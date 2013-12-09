@@ -1,0 +1,41 @@
+
+import os.path
+
+Import("env")
+
+
+# SOURCES
+
+rendersources = [
+
+	'render.c'
+
+	]
+
+networkheaders = [
+
+	'build.h', 'hashstrings.h', 'internal.h', 'render.h', 'types.h'
+
+	]
+
+
+# ADD INTERNAL FLAGS
+
+libenv = env.Clone()
+libenv.Append( CPPDEFINES=['RENDER_COMPILE=1'] )
+
+
+# OUTPUTS
+
+env['renderlib'] = libenv.StaticLibrary( 'render', rendersources )
+
+
+# DEPENDENCIES
+
+#if env['toolset'] == 'gnu':
+#	libenv.Depends( [ os.path.splitext( x )[0] + '.o' for x in rendersources ], '#/render/render.h.gch' )
+
+
+# INSTALLS
+
+libenv.AddPostAction( 'render', libenv.Install( '#lib/${platform}${platformsuffix}/${buildprofile}', [ env['renderlib'] ] ) )

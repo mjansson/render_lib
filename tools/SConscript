@@ -1,0 +1,22 @@
+import os.path
+
+Import("env")
+
+
+toolsenv    = env.Clone()
+
+toolsenv.Append( CPPPATH=['#/tools'] )
+toolsenv.Append( LIBPATH=['#/lib/${platform}${platformsuffix}/${buildprofile}','#/lib/${platform}${platformsuffix}'] )
+toolsenv.Append( LIBS=[ 'network', 'foundation' ] )
+
+if toolsenv['platform'] == 'linux':
+	toolsenv.Append( LIBS=[ 'dl', 'rt', 'm' ] )
+elif toolsenv['platform'] == 'raspberrypi':
+	toolsenv.Append( LIBS=[ 'bcm_host', 'rt', 'm' ] )
+
+#env['luadumpprg'] = toolsenv.Program( 'bin/${buildprofile}/luadump${prgsuffix}', 'luadump/main.c' )
+
+
+# INSTALLS
+
+#toolsenv.AddPostAction( 'bin/${buildprofile}/luadump${prgsuffix}', toolsenv.Install( '#bin/${platform}${platformsuffix}/${buildprofile}', [ env['luadumpprg'] ] ) )
