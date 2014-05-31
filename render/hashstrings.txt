@@ -1,2 +1,13 @@
 
 HASH_RENDER                                render
+HASH_API                                   api
+HASH_DIRECTX10                             directx10
+HASH_DIRECTX11                             directx11
+HASH_OPENGL2                               opengl2
+HASH_OPENGL3                               opengl3
+HASH_OPENGL4                               opengl4
+HASH_GLES1                                 gles1
+HASH_GLES2                                 gles2
+HASH_D3D_DEVICE_REF                        d3d_device_ref
+HASH_D3D_DEVICE_DEBUG                      d3d_device_debug
+HASH_D3D_SHADER_DEBUG                      d3d_shader_debug

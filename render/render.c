@@ -15,17 +15,58 @@
  * 
  */
 
-#include <render/render.h>
-
 #include <foundation/foundation.h>
+#include <window/window.h>
+#include <render/render.h>
+#include <render/internal.h>
+
+
+static bool _render_initialized = false;
 
 
 int render_initialize( void )
 {
+    if( _render_initialized )
+        return 0;
+    
+    if( window_initialize() < 0 )
+        return -1;
+    
+    _render_initialized = true;
+    
 	return 0;
 }
 
 
 void render_shutdown( void )
 {
+    if( !_render_initialized )
+        return;
+    
+    _render_initialized = false;
+}
+
+
+bool render_is_initialized( void )
+{
+    return _render_initialized;
+}
+
+
+void render_api_enable( unsigned int num, render_api_t* api )
+{
+	for( unsigned int i = 0; i < num; ++i )
+	{
+		if( ( api[i] > RENDERAPI_DEFAULT ) && ( api[i] < RENDERAPI_NUM ) )
+			render_api_disabled[api[i]] = false;
+	}
+}
+
+void render_api_disable( unsigned int num, render_api_t* api )
+{
+	for( unsigned int i = 0; i < num; ++i )
+	{
+		if( ( api[i] > RENDERAPI_DEFAULT ) && ( api[i] < RENDERAPI_NUM ) )
+			render_api_disabled[api[i]] = true;
+	}
 }

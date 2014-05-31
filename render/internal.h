@@ -26,3 +26,96 @@
 
 #include <render/types.h>
 #include <render/hashstrings.h>
+
+
+typedef bool                                   (* render_backend_construct_fn)( render_backend_t* );
+typedef void                                   (* render_backend_destruct_fn)( render_backend_t* );
+typedef unsigned int*                          (* render_backend_enumerate_adapters_fn)( render_backend_t* );
+typedef render_resolution_t*                   (* render_backend_enumerate_modes_fn)( render_backend_t*, unsigned int );
+typedef void                                   (* render_backend_enable_thread_fn)( render_backend_t* );
+typedef void                                   (* render_backend_disable_thread_fn)( render_backend_t* );
+typedef bool                                   (* render_backend_set_drawable_fn)( render_backend_t*, render_drawable_t* );
+typedef void                                   (* render_backend_dispatch_fn)( render_backend_t*, render_context_t**, unsigned int );
+typedef void                                   (* render_backend_flip_fn)( render_backend_t* );
+
+typedef struct _render_backend_vtable
+{
+	render_backend_construct_fn                   construct;
+	render_backend_destruct_fn                    destruct;
+	render_backend_enumerate_adapters_fn          enumerate_adapters;
+	render_backend_enumerate_modes_fn             enumerate_modes;
+	render_backend_enable_thread_fn               enable_thread;
+	render_backend_disable_thread_fn              disable_thread;
+	render_backend_set_drawable_fn                set_drawable;
+	render_backend_dispatch_fn                    dispatch;
+	render_backend_flip_fn                        flip;
+} render_backend_vtable_t;
+
+#define RENDER_DECLARE_BACKEND							\
+render_api_t                      api;					\
+render_backend_vtable_t           vtable;				\
+render_drawable_t*                drawable;				\
+pixelformat_t                     pixelformat;          \
+colorspace_t                      colorspace;           \
+uint64_t                          framecount
+
+struct _render_backend
+{
+	RENDER_DECLARE_BACKEND;
+};
+
+
+struct _render_drawable
+{
+	render_drawable_type_t      type;
+	unsigned int                adapter;
+	window_t*                   window;
+#if FOUNDATION_PLATFORM_WINDOWS
+	void*                       hwnd;
+	void*                       hdc;
+#elif FOUNDATION_PLATFORM_LINUX_RASPBERRYPI
+	void*                       native; //EGL_DISPMANX_WINDOW_T*
+	void*                       display;
+#elif FOUNDATION_PLATFORM_LINUX
+	void*                       display;
+	int                         screen;
+	int                         drawable;
+#elif FOUNDATION_PLATFORM_MACOSX
+	void*                       view;
+#elif FOUNDATION_PLATFORM_IOS
+	void*                       view;
+	void*                       drawable; //CAEAGLLayer*
+#elif FOUNDATION_PLATFORM_ANDROID
+	void*                       native;
+	void*                       display;
+#else
+#  error Not implemented
+#endif
+	object_t                    buffer;
+	unsigned int                width;
+	unsigned int                height;
+	unsigned int                refresh;
+};
+
+
+struct _render_context
+{
+	int32_t                   reserved;
+	int32_t                   allocated;
+    
+	object_t                  target;
+    
+	int64_t                   key;
+    
+	render_command_t*         commands;
+	uint64_t*                 keys;
+	radixsort_t*              sort;
+    
+	radixsort_index_t*        order;
+};
+
+
+// GLOBAL DATA
+
+RENDER_EXTERN bool            render_api_disabled[];
+

@@ -23,11 +23,28 @@
 #include <foundation/platform.h>
 
 #include <render/types.h>
+#include <render/hashstrings.h>
+#include <render/backend.h>
+#include <render/drawable.h>
 
 
-//! Initialize render library
-/*! \return                                             0 if success, <0 if error */
+/*! Initialize render library
+    \return                                             0 if success, <0 if error */
 RENDER_API int                                          render_initialize( void );
 
 //! Shutdown render library
 RENDER_API void                                         render_shutdown( void );
+
+/*! Query if render library is initialized
+    \return                                             true if library is initialized, false if not */
+RENDER_API bool                                         render_is_initialized( void );
+
+/*! Enable use of the given APIs
+    \param num                                          Number of elements in array
+    \param api                                          Array of API identifiers to enable */
+RENDER_API void                                         render_api_enable( unsigned int num, render_api_t* api );
+
+/*! Enable use of the given APIs
+    \param num                                          Number of elements in array
+    \param api                                          Array of API identifiers to disable */
+RENDER_API void                                         render_api_disable( unsigned int num, render_api_t* api );
