@@ -108,6 +108,9 @@ DECLARE_TEST( render, null )
 	EXPECT_TRUE( window_is_open( window ) );
     
     render_backend_t* backend = render_backend_allocate( RENDERAPI_NULL );
+
+    EXPECT_EQ( render_backend_api( backend ), RENDERAPI_NULL );
+    
     render_drawable_t* drawable = render_drawable_allocate();
     
     EXPECT_NE( backend, 0 );
@@ -137,10 +140,75 @@ DECLARE_TEST( render, null )
 }
 
 
+DECLARE_TEST( render, gles2 )
+{
+    render_initialize();
+    
+    EXPECT_TRUE( render_is_initialized() );
+    
+    render_shutdown();
+    
+    EXPECT_FALSE( render_is_initialized() );
+    
+	window_t* window;
+#if FOUNDATION_PLATFORM_MACOSX
+	window = window_allocate_from_nswindow( delegate_nswindow() );
+#elif FOUNDATION_PLATFORM_IOS
+	window = window_allocate_from_uiwindow( delegate_uiwindow() );
+#else
+#  error Not implemented
+#endif
+	
+	EXPECT_NE( window, 0 );
+	EXPECT_TRUE( window_is_open( window ) );
+    
+    render_backend_t* backend = render_backend_allocate( RENDERAPI_GLES2 );
+    
+    EXPECT_EQ( render_backend_api( backend ), RENDERAPI_GLES2 );
+	
+	render_resolution_t* resolutions = render_backend_enumerate_modes( backend, WINDOW_ADAPTER_DEFAULT );
+    render_drawable_t* drawable = render_drawable_allocate();
+    
+    EXPECT_NE( backend, 0 );
+    EXPECT_NE( drawable, 0 );
+
+	log_infof( HASH_TEST, "Render mode: %ux%u@%uHz", resolutions[0].width, resolutions[0].height, resolutions[0].refresh );
+    
+#if FOUNDATION_PLATFORM_IOS
+    render_drawable_set_window( drawable, window, 1 );
+#else
+    render_drawable_set_window( drawable, window );
+#endif
+
+	log_infof( HASH_TEST, "Drawable   : %ux%u", render_drawable_width( drawable ), render_drawable_height( drawable ) );
+    
+    EXPECT_EQ( render_drawable_type( drawable ), RENDERDRAWABLE_WINDOW );
+	EXPECT_EQ( render_drawable_width( drawable ), window_width( window ) );
+	EXPECT_EQ( render_drawable_height( drawable ), window_height( window ) );
+    
+    render_backend_set_format( backend, PIXELFORMAT_R8G8B8X8, COLORSPACE_LINEAR );
+    render_backend_set_drawable( backend, drawable );
+    
+	thread_sleep( 5000 );
+	
+    render_backend_deallocate( backend );
+    
+	window_deallocate( window );
+	window = 0;
+    
+	EXPECT_FALSE( window_is_open( window ) );
+    
+	return 0;
+}
+
+
 static void test_render_declare( void )
 {
 	ADD_TEST( render, initialize );
 	ADD_TEST( render, null );
+#if FOUNDATION_PLATFORM_IOS || FOUNDATION_PLATFORM_ANDROID || FOUNDATION_PLATFORM_LINUX_RASPBERRYPI
+	ADD_TEST( render, gles2 );
+#endif
 }
 
 

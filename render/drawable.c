@@ -56,6 +56,9 @@ void render_drawable_set_window( render_drawable_t* drawable, window_t* window )
 	drawable->type = RENDERDRAWABLE_WINDOW;
 	drawable->adapter = window_adapter( window );
 	drawable->window = window;
+	drawable->width = window_width( window );
+	drawable->height = window_height( window );
+	drawable->refresh = 0;
 #if FOUNDATION_PLATFORM_WINDOWS
 	drawable->hwnd = window_hwnd( window );
 	drawable->hdc = window_hdc( window );
@@ -70,15 +73,14 @@ void render_drawable_set_window( render_drawable_t* drawable, window_t* window )
 #elif FOUNDATION_PLATFORM_IOS
 	drawable->view = window_view( window, tag );
 	drawable->drawable = window_layer( window, drawable->view );
+	drawable->width = window_view_width( window, drawable->view );
+	drawable->height = window_view_height( window, drawable->view );
 #elif FOUNDATION_PLATFORM_ANDROID
 	drawable->native = window_native( window );
 	drawable->display = window_display( window );
 #else
 #  error Not implemented
 #endif
-	drawable->width = window_width( window );
-	drawable->height = window_height( window );
-	drawable->refresh = 0;
 }
 
 

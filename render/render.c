@@ -32,6 +32,9 @@ int render_initialize( void )
     if( window_initialize() < 0 )
         return -1;
     
+    render_api_disabled[RENDERAPI_UNKNOWN] = true;
+    render_api_disabled[RENDERAPI_DEFAULT] = true;
+    
     _render_initialized = true;
     
 	return 0;

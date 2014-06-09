@@ -21,6 +21,7 @@
 #include <render/internal.h>
 
 #include <render/null/backend.h>
+#include <render/gles2/backend.h>
 
 
 bool render_api_disabled[RENDERAPI_NUM] = {0};
@@ -69,21 +70,18 @@ render_backend_t* render_backend_allocate( render_api_t api )
 	render_backend_t* backend = 0;
 	while( !backend ) { while( render_api_disabled[api] ) api = render_api_fallback( api ); switch( api )
 	{
-#if FOUNDATION_PLATFORM_IOS || FOUNDATION_PLATFORM_ANDROID || FOUNDATION_PLATFORM_LINUX_RASPBERRYPI
-
-        /*
 		case RENDERAPI_GLES2:
 		{
 			backend = render_backend_gles2_allocate();
 			if( !backend || !backend->vtable.construct( backend ) )
 			{
 				log_info( HASH_RENDER, "Failed to initialize OpenGL ES 2 render backend" );
-				render_deallocate( backend ), backend = 0;
+				render_backend_deallocate( backend ), backend = 0;
 			}
 			break;
 		}
 
-		case RENDERAPI_GLES1:
+		/*case RENDERAPI_GLES1:
 		{
 			backend = render_backend_gles1_allocate();
 			if( !backend || !backend->vtable.construct( backend ) )
@@ -93,11 +91,8 @@ render_backend_t* render_backend_allocate( render_api_t api )
 			}
 			break;
 		}
-         */
 			
-#else
-			
-		/*case RENDERAPI_OPENGL2:
+		case RENDERAPI_OPENGL2:
 		{
 			backend = render_gl2_allocate();
 			if( !backend || !backend->vtable.construct( backend ) )
@@ -152,8 +147,6 @@ render_backend_t* render_backend_allocate( render_api_t api )
 			break;
 		}*/
 
-#endif
-
 		case RENDERAPI_NULL:
 		{
 			backend = render_backend_null_allocate();
@@ -170,7 +163,7 @@ render_backend_t* render_backend_allocate( render_api_t api )
 		default:
 		{
 			//Try loading dynamic library
-			log_warn( HASH_RENDER, WARNING_SUSPICIOUS, "Unknown render API, dynamic library loading not implemented yet. Fallback to NULL rendering" );
+			log_warnf( HASH_RENDER, WARNING_SUSPICIOUS, "Unknown render API (%u), dynamic library loading not implemented yet. Fallback to NULL rendering", api );
 			break;
 		}
 	} if( !backend ) api = render_api_fallback( api ); }

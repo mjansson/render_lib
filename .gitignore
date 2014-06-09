@@ -194,20 +194,4 @@ build/scons/deploy*
 
 #XCode
 xcuserdata
-
-#LuaJIT local build generated files
-lua/luajit/src/host/buildvm
-lua/luajit/src/host/buildvm_arch.h
-lua/luajit/src/host/minilua
-lua/luajit/src/jit/vmdef.lua
-lua/luajit/src/libluajit.a
-lua/luajit/src/libluajit.so
-lua/luajit/src/lj_bcdef.h
-lua/luajit/src/lj_ffdef.h
-lua/luajit/src/lj_folddef.h
-lua/luajit/src/lj_libdef.h
-lua/luajit/src/lj_recdef.h
-lua/luajit/src/lj_vm.s
-lua/luajit/src/luajit
-
-lua/luajit/src/luajit.exp
+*.xccheckout
