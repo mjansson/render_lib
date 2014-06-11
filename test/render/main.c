@@ -40,6 +40,7 @@ static memory_system_t test_render_memory_system( void )
 
 static int test_render_initialize( void )
 {
+	log_suppress_clear();
 	return 0;
 }
 
@@ -172,7 +173,7 @@ DECLARE_TEST( render, gles2 )
     EXPECT_NE( backend, 0 );
     EXPECT_NE( drawable, 0 );
 
-	log_infof( HASH_TEST, "Render mode: %ux%u@%uHz", resolutions[0].width, resolutions[0].height, resolutions[0].refresh );
+	log_infof( HASH_TEST, "Resolution: %ux%u@%uHz", resolutions[0].width, resolutions[0].height, resolutions[0].refresh );
     
 #if FOUNDATION_PLATFORM_IOS
     render_drawable_set_window( drawable, window, 1 );
@@ -180,7 +181,7 @@ DECLARE_TEST( render, gles2 )
     render_drawable_set_window( drawable, window );
 #endif
 
-	log_infof( HASH_TEST, "Drawable   : %ux%u", render_drawable_width( drawable ), render_drawable_height( drawable ) );
+	log_infof( HASH_TEST, "Drawable  : %ux%u", render_drawable_width( drawable ), render_drawable_height( drawable ) );
     
     EXPECT_EQ( render_drawable_type( drawable ), RENDERDRAWABLE_WINDOW );
 	EXPECT_EQ( render_drawable_width( drawable ), window_width( window ) );

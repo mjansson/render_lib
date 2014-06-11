@@ -24,8 +24,8 @@
                 <outlet property="rootViewController" destination="dQg-1M-d8C" id="aON-gj-hTu"/>
             </connections>
         </window>
-        <viewController id="dQg-1M-d8C">
-            <textView key="view" clipsSubviews="YES" multipleTouchEnabled="YES" tag="1" contentMode="scaleToFill" showsHorizontalScrollIndicator="NO" editable="NO" id="Ied-uC-Ke1" customClass="WindowGLView">
+        <viewController id="dQg-1M-d8C" customClass="WindowViewController">
+            <textView key="view" clipsSubviews="YES" multipleTouchEnabled="YES" tag="1" contentMode="scaleToFill" showsHorizontalScrollIndicator="NO" editable="NO" id="Ied-uC-Ke1" customClass="WindowView">
                 <rect key="frame" x="0.0" y="0.0" width="768" height="1024"/>
                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                 <color key="backgroundColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
@@ -38,6 +38,9 @@
             <nil key="simulatedBottomBarMetrics"/>
             <simulatedOrientationMetrics key="simulatedOrientationMetrics"/>
             <nil key="simulatedDestinationMetrics"/>
+            <userDefinedRuntimeAttributes>
+                <userDefinedRuntimeAttribute type="boolean" keyPath="hideStatusBar" value="YES"/>
+            </userDefinedRuntimeAttributes>
         </viewController>
     </objects>
 </document>

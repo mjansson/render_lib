@@ -28,7 +28,7 @@
 #import <UIKit/UIScreenMode.h>
 
 
-const void* _rb_gles2_create_egl_context( void )
+const void* _rb_gles2_ios_create_egl_context( void )
 {
 	EAGLContext* context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
 	if( !context )
@@ -48,22 +48,52 @@ const void* _rb_gles2_create_egl_context( void )
 }
 
 
-void _rb_gles2_destroy_egl_context( const void* context )
+void _rb_gles2_ios_set_current_egl_context( const void* context )
+{
+	[EAGLContext setCurrentContext:(__bridge EAGLContext*)context];
+}
+
+
+void _rb_gles2_ios_destroy_egl_context( const void* context )
 {
 	[EAGLContext setCurrentContext:0];
     CFBridgingRelease( context );
 }
 
 
-int _rb_gles2_screen_width( void )
+int _rb_gles2_ios_screen_width( void )
 {
 	return (int)[UIScreen mainScreen].currentMode.size.width;
 }
 
 
-int _rb_gles2_screen_height( void )
+int _rb_gles2_ios_screen_height( void )
 {
 	return (int)[UIScreen mainScreen].currentMode.size.height;
+}
+
+
+bool _rb_gles2_ios_render_buffer_storage_from_drawable( const void* context, const void* drawable, unsigned int framebuffer, unsigned int colorbuffer )
+{
+	EAGLContext* eagl_context = (__bridge EAGLContext*)context;
+	CAEAGLLayer* layer = (__bridge CAEAGLLayer*)drawable;
+	
+	[EAGLContext setCurrentContext:eagl_context];
+	
+	glBindRenderbuffer( GL_RENDERBUFFER, colorbuffer );
+	
+	if( ![eagl_context renderbufferStorage:GL_RENDERBUFFER fromDrawable:layer] )
+	{
+		log_errorf( HASH_RENDER, ERROR_OUT_OF_MEMORY, "Unable to allocate render buffer storage" );
+		return false;
+	}
+	
+	int backing_width = 0, backing_height = 0;
+	glGetRenderbufferParameteriv( GL_RENDERBUFFER, GL_RENDERBUFFER_WIDTH, &backing_width );
+    glGetRenderbufferParameteriv( GL_RENDERBUFFER, GL_RENDERBUFFER_HEIGHT, &backing_height );
+	log_debugf( HASH_RENDER, "Context 0x%" PRIfixPTR ", drawable 0x%" PRIfixPTR ", colorbuffer %d storage allocated for drawable size %dx%d", context, drawable, colorbuffer, backing_width, backing_height );
+
+	return true;
 }
 
 
