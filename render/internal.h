@@ -57,7 +57,8 @@ render_backend_vtable_t           vtable;				\
 render_drawable_t*                drawable;				\
 pixelformat_t                     pixelformat;          \
 colorspace_t                      colorspace;           \
-uint64_t                          framecount
+object_t                          framebuffer;          \
+uint64_t                          framecount;
 
 struct _render_backend
 {
@@ -97,25 +98,83 @@ struct _render_drawable
 	unsigned int                refresh;
 };
 
+struct _render_target
+{
+	FOUNDATION_DECLARE_OBJECT;
+	render_backend_t*           backend;
+	unsigned int                width;
+	unsigned int                height;
+	pixelformat_t               pixelformat;
+	colorspace_t                colorspace;
+};
 
 struct _render_context
 {
-	int32_t                   reserved;
-	int32_t                   allocated;
+	atomic32_t                  reserved;
+	int32_t                     allocated;
     
-	object_t                  target;
+	object_t                    target;
     
-	int64_t                   key;
+	int64_t                     key;
     
-	render_command_t*         commands;
-	uint64_t*                 keys;
-	radixsort_t*              sort;
+	render_command_t*           commands;
+	uint64_t*                   keys;
+	radixsort_t*                sort;
     
-	radixsort_index_t*        order;
+	radixsort_index_t*          order;
+};
+
+typedef struct _render_command_clear
+{
+	unsigned int                mask;
+	uint32_t                    color;
+	uint32_t                    depth;
+	uint32_t                    stencil;
+} render_command_clear_t;
+
+typedef struct _render_command_viewport
+{
+	uint16_t                    x;
+	uint16_t                    y;
+	uint16_t                    width;
+	uint16_t                    height;
+	real                        min_z;
+	real                        max_z;
+} render_command_viewport_t;
+
+typedef struct _render_command_render
+{
+	object_t                    vertexshader;
+	object_t                    pixelshader;
+	object_t                    vertexbuffer;
+	object_t                    indexbuffer;
+	object_t                    parameterblock;
+	uint64_t                    blend_state;
+} render_command_render_t;
+
+struct _render_command
+{
+	unsigned int                type:8;
+	unsigned int                reserved:8;
+	unsigned int                count:16;
+	
+	union
+	{
+		render_command_clear_t    clear;
+		render_command_viewport_t viewport;
+		render_command_render_t   render;
+	} data;
 };
 
 
 // GLOBAL DATA
 
 RENDER_EXTERN bool            render_api_disabled[];
+
+
+// INTERNAL FUNCTIONS
+RENDER_EXTERN int                 render_target_initialize( void );
+RENDER_EXTERN void                render_target_shutdown( void );
+RENDER_EXTERN object_t            render_target_create_framebuffer( render_backend_t* backend );
+RENDER_EXTERN render_target_t*    render_target_lookup( object_t id );
 

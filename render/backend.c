@@ -68,6 +68,9 @@ render_backend_t* render_backend_allocate( render_api_t api )
 {
 	//First find best matching supported backend
 	render_backend_t* backend = 0;
+	
+	memory_context_push( HASH_RENDER );
+	
 	while( !backend ) { while( render_api_disabled[api] ) api = render_api_fallback( api ); switch( api )
 	{
 		case RENDERAPI_GLES2:
@@ -168,8 +171,11 @@ render_backend_t* render_backend_allocate( render_api_t api )
 		}
 	} if( !backend ) api = render_api_fallback( api ); }
 	
+	backend->framebuffer = render_target_create_framebuffer( backend );
 	backend->framecount = 1;
-
+	
+	memory_context_pop();
+	
 	return backend;
 }
 
@@ -183,6 +189,8 @@ void render_backend_deallocate( render_backend_t* backend )
 
 	if( backend->drawable )
 		render_drawable_deallocate( backend->drawable );
+	if( backend->framebuffer )
+		render_target_destroy( backend->framebuffer );
 	
 	memory_deallocate( backend );
 }
@@ -218,6 +226,7 @@ void render_backend_set_format( render_backend_t* backend, const pixelformat_t f
 
 void render_backend_set_drawable( render_backend_t* backend, render_drawable_t* drawable )
 {
+	render_target_t* framebuffer_target;
 	render_drawable_t* old = backend->drawable;
 	if( old == drawable )
 		return;
@@ -228,6 +237,15 @@ void render_backend_set_drawable( render_backend_t* backend, render_drawable_t* 
 	backend->drawable = drawable;
 	if( old )
 		render_drawable_deallocate( old );
+	
+	framebuffer_target = render_target_lookup( backend->framebuffer );
+	if( framebuffer_target )
+	{
+		framebuffer_target->width = render_drawable_width( drawable );
+		framebuffer_target->height = render_drawable_height( drawable );
+		framebuffer_target->pixelformat = backend->pixelformat;
+		framebuffer_target->colorspace = backend->colorspace;
+	}
 }
 
 
@@ -239,7 +257,7 @@ render_drawable_t* render_backend_drawable( render_backend_t* backend )
 
 object_t render_backend_target_framebuffer( render_backend_t* backend )
 {
-	return RENDER_TARGET_FRAMEBUFFER;
+	return backend->framebuffer;
 }
 
 
@@ -248,7 +266,7 @@ void render_backend_dispatch( render_backend_t* backend, render_context_t** cont
 	backend->vtable.dispatch( backend, contexts, num_contexts );
 
 	for( int i = 0, size = num_contexts; i < size; ++i )
-		contexts[i]->reserved = 0;
+		atomic_store32( &contexts[i]->reserved, 0 );
 }
 
 

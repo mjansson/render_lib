@@ -17,7 +17,7 @@
 
 #pragma once
 
-/*! \file http.h
+/*! \file render.h
     Render library entry points */
 
 #include <foundation/platform.h>
@@ -25,7 +25,9 @@
 #include <render/types.h>
 #include <render/hashstrings.h>
 #include <render/backend.h>
+#include <render/context.h>
 #include <render/drawable.h>
+#include <render/target.h>
 
 
 /*! Initialize render library

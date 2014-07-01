@@ -28,8 +28,6 @@
 
 //CONSTANTS
 
-#define RENDER_TARGET_FRAMEBUFFER    0
-
 typedef enum _render_api
 {
 	RENDERAPI_UNKNOWN                       = 0,
@@ -212,7 +210,9 @@ typedef enum _render_pixelformat
 
 typedef enum _render_colorspace
 {
-	COLORSPACE_LINEAR                       = 0,
+	COLORSPACE_INVALID                      = 0,
+	
+	COLORSPACE_LINEAR,
 	COLORSPACE_sRGB,
     
 	COLORSPACE_NUMSPACES
@@ -222,6 +222,7 @@ typedef enum _render_colorspace
 // OPAQUE COMPLEX TYPES
 
 typedef struct _render_backend        render_backend_t;
+typedef struct _render_target         render_target_t;
 typedef struct _render_context        render_context_t;
 typedef struct _render_drawable       render_drawable_t;
 typedef struct _render_command        render_command_t;
@@ -233,7 +234,7 @@ typedef struct _render_resolution
 	unsigned int                      id;
 	unsigned int                      width;
 	unsigned int                      height;
-	pixelformat_t                     format;
+	pixelformat_t                     pixelformat;
 	colorspace_t                      colorspace;
 	unsigned int                      refresh;
 } render_resolution_t;

@@ -40,13 +40,13 @@ static memory_system_t test_render_memory_system( void )
 
 static int test_render_initialize( void )
 {
-	log_suppress_clear();
-	return 0;
+	return render_initialize();
 }
 
 
 static void test_render_shutdown( void )
 {
+	render_shutdown();
 }
 
 
@@ -59,6 +59,8 @@ DECLARE_TEST( render, initialize )
     render_shutdown();
     
     EXPECT_FALSE( render_is_initialized() );
+
+    render_initialize();
     
 	window_t* window;
 #if FOUNDATION_PLATFORM_MACOSX
@@ -88,15 +90,12 @@ DECLARE_TEST( render, initialize )
 
 DECLARE_TEST( render, null )
 {
-    render_initialize();
+	window_t* window;
+	
+	render_initialize();
     
     EXPECT_TRUE( render_is_initialized() );
-    
-    render_shutdown();
-    
-    EXPECT_FALSE( render_is_initialized() );
-    
-	window_t* window;
+	
 #if FOUNDATION_PLATFORM_MACOSX
 	window = window_allocate_from_nswindow( delegate_nswindow() );
 #elif FOUNDATION_PLATFORM_IOS
@@ -136,6 +135,10 @@ DECLARE_TEST( render, null )
 	window = 0;
     
 	EXPECT_FALSE( window_is_open( window ) );
+	
+	render_shutdown();
+    
+    EXPECT_FALSE( render_is_initialized() );
     
 	return 0;
 }
@@ -146,10 +149,6 @@ DECLARE_TEST( render, gles2 )
     render_initialize();
     
     EXPECT_TRUE( render_is_initialized() );
-    
-    render_shutdown();
-    
-    EXPECT_FALSE( render_is_initialized() );
     
 	window_t* window;
 #if FOUNDATION_PLATFORM_MACOSX
@@ -169,6 +168,7 @@ DECLARE_TEST( render, gles2 )
 	
 	render_resolution_t* resolutions = render_backend_enumerate_modes( backend, WINDOW_ADAPTER_DEFAULT );
     render_drawable_t* drawable = render_drawable_allocate();
+	object_t framebuffer;
     
     EXPECT_NE( backend, 0 );
     EXPECT_NE( drawable, 0 );
@@ -191,6 +191,13 @@ DECLARE_TEST( render, gles2 )
     render_backend_set_drawable( backend, drawable );
     
 	thread_sleep( 5000 );
+
+	framebuffer = render_backend_target_framebuffer( backend );
+	EXPECT_NE( framebuffer, 0 );
+	EXPECT_GE( render_target_width( framebuffer ), window_width( window ) );
+	EXPECT_GE( render_target_height( framebuffer ), window_height( window ) );
+	EXPECT_EQ( render_target_pixelformat( framebuffer ), PIXELFORMAT_R8G8B8X8 );
+	EXPECT_EQ( render_target_colorspace( framebuffer ), COLORSPACE_LINEAR );
 	
     render_backend_deallocate( backend );
     
@@ -199,6 +206,10 @@ DECLARE_TEST( render, gles2 )
     
 	EXPECT_FALSE( window_is_open( window ) );
     
+    render_shutdown();
+    
+    EXPECT_FALSE( render_is_initialized() );
+	
 	return 0;
 }
 

@@ -34,6 +34,9 @@ int render_initialize( void )
     
     render_api_disabled[RENDERAPI_UNKNOWN] = true;
     render_api_disabled[RENDERAPI_DEFAULT] = true;
+	
+	if( render_target_initialize() < 0 )
+		return -1;
     
     _render_initialized = true;
     
@@ -45,6 +48,8 @@ void render_shutdown( void )
 {
     if( !_render_initialized )
         return;
+
+	render_target_shutdown();
     
     _render_initialized = false;
 }

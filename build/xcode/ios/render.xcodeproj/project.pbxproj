@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		451389B71945B1D300BA2092 /* backend.c in Sources */ = {isa = PBXBuildFile; fileRef = 451389B51945B1D300BA2092 /* backend.c */; };
 		451389B91945C29F00BA2092 /* backend.m in Sources */ = {isa = PBXBuildFile; fileRef = 451389B81945C29F00BA2092 /* backend.m */; };
+		451871C11957FAB1000E42C9 /* context.c in Sources */ = {isa = PBXBuildFile; fileRef = 451871BF1957FAB1000E42C9 /* context.c */; };
+		451871C41958A40C000E42C9 /* target.c in Sources */ = {isa = PBXBuildFile; fileRef = 451871C21958A40C000E42C9 /* target.c */; };
 		455515F31935D32700CF089B /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 455515F21935D32700CF089B /* Foundation.framework */; };
 		455516231935D37C00CF089B /* backend.c in Sources */ = {isa = PBXBuildFile; fileRef = 455516191935D37C00CF089B /* backend.c */; };
 		455516241935D37C00CF089B /* drawable.c in Sources */ = {isa = PBXBuildFile; fileRef = 4555161C1935D37C00CF089B /* drawable.c */; };
@@ -32,6 +34,10 @@
 		451389B51945B1D300BA2092 /* backend.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = backend.c; path = ../../../render/gles2/backend.c; sourceTree = "<group>"; };
 		451389B61945B1D300BA2092 /* backend.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = backend.h; path = ../../../render/gles2/backend.h; sourceTree = "<group>"; };
 		451389B81945C29F00BA2092 /* backend.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = backend.m; path = ../../../render/gles2/backend.m; sourceTree = "<group>"; };
+		451871BF1957FAB1000E42C9 /* context.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = context.c; path = ../../../render/context.c; sourceTree = "<group>"; };
+		451871C01957FAB1000E42C9 /* context.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = context.h; path = ../../../render/context.h; sourceTree = "<group>"; };
+		451871C21958A40C000E42C9 /* target.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = target.c; path = ../../../render/target.c; sourceTree = "<group>"; };
+		451871C31958A40C000E42C9 /* target.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = target.h; path = ../../../render/target.h; sourceTree = "<group>"; };
 		455515EF1935D32700CF089B /* librender.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = librender.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		455515F21935D32700CF089B /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		455516031935D32700CF089B /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };
@@ -113,6 +119,8 @@
 				455516261935D37F00CF089B /* null */,
 				455516191935D37C00CF089B /* backend.c */,
 				4555161A1935D37C00CF089B /* backend.h */,
+				451871BF1957FAB1000E42C9 /* context.c */,
+				451871C01957FAB1000E42C9 /* context.h */,
 				4555161B1935D37C00CF089B /* build.h */,
 				4555161C1935D37C00CF089B /* drawable.c */,
 				4555161D1935D37C00CF089B /* drawable.h */,
@@ -120,6 +128,8 @@
 				4555161F1935D37C00CF089B /* internal.h */,
 				455516201935D37C00CF089B /* render.c */,
 				455516211935D37C00CF089B /* render.h */,
+				451871C21958A40C000E42C9 /* target.c */,
+				451871C31958A40C000E42C9 /* target.h */,
 				455516221935D37C00CF089B /* types.h */,
 			);
 			name = render;
@@ -185,10 +195,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				451871C41958A40C000E42C9 /* target.c in Sources */,
 				451389B91945C29F00BA2092 /* backend.m in Sources */,
 				455516231935D37C00CF089B /* backend.c in Sources */,
 				455516251935D37C00CF089B /* render.c in Sources */,
 				455516291935D38D00CF089B /* backend.c in Sources */,
+				451871C11957FAB1000E42C9 /* context.c in Sources */,
 				451389B71945B1D300BA2092 /* backend.c in Sources */,
 				455516241935D37C00CF089B /* drawable.c in Sources */,
 			);

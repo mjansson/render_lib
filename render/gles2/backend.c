@@ -47,9 +47,9 @@ typedef struct _render_backend_gles2
     
 #if FOUNDATION_PLATFORM_IOS
 	const void*                context;
-	GLuint                     framebuffer;
-	GLuint                     renderbuffer;
-	GLuint                     depthbuffer;
+	GLuint                     framebuffer_id;
+	GLuint                     renderbuffer_id;
+	GLuint                     depthbuffer_id;
 #elif FOUNDATION_PLATFORM_ANDROID || FOUNDATION_PLATFORM_LINUX_RASPBERRYPI
 	EGLDisplay*                display;
 	EGLConfig                  config;
@@ -279,31 +279,31 @@ static bool _rb_gles2_set_drawable( render_backend_t* backend, render_drawable_t
 	
 #if FOUNDATION_PLATFORM_IOS
 	
-	glGenFramebuffers( 1, &backend_gles2->framebuffer );
-	glBindFramebuffer( GL_FRAMEBUFFER, backend_gles2->framebuffer );
+	glGenFramebuffers( 1, &backend_gles2->framebuffer_id );
+	glBindFramebuffer( GL_FRAMEBUFFER, backend_gles2->framebuffer_id );
 	_rb_gles2_check_error( "Unable to generate framebuffer object" );
 	
-	glGenRenderbuffers( 1, &backend_gles2->renderbuffer );
-	glBindRenderbuffer( GL_RENDERBUFFER, backend_gles2->renderbuffer );
+	glGenRenderbuffers( 1, &backend_gles2->renderbuffer_id );
+	glBindRenderbuffer( GL_RENDERBUFFER, backend_gles2->renderbuffer_id );
 	_rb_gles2_check_error( "Unable to generate renderbuffer object" );
 	
-	glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, backend_gles2->renderbuffer );
-	glBindRenderbuffer( GL_RENDERBUFFER, backend_gles2->renderbuffer );
-	_rb_gles2_ios_render_buffer_storage_from_drawable( backend_gles2->context, drawable->drawable, backend_gles2->framebuffer, backend_gles2->renderbuffer );
+	glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, backend_gles2->renderbuffer_id );
+	glBindRenderbuffer( GL_RENDERBUFFER, backend_gles2->renderbuffer_id );
+	_rb_gles2_ios_render_buffer_storage_from_drawable( backend_gles2->context, drawable->drawable, backend_gles2->framebuffer_id, backend_gles2->renderbuffer_id );
 	
 	GLint width = 0, height = 0;
 	glGetRenderbufferParameteriv( GL_RENDERBUFFER, GL_RENDERBUFFER_WIDTH, &width );
 	glGetRenderbufferParameteriv( GL_RENDERBUFFER, GL_RENDERBUFFER_HEIGHT, &height );
 	
-	glGenRenderbuffers( 1, &backend_gles2->depthbuffer );
-	glBindRenderbuffer( GL_RENDERBUFFER, backend_gles2->depthbuffer );
+	glGenRenderbuffers( 1, &backend_gles2->depthbuffer_id );
+	glBindRenderbuffer( GL_RENDERBUFFER, backend_gles2->depthbuffer_id );
 	_rb_gles2_check_error( "Unable to generate depthbuffer object" );
 	
-	glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, backend_gles2->depthbuffer );
+	glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, backend_gles2->depthbuffer_id );
 	glRenderbufferStorage( GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, width, height );
 	_rb_gles2_check_error( "Unable to allocate storage for depthbuffer object" );
 	
-	glBindRenderbuffer( GL_RENDERBUFFER, backend_gles2->renderbuffer ); //restore color binding
+	glBindRenderbuffer( GL_RENDERBUFFER, backend_gles2->renderbuffer_id ); //restore color binding
 	if( glCheckFramebufferStatus( GL_FRAMEBUFFER ) != GL_FRAMEBUFFER_COMPLETE )
 	{
 		log_errorf( HASH_RENDER, ERROR_SYSTEM_CALL_FAIL, "Failed to make complete framebuffer object with dimensions %dx%d: %d", width, height, glCheckFramebufferStatus( GL_FRAMEBUFFER ) );
@@ -587,8 +587,8 @@ static bool _rb_gles2_set_drawable( render_backend_t* backend, render_drawable_t
 }
 
 
-static void                    _rb_gles2_dispatch( render_backend_t* backend, render_context_t** contexts, unsigned int num_contexts ) {}
-static void                    _rb_gles2_flip( render_backend_t* backend ) { ++backend->framecount; }
+static void _rb_gles2_dispatch( render_backend_t* backend, render_context_t** contexts, unsigned int num_contexts ) {}
+static void _rb_gles2_flip( render_backend_t* backend ) { ++backend->framecount; }
 
 
 static render_backend_vtable_t _render_backend_vtable_gles2 = {
@@ -606,7 +606,7 @@ static render_backend_vtable_t _render_backend_vtable_gles2 = {
 
 render_backend_t* render_backend_gles2_allocate()
 {
-	render_backend_t* backend = memory_allocate_zero_context( HASH_RENDER, sizeof( render_backend_t ), 0, MEMORY_PERSISTENT );
+	render_backend_t* backend = memory_allocate_zero( sizeof( render_backend_gles2_t ), 0, MEMORY_PERSISTENT );
 	backend->api = RENDERAPI_GLES2;
 	backend->vtable = _render_backend_vtable_gles2;
 	return backend;
