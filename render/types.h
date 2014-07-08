@@ -48,7 +48,7 @@ typedef enum _render_api
 
 typedef enum _render_drawable_type
 {
-	RENDERDRAWABLE_INVALID                        = 0,
+	RENDERDRAWABLE_INVALID                 = 0,
 	RENDERDRAWABLE_WINDOW,
 	RENDERDRAWABLE_OFFSCREEN,
 	RENDERDRAWABLE_FULLSCREEN
@@ -65,31 +65,31 @@ typedef enum _render_usage
 
 typedef enum _render_buffer_type
 {
-	RENDERBUFFER_COLOR                      = 0x01,
-	RENDERBUFFER_DEPTH                      = 0x02,
-	RENDERBUFFER_STENCIL                    = 0x04,
+	RENDERBUFFER_COLOR                     = 0x01,
+	RENDERBUFFER_DEPTH                     = 0x02,
+	RENDERBUFFER_STENCIL                   = 0x04,
     
-	RENDERBUFFER_VERTEX                     = 0x10,
-	RENDERBUFFER_INDEX                      = 0x20
+	RENDERBUFFER_VERTEX                    = 0x10,
+	RENDERBUFFER_INDEX                     = 0x20
 } render_buffer_type_t;
 
 typedef enum _render_buffer_uploadpolicy
 {
-	RENDERBUFFER_UPLOAD_ONUNLOCK            = 0,
+	RENDERBUFFER_UPLOAD_ONUNLOCK           = 0,
 	RENDERBUFFER_UPLOAD_ONRENDER,
 	RENDERBUFFER_UPLOAD_ONDISPATCH
 } render_buffer_uploadpolicy_t;
 
 typedef enum _render_buffer_flag
 {
-	RENDERBUFFER_DIRTY                      = 0x00000001,
-	RENDERBUFFER_LOST                       = 0x00000002,
+	RENDERBUFFER_DIRTY                     = 0x00000001,
+	RENDERBUFFER_LOST                      = 0x00000002,
     
-	RENDERBUFFER_LOCK_READ                  = 0x00010000,
-	RENDERBUFFER_LOCK_WRITE                 = 0x00020000,
-	RENDERBUFFER_LOCK_NOUPLOAD              = 0x00040000,
-	RENDERBUFFER_LOCK_FORCEUPLOAD           = 0x00080000,
-	RENDERBUFFER_LOCK_BITS                  = 0x000F0000
+	RENDERBUFFER_LOCK_READ                 = 0x00010000,
+	RENDERBUFFER_LOCK_WRITE                = 0x00020000,
+	RENDERBUFFER_LOCK_NOUPLOAD             = 0x00040000,
+	RENDERBUFFER_LOCK_FORCEUPLOAD          = 0x00080000,
+	RENDERBUFFER_LOCK_BITS                 = 0x000F0000
 } render_buffer_flag_t;
 
 typedef enum _render_vertex_format
@@ -141,15 +141,15 @@ typedef enum _render_vertex_attribute_id
 
 typedef enum _render_shader_type
 {
-	SHADER_COMPUTE                   = 1,
-	SHADER_GEOMETRY                  = 2,
-	SHADER_VERTEX                    = 4,
-	SHADER_PIXEL                     = 8
+	SHADER_COMPUTE                          = 1,
+	SHADER_GEOMETRY                         = 2,
+	SHADER_VERTEX                           = 4,
+	SHADER_PIXEL                            = 8
 } render_shader_type_t;
 
 typedef enum _render_parameter_type
 {
-	RENDERPARAMETER_FLOAT4           = 0,
+	RENDERPARAMETER_FLOAT4                  = 0,
 	RENDERPARAMETER_INT4,
 	RENDERPARAMETER_MATRIX,
 	RENDERPARAMETER_TEXTURE
@@ -166,7 +166,7 @@ typedef enum _render_texture_type
 
 typedef enum _render_blend_factor
 {
-	BLEND_ZERO                       = 0,
+	BLEND_ZERO                              = 0,
 	BLEND_ONE,
 	BLEND_SRCCOLOR,
 	BLEND_INVSRCCOLOR,
@@ -218,7 +218,12 @@ typedef enum _render_colorspace
 	COLORSPACE_NUMSPACES
 } colorspace_t;
 
-
+typedef enum _render_primitive
+{
+	RENDERPRIMITIVE_TRIANGLELIST            = 0,
+	
+	RENDERPRIMITIVE_NUMTYPES
+} render_primitive_t;
 // OPAQUE COMPLEX TYPES
 
 typedef struct _render_backend        render_backend_t;

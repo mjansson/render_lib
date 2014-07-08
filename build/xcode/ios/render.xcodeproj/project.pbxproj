@@ -16,6 +16,8 @@
 		455516241935D37C00CF089B /* drawable.c in Sources */ = {isa = PBXBuildFile; fileRef = 4555161C1935D37C00CF089B /* drawable.c */; };
 		455516251935D37C00CF089B /* render.c in Sources */ = {isa = PBXBuildFile; fileRef = 455516201935D37C00CF089B /* render.c */; };
 		455516291935D38D00CF089B /* backend.c in Sources */ = {isa = PBXBuildFile; fileRef = 455516271935D38D00CF089B /* backend.c */; };
+		45D5DB401969D8F4005E37BC /* command.c in Sources */ = {isa = PBXBuildFile; fileRef = 45D5DB3E1969D8F4005E37BC /* command.c */; };
+		45D5DB43196C42E8005E37BC /* sort.c in Sources */ = {isa = PBXBuildFile; fileRef = 45D5DB41196C42E8005E37BC /* sort.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -57,6 +59,10 @@
 		455516681935D9E600CF089B /* OpenGLES.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGLES.framework; path = System/Library/Frameworks/OpenGLES.framework; sourceTree = SDKROOT; };
 		4555166A1935DA0700CF089B /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
 		4555166C1935DA2700CF089B /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
+		45D5DB3E1969D8F4005E37BC /* command.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = command.c; path = ../../../render/command.c; sourceTree = "<group>"; };
+		45D5DB3F1969D8F4005E37BC /* command.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = command.h; path = ../../../render/command.h; sourceTree = "<group>"; };
+		45D5DB41196C42E8005E37BC /* sort.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sort.c; path = ../../../render/sort.c; sourceTree = "<group>"; };
+		45D5DB42196C42E8005E37BC /* sort.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = sort.h; path = ../../../render/sort.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -119,6 +125,8 @@
 				455516261935D37F00CF089B /* null */,
 				455516191935D37C00CF089B /* backend.c */,
 				4555161A1935D37C00CF089B /* backend.h */,
+				45D5DB3E1969D8F4005E37BC /* command.c */,
+				45D5DB3F1969D8F4005E37BC /* command.h */,
 				451871BF1957FAB1000E42C9 /* context.c */,
 				451871C01957FAB1000E42C9 /* context.h */,
 				4555161B1935D37C00CF089B /* build.h */,
@@ -128,6 +136,8 @@
 				4555161F1935D37C00CF089B /* internal.h */,
 				455516201935D37C00CF089B /* render.c */,
 				455516211935D37C00CF089B /* render.h */,
+				45D5DB41196C42E8005E37BC /* sort.c */,
+				45D5DB42196C42E8005E37BC /* sort.h */,
 				451871C21958A40C000E42C9 /* target.c */,
 				451871C31958A40C000E42C9 /* target.h */,
 				455516221935D37C00CF089B /* types.h */,
@@ -195,10 +205,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				45D5DB401969D8F4005E37BC /* command.c in Sources */,
 				451871C41958A40C000E42C9 /* target.c in Sources */,
 				451389B91945C29F00BA2092 /* backend.m in Sources */,
 				455516231935D37C00CF089B /* backend.c in Sources */,
 				455516251935D37C00CF089B /* render.c in Sources */,
+				45D5DB43196C42E8005E37BC /* sort.c in Sources */,
 				455516291935D38D00CF089B /* backend.c in Sources */,
 				451871C11957FAB1000E42C9 /* context.c in Sources */,
 				451389B71945B1D300BA2092 /* backend.c in Sources */,

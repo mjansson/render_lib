@@ -32,6 +32,7 @@ RENDER_EXTERN void            _rb_gles2_ios_destroy_egl_context( const void* con
 RENDER_EXTERN int             _rb_gles2_ios_screen_width( void );
 RENDER_EXTERN int             _rb_gles2_ios_screen_height( void );
 RENDER_EXTERN bool            _rb_gles2_ios_render_buffer_storage_from_drawable( const void* context, const void* drawable, unsigned int framebuffer, unsigned int colorbuffer );
+RENDER_EXTERN void            _rb_gles2_ios_present_render_buffer( const void* context );
 
 #endif
 
@@ -59,6 +60,8 @@ typedef struct _render_backend_gles2
     
 	unsigned int               framebuffer_width;
 	unsigned int               framebuffer_height;
+	
+	bool                       use_clear_scissor;
     
 } render_backend_gles2_t;
 
@@ -587,8 +590,220 @@ static bool _rb_gles2_set_drawable( render_backend_t* backend, render_drawable_t
 }
 
 
-static void _rb_gles2_dispatch( render_backend_t* backend, render_context_t** contexts, unsigned int num_contexts ) {}
-static void _rb_gles2_flip( render_backend_t* backend ) { ++backend->framecount; }
+static void _rb_gles2_dispatch( render_backend_t* backend, render_context_t** contexts, unsigned int num_contexts )
+{
+	render_backend_gles2_t* backend_gles2 = (render_backend_gles2_t*)backend;
+	
+	for( int context_index = 0, context_size = num_contexts; context_index < context_size; ++context_index )
+	{
+		render_context_t* context = contexts[context_index];
+		render_command_t* command = context->commands;
+		const radixsort_index_t* order = context->order;
+		
+		for( int cmd_index = 0, cmd_size = atomic_load32( &context->reserved ); cmd_index < cmd_size; ++cmd_index, ++order ) { command = context->commands + *order; switch( command->type )
+		{
+			case RENDERCOMMAND_CLEAR:
+			{
+				unsigned int buffer_mask = command->data.clear.buffer_mask;
+				unsigned int bits = 0;
+					
+				if( buffer_mask & RENDERBUFFER_COLOR )
+				{
+					unsigned int color_mask = command->data.clear.color_mask;
+					uint32_t color = command->data.clear.color;
+					glColorMask( ( color_mask & 0x01 ) ? GL_TRUE : GL_FALSE, ( color_mask & 0x02 ) ? GL_TRUE : GL_FALSE, ( color_mask & 0x04 ) ? GL_TRUE : GL_FALSE, ( color_mask & 0x08 ) ? GL_TRUE : GL_FALSE );
+					bits |= GL_COLOR_BUFFER_BIT;
+					//color_linear_t color = uint32_to_color( command->data.clear.color );
+					//glClearColor( vector_x( color ), vector_y( color ), vector_z( color ), vector_w( color ) );
+					glClearColor( (float)( color & 0xFF ) / 255.0f, (float)( ( color >> 8 ) & 0xFF ) / 255.0f, (float)( ( color >> 16 ) & 0xFF ) / 255.0f, (float)( ( color >> 24 ) & 0xFF ) / 255.0f );
+				}
+					
+				if( buffer_mask & RENDERBUFFER_DEPTH )
+				{
+					glDepthMask( GL_TRUE );
+					bits |= GL_DEPTH_BUFFER_BIT;
+					glClearDepthf( command->data.clear.depth );
+				}
+					
+				if( buffer_mask & RENDERBUFFER_STENCIL )
+				{
+					//glClearStencil( command->data.clear.stencil );
+					bits |= GL_STENCIL_BUFFER_BIT;
+				}
+				
+				if( backend_gles2->use_clear_scissor )
+					glEnable( GL_SCISSOR_TEST );
+				
+				glClear( bits );
+
+				if( backend_gles2->use_clear_scissor )
+					glDisable( GL_SCISSOR_TEST );
+				glColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
+				
+				break;
+			}
+					
+			case RENDERCOMMAND_VIEWPORT:
+			{
+				unsigned int target_width = render_target_width( context->target );
+				unsigned int target_height = render_target_height( context->target );
+				
+				GLint x = command->data.viewport.x;
+				GLint y = command->data.viewport.y;
+				GLsizei w = command->data.viewport.width;
+				GLsizei h = command->data.viewport.height;
+
+				glViewport( x, y, w, h );
+				glScissor( x, y, w, h );
+				
+				backend_gles2->use_clear_scissor = ( x || y || ( w != target_width ) || ( h != target_height ) );
+				break;
+			}
+					
+			/*	case RENDERCOMMAND_RENDER:
+				{
+					render_vertexbuffer_t* vertexbuffer = pool_lookup( _global_pool_renderbuffer, command->data.render.vertexbuffer );
+					render_indexbuffer_t* indexbuffer  = pool_lookup( _global_pool_renderbuffer, command->data.render.indexbuffer );
+					render_vertexshader_t* vertexshader = pool_lookup( _global_pool_shader, command->data.render.vertexshader );
+					render_pixelshader_t* pixelshader  = pool_lookup( _global_pool_shader, command->data.render.pixelshader );
+					render_parameter_block_t* block = pool_lookup( _global_pool_parameterblock, command->data.render.parameterblock );
+					
+					if( !vertexbuffer || !indexbuffer || !vertexshader || !pixelshader ) //Outdated references
+					{
+						NEO_ASSERT_FAIL( "Render command using invalid resources" );
+						break;
+					}
+					
+					if( vertexbuffer->flags & RENDERBUFFER_DIRTY )
+						_rb_gles2_upload_buffer( backend, (render_buffer_t*)vertexbuffer );
+					if( indexbuffer->flags & RENDERBUFFER_DIRTY )
+						_rb_gles2_upload_buffer( backend, (render_buffer_t*)indexbuffer );
+					
+					//Bind vertex attributes
+					{
+						glBindBuffer( GL_ARRAY_BUFFER, (unsigned int)vertexbuffer->backend_data[0] );
+						
+						const render_vertex_decl_t* decl = &vertexbuffer->decl;
+						for( unsigned int attrib = 0; attrib < VERTEXATTRIBUTE_NUMATTRIBUTES; ++attrib )
+						{
+							const uint8_t format = decl->attribute[attrib].format;
+							if( format < VERTEXFORMAT_NUMTYPES )
+							{
+								glVertexAttribPointer( attrib, _rb_gles2_vertex_format_size[format], _rb_gles2_vertex_format_type[format], _rb_gles2_vertex_format_norm[format], vertexbuffer->size, (const void*)(uintptr_t)decl->attribute[attrib].offset );
+								glEnableVertexAttribArray( attrib );
+							}
+							else
+							{
+								glDisableVertexAttribArray( attrib );
+							}
+						}
+					}
+					
+					//Index buffer
+					glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, (unsigned int)indexbuffer->backend_data[0] );
+					
+					//Bind programs/shaders
+					render_program_gles2_t* program = _rb_gles2_program_map( (unsigned int)vertexshader->backend_data[0], (unsigned int)pixelshader->backend_data[0] );
+					glUseProgram( program->program );
+					
+					// Bind the parameter blocks
+					render_parameter_info_t* param_info = block->info;
+					hash_t* param_name = pointer_offset( block, sizeof( render_parameter_block_t ) + ( sizeof( render_parameter_info_t ) * block->num ) );
+					for( unsigned int ip = 0; ip < block->num; ++ip, ++param_info, ++param_name )
+					{
+						if( param_info->type == RENDERPARAMETER_TEXTURE )
+						{
+							//TODO: Dynamic use of texture units, reusing unit that already have correct texture bound, and least-recently-used evicting old bindings to free a new unit
+							glActiveTexture( GL_TEXTURE0 + param_info->unit );
+							
+							object_t object = *(object_t*)pointer_offset( block, param_info->offset );
+							render_texture_gles2_t* texture = object ? pool_lookup( _global_pool_texture, object ) : 0;
+							NEO_ASSERT_MSGFORMAT( !object || texture, "Parameter block using old/invalid texture 0x%llx", object );
+							
+							glBindTexture( GL_TEXTURE_2D, texture ? texture->object : 0 );
+							
+							for( unsigned int iu = 0; iu < program->num_uniforms; ++iu )
+							{
+								if( program->uniforms[iu].name == *param_name )
+								{
+									glUniform1i( program->uniforms[iu].location, param_info->unit );
+									break;
+								}
+							}
+						}
+						else
+						{
+							for( unsigned int iu = 0; iu < program->num_uniforms; ++iu )
+							{
+								if( program->uniforms[iu].name == *param_name )
+								{
+									if( param_info->type == RENDERPARAMETER_FLOAT4 )
+										glUniform4fv( program->uniforms[iu].location, param_info->dim, (const GLfloat*)pointer_offset( block, param_info->offset ) );
+									else if( param_info->type == RENDERPARAMETER_INT4 )
+										glUniform4iv( program->uniforms[iu].location, param_info->dim, (const GLint*)pointer_offset( block, param_info->offset ) );
+									else if( param_info->type == RENDERPARAMETER_MATRIX )
+										glUniformMatrix4fv( program->uniforms[iu].location, param_info->dim, GL_FALSE, (const GLfloat*)pointer_offset( block, param_info->offset ) );
+									break;
+								}
+							}
+						}
+					}
+					
+					//TODO: Proper states
+					//ID3D10Device_RSSetState( device, backend_dx10->rasterizer_state[0].state );
+					 
+					//FLOAT blend_factors[] = { 0.7f, 0.7f, 0.7f, 0.7f, 0.7f, 0.7f, 0.7f, 0.7f };
+					//ID3D10Device_OMSetBlendState( device, backend_dx10->blend_state[ ( command->data.render.blend_state >> 48ULL ) & 0xFFFFULL ].state, blend_factors, 0xFFFFFFFF );
+					//ID3D10Device_OMSetDepthStencilState( device, backend_dx10->depthstencil_state[0].state, 0xFFFFFFFF );
+					
+					if( command->data.render.blend_state )
+					{
+						unsigned int source_color = (unsigned int)( command->data.render.blend_state & 0xFULL );
+						unsigned int dest_color = (unsigned int)( ( command->data.render.blend_state >> 4ULL ) & 0xFULL );
+						
+						glBlendFunc( _rb_gles2_blend_func[source_color], _rb_gles2_blend_func[dest_color] );
+					}
+					else
+					{
+						glBlendFunc( GL_ONE, GL_ZERO );
+					}
+					
+					unsigned int primitive = command->data.render.primitive;
+					unsigned int num = command->data.render.num;
+					unsigned int pnum = _rb_gles2_primitive_mult[primitive] * num + _rb_gles2_primitive_add[primitive];
+					
+					glDrawElements( _rb_gles2_primitive_type[primitive], pnum, ( indexbuffer->size == 2 ) ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT, 0 );
+					
+#if !NEO_BUILD_RTM
+					glesCheckError( "Failed rendering primitives" );
+#endif
+					
+					break;
+				}*/
+		} }
+	}
+}
+
+
+static void _rb_gles2_flip( render_backend_t* backend )
+{
+	render_backend_gles2_t* backend_gles2 = (render_backend_gles2_t*)backend;
+	
+#if FOUNDATION_PLATFORM_IOS
+	
+	_rb_gles2_ios_present_render_buffer( backend_gles2->context );
+	
+#elif FOUNDATION_PLATFORM_ANDROID || FOUNDATION_PLATFORM_LINUX_RASPBERRYPI
+	
+	if( backend_gles2->surface )
+		eglSwapBuffers( backend_gles2->display, backend_gles2->surface );
+	
+#else
+#  error Not Implemented
+#endif
+
+	++backend->framecount;
+}
 
 
 static render_backend_vtable_t _render_backend_vtable_gles2 = {

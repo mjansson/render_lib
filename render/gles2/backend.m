@@ -97,4 +97,15 @@ bool _rb_gles2_ios_render_buffer_storage_from_drawable( const void* context, con
 }
 
 
+void _rb_gles2_ios_present_render_buffer( const void* context )
+{
+	EAGLContext* eagl_context = (__bridge EAGLContext*)context;
+
+	[EAGLContext setCurrentContext:eagl_context];
+	
+	if( ![eagl_context presentRenderbuffer:GL_RENDERBUFFER] )
+		log_warnf( HASH_RENDER, WARNING_SUSPICIOUS, "Failed presentRenderbuffer" );
+}
+
+
 #endif

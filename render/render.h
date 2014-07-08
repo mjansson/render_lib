@@ -28,6 +28,8 @@
 #include <render/context.h>
 #include <render/drawable.h>
 #include <render/target.h>
+#include <render/command.h>
+#include <render/sort.h>
 
 
 /*! Initialize render library

@@ -115,19 +115,20 @@ struct _render_context
     
 	object_t                    target;
     
-	int64_t                     key;
+	atomic64_t                  key;
     
 	render_command_t*           commands;
 	uint64_t*                   keys;
 	radixsort_t*                sort;
     
-	radixsort_index_t*          order;
+	const radixsort_index_t*    order;
 };
 
 typedef struct _render_command_clear
 {
-	unsigned int                mask;
+	unsigned int                buffer_mask;
 	uint32_t                    color;
+	unsigned int                color_mask;
 	uint32_t                    depth;
 	uint32_t                    stencil;
 } render_command_clear_t;
@@ -154,9 +155,9 @@ typedef struct _render_command_render
 
 struct _render_command
 {
-	unsigned int                type:8;
-	unsigned int                reserved:8;
-	unsigned int                count:16;
+	unsigned int                  type:8;
+	unsigned int                  reserved:8;
+	unsigned int                  count:16;
 	
 	union
 	{
@@ -166,10 +167,18 @@ struct _render_command
 	} data;
 };
 
+typedef enum _render_command_id
+{
+	RENDERCOMMAND_INVALID                   = 0,
+	RENDERCOMMAND_CLEAR,
+	RENDERCOMMAND_VIEWPORT,
+	RENDERCOMMAND_RENDER_TRIANGLELIST
+} render_command_id;
+
 
 // GLOBAL DATA
 
-RENDER_EXTERN bool            render_api_disabled[];
+RENDER_EXTERN bool                render_api_disabled[];
 
 
 // INTERNAL FUNCTIONS
