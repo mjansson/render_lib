@@ -806,6 +806,44 @@ static void _rb_gles2_flip( render_backend_t* backend )
 }
 
 
+static void* _rb_gles2_allocate_buffer( render_backend_t* backend, render_buffer_t* buffer )
+{
+	return memory_allocate_context( HASH_RENDER, buffer->size * buffer->allocated, 0, MEMORY_PERSISTENT );
+}
+
+
+static void _rb_gles2_deallocate_buffer( render_backend_t* backend, render_buffer_t* buffer, bool sys, bool aux )
+{
+	if( sys )
+		memory_deallocate( buffer->store );
+	
+	if( aux && buffer->backend_data[0] )
+	{
+		GLuint buffer_object = (GLuint)buffer->backend_data[0];
+		glDeleteBuffers( 1, &buffer_object );
+		buffer->backend_data[0] = 0;
+	}
+}
+
+
+static void _rb_gles2_upload_buffer( render_backend_t* backend, render_buffer_t* buffer )
+{
+	GLuint buffer_object = (GLuint)buffer->backend_data[0];
+	if( !buffer_object )
+	{
+		glGenBuffers( 1, &buffer_object );
+		_rb_gles2_check_error( "Unable to create buffer object" );
+		buffer->backend_data[0] = buffer_object;
+	}
+	
+	glBindBuffer( GL_ARRAY_BUFFER, buffer_object );
+	glBufferData( GL_ARRAY_BUFFER, buffer->size * buffer->allocated, buffer->store, ( buffer->usage == RENDERUSAGE_DYNAMIC ) ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW );
+	_rb_gles2_check_error( "Unable to upload buffer object data" );
+	
+	buffer->flags &= ~RENDERBUFFER_DIRTY;
+}
+
+
 static render_backend_vtable_t _render_backend_vtable_gles2 = {
 	.construct = _rb_gles2_construct,
 	.destruct  = _rb_gles2_destruct,
@@ -815,7 +853,10 @@ static render_backend_vtable_t _render_backend_vtable_gles2 = {
 	.disable_thread = _rb_gles2_disable_thread,
 	.set_drawable = _rb_gles2_set_drawable,
 	.dispatch = _rb_gles2_dispatch,
-	.flip = _rb_gles2_flip
+	.flip = _rb_gles2_flip,
+	.allocate_buffer = _rb_gles2_allocate_buffer,
+	.deallocate_buffer = _rb_gles2_deallocate_buffer,
+	.upload_buffer = _rb_gles2_upload_buffer
 };
 
 

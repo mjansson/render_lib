@@ -11,6 +11,7 @@
 		451389B91945C29F00BA2092 /* backend.m in Sources */ = {isa = PBXBuildFile; fileRef = 451389B81945C29F00BA2092 /* backend.m */; };
 		451871C11957FAB1000E42C9 /* context.c in Sources */ = {isa = PBXBuildFile; fileRef = 451871BF1957FAB1000E42C9 /* context.c */; };
 		451871C41958A40C000E42C9 /* target.c in Sources */ = {isa = PBXBuildFile; fileRef = 451871C21958A40C000E42C9 /* target.c */; };
+		4523936119A0FE9E006974DA /* vertexbuffer.c in Sources */ = {isa = PBXBuildFile; fileRef = 4523935F19A0FE9E006974DA /* vertexbuffer.c */; };
 		455515F31935D32700CF089B /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 455515F21935D32700CF089B /* Foundation.framework */; };
 		455516231935D37C00CF089B /* backend.c in Sources */ = {isa = PBXBuildFile; fileRef = 455516191935D37C00CF089B /* backend.c */; };
 		455516241935D37C00CF089B /* drawable.c in Sources */ = {isa = PBXBuildFile; fileRef = 4555161C1935D37C00CF089B /* drawable.c */; };
@@ -18,6 +19,7 @@
 		455516291935D38D00CF089B /* backend.c in Sources */ = {isa = PBXBuildFile; fileRef = 455516271935D38D00CF089B /* backend.c */; };
 		45D5DB401969D8F4005E37BC /* command.c in Sources */ = {isa = PBXBuildFile; fileRef = 45D5DB3E1969D8F4005E37BC /* command.c */; };
 		45D5DB43196C42E8005E37BC /* sort.c in Sources */ = {isa = PBXBuildFile; fileRef = 45D5DB41196C42E8005E37BC /* sort.c */; };
+		45D5DB46196C7706005E37BC /* indexbuffer.c in Sources */ = {isa = PBXBuildFile; fileRef = 45D5DB44196C7706005E37BC /* indexbuffer.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -40,6 +42,8 @@
 		451871C01957FAB1000E42C9 /* context.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = context.h; path = ../../../render/context.h; sourceTree = "<group>"; };
 		451871C21958A40C000E42C9 /* target.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = target.c; path = ../../../render/target.c; sourceTree = "<group>"; };
 		451871C31958A40C000E42C9 /* target.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = target.h; path = ../../../render/target.h; sourceTree = "<group>"; };
+		4523935F19A0FE9E006974DA /* vertexbuffer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = vertexbuffer.c; path = ../../../render/vertexbuffer.c; sourceTree = "<group>"; };
+		4523936019A0FE9E006974DA /* vertexbuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = vertexbuffer.h; path = ../../../render/vertexbuffer.h; sourceTree = "<group>"; };
 		455515EF1935D32700CF089B /* librender.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = librender.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		455515F21935D32700CF089B /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		455516031935D32700CF089B /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };
@@ -63,6 +67,8 @@
 		45D5DB3F1969D8F4005E37BC /* command.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = command.h; path = ../../../render/command.h; sourceTree = "<group>"; };
 		45D5DB41196C42E8005E37BC /* sort.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sort.c; path = ../../../render/sort.c; sourceTree = "<group>"; };
 		45D5DB42196C42E8005E37BC /* sort.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = sort.h; path = ../../../render/sort.h; sourceTree = "<group>"; };
+		45D5DB44196C7706005E37BC /* indexbuffer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = indexbuffer.c; path = ../../../render/indexbuffer.c; sourceTree = "<group>"; };
+		45D5DB45196C7706005E37BC /* indexbuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = indexbuffer.h; path = ../../../render/indexbuffer.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -133,6 +139,8 @@
 				4555161C1935D37C00CF089B /* drawable.c */,
 				4555161D1935D37C00CF089B /* drawable.h */,
 				4555161E1935D37C00CF089B /* hashstrings.h */,
+				45D5DB44196C7706005E37BC /* indexbuffer.c */,
+				45D5DB45196C7706005E37BC /* indexbuffer.h */,
 				4555161F1935D37C00CF089B /* internal.h */,
 				455516201935D37C00CF089B /* render.c */,
 				455516211935D37C00CF089B /* render.h */,
@@ -141,6 +149,8 @@
 				451871C21958A40C000E42C9 /* target.c */,
 				451871C31958A40C000E42C9 /* target.h */,
 				455516221935D37C00CF089B /* types.h */,
+				4523935F19A0FE9E006974DA /* vertexbuffer.c */,
+				4523936019A0FE9E006974DA /* vertexbuffer.h */,
 			);
 			name = render;
 			sourceTree = "<group>";
@@ -208,7 +218,9 @@
 				45D5DB401969D8F4005E37BC /* command.c in Sources */,
 				451871C41958A40C000E42C9 /* target.c in Sources */,
 				451389B91945C29F00BA2092 /* backend.m in Sources */,
+				4523936119A0FE9E006974DA /* vertexbuffer.c in Sources */,
 				455516231935D37C00CF089B /* backend.c in Sources */,
+				45D5DB46196C7706005E37BC /* indexbuffer.c in Sources */,
 				455516251935D37C00CF089B /* render.c in Sources */,
 				45D5DB43196C42E8005E37BC /* sort.c in Sources */,
 				455516291935D38D00CF089B /* backend.c in Sources */,

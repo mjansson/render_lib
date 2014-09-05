@@ -18,7 +18,7 @@
 #pragma once
 
 /*! \file sort.h
-    Render context */
+    Sorting of render commands */
 
 #include <foundation/platform.h>
 

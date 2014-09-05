@@ -224,6 +224,7 @@ typedef enum _render_primitive
 	
 	RENDERPRIMITIVE_NUMTYPES
 } render_primitive_t;
+
 // OPAQUE COMPLEX TYPES
 
 typedef struct _render_backend        render_backend_t;
@@ -231,6 +232,8 @@ typedef struct _render_target         render_target_t;
 typedef struct _render_context        render_context_t;
 typedef struct _render_drawable       render_drawable_t;
 typedef struct _render_command        render_command_t;
+typedef struct _render_buffer         render_buffer_t;
+typedef struct _render_vertex_decl    render_vertex_decl_t;
 
 // COMPLEX TYPES
 
@@ -243,6 +246,12 @@ typedef struct _render_resolution
 	colorspace_t                      colorspace;
 	unsigned int                      refresh;
 } render_resolution_t;
+
+typedef struct _render_vertex_decl_element
+{
+	render_vertex_format_t      format;
+	render_vertex_attribute_id  attribute;
+} render_vertex_decl_element_t;
 
 // EXTERNAL OPAQUE TYPES
 typedef struct _window                window_t;

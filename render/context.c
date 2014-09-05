@@ -88,3 +88,14 @@ unsigned int render_context_reserved( render_context_t* context )
 	return atomic_load32( &context->reserved );
 }
 
+
+uint8_t render_context_group( render_context_t* context )
+{
+	return context->group;
+}
+
+
+void render_context_set_group( render_context_t* context, uint8_t group )
+{
+	context->group = group;
+}

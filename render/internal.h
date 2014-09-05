@@ -37,6 +37,9 @@ typedef void                                   (* render_backend_disable_thread_
 typedef bool                                   (* render_backend_set_drawable_fn)( render_backend_t*, render_drawable_t* );
 typedef void                                   (* render_backend_dispatch_fn)( render_backend_t*, render_context_t**, unsigned int );
 typedef void                                   (* render_backend_flip_fn)( render_backend_t* );
+typedef void*                                  (* render_backend_allocate_buffer_fn)( render_backend_t*, render_buffer_t* );
+typedef void                                   (* render_backend_deallocate_buffer_fn)( render_backend_t*, render_buffer_t*, bool, bool );
+typedef void                                   (* render_backend_upload_buffer_fn)( render_backend_t*, render_buffer_t* );
 
 typedef struct _render_backend_vtable
 {
@@ -49,16 +52,19 @@ typedef struct _render_backend_vtable
 	render_backend_set_drawable_fn                set_drawable;
 	render_backend_dispatch_fn                    dispatch;
 	render_backend_flip_fn                        flip;
+	render_backend_allocate_buffer_fn             allocate_buffer;
+	render_backend_deallocate_buffer_fn           deallocate_buffer;
+	render_backend_upload_buffer_fn               upload_buffer;
 } render_backend_vtable_t;
 
 #define RENDER_DECLARE_BACKEND							\
-render_api_t                      api;					\
-render_backend_vtable_t           vtable;				\
-render_drawable_t*                drawable;				\
-pixelformat_t                     pixelformat;          \
-colorspace_t                      colorspace;           \
-object_t                          framebuffer;          \
-uint64_t                          framecount;
+	render_api_t                      api;				\
+	render_backend_vtable_t           vtable;			\
+	render_drawable_t*                drawable;			\
+	pixelformat_t                     pixelformat;      \
+	colorspace_t                      colorspace;       \
+	object_t                          framebuffer;      \
+	uint64_t                          framecount;
 
 struct _render_backend
 {
@@ -98,10 +104,13 @@ struct _render_drawable
 	unsigned int                refresh;
 };
 
+#define RENDER_DECLARE_OBJECT             \
+	FOUNDATION_DECLARE_OBJECT;            \
+	render_backend_t*           backend
+
 struct _render_target
 {
-	FOUNDATION_DECLARE_OBJECT;
-	render_backend_t*           backend;
+	RENDER_DECLARE_OBJECT;
 	unsigned int                width;
 	unsigned int                height;
 	pixelformat_t               pixelformat;
@@ -120,6 +129,7 @@ struct _render_context
 	render_command_t*           commands;
 	uint64_t*                   keys;
 	radixsort_t*                sort;
+	uint8_t                     group;
     
 	const radixsort_index_t*    order;
 };
@@ -175,10 +185,55 @@ typedef enum _render_command_id
 	RENDERCOMMAND_RENDER_TRIANGLELIST
 } render_command_id;
 
+typedef struct _render_vertex_attribute
+{
+	uint8_t                           format;
+	uint8_t                           binding;
+	uint16_t                          offset;
+} render_vertex_attribute_t;
+
+typedef struct _render_vertex_decl
+{
+	render_vertex_attribute_t         attribute[VERTEXATTRIBUTE_NUMATTRIBUTES];
+} render_vertex_decl_t;
+
+#define RENDER_DECLARE_BUFFER \
+	RENDER_DECLARE_OBJECT;	                         \
+	uint8_t                       usage;             \
+	uint8_t                       buffertype;		 \
+	uint8_t                       policy;			 \
+	uint8_t                       __unused_buffer_0; \
+	unsigned int                  bufferflags;       \
+	atomic32_t                    locks;             \
+	unsigned int                  allocated;		 \
+	unsigned int                  used;              \
+	unsigned int                  size;              \
+	void*                         store;             \
+	void*                         access;            \
+	object_t                      vram;              \
+	uintptr_t                     backend_data[4]
+
+typedef struct _render_buffer
+{
+	RENDER_DECLARE_BUFFER;
+} render_buffer_t;
+
+typedef struct _render_vertexbuffer
+{
+	RENDER_DECLARE_BUFFER;
+	render_vertex_decl_t          decl;
+} render_vertexbuffer_t;
+
+typedef struct _render_indexbuffer
+{
+	RENDER_DECLARE_BUFFER;
+} render_indexbuffer_t;
 
 // GLOBAL DATA
 
-RENDER_EXTERN bool                render_api_disabled[];
+RENDER_EXTERN bool                _render_api_disabled[];
+RENDER_EXTERN objectmap_t*        _render_map_target;
+RENDER_EXTERN objectmap_t*        _render_map_buffer;
 
 
 // INTERNAL FUNCTIONS

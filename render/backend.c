@@ -24,7 +24,7 @@
 #include <render/gles2/backend.h>
 
 
-bool render_api_disabled[RENDERAPI_NUM] = {0};
+bool _render_api_disabled[RENDERAPI_NUM] = {0};
 
 
 static render_api_t render_api_fallback( render_api_t api )
@@ -71,7 +71,7 @@ render_backend_t* render_backend_allocate( render_api_t api )
 	
 	memory_context_push( HASH_RENDER );
 	
-	while( !backend ) { while( render_api_disabled[api] ) api = render_api_fallback( api ); switch( api )
+	while( !backend ) { while( _render_api_disabled[api] ) api = render_api_fallback( api ); switch( api )
 	{
 		case RENDERAPI_GLES2:
 		{

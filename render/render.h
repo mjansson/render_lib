@@ -30,6 +30,8 @@
 #include <render/target.h>
 #include <render/command.h>
 #include <render/sort.h>
+#include <render/indexbuffer.h>
+#include <render/vertexbuffer.h>
 
 
 /*! Initialize render library

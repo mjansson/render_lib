@@ -26,7 +26,7 @@
 
 
 RENDER_API object_t              render_target_create( render_backend_t* backend );
-RENDER_API void                  render_target_ref( object_t target );
+RENDER_API object_t              render_target_ref( object_t target );
 RENDER_API void                  render_target_destroy( object_t target );
 
 RENDER_API unsigned int          render_target_width( object_t target );

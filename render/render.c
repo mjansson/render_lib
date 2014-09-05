@@ -32,8 +32,8 @@ int render_initialize( void )
     if( window_initialize() < 0 )
         return -1;
     
-    render_api_disabled[RENDERAPI_UNKNOWN] = true;
-    render_api_disabled[RENDERAPI_DEFAULT] = true;
+    _render_api_disabled[RENDERAPI_UNKNOWN] = true;
+    _render_api_disabled[RENDERAPI_DEFAULT] = true;
 	
 	if( render_target_initialize() < 0 )
 		return -1;
@@ -66,7 +66,7 @@ void render_api_enable( unsigned int num, render_api_t* api )
 	for( unsigned int i = 0; i < num; ++i )
 	{
 		if( ( api[i] > RENDERAPI_DEFAULT ) && ( api[i] < RENDERAPI_NUM ) )
-			render_api_disabled[api[i]] = false;
+			_render_api_disabled[api[i]] = false;
 	}
 }
 
@@ -75,6 +75,6 @@ void render_api_disable( unsigned int num, render_api_t* api )
 	for( unsigned int i = 0; i < num; ++i )
 	{
 		if( ( api[i] > RENDERAPI_DEFAULT ) && ( api[i] < RENDERAPI_NUM ) )
-			render_api_disabled[api[i]] = true;
+			_render_api_disabled[api[i]] = true;
 	}
 }
