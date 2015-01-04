@@ -36,7 +36,7 @@ object_t render_indexbuffer_create( render_backend_t* backend, render_usage_t us
 
 	memory_context_push( HASH_RENDER );
 	
-	render_indexbuffer_t* buffer = memory_allocate_zero( sizeof( render_indexbuffer_t ), 0, MEMORY_PERSISTENT );
+	render_indexbuffer_t* buffer = memory_allocate( HASH_RENDER, sizeof( render_indexbuffer_t ), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED );
 	buffer->id         = id;
 	buffer->backend    = backend;
 	buffer->usage      = usage;
@@ -61,6 +61,12 @@ object_t render_indexbuffer_create( render_backend_t* backend, render_usage_t us
 	memory_context_pop();
 	
 	return buffer->id;
+}
+
+
+object_t render_indexbuffer_load( const uuid_t uuid )
+{
+	return 0;
 }
 
 
@@ -231,3 +237,17 @@ void render_indexbuffer_restore( object_t id )
 	}
 }
 
+
+uuid_t render_indexbuffer_uuid( object_t id )
+{
+	render_indexbuffer_t* buffer = GET_BUFFER( id );
+	return buffer ? buffer->uuid : uuid_null();
+}
+
+
+void render_indexbuffer_set_uuid( object_t id, const uuid_t uuid )
+{
+	render_indexbuffer_t* buffer = GET_BUFFER( id );
+	if( buffer )
+		buffer->uuid = uuid;
+}

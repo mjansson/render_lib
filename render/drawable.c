@@ -30,7 +30,7 @@
 
 render_drawable_t* render_drawable_allocate()
 {
-	return memory_allocate_zero_context( HASH_RENDER, sizeof( render_drawable_t ), 0, MEMORY_PERSISTENT );
+	return memory_allocate( HASH_RENDER, sizeof( render_drawable_t ), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED );
 }
 
 

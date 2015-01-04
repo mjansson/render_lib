@@ -1,0 +1,742 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"stream_",
+				"stream_ringbuffer_t"
+			],
+			[
+				"__s",
+				"__sync_bool_compare_and_swap"
+			],
+			[
+				"h_p",
+				"h_playback_activation"
+			],
+			[
+				"magne",
+				"magneto_log_serialize_path"
+			],
+			[
+				"t_floa",
+				"t_float_vector_int"
+			],
+			[
+				"magneto_log_unse",
+				"magneto_log_unserialize_blob"
+			],
+			[
+				"mag",
+				"magneto_log_unserialize"
+			],
+			[
+				"log_pen",
+				"log_pending_normal"
+			],
+			[
+				"LOG_",
+				"LOG_BLOB_CRITICAL_THRESHOLD"
+			],
+			[
+				"log_pending_",
+				"log_pending_critical"
+			],
+			[
+				"show",
+				"showtime_get_ts"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"file": "/Users/mjansson/projects/render_lib/render/types.h",
+			"settings":
+			{
+				"buffer_size": 6361,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/Users/mjansson/projects/render_lib/configure.py",
+			"settings":
+			{
+				"buffer_size": 2382,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/Users/mjansson/projects/window_lib/window/window_osx.m",
+			"settings":
+			{
+				"buffer_size": 6796,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/Users/mjansson/projects/window_lib/window/internal.h",
+			"settings":
+			{
+				"buffer_size": 2214,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/Users/mjansson/projects/window_lib/window/types.h",
+			"settings":
+			{
+				"buffer_size": 1558,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/Users/mjansson/projects/render_lib/render/internal.h",
+			"settings":
+			{
+				"buffer_size": 9631,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/Users/mjansson/projects/resource_lib/resource/types.h",
+			"settings":
+			{
+				"buffer_size": 1261,
+				"line_ending": "Unix"
+			}
+		}
+	],
+	"build_system": "Ninja",
+	"command_palette":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"console":
+	{
+		"height": 0.0,
+		"history":
+		[
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"expanded_folders":
+	[
+		"/Users/mjansson/projects/render_lib/render",
+		"/Users/mjansson/projects/render_lib/render/null",
+		"/Users/mjansson/projects/render_lib/doc"
+	],
+	"file_history":
+	[
+		"/Users/mjansson/projects/render_lib/build/render.sublime-project",
+		"/Users/mjansson/projects/resource_lib/build/resource.sublime-project",
+		"/Users/mjansson/magneto/WebKit/Source/WebCore/platform/network/HTTPHeaderNames.in",
+		"/Users/mjansson/magneto/WebKit/Source/WebCore/DerivedSources.make",
+		"/Users/mjansson/magneto/WebKit/Source/WebCore/HTTPHeaderNames.h",
+		"/Users/mjansson/magneto/WebKit/Source/JavaScriptCore/Bytecodes.h",
+		"/Users/mjansson/projects/foundation_lib/foundation/stacktrace.c",
+		"/Users/mjansson/projects/foundation_lib/doc/mainpage.dox",
+		"/Users/mjansson/projects/foundation_lib/build/vs13/foundation.vcxproj",
+		"/Users/mjansson/projects/foundation_lib/build/vs13/test/all.vcxproj",
+		"/Users/mjansson/projects/foundation_lib/build/vs13/test/app.vcxproj",
+		"/Users/mjansson/projects/foundation_lib/build/vs13/test/array.vcxproj",
+		"/Users/mjansson/projects/foundation_lib/build/vs13/test/atomic.vcxproj",
+		"/Users/mjansson/projects/foundation_lib/build/vs13/test/base64.vcxproj",
+		"/Users/mjansson/projects/foundation_lib/build/vs13/test/bitbuffer.vcxproj",
+		"/Users/mjansson/projects/foundation_lib/build/vs13/test/blowfish.vcxproj",
+		"/Users/mjansson/projects/foundation_lib/build/vs13/test/bufferstream.vcxproj",
+		"/Users/mjansson/projects/foundation_lib/build/vs13/test/config.vcxproj",
+		"/Users/mjansson/projects/foundation_lib/build/vs13/test/crash.vcxproj",
+		"/Users/mjansson/projects/foundation_lib/build/vs13/test/environment.vcxproj",
+		"/Users/mjansson/projects/foundation_lib/build/vs13/test/error.vcxproj",
+		"/Users/mjansson/projects/foundation_lib/build/vs13/test/event.vcxproj",
+		"/Users/mjansson/projects/foundation_lib/build/vs13/test/fs.vcxproj",
+		"/Users/mjansson/projects/foundation_lib/build/vs13/test/hash.vcxproj",
+		"/Users/mjansson/projects/foundation_lib/build/vs13/test/hashmap.vcxproj",
+		"/Users/mjansson/projects/foundation_lib/build/vs13/test/hashtable.vcxproj",
+		"/Users/mjansson/projects/foundation_lib/build/vs13/test/library.vcxproj",
+		"/Users/mjansson/projects/foundation_lib/build/vs13/test/math.vcxproj",
+		"/Users/mjansson/projects/foundation_lib/build/vs13/test/md5.vcxproj",
+		"/Users/mjansson/projects/foundation_lib/build/vs13/test/mutex.vcxproj",
+		"/Users/mjansson/projects/foundation_lib/build/vs13/test/objectmap.vcxproj",
+		"/Users/mjansson/projects/foundation_lib/build/vs13/test/path.vcxproj",
+		"/Users/mjansson/projects/foundation_lib/build/vs13/test/pipe.vcxproj",
+		"/Users/mjansson/projects/foundation_lib/build/vs13/test/profile.vcxproj",
+		"/Users/mjansson/projects/foundation_lib/build/vs13/test/radixsort.vcxproj",
+		"/Users/mjansson/projects/foundation_lib/build/vs13/test/random.vcxproj",
+		"/Users/mjansson/projects/foundation_lib/build/vs13/test/ringbuffer.vcxproj",
+		"/Users/mjansson/projects/foundation_lib/build/vs13/test/semaphore.vcxproj",
+		"/Users/mjansson/projects/foundation_lib/build/vs13/test/stacktrace.vcxproj",
+		"/Users/mjansson/projects/foundation_lib/build/vs13/test/string.vcxproj",
+		"/Users/mjansson/projects/foundation_lib/build/vs13/test/test.vcxproj",
+		"/Users/mjansson/projects/foundation_lib/build/vs13/test/uuid.vcxproj",
+		"/Users/mjansson/projects/foundation_lib/build/vs13/tools/bin2hex.vcxproj",
+		"/Users/mjansson/projects/foundation_lib/build/vs13/tools/hashify.vcxproj",
+		"/Users/mjansson/projects/foundation_lib/build/vs13/tools/uuidgen.vcxproj",
+		"/Users/mjansson/projects/foundation_lib/README.md",
+		"/Users/mjansson/projects/foundation_lib/doc/Doxyfile",
+		"/Users/mjansson/projects/foundation_lib/doc/types.dox",
+		"/Users/mjansson/projects/foundation_lib/doc/atomic.dox",
+		"/Users/mjansson/projects/foundation_lib/foundation/ringbuffer.h",
+		"/Users/mjansson/projects/foundation_lib/doc/platform.dox",
+		"/Users/mjansson/projects/foundation_lib/foundation/types.h",
+		"/Users/mjansson/projects/foundation_lib/foundation/platform.h",
+		"/Users/mjansson/projects/foundation_lib/Doxyfile",
+		"/Users/mjansson/projects/foundation_lib/foundation/fs.c",
+		"/Users/mjansson/projects/foundation_lib/test/all/main.c",
+		"/Users/mjansson/projects/foundation_lib/foundation/assetstream.c",
+		"/Users/mjansson/projects/foundation_lib/build/foundation.sublime-project",
+		"/Users/mjansson/Library/Application Support/Sublime Text 3/Packages/User/Preferences.sublime-settings",
+		"/Users/mjansson/Library/Application Support/Sublime Text 3/Packages/Default/Preferences.sublime-settings",
+		"/Users/mjansson/projects/foundation_lib/foundation/android.h",
+		"/Users/mjansson/projects/foundation_lib/doc/assert.dox",
+		"/Users/mjansson/projects/foundation_lib/doc/array.dox",
+		"/Users/mjansson/projects/foundation_lib/foundation/assert.h",
+		"/Users/mjansson/projects/foundation_lib/foundation/assert.c",
+		"/Users/mjansson/projects/foundation_lib/foundation/build.h",
+		"/Users/mjansson/projects/foundation_lib/foundation/array.h",
+		"/Users/mjansson/projects/foundation_lib/doc/android.dox",
+		"/Users/mjansson/projects/foundation_lib/foundation/fs.h",
+		"/Users/mjansson/projects/foundation_lib/foundation/random.h",
+		"/Users/mjansson/projects/foundation_lib/foundation/stream.h",
+		"/Users/mjansson/projects/foundation_lib/foundation/string.h",
+		"/Users/mjansson/projects/foundation_lib/foundation/system.h",
+		"/Users/mjansson/projects/foundation_lib/foundation/thread.h",
+		"/Users/mjansson/projects/foundation_lib/foundation/bufferstream.h",
+		"/Users/mjansson/projects/foundation_lib/doc/build.dox",
+		"/Users/mjansson/projects/foundation_lib/foundation/android.c",
+		"/Users/mjansson/projects/foundation_lib/foundation/hashmap.c",
+		"/Users/mjansson/projects/foundation_lib/foundation/fs.m",
+		"/Users/mjansson/projects/foundation_lib/foundation/crash.c",
+		"/Users/mjansson/projects/foundation_lib/doc/android.h",
+		"/Users/mjansson/projects/foundation_lib/doc/android.dox.c",
+		"/Users/mjansson/projects/foundation_lib/doc/build.dox.c",
+		"/Users/mjansson/projects/foundation_lib/foundation/thread.c",
+		"/Users/mjansson/projects/foundation_lib/foundation/system.c",
+		"/Users/mjansson/projects/foundation_lib/foundation/stream.c",
+		"/Users/mjansson/projects/foundation_lib/foundation/ringbuffer.c",
+		"/Users/mjansson/projects/foundation_lib/foundation/regex.c",
+		"/Users/mjansson/projects/foundation_lib/foundation/radixsort.c",
+		"/Users/mjansson/projects/foundation_lib/foundation/process.c",
+		"/Users/mjansson/projects/foundation_lib/foundation/pipe.c",
+		"/Users/mjansson/projects/foundation_lib/foundation/mutex.c",
+		"/Users/mjansson/projects/foundation_lib/foundation/memory.c",
+		"/Users/mjansson/projects/foundation_lib/foundation/md5.c",
+		"/Users/mjansson/projects/foundation_lib/foundation/library.c",
+		"/Users/mjansson/projects/foundation_lib/foundation/hashtable.c",
+		"/Users/mjansson/projects/foundation_lib/foundation/event.c",
+		"/Users/mjansson/projects/foundation_lib/foundation/internal.h",
+		"/Users/mjansson/projects/foundation_lib/foundation/config.c",
+		"/Users/mjansson/projects/foundation_lib/foundation/bufferstream.c",
+		"/Users/mjansson/projects/foundation_lib/foundation/blowfish.c",
+		"/Users/mjansson/projects/foundation_lib/foundation/objectmap.c",
+		"/Users/mjansson/projects/foundation_lib/foundation/crash.h",
+		"/Users/mjansson/projects/foundation_lib/foundation/regex.h",
+		"/Users/mjansson/projects/foundation_lib/foundation/hashtable.h",
+		"/Users/mjansson/projects/foundation_lib/foundation/hashmap.h",
+		"/Users/mjansson/projects/foundation_lib/foundation/log.c",
+		"/Users/mjansson/projects/foundation_lib/test/crash/main.c",
+		"/Users/mjansson/projects/foundation_lib/doc/html/crash_8h.html",
+		"/Users/mjansson/projects/foundation_lib/doc/html/globals_c.html",
+		"/Users/mjansson/projects/foundation_lib/doc/html/globals_defs.html",
+		"/Users/mjansson/projects/foundation_lib/doc/html/types_8h.html",
+		"/Users/mjansson/projects/foundation_lib/doc/html/types_8h_source.html",
+		"/Users/mjansson/projects/foundation_lib/foundation/error.c",
+		"/Users/mjansson/projects/foundation_lib/foundation/error.h",
+		"/Users/mjansson/projects/foundation_lib/test/string/main.c",
+		"/Users/mjansson/projects/foundation_lib/foundation/platform",
+		"/Users/mjansson/projects/foundation_lib/doc/html/globals_f.html",
+		"/Users/mjansson/projects/foundation_lib/doc/html/platform_8h.html",
+		"/Users/mjansson/projects/foundation_lib/doc/html/platform_8h_source.html",
+		"/Users/mjansson/projects/foundation_lib/foundation/atomic.h",
+		"/Users/mjansson/projects/foundation_lib/foundation/bitbuffer.c",
+		"/Users/mjansson/projects/foundation_lib/doc/html/atomic_8h_source.html",
+		"/Users/mjansson/projects/foundation_lib/doc/html/hashtable_8h_source.html",
+		"/Users/mjansson/projects/foundation_lib/foundation/math.h",
+		"/Users/mjansson/projects/foundation_lib/doc/html/math_8h_source.html",
+		"/Users/mjansson/projects/foundation_lib/doc/html/overview_page.html",
+		"/Users/mjansson/projects/foundation_lib/foundation/random.c"
+	],
+	"find":
+	{
+		"height": 22.0
+	},
+	"find_in_files":
+	{
+		"height": 93.0,
+		"where_history":
+		[
+			"/Users/mjansson/projects/foundation_lib/build/vs13",
+			"/Users/mjansson/projects/foundation_lib/build/vc13",
+			"/Users/mjansson/projects/foundation_lib/foundation",
+			"/Users/mjansson/projects/foundation_lib/",
+			"/Users/mjansson/projects/foundation_lib/build/android",
+			"/Users/mjansson/Downloads/skbt",
+			"/Users/mjansson/Downloads/skbt/src",
+			"/Users/mjansson/projects/neoengine_old",
+			"/Users/mjansson/projects/lua_lib/lua/luajit",
+			"/Users/mjansson/magneto/showtime/src"
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"win64\\debug",
+			"win64\\release",
+			"win64\\profile",
+			"win64\\deploy",
+			"win32\\deploy",
+			"win32\\profile",
+			"win32\\release",
+			"win32\\debug",
+			"win32\\",
+			"win32",
+			"ALIGN(",
+			"atomic",
+			"atomic_",
+			"ALIGN(",
+			"ALIGNED_STRUCT",
+			"ALIGN",
+			"ALIGNB",
+			"LATEX",
+			"stream_vtable_t",
+			"stream_buffer_t",
+			"ALIGN(",
+			"include_path",
+			"FOUNDATION_PLATFORM_DOXYGEN",
+			"ALIGN(x",
+			"-D",
+			"stream_t",
+			"osx_ninja",
+			"raspberry",
+			"est_all",
+			"test_all",
+			"Volume",
+			"test_all",
+			"test-all",
+			"<<<<",
+			"FOUNDATION_",
+			"build.h",
+			"brief",
+			"typedef struct",
+			"_foundation_",
+			"foundation_",
+			"_foundation_",
+			"objectmap_lookup",
+			"EVENT",
+			"CRASH_DUMP_GENERATED",
+			"\\brief",
+			"FOUNDATION_SIZE_WCHAR",
+			"FOUNDATION_WCHAR_SIZE",
+			"FOUNDATION_ARCH_POINTER_SIZE",
+			"FOUNDATION_PLATFORM_REALSIZE",
+			"    Defined",
+			"otherwise */",
+			"/*! \\def",
+			"<pre>",
+			"uint128_make",
+			"atomic32_t",
+			"ALIGN",
+			"uint256_is_null",
+			"FOUNDATION_COMPILER_NAME",
+			"CHUNK",
+			"_DEBUG",
+			"BUILD_EVENT_BLOCK_CHUNK_SIZE",
+			"_DEBUG",
+			"BUILD_EVENT_BLOCK_CHUNK_SIZE",
+			"FOUNDATION_PLATFORM_REALSIZE",
+			"allocate_verte",
+			"allocate_vertex",
+			"clang",
+			"FOUNDATION_ARCH_ARM_64",
+			"FOUNDATION_ARCH_MIPS",
+			"__ISO_C_VISIBLE",
+			"android",
+			"bsa_sv_hh_add_dev_hdlr",
+			"HhIdx:[0] InUse",
+			"BTM_SecAddBleDevice",
+			"BTA got event 0x11b",
+			"bsa_sv_sec_add_dev_hdlr",
+			"1e",
+			"-55",
+			"55",
+			"[34;47",
+			"[32;47",
+			"[30;47",
+			"66",
+			"[32;47m",
+			"[30;47m",
+			"-66",
+			"[34;47m",
+			"[30;47m",
+			"[32;47m",
+			"hh_open",
+			"[32;47m",
+			"[31;47m",
+			"[34;47m",
+			"[30;47m",
+			"hh_open",
+			"[31;47m",
+			"[32;47m",
+			"[34;47m",
+			"[30;47m",
+			"hh_open",
+			"[31;47m",
+			"dm_set_config",
+			"[34;47m",
+			"dm_set_config",
+			"[34;47m",
+			"[30;47m",
+			"[32;47m",
+			"[31;47m",
+			"dm_set",
+			"[34;47m",
+			"dm_set",
+			"[34;47m",
+			"[30;47m",
+			"[32;47m",
+			"dm_set_",
+			"bsa_sv_dm_set_config",
+			"[34;47m",
+			"[32;47m",
+			"[30;47m",
+			"[31;47m",
+			"hh_open",
+			":66",
+			"[34;47m",
+			"[32;47m",
+			"[30;47m",
+			"[32;47m",
+			"[34;47m",
+			"[30;47m"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+			"windows\\debug\\x86-64",
+			"windows\\release\\x86-64",
+			"windows\\profile\\x86-64",
+			"windows\\deploy\\x86-64",
+			"windows\\deploy\\x86",
+			"windows\\profile\\x86",
+			"windows\\release\\x86",
+			"windows\\debug\\x86",
+			"FOUNDATION_CRASH_DUMP_GENERATED",
+			"FOUNDATION_SIZE_WCHAR",
+			"FOUNDATION_SIZE_POINTER",
+			"FOUNDATION_SIZE_REAL",
+			"Defined",
+			"otherwise",
+			"\\def",
+			"<code>",
+			"",
+			"BLOB_SIZE"
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 3,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "/Users/mjansson/projects/render_lib/render/types.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 6361,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								805,
+								805
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 6,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "/Users/mjansson/projects/render_lib/configure.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2382,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								661,
+								661
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 3,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "/Users/mjansson/projects/window_lib/window/window_osx.m",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 6796,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								562,
+								562
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Objective-C/Objective-C++.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "/Users/mjansson/projects/window_lib/window/internal.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2214,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								727,
+								727
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 8.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "/Users/mjansson/projects/window_lib/window/types.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1558,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 5,
+					"file": "/Users/mjansson/projects/render_lib/render/internal.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 9631,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								869,
+								869
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 4,
+					"type": "text"
+				},
+				{
+					"buffer": 6,
+					"file": "/Users/mjansson/projects/resource_lib/resource/types.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1261,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1261,
+								1261
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 5,
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 21.0
+	},
+	"input":
+	{
+		"height": 0.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"project": "render.sublime-project",
+	"replace":
+	{
+		"height": 40.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 264.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}

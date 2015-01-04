@@ -54,7 +54,7 @@ object_t render_target_create( render_backend_t* backend )
 		return 0;
 	}
 	
-	target = memory_allocate_zero( sizeof( render_target_t ), 0, MEMORY_PERSISTENT );
+	target = memory_allocate( HASH_RENDER, sizeof( render_target_t ), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED );
 	target->id = id;
 	target->backend = backend;
 	atomic_store32( &target->ref, 1 );

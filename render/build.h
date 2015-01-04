@@ -42,6 +42,8 @@
 #endif
 
 
+#define RENDER_ENABLE_NVGLEXPERT                     0
+
 
 // Allocation sizes
 

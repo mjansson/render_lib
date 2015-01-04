@@ -24,8 +24,12 @@
 #if FOUNDATION_PLATFORM_IOS
 
 #include <foundation/apple.h>
+
 #import <UIKit/UIScreen.h>
 #import <UIKit/UIScreenMode.h>
+
+#include <OpenGLES/ES2/gl.h>
+#include <OpenGLES/ES2/glext.h>
 
 
 const void* _rb_gles2_ios_create_egl_context( void )

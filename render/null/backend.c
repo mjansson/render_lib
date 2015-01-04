@@ -28,6 +28,12 @@ static render_resolution_t*    _rb_null_enumerate_modes( render_backend_t* backe
 static bool                    _rb_null_set_drawable( render_backend_t* backend, render_drawable_t* drawable ) { return true; }
 static void                    _rb_null_dispatch( render_backend_t* backend, render_context_t** contexts, unsigned int num_contexts ) {}
 static void                    _rb_null_flip( render_backend_t* backend ) { ++backend->framecount; }
+static void*                   _rb_null_allocate_buffer( render_backend_t* backend, render_buffer_t* buffer ) { return memory_allocate( HASH_RENDER, buffer->size * buffer->allocated, 16, MEMORY_PERSISTENT ); }
+static void                    _rb_null_deallocate_buffer( render_backend_t* backend, render_buffer_t* buffer, bool sys, bool aux ) { if( sys ) memory_deallocate( buffer->store ); }
+static void                    _rb_null_upload_buffer( render_backend_t* backend, render_buffer_t* buffer ) {}
+static void                    _rb_null_upload_shader( render_backend_t* backend, render_shader_t* shader, const void* buffer, unsigned int size ) {}
+static void*                   _rb_null_read_shader( render_backend_t* backend, render_shader_t* shader, uint64_t* size ) { return 0; }
+static void                    _rb_null_deallocate_shader( render_backend_t* backend, render_shader_t* shader ) {}
 
 
 static render_backend_vtable_t _render_backend_vtable_null = {
@@ -37,13 +43,19 @@ static render_backend_vtable_t _render_backend_vtable_null = {
 	.enumerate_modes = _rb_null_enumerate_modes,
 	.set_drawable = _rb_null_set_drawable,
 	.dispatch = _rb_null_dispatch,
-	.flip = _rb_null_flip
+	.flip = _rb_null_flip,
+	.allocate_buffer = _rb_null_allocate_buffer,
+	.deallocate_buffer = _rb_null_deallocate_buffer,
+	.upload_buffer = _rb_null_upload_buffer,
+	.upload_shader = _rb_null_upload_shader,
+	.read_shader = _rb_null_read_shader,
+	.deallocate_shader = _rb_null_deallocate_shader
 };
 
 
 render_backend_t* render_backend_null_allocate()
 {
-	render_backend_t* backend = memory_allocate_zero_context( HASH_RENDER, sizeof( render_backend_t ), 0, MEMORY_PERSISTENT );
+	render_backend_t* backend = memory_allocate( HASH_RENDER, sizeof( render_backend_t ), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED );
 	backend->api = RENDERAPI_NULL;
 	backend->vtable = _render_backend_vtable_null;
 	return backend;

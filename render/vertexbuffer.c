@@ -36,7 +36,7 @@ object_t render_vertexbuffer_create( render_backend_t* backend, render_usage_t u
 
 	memory_context_push( HASH_RENDER );
 	
-	render_vertexbuffer_t* buffer = memory_allocate_zero( sizeof( render_vertexbuffer_t ), 0, MEMORY_PERSISTENT );
+	render_vertexbuffer_t* buffer = memory_allocate( HASH_RENDER, sizeof( render_vertexbuffer_t ), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED );
 	buffer->id         = id;
 	buffer->backend    = backend;
 	buffer->usage      = usage;
@@ -65,6 +65,12 @@ object_t render_vertexbuffer_create( render_backend_t* backend, render_usage_t u
 }
 
 
+object_t render_vertexbuffer_load( const uuid_t uuid )
+{
+	return 0;
+}
+
+
 object_t render_vertexbuffer_ref( object_t id )
 {
 	int32_t ref;
@@ -79,7 +85,7 @@ object_t render_vertexbuffer_ref( object_t id )
 }
 
 
-void render_indexbuffer_destroy( object_t id )
+void render_vertexbuffer_destroy( object_t id )
 {
 	int32_t ref;
 	render_vertexbuffer_t* buffer = GET_BUFFER( id );
@@ -278,7 +284,7 @@ unsigned int render_vertex_decl_size( const render_vertex_decl_t* decl )
 
 render_vertex_decl_t* render_vertex_decl_allocate_buffer( unsigned int num_elements, render_vertex_decl_element_t* elements )
 {
-	render_vertex_decl_t* decl = memory_allocate_zero_context( HASH_RENDER, sizeof( render_vertex_decl_t ), 0, MEMORY_PERSISTENT );
+	render_vertex_decl_t* decl = memory_allocate( HASH_RENDER, sizeof( render_vertex_decl_t ), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED );
 	for( int i = 0; i < VERTEXATTRIBUTE_NUMATTRIBUTES; ++i )
 		decl->attribute[i].format = VERTEXFORMAT_UNKNOWN;
 	
@@ -301,7 +307,7 @@ render_vertex_decl_t* render_vertex_decl_allocate_buffer( unsigned int num_eleme
 
 render_vertex_decl_t* render_vertex_decl_allocate( render_vertex_format_t format, render_vertex_attribute_id attribute, ... )
 {
-	render_vertex_decl_t* decl = memory_allocate_zero_context( HASH_RENDER, sizeof( render_vertex_decl_t ), 0, MEMORY_PERSISTENT );
+	render_vertex_decl_t* decl = memory_allocate( HASH_RENDER, sizeof( render_vertex_decl_t ), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED );
 	for( int i = 0; i < VERTEXATTRIBUTE_NUMATTRIBUTES; ++i )
 		decl->attribute[i].format = VERTEXFORMAT_UNKNOWN;
 	
@@ -329,5 +335,20 @@ render_vertex_decl_t* render_vertex_decl_allocate( render_vertex_format_t format
 	va_end( list );
 	
 	return decl;
+}
+
+
+uuid_t render_vertexbuffer_uuid( object_t id )
+{
+	render_vertexbuffer_t* buffer = GET_BUFFER( id );
+	return buffer ? buffer->uuid : uuid_null();
+}
+
+
+void render_vertexbuffer_set_uuid( object_t id, const uuid_t uuid )
+{
+	render_vertexbuffer_t* buffer = GET_BUFFER( id );
+	if( buffer )
+		buffer->uuid = uuid;
 }
 

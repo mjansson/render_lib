@@ -30,6 +30,7 @@ RENDER_API render_vertex_decl_t*           render_vertex_decl_allocate( render_v
 RENDER_API unsigned int                    render_vertex_decl_size( const render_vertex_decl_t* decl );
 
 RENDER_API object_t                        render_vertexbuffer_create( render_backend_t* backend, render_usage_t usage, unsigned int vertices, const render_vertex_decl_t* decl, const void* data );
+RENDER_API object_t                        render_vertexbuffer_load( const uuid_t uuid );
 RENDER_API object_t                        render_vertexbuffer_ref( object_t buffer );
 RENDER_API void                            render_vertexbuffer_destroy( object_t buffer );
 
@@ -51,3 +52,6 @@ RENDER_API unsigned int                    render_vertexbuffer_element_size( obj
 
 RENDER_API void                            render_vertexbuffer_release( object_t buffer, bool sys, bool aux );
 RENDER_API void                            render_vertexbuffer_restore( object_t buffer );
+
+RENDER_API uuid_t                          render_vertexbuffer_uuid( object_t buffer );
+RENDER_API void                            render_vertexbuffer_set_uuid( object_t buffer, const uuid_t uuid );

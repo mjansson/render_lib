@@ -137,7 +137,7 @@
 		451386CB193A797B00BA2092 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0510;
+				LastUpgradeCheck = 0600;
 				TargetAttributes = {
 					451386D4193A79B000BA2092 = {
 						DevelopmentTeam = TDSNBN44YV;
@@ -192,6 +192,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ENABLE_OBJC_ARC = YES;
+				CONFIGURATION_BUILD_DIR = ../../../bin/ios/debug;
 				GCC_C_LANGUAGE_STANDARD = c11;
 				GCC_ENABLE_CPP_EXCEPTIONS = NO;
 				GCC_ENABLE_CPP_RTTI = NO;
@@ -207,6 +208,7 @@
 					../../..,
 					../../../../foundation_lib,
 					../../../../window_lib,
+					../../../../resource_lib,
 					../../../../foundation_lib/test,
 					"$(inherited)",
 				);
@@ -215,6 +217,7 @@
 					../../../lib/ios/debug,
 					../../../../foundation_lib/lib/ios/debug,
 					../../../../window_lib/lib/ios/debug,
+					../../../../resource_lib/lib/ios/debug,
 					"$(inherited)",
 				);
 				PRECOMPS_INCLUDE_HEADERS_FROM_BUILT_PRODUCTS_DIR = NO;
@@ -228,6 +231,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ENABLE_OBJC_ARC = YES;
+				CONFIGURATION_BUILD_DIR = ../../../bin/ios/release;
 				GCC_C_LANGUAGE_STANDARD = c11;
 				GCC_ENABLE_CPP_EXCEPTIONS = NO;
 				GCC_ENABLE_CPP_RTTI = NO;
@@ -244,6 +248,7 @@
 					../../..,
 					../../../../foundation_lib,
 					../../../../window_lib,
+					../../../../resource_lib,
 					../../../../foundation_lib/test,
 					"$(inherited)",
 				);
@@ -252,6 +257,7 @@
 					../../../lib/ios/release,
 					../../../../foundation_lib/lib/ios/release,
 					../../../../window_lib/lib/ios/release,
+					../../../../resource_lib/lib/ios/release,
 					"$(inherited)",
 				);
 				LLVM_LTO = YES;
@@ -341,6 +347,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ENABLE_OBJC_ARC = YES;
+				CONFIGURATION_BUILD_DIR = ../../../bin/ios/profile;
 				GCC_C_LANGUAGE_STANDARD = c11;
 				GCC_ENABLE_CPP_EXCEPTIONS = NO;
 				GCC_ENABLE_CPP_RTTI = NO;
@@ -357,6 +364,7 @@
 					../../..,
 					../../../../foundation_lib,
 					../../../../window_lib,
+					../../../../resource_lib,
 					../../../../foundation_lib/test,
 					"$(inherited)",
 				);
@@ -365,6 +373,7 @@
 					../../../lib/ios/profile,
 					../../../../foundation_lib/lib/ios/profile,
 					../../../../window_lib/lib/ios/profile,
+					../../../../resource_lib/lib/ios/profile,
 					"$(inherited)",
 				);
 				LLVM_LTO = YES;
@@ -416,6 +425,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ENABLE_OBJC_ARC = YES;
+				CONFIGURATION_BUILD_DIR = ../../../bin/ios/deploy;
 				GCC_C_LANGUAGE_STANDARD = c11;
 				GCC_ENABLE_CPP_EXCEPTIONS = NO;
 				GCC_ENABLE_CPP_RTTI = NO;
@@ -432,6 +442,7 @@
 					../../..,
 					../../../../foundation_lib,
 					../../../../window_lib,
+					../../../../resource_lib,
 					../../../../foundation_lib/test,
 					"$(inherited)",
 				);
@@ -440,6 +451,7 @@
 					../../../lib/ios/deploy,
 					../../../../foundation_lib/lib/ios/deploy,
 					../../../../window_lib/lib/ios/deploy,
+					../../../../resource_lib/lib/ios/deploy,
 					"$(inherited)",
 				);
 				LLVM_LTO = YES;

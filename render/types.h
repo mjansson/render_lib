@@ -23,6 +23,8 @@
 #include <foundation/platform.h>
 #include <foundation/types.h>
 
+#include <window/types.h>
+
 #include <render/build.h>
 
 
@@ -33,15 +35,17 @@ typedef enum _render_api
 	RENDERAPI_UNKNOWN                       = 0,
 	RENDERAPI_DEFAULT,
 	RENDERAPI_NULL,
+	RENDERAPI_OPENGL2,
 	RENDERAPI_OPENGL3,
 	RENDERAPI_OPENGL4,
 	RENDERAPI_DIRECTX10,
 	RENDERAPI_DIRECTX11,
 	RENDERAPI_PS3,
+	RENDERAPI_PS4,
 	RENDERAPI_XBOX360,
+	RENDERAPI_XBOXONE,
 	RENDERAPI_GLES1,
 	RENDERAPI_GLES2,
-	RENDERAPI_OPENGL2,
     
 	RENDERAPI_NUM
 } render_api_t;
@@ -227,17 +231,18 @@ typedef enum _render_primitive
 
 // OPAQUE COMPLEX TYPES
 
-typedef struct _render_backend        render_backend_t;
-typedef struct _render_target         render_target_t;
-typedef struct _render_context        render_context_t;
-typedef struct _render_drawable       render_drawable_t;
-typedef struct _render_command        render_command_t;
-typedef struct _render_buffer         render_buffer_t;
-typedef struct _render_vertex_decl    render_vertex_decl_t;
+typedef struct render_backend_t        render_backend_t;
+typedef struct render_target_t         render_target_t;
+typedef struct render_context_t        render_context_t;
+typedef struct render_drawable_t       render_drawable_t;
+typedef struct render_command_t        render_command_t;
+typedef struct render_buffer_t         render_buffer_t;
+typedef struct render_vertex_decl_t    render_vertex_decl_t;
+typedef struct render_shader_t         render_shader_t;
 
 // COMPLEX TYPES
 
-typedef struct _render_resolution
+typedef struct render_resolution_t
 {
 	unsigned int                      id;
 	unsigned int                      width;
@@ -247,12 +252,12 @@ typedef struct _render_resolution
 	unsigned int                      refresh;
 } render_resolution_t;
 
-typedef struct _render_vertex_decl_element
+typedef struct render_vertex_decl_element_t
 {
 	render_vertex_format_t      format;
 	render_vertex_attribute_id  attribute;
 } render_vertex_decl_element_t;
 
 // EXTERNAL OPAQUE TYPES
-typedef struct _window                window_t;
+typedef struct window_t                window_t;
 

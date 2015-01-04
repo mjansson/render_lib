@@ -40,7 +40,7 @@ RENDER_EXTERN void            _rb_gles2_ios_present_render_buffer( const void* c
 #if FOUNDATION_PLATFORM_IOS || FOUNDATION_PLATFORM_ANDROID || FOUNDATION_PLATFORM_LINUX_RASPBERRYPI
 
 
-typedef struct _render_backend_gles2
+typedef struct render_backend_gles2_t
 {
 	RENDER_DECLARE_BACKEND;
     
@@ -140,6 +140,17 @@ bool _rb_gles2_check_error( const char* message )
 		return true;
 	}
 	return false;
+}
+
+
+static bool _rb_gles2_log_error( const char* message )
+{
+	if( !_rb_gles2_check_error( message ) )
+	{
+		log_errorf( HASH_RENDER, ERROR_SYSTEM_CALL_FAIL, "%s: No GL error", message );
+		return false;
+	}
+	return true;
 }
 
 
@@ -808,7 +819,7 @@ static void _rb_gles2_flip( render_backend_t* backend )
 
 static void* _rb_gles2_allocate_buffer( render_backend_t* backend, render_buffer_t* buffer )
 {
-	return memory_allocate_context( HASH_RENDER, buffer->size * buffer->allocated, 0, MEMORY_PERSISTENT );
+	return memory_allocate( HASH_RENDER, buffer->size * buffer->allocated, 0, MEMORY_PERSISTENT );
 }
 
 
@@ -844,6 +855,163 @@ static void _rb_gles2_upload_buffer( render_backend_t* backend, render_buffer_t*
 }
 
 
+static void _rb_gles2_upload_shader( render_backend_t* backend, render_shader_t* shader, const void* buffer, unsigned int size )
+{
+	switch( shader->shadertype )
+	{
+		case SHADER_VERTEX:
+		{
+			//Vertex program backend data:
+			//  0 - Shader object (GLuint)
+			if( shader->backend_data[0] )
+			{
+				glDeleteShader( (GLuint)shader->backend_data[0] );
+				shader->backend_data[0] = 0;
+			}
+			
+			GLuint shader_object = glCreateShader( GL_VERTEX_SHADER );
+			if( !shader_object )
+			{
+				_rb_gles2_log_error( "Unable to create vertex shader object" );
+				return;
+			}
+			shader->backend_data[0] = shader_object;
+			
+			if( size < 16 )
+			{
+				log_errorf( HASH_RENDER, ERROR_INVALID_VALUE, "Invalid vertex shader code: %s", (const char*)buffer );
+				return;
+			}
+			//TODO: Binary formats
+			GLint length = (GLint)size;
+			glShaderSource( shader_object, 1, (const GLchar**)&buffer, &length );
+			glCompileShader( shader_object );
+			
+			GLint compiled = 0;
+			glGetShaderiv( shader_object, GL_COMPILE_STATUS, &compiled );
+			if( !compiled )
+			{
+				GLint buffer_size = 2048;
+				GLchar* log = memory_allocate( HASH_RENDER, buffer_size, 0, MEMORY_TEMPORARY );
+				GLint log_length = 0;
+				glGetShaderInfoLog( shader_object, buffer_size, &log_length, log );
+				log_errorf( HASH_RENDER, ERROR_SYSTEM_CALL_FAIL, "Unable to compile vertex shader: %s", log );
+				memory_deallocate( log );
+				log_debugf( HASH_RENDER, "Shader source:\n%s", (const char*)buffer );
+				return;
+			}
+			
+			_rb_gles2_check_error( "Error uploading and compiling vertex shader" );
+			
+			break;
+		}
+			
+		case SHADER_PIXEL:
+		{
+			//Fragment program backend data:
+			//  0 - Shader object (GLuint)
+			if( shader->backend_data[0] )
+			{
+				glDeleteShader( (GLuint)shader->backend_data[0] );
+				shader->backend_data[0] = 0;
+			}
+			
+			GLuint shader_object = glCreateShader( GL_FRAGMENT_SHADER );
+			if( !shader_object )
+			{
+				_rb_gles2_log_error( "Unable to create pixel shader object" );
+				return;
+			}
+			shader->backend_data[0] = shader_object;
+			
+			if( size < 16 )
+			{
+				log_errorf( HASH_RENDER, ERROR_INVALID_VALUE, "Invalid pixel shader code: %s", (const char*)buffer );
+				return;
+			}
+			//TODO: Binary formats
+			GLint length = (GLint)size;
+			glShaderSource( shader_object, 1, (const GLchar**)&buffer, &length );
+			glCompileShader( shader_object );
+			
+			GLint compiled = 0;
+			glGetShaderiv( shader_object, GL_COMPILE_STATUS, &compiled );
+			if( !compiled )
+			{
+				GLint buffer_size = 2048;
+				GLchar* log = memory_allocate( HASH_RENDER, buffer_size, 0, MEMORY_TEMPORARY );
+				GLint log_length = 0;
+				glGetShaderInfoLog( shader_object, buffer_size, &log_length, log );
+				log_errorf( HASH_RENDER, ERROR_SYSTEM_CALL_FAIL, "Unable to compile pixel shader: %s", log );
+				memory_deallocate( log );
+				log_debugf( HASH_RENDER, "Shader source:\n%s", (const char*)buffer );
+				return;
+			}
+			
+			_rb_gles2_check_error( "Error uploading and compiling pixel shader" );
+			
+			break;
+		}
+			
+		default:
+			break;
+	}
+}
+
+
+static void* _rb_gles2_read_shader( render_backend_t* backend, render_shader_t* shader, uint64_t* size )
+{
+	return 0;
+}
+
+
+static void _rb_gles2_program_unmap( GLuint vertex_shader, GLuint pixel_shader )
+{
+	/*for( int ip = 0; ip < 512; ++ip )
+	{
+		if( ( _rb_gles2_programs[ip].vertex_shader == vertex_shader ) || ( _rb_gles2_programs[ip].pixel_shader == pixel_shader ) )
+		{
+			glDeleteProgram( _rb_gles2_programs[ip].program );
+			deallocate( _rb_gles2_programs[ip].uniforms );
+			memset( _rb_gles2_programs + ip, 0, sizeof( render_program_gles2_t ) );
+		}
+	}*/
+}
+
+
+static void _rb_gles2_deallocate_shader( render_backend_t* backend, render_shader_t* shader )
+{
+	switch( shader->shadertype )
+	{
+		case SHADER_VERTEX:
+		{
+			//Vertex program backend data:
+			//  0 - Shader object (GLuint)
+			if( shader->backend_data[0] )
+			{
+				_rb_gles2_program_unmap( (unsigned int)shader->backend_data[0], 0 );
+				glDeleteShader( (GLuint)shader->backend_data[0] );
+			}
+			shader->backend_data[0] = 0;
+			break;
+		}
+			
+		case SHADER_PIXEL:
+		{
+			//Pixel shader backend data:
+			//  0 - Shader object (GLuint)
+			if( shader->backend_data[0] )
+			{
+				_rb_gles2_program_unmap( 0, (unsigned int)shader->backend_data[0] );
+				glDeleteShader( (GLuint)shader->backend_data[0] );
+			}
+			shader->backend_data[0] = 0;
+			break;
+		}
+	}
+}
+
+
 static render_backend_vtable_t _render_backend_vtable_gles2 = {
 	.construct = _rb_gles2_construct,
 	.destruct  = _rb_gles2_destruct,
@@ -856,13 +1024,16 @@ static render_backend_vtable_t _render_backend_vtable_gles2 = {
 	.flip = _rb_gles2_flip,
 	.allocate_buffer = _rb_gles2_allocate_buffer,
 	.deallocate_buffer = _rb_gles2_deallocate_buffer,
-	.upload_buffer = _rb_gles2_upload_buffer
+	.upload_buffer = _rb_gles2_upload_buffer,
+	.upload_shader = _rb_gles2_upload_shader,
+	.read_shader = _rb_gles2_read_shader,
+	.deallocate_shader = _rb_gles2_deallocate_shader
 };
 
 
 render_backend_t* render_backend_gles2_allocate()
 {
-	render_backend_t* backend = memory_allocate_zero( sizeof( render_backend_gles2_t ), 0, MEMORY_PERSISTENT );
+	render_backend_t* backend = memory_allocate( HASH_RENDER, sizeof( render_backend_gles2_t ), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED );
 	backend->api = RENDERAPI_GLES2;
 	backend->vtable = _render_backend_vtable_gles2;
 	return backend;

@@ -26,6 +26,7 @@
 
 
 RENDER_API object_t                        render_indexbuffer_create( render_backend_t* backend, render_usage_t type, unsigned int indices, const uint16_t* data );
+RENDER_API object_t                        render_indexbuffer_load( const uuid_t uuid );
 RENDER_API object_t                        render_indexbuffer_ref( object_t buffer );
 RENDER_API void                            render_indexbuffer_destroy( object_t buffer );
 
@@ -46,3 +47,5 @@ RENDER_API uint16_t*                       render_indexbuffer_element( object_t 
 RENDER_API void                            render_indexbuffer_release( object_t buffer, bool sys, bool aux );
 RENDER_API void                            render_indexbuffer_restore( object_t buffer );
 
+RENDER_API uuid_t                          render_indexbuffer_uuid( object_t buffer );
+RENDER_API void                            render_indexbuffer_set_uuid( object_t buffer, const uuid_t uuid );

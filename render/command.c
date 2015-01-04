@@ -24,7 +24,7 @@
 
 render_command_t* render_command_allocate( void )
 {
-	return memory_allocate_context( HASH_RENDER, sizeof( render_command_t ), 0, MEMORY_PERSISTENT );
+	return memory_allocate( HASH_RENDER, sizeof( render_command_t ), 0, MEMORY_PERSISTENT );
 }
 
 

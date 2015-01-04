@@ -17,6 +17,7 @@
 		455516241935D37C00CF089B /* drawable.c in Sources */ = {isa = PBXBuildFile; fileRef = 4555161C1935D37C00CF089B /* drawable.c */; };
 		455516251935D37C00CF089B /* render.c in Sources */ = {isa = PBXBuildFile; fileRef = 455516201935D37C00CF089B /* render.c */; };
 		455516291935D38D00CF089B /* backend.c in Sources */ = {isa = PBXBuildFile; fileRef = 455516271935D38D00CF089B /* backend.c */; };
+		45670AE219D73D2300BE1677 /* shader.c in Sources */ = {isa = PBXBuildFile; fileRef = 45670AE019D73D2300BE1677 /* shader.c */; };
 		45D5DB401969D8F4005E37BC /* command.c in Sources */ = {isa = PBXBuildFile; fileRef = 45D5DB3E1969D8F4005E37BC /* command.c */; };
 		45D5DB43196C42E8005E37BC /* sort.c in Sources */ = {isa = PBXBuildFile; fileRef = 45D5DB41196C42E8005E37BC /* sort.c */; };
 		45D5DB46196C7706005E37BC /* indexbuffer.c in Sources */ = {isa = PBXBuildFile; fileRef = 45D5DB44196C7706005E37BC /* indexbuffer.c */; };
@@ -63,6 +64,8 @@
 		455516681935D9E600CF089B /* OpenGLES.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGLES.framework; path = System/Library/Frameworks/OpenGLES.framework; sourceTree = SDKROOT; };
 		4555166A1935DA0700CF089B /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
 		4555166C1935DA2700CF089B /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
+		45670AE019D73D2300BE1677 /* shader.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = shader.c; path = ../../../render/shader.c; sourceTree = "<group>"; };
+		45670AE119D73D2300BE1677 /* shader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = shader.h; path = ../../../render/shader.h; sourceTree = "<group>"; };
 		45D5DB3E1969D8F4005E37BC /* command.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = command.c; path = ../../../render/command.c; sourceTree = "<group>"; };
 		45D5DB3F1969D8F4005E37BC /* command.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = command.h; path = ../../../render/command.h; sourceTree = "<group>"; };
 		45D5DB41196C42E8005E37BC /* sort.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sort.c; path = ../../../render/sort.c; sourceTree = "<group>"; };
@@ -144,6 +147,8 @@
 				4555161F1935D37C00CF089B /* internal.h */,
 				455516201935D37C00CF089B /* render.c */,
 				455516211935D37C00CF089B /* render.h */,
+				45670AE019D73D2300BE1677 /* shader.c */,
+				45670AE119D73D2300BE1677 /* shader.h */,
 				45D5DB41196C42E8005E37BC /* sort.c */,
 				45D5DB42196C42E8005E37BC /* sort.h */,
 				451871C21958A40C000E42C9 /* target.c */,
@@ -190,7 +195,7 @@
 		455515E71935D32700CF089B /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0510;
+				LastUpgradeCheck = 0600;
 				ORGANIZATIONNAME = "Rampant Pixels AB";
 			};
 			buildConfigurationList = 455515EA1935D32700CF089B /* Build configuration list for PBXProject "render" */;
@@ -227,6 +232,7 @@
 				451871C11957FAB1000E42C9 /* context.c in Sources */,
 				451389B71945B1D300BA2092 /* backend.c in Sources */,
 				455516241935D37C00CF089B /* drawable.c in Sources */,
+				45670AE219D73D2300BE1677 /* shader.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -268,6 +274,7 @@
 					../../..,
 					../../../../foundation_lib,
 					../../../../window_lib,
+					../../../../resource_lib,
 					"$(inherited)",
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
@@ -326,6 +333,7 @@
 					../../..,
 					../../../../foundation_lib,
 					../../../../window_lib,
+					../../../../resource_lib,
 					"$(inherited)",
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
@@ -385,6 +393,7 @@
 					../../..,
 					../../../../foundation_lib,
 					../../../../window_lib,
+					../../../../resource_lib,
 					"$(inherited)",
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
@@ -434,6 +443,7 @@
 					../../..,
 					../../../../foundation_lib,
 					../../../../window_lib,
+					../../../../resource_lib,
 					"$(inherited)",
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 6.0;

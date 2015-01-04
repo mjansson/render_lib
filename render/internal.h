@@ -24,6 +24,9 @@
 #include <foundation/types.h>
 #include <foundation/internal.h>
 
+#include <window/types.h>
+#include <resource/types.h>
+
 #include <render/types.h>
 #include <render/hashstrings.h>
 
@@ -40,8 +43,11 @@ typedef void                                   (* render_backend_flip_fn)( rende
 typedef void*                                  (* render_backend_allocate_buffer_fn)( render_backend_t*, render_buffer_t* );
 typedef void                                   (* render_backend_deallocate_buffer_fn)( render_backend_t*, render_buffer_t*, bool, bool );
 typedef void                                   (* render_backend_upload_buffer_fn)( render_backend_t*, render_buffer_t* );
+typedef void                                   (* render_backend_upload_shader_fn)( render_backend_t*, render_shader_t*, const void*, unsigned int );
+typedef void*                                  (* render_backend_read_shader_fn)( render_backend_t*, render_shader_t*, uint64_t* );
+typedef void                                   (* render_backend_deallocate_shader_fn)( render_backend_t*, render_shader_t* );
 
-typedef struct _render_backend_vtable
+typedef struct render_backend_vtable_t
 {
 	render_backend_construct_fn                   construct;
 	render_backend_destruct_fn                    destruct;
@@ -55,6 +61,9 @@ typedef struct _render_backend_vtable
 	render_backend_allocate_buffer_fn             allocate_buffer;
 	render_backend_deallocate_buffer_fn           deallocate_buffer;
 	render_backend_upload_buffer_fn               upload_buffer;
+	render_backend_upload_shader_fn               upload_shader;
+	render_backend_read_shader_fn                 read_shader;
+	render_backend_deallocate_shader_fn           deallocate_shader;
 } render_backend_vtable_t;
 
 #define RENDER_DECLARE_BACKEND							\
@@ -66,13 +75,13 @@ typedef struct _render_backend_vtable
 	object_t                          framebuffer;      \
 	uint64_t                          framecount;
 
-struct _render_backend
+struct render_backend_t
 {
 	RENDER_DECLARE_BACKEND;
 };
 
 
-struct _render_drawable
+struct render_drawable_t
 {
 	render_drawable_type_t      type;
 	unsigned int                adapter;
@@ -105,10 +114,10 @@ struct _render_drawable
 };
 
 #define RENDER_DECLARE_OBJECT             \
-	FOUNDATION_DECLARE_OBJECT;            \
+	RESOURCE_DECLARE_OBJECT;              \
 	render_backend_t*           backend
 
-struct _render_target
+struct render_target_t
 {
 	RENDER_DECLARE_OBJECT;
 	unsigned int                width;
@@ -117,7 +126,7 @@ struct _render_target
 	colorspace_t                colorspace;
 };
 
-struct _render_context
+struct render_context_t
 {
 	atomic32_t                  reserved;
 	int32_t                     allocated;
@@ -134,7 +143,7 @@ struct _render_context
 	const radixsort_index_t*    order;
 };
 
-typedef struct _render_command_clear
+typedef struct render_command_clear_t
 {
 	unsigned int                buffer_mask;
 	uint32_t                    color;
@@ -143,7 +152,7 @@ typedef struct _render_command_clear
 	uint32_t                    stencil;
 } render_command_clear_t;
 
-typedef struct _render_command_viewport
+typedef struct render_command_viewport_t
 {
 	uint16_t                    x;
 	uint16_t                    y;
@@ -153,7 +162,7 @@ typedef struct _render_command_viewport
 	real                        max_z;
 } render_command_viewport_t;
 
-typedef struct _render_command_render
+typedef struct render_command_render_t
 {
 	object_t                    vertexshader;
 	object_t                    pixelshader;
@@ -163,7 +172,7 @@ typedef struct _render_command_render
 	uint64_t                    blend_state;
 } render_command_render_t;
 
-struct _render_command
+struct render_command_t
 {
 	unsigned int                  type:8;
 	unsigned int                  reserved:8;
@@ -177,7 +186,7 @@ struct _render_command
 	} data;
 };
 
-typedef enum _render_command_id
+typedef enum render_command_id
 {
 	RENDERCOMMAND_INVALID                   = 0,
 	RENDERCOMMAND_CLEAR,
@@ -185,14 +194,14 @@ typedef enum _render_command_id
 	RENDERCOMMAND_RENDER_TRIANGLELIST
 } render_command_id;
 
-typedef struct _render_vertex_attribute
+typedef struct render_vertex_attribute_t
 {
 	uint8_t                           format;
 	uint8_t                           binding;
 	uint16_t                          offset;
 } render_vertex_attribute_t;
 
-typedef struct _render_vertex_decl
+typedef struct render_vertex_decl_t
 {
 	render_vertex_attribute_t         attribute[VERTEXATTRIBUTE_NUMATTRIBUTES];
 } render_vertex_decl_t;
@@ -213,27 +222,49 @@ typedef struct _render_vertex_decl
 	object_t                      vram;              \
 	uintptr_t                     backend_data[4]
 
-typedef struct _render_buffer
+#define RENDER_DECLARE_SHADER \
+	RENDER_DECLARE_OBJECT;                           \
+	int32_t                       shadertype:8;      \
+	int32_t                       unused:24;         \
+	uintptr_t                     backend_data[4]
+
+typedef struct render_buffer_t
 {
 	RENDER_DECLARE_BUFFER;
 } render_buffer_t;
 
-typedef struct _render_vertexbuffer
+typedef struct render_vertexbuffer_t
 {
 	RENDER_DECLARE_BUFFER;
 	render_vertex_decl_t          decl;
 } render_vertexbuffer_t;
 
-typedef struct _render_indexbuffer
+typedef struct render_indexbuffer_t
 {
 	RENDER_DECLARE_BUFFER;
 } render_indexbuffer_t;
+
+typedef struct render_shader_t
+{
+	RENDER_DECLARE_SHADER;
+} render_shader_t;
+
+typedef struct render_vertexshader_t
+{
+	RENDER_DECLARE_SHADER;
+} render_vertexshader_t;
+
+typedef struct render_pixelshader_t
+{
+	RENDER_DECLARE_SHADER;
+} render_pixelshader_t;
 
 // GLOBAL DATA
 
 RENDER_EXTERN bool                _render_api_disabled[];
 RENDER_EXTERN objectmap_t*        _render_map_target;
 RENDER_EXTERN objectmap_t*        _render_map_buffer;
+RENDER_EXTERN objectmap_t*        _render_map_shader;
 
 
 // INTERNAL FUNCTIONS

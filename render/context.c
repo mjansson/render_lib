@@ -30,12 +30,14 @@ render_context_t* render_context_allocate( unsigned int commands )
 
 	memory_context_push( HASH_RENDER );
 	
-	context = memory_allocate_zero( sizeof( render_context_t ), 0, MEMORY_PERSISTENT );
+	context = memory_allocate( HASH_RENDER, sizeof( render_context_t ), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED );
 	
 	context->allocated = commands;
-	context->commands  = memory_allocate( sizeof( render_command_t ) * commands, 0, MEMORY_PERSISTENT );
-	context->keys      = memory_allocate( sizeof( uint64_t ) * commands, 0, MEMORY_PERSISTENT );
+	context->commands  = memory_allocate( HASH_RENDER, sizeof( render_command_t ) * commands, 0, MEMORY_PERSISTENT );
+	context->keys      = memory_allocate( HASH_RENDER, sizeof( uint64_t ) * commands, 0, MEMORY_PERSISTENT );
 	context->sort      = radixsort_allocate( RADIXSORT_UINT64, (radixsort_index_t)commands );
+	
+	memory_context_pop();
 	
 	return context;
 }

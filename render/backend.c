@@ -21,6 +21,7 @@
 #include <render/internal.h>
 
 #include <render/null/backend.h>
+#include <render/gl4/backend.h>
 #include <render/gles2/backend.h>
 
 
@@ -115,20 +116,20 @@ render_backend_t* render_backend_allocate( render_api_t api )
 				render_deallocate( backend ), backend = 0;
 			}
 			break;
-		}
+		}*/
 
 		case RENDERAPI_OPENGL4:
 		{
-			backend = render_gl4_allocate();
+			backend = render_backend_gl4_allocate();
 			if( !backend || !backend->vtable.construct( backend ) )
 			{
 				log_info( HASH_RENDER, "Failed to initialize OpenGL 4 render backend" );
-				render_deallocate( backend ), backend = 0;
+				render_backend_deallocate( backend ), backend = 0;
 			}
 			break;
 		}
 
-		case RENDERAPI_DIRECTX10:
+		/*case RENDERAPI_DIRECTX10:
 		{
 			backend = render_dx10_allocate();
 			if( !backend || !backend->vtable.construct( backend ) )
