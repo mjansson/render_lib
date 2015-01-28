@@ -89,8 +89,6 @@
 		4513865A193A580400BA2092 = {
 			isa = PBXGroup;
 			children = (
-				45BB33571A59728200D30F3E /* OpenGL.framework */,
-				45BB33551A59726E00D30F3E /* OpenCL.framework */,
 				45138679193A73D200BA2092 /* all */,
 				451386B4193A748300BA2092 /* render */,
 				45138666193A58B300BA2092 /* bin */,
@@ -111,6 +109,8 @@
 		45138677193A73BB00BA2092 /* framework */ = {
 			isa = PBXGroup;
 			children = (
+				45BB33571A59728200D30F3E /* OpenGL.framework */,
+				45BB33551A59726E00D30F3E /* OpenCL.framework */,
 				45138682193A746000BA2092 /* Cocoa.framework */,
 				45138670193A5C2E00BA2092 /* Carbon.framework */,
 				45138672193A5C2E00BA2092 /* CoreFoundation.framework */,

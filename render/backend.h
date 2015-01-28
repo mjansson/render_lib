@@ -25,7 +25,7 @@
 #include <render/types.h>
 
 
-RENDER_API render_backend_t*     render_backend_allocate( render_api_t api );
+RENDER_API render_backend_t*     render_backend_allocate( render_api_t api, bool allow_fallback );
 RENDER_API void                  render_backend_deallocate( render_backend_t* backend );
 
 RENDER_API render_api_t          render_backend_api( render_backend_t* backend );

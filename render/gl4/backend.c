@@ -27,7 +27,7 @@
 #if RENDER_ENABLE_NVGLEXPERT
 #  include <nvapi.h>
 
-void nvoglexpert_callback( unsigned int category, unsigned int id, unsigned int detail, int object, const char* msg )
+static void nvoglexpert_callback( unsigned int category, unsigned int id, unsigned int detail, int object, const char* msg )
 {
 	warn_logf( "nVidia OpenGL Expert error: Category 0x%08x, Message 0x%08x : %s", category, id, msg );
 }
@@ -209,7 +209,7 @@ void* _rb_gl_create_context( render_drawable_t* drawable, int major, int minor, 
 		if( major >= 3 )
 		{
 			int err = GetLastError();
-			log_debugf( HASH_RENDER, "Unable to create GL context for version %d.%d: %s (%08x)", major, minor, system_error_message( err ), err );
+			log_infof( HASH_RENDER, "Unable to create GL context for version %d.%d: %s (%08x)", major, minor, system_error_message( err ), err );
 		}
 		wglMakeCurrent( 0, 0 );
 	}
@@ -326,7 +326,7 @@ failed:
 	
 	if( !supported )
 	{
-		log_warnf( HASH_RENDER, WARNING_UNSUPPORTED, "GL version %d.%d not supported, got %d.%d (%s)", major, minor, have_major, have_minor, version );
+		log_infof( HASH_RENDER, "GL version %d.%d not supported, got %d.%d (%s)", major, minor, have_major, have_minor, version );
 		goto failed;
 	}
 	
@@ -430,15 +430,17 @@ static bool _rb_gl4_set_drawable( render_backend_t* backend, render_drawable_t* 
 	NvAPI_OGL_ExpertModeSet( 20, NVAPI_OGLEXPERT_REPORT_ALL, NVAPI_OGLEXPERT_OUTPUT_TO_CALLBACK, nvoglexpert_callback );
 #endif
 
+#if BUILD_ENABLE_LOG
 	const char* vendor   = (const char*)glGetString( GL_VENDOR     );
 	const char* renderer = (const char*)glGetString( GL_RENDERER   );
 	const char* version  = (const char*)glGetString( GL_VERSION    );
 	const char* ext      = (const char*)glGetString( GL_EXTENSIONS );
 
-	log_debugf( HASH_RENDER, "Vendor:     %s", vendor ? vendor : "<unknown>" );
-	log_debugf( HASH_RENDER, "Renderer:   %s", renderer ? renderer : "<unknown>" );
-	log_debugf( HASH_RENDER, "Version:    %s", version ? version : "<unknown>" );
-	log_debugf( HASH_RENDER, "Extensions: %s", ext ? ext : "<none>" );
+	log_infof( HASH_RENDER, "Vendor:     %s", vendor ? vendor : "<unknown>" );
+	log_infof( HASH_RENDER, "Renderer:   %s", renderer ? renderer : "<unknown>" );
+	log_infof( HASH_RENDER, "Version:    %s", version ? version : "<unknown>" );
+	log_infof( HASH_RENDER, "Extensions: %s", ext ? ext : "<none>" );
+#endif
 
 #if FOUNDATION_PLATFORM_WINDOWS
 	const char* wglext = 0;

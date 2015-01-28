@@ -41,6 +41,8 @@
  //Objective-C interface
 RENDER_EXTERN void* _rb_gl_create_agl_context( void* view, unsigned int displaymask, unsigned int color, unsigned int depth, unsigned int stencil );
 RENDER_EXTERN void  _rb_gl_destroy_agl_context( void* context );
+RENDER_EXTERN void  _rb_gl_make_agl_context_current( void* context );
+RENDER_EXTERN void  _rb_gl_flush_drawable( void* context );
 
 #elif FOUNDATION_PLATFORM_LINUX
 
