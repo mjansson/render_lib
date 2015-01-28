@@ -277,6 +277,7 @@ static void* _test_render_clear( render_api_t api )
 	render_backend_flip( backend );
 	
 	//TODO: Verify framebuffer
+	thread_sleep( 2000 );
 
 	ignore_test:
 	

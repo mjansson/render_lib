@@ -43,7 +43,7 @@ typedef struct render_backend_gl2_t
 
 	void*                  context;
 	render_resolution_t    resolution;
-	
+
 	bool                   use_clear_scissor;
 } render_backend_gl2_t;
 
@@ -527,7 +527,7 @@ static void _rb_gl2_dispatch( render_backend_t* backend, render_context_t** cont
 
 static void _rb_gl2_flip( render_backend_t* backend )
 {
-	//render_backend_gl2_t* backend_gl2 = (render_backend_gl2_t*)backend;
+	render_backend_gl2_t* backend_gl2 = (render_backend_gl2_t*)backend;
 
 #if FOUNDATION_PLATFORM_WINDOWS
 
@@ -539,10 +539,13 @@ static void _rb_gl2_flip( render_backend_t* backend )
 
 #elif FOUNDATION_PLATFORM_MACOSX
 
-	/*if( _fullscreen && _context )
-		CGLFlushDrawable( _context );
-	else
-	window::objc::flushDrawable( (void*)_context );*/
+	if( backend_gl2->context )
+	{
+		/*if( backend_gl2->fullscreen )
+			CGLFlushDrawable( backend_gl2->context );
+		else*/
+			_rb_gl_flush_drawable( backend_gl2->context );
+	}
 	
 #elif FOUNDATION_PLATFORM_LINUX
 
