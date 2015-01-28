@@ -209,7 +209,7 @@ void* _rb_gl_create_context( render_drawable_t* drawable, int major, int minor, 
 		if( major >= 3 )
 		{
 			int err = GetLastError();
-			log_debugf( HASH_RENDER, "Unable to create GL context for version %d.%d: %s (%08x)", major, minor, system_error_message( err ), err );
+			log_infof( HASH_RENDER, "Unable to create GL context for version %d.%d: %s (%08x)", major, minor, system_error_message( err ), err );
 		}
 		wglMakeCurrent( 0, 0 );
 	}
@@ -326,7 +326,7 @@ failed:
 	
 	if( !supported )
 	{
-		log_warnf( HASH_RENDER, WARNING_UNSUPPORTED, "GL version %d.%d not supported, got %d.%d (%s)", major, minor, have_major, have_minor, version );
+		log_infof( HASH_RENDER, "GL version %d.%d not supported, got %d.%d (%s)", major, minor, have_major, have_minor, version );
 		goto failed;
 	}
 	

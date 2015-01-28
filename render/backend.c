@@ -73,105 +73,119 @@ render_backend_t* render_backend_allocate( render_api_t api, bool allow_fallback
 	
 	memory_context_push( HASH_RENDER );
 	
-	while( !backend ) { while( _render_api_disabled[api] ) api = render_api_fallback( api ); switch( api )
+	while( !backend )
 	{
-		case RENDERAPI_GLES2:
+		while( _render_api_disabled[api] ) api = render_api_fallback( api ); switch( api )
 		{
-			backend = render_backend_gles2_allocate();
-			if( !backend || !backend->vtable.construct( backend ) )
+			case RENDERAPI_GLES2:
 			{
-				log_info( HASH_RENDER, "Failed to initialize OpenGL ES 2 render backend" );
-				render_backend_deallocate( backend ), backend = 0;
+				backend = render_backend_gles2_allocate();
+				if( !backend || !backend->vtable.construct( backend ) )
+				{
+					log_info( HASH_RENDER, "Failed to initialize OpenGL ES 2 render backend" );
+					render_backend_deallocate( backend ), backend = 0;
+				}
+				break;
 			}
-			break;
-		}
 
-		case RENDERAPI_GLES1:
-		{
-			/*backend = render_backend_gles1_allocate();
-			if( !backend || !backend->vtable.construct( backend ) )
+			case RENDERAPI_GLES1:
 			{
-				log_info( HASH_RENDER, "Failed to initialize OpenGL ES 1 render backend" );
-				render_deallocate( backend ), backend = 0;
-			}*/
-			break;
-		}
+				/*backend = render_backend_gles1_allocate();
+				if( !backend || !backend->vtable.construct( backend ) )
+				{
+					log_info( HASH_RENDER, "Failed to initialize OpenGL ES 1 render backend" );
+					render_deallocate( backend ), backend = 0;
+				}*/
+				break;
+			}
+				
+			case RENDERAPI_OPENGL2:
+			{
+				backend = render_backend_gl2_allocate();
+				if( !backend || !backend->vtable.construct( backend ) )
+				{
+					log_info( HASH_RENDER, "Failed to initialize OpenGL 2 render backend" );
+					render_backend_deallocate( backend ), backend = 0;
+				}
+				break;
+			}
+
+			case RENDERAPI_OPENGL3:
+			{
+				/*backend = render_gl3_allocate();
+				if( !backend || !backend->vtable.construct( backend ) )
+				{
+					log_info( HASH_RENDER, "Failed to initialize OpenGL 3 render backend" );
+					render_deallocate( backend ), backend = 0;
+				}*/
+				break;
+			}
+
+			case RENDERAPI_OPENGL4:
+			{
+				backend = render_backend_gl4_allocate();
+				if( !backend || !backend->vtable.construct( backend ) )
+				{
+					log_info( HASH_RENDER, "Failed to initialize OpenGL 4 render backend" );
+					render_backend_deallocate( backend ), backend = 0;
+				}
+				break;
+			}
+
+			case RENDERAPI_DIRECTX10:
+			{
+				/*backend = render_dx10_allocate();
+				if( !backend || !backend->vtable.construct( backend ) )
+				{
+					log_info( HASH_RENDER, "Failed to initialize DirectX 10 render backend" );
+					render_deallocate( backend ), backend = 0;
+				}*/
+				break;
+			}
+
+			case RENDERAPI_DIRECTX11:
+			{
+				/*backend = render_dx11_allocate();
+				if( !backend || !backend->vtable.construct( backend ) )
+				{
+					log_info( HASH_RENDER, "Failed to initialize DirectX 11 render backend" );
+					render_deallocate( backend ), backend = 0;
+				}*/
+				break;
+			}
+
+			case RENDERAPI_NULL:
+			{
+				backend = render_backend_null_allocate();
+				backend->vtable.construct( backend );
+				break;
+			}
+
+			case RENDERAPI_UNKNOWN:
+			{
+				log_warn( HASH_RENDER, WARNING_SUSPICIOUS, "No supported and enabled render api found, giving up" );
+				return 0;
+			}
 			
-		case RENDERAPI_OPENGL2:
-		{
-			backend = render_backend_gl2_allocate();
-			if( !backend || !backend->vtable.construct( backend ) )
+			default:
 			{
-				log_info( HASH_RENDER, "Failed to initialize OpenGL 2 render backend" );
-				render_backend_deallocate( backend ), backend = 0;
+				//Try loading dynamic library
+				log_warnf( HASH_RENDER, WARNING_SUSPICIOUS, "Unknown render API (%u), dynamic library loading not implemented yet", api );
+				break;
 			}
-			break;
-		}
-	
-		case RENDERAPI_OPENGL3:
-		{
-			/*backend = render_gl3_allocate();
-			if( !backend || !backend->vtable.construct( backend ) )
-			{
-				log_info( HASH_RENDER, "Failed to initialize OpenGL 3 render backend" );
-				render_deallocate( backend ), backend = 0;
-			}*/
-			break;
-		}
+		} 
 
-		case RENDERAPI_OPENGL4:
+		if( !backend )
 		{
-			backend = render_backend_gl4_allocate();
-			if( !backend || !backend->vtable.construct( backend ) )
+			if( !allow_fallback )
 			{
-				log_info( HASH_RENDER, "Failed to initialize OpenGL 4 render backend" );
-				render_backend_deallocate( backend ), backend = 0;
+				log_warn( HASH_RENDER, WARNING_UNSUPPORTED, "Requested render api not supported" );
+				return 0;
 			}
-			break;
+			
+			api = render_api_fallback( api );
 		}
-
-		case RENDERAPI_DIRECTX10:
-		{
-			/*backend = render_dx10_allocate();
-			if( !backend || !backend->vtable.construct( backend ) )
-			{
-				log_info( HASH_RENDER, "Failed to initialize DirectX 10 render backend" );
-				render_deallocate( backend ), backend = 0;
-			}*/
-			break;
-		}
-
-		case RENDERAPI_DIRECTX11:
-		{
-			/*backend = render_dx11_allocate();
-			if( !backend || !backend->vtable.construct( backend ) )
-			{
-				log_info( HASH_RENDER, "Failed to initialize DirectX 11 render backend" );
-				render_deallocate( backend ), backend = 0;
-			}*/
-			break;
-		}
-
-		case RENDERAPI_NULL:
-		{
-			backend = render_backend_null_allocate();
-			backend->vtable.construct( backend );
-			break;
-		}
-
-		case RENDERAPI_UNKNOWN:
-		{
-			log_warn( HASH_RENDER, WARNING_SUSPICIOUS, "No supported and enabled render api found, giving up" );
-			return 0;
-		}
-		
-		default:
-		{
-			//Try loading dynamic library
-			log_warnf( HASH_RENDER, WARNING_SUSPICIOUS, "Unknown render API (%u), dynamic library loading not implemented yet", api );
-			break;
-		}
-	} if( !backend && allow_fallback ) api = render_api_fallback( api ); else return 0; }
+	}
 	
 	backend->framebuffer = render_target_create_framebuffer( backend );
 	backend->framecount = 1;

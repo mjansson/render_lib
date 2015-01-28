@@ -45,6 +45,8 @@ render_context_t* render_context_allocate( unsigned int commands )
 
 void render_context_deallocate( render_context_t* context )
 {
+	if( !context )
+		return;
 	render_target_destroy( context->target );
 	radixsort_deallocate( context->sort );
 	memory_deallocate( context->commands );
