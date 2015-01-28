@@ -74,8 +74,9 @@ DECLARE_TEST( render, initialize )
 	EXPECT_NE( window, 0 );
 	EXPECT_TRUE( window_is_open( window ) );
 	
-    render_backend_t* backend = render_backend_allocate( RENDERAPI_DEFAULT );
+    render_backend_t* backend = render_backend_allocate( RENDERAPI_DEFAULT, true );
     
+    EXPECT_NE( backend, 0 );
     
     render_backend_deallocate( backend );
     
@@ -107,7 +108,7 @@ DECLARE_TEST( render, null )
 	EXPECT_NE( window, 0 );
 	EXPECT_TRUE( window_is_open( window ) );
     
-    render_backend_t* backend = render_backend_allocate( RENDERAPI_NULL );
+    render_backend_t* backend = render_backend_allocate( RENDERAPI_NULL, false );
 
     EXPECT_EQ( render_backend_api( backend ), RENDERAPI_NULL );
     
@@ -149,6 +150,8 @@ DECLARE_TEST( render, null )
 
 DECLARE_TEST( render, gl4 )
 {
+	render_backend_t* backend = 0;
+
     render_initialize();
     
     EXPECT_TRUE( render_is_initialized() );
@@ -163,7 +166,10 @@ DECLARE_TEST( render, gl4 )
 	EXPECT_NE( window, 0 );
 	EXPECT_TRUE( window_is_open( window ) );
     
-    render_backend_t* backend = render_backend_allocate( RENDERAPI_OPENGL4 );
+    render_backend_t* backend = render_backend_allocate( RENDERAPI_OPENGL4, false );
+
+    if( !backend )
+    	goto ignore_test;
     
     EXPECT_EQ( render_backend_api( backend ), RENDERAPI_OPENGL4 );
 	
@@ -196,6 +202,8 @@ DECLARE_TEST( render, gl4 )
 	EXPECT_EQ( render_target_pixelformat( framebuffer ), PIXELFORMAT_R8G8B8X8 );
 	EXPECT_EQ( render_target_colorspace( framebuffer ), COLORSPACE_LINEAR );
 	
+	ignore_test:
+	
     render_backend_deallocate( backend );
     
 	window_deallocate( window );
@@ -206,7 +214,7 @@ DECLARE_TEST( render, gl4 )
     render_shutdown();
     
     EXPECT_FALSE( render_is_initialized() );
-	
+
 	return 0;
 }
 
@@ -222,7 +230,11 @@ DECLARE_TEST( render, gl4_clear )
 #  error Not implemented
 #endif
 	
-    render_backend_t* backend = render_backend_allocate( RENDERAPI_OPENGL4 );
+    render_backend_t* backend = render_backend_allocate( RENDERAPI_OPENGL4, false );
+
+    if( !backend )
+    	goto ignore_test;
+
 	//render_resolution_t* resolutions = render_backend_enumerate_modes( backend, WINDOW_ADAPTER_DEFAULT );
     render_drawable_t* drawable = render_drawable_allocate();
 	object_t framebuffer;
@@ -260,10 +272,12 @@ DECLARE_TEST( render, gl4_clear )
 	render_backend_flip( backend );
 	
 	//TODO: Verify framebuffer
+
+    ignore_test:
 	
 	render_context_deallocate( context );
     render_backend_deallocate( backend );
-    
+
 	window_deallocate( window );
 	window = 0;
     
@@ -300,7 +314,7 @@ DECLARE_TEST( render, gles2 )
 	EXPECT_NE( window, 0 );
 	EXPECT_TRUE( window_is_open( window ) );
     
-    render_backend_t* backend = render_backend_allocate( RENDERAPI_GLES2 );
+    render_backend_t* backend = render_backend_allocate( RENDERAPI_GLES2, false );
     
     EXPECT_EQ( render_backend_api( backend ), RENDERAPI_GLES2 );
 	
@@ -365,7 +379,7 @@ DECLARE_TEST( render, gles2_clear )
 #  error Not implemented
 #endif
 	
-    render_backend_t* backend = render_backend_allocate( RENDERAPI_GLES2 );
+    render_backend_t* backend = render_backend_allocate( RENDERAPI_GLES2, false );
 	//render_resolution_t* resolutions = render_backend_enumerate_modes( backend, WINDOW_ADAPTER_DEFAULT );
     render_drawable_t* drawable = render_drawable_allocate();
 	object_t framebuffer;

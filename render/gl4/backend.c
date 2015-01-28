@@ -27,7 +27,7 @@
 #if RENDER_ENABLE_NVGLEXPERT
 #  include <nvapi.h>
 
-void nvoglexpert_callback( unsigned int category, unsigned int id, unsigned int detail, int object, const char* msg )
+static void nvoglexpert_callback( unsigned int category, unsigned int id, unsigned int detail, int object, const char* msg )
 {
 	warn_logf( "nVidia OpenGL Expert error: Category 0x%08x, Message 0x%08x : %s", category, id, msg );
 }
