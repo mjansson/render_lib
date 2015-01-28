@@ -101,15 +101,17 @@ static bool _rb_gl2_set_drawable( render_backend_t* backend, render_drawable_t* 
 	NvAPI_OGL_ExpertModeSet( 20, NVAPI_OGLEXPERT_REPORT_ALL, NVAPI_OGLEXPERT_OUTPUT_TO_CALLBACK, nvoglexpert_callback );
 #endif
 
+#if BUILD_ENABLE_LOG
 	const char* vendor   = (const char*)glGetString( GL_VENDOR     );
 	const char* renderer = (const char*)glGetString( GL_RENDERER   );
 	const char* version  = (const char*)glGetString( GL_VERSION    );
 	const char* ext      = (const char*)glGetString( GL_EXTENSIONS );
 
-	log_debugf( HASH_RENDER, "Vendor:     %s", vendor ? vendor : "<unknown>" );
-	log_debugf( HASH_RENDER, "Renderer:   %s", renderer ? renderer : "<unknown>" );
-	log_debugf( HASH_RENDER, "Version:    %s", version ? version : "<unknown>" );
-	log_debugf( HASH_RENDER, "Extensions: %s", ext ? ext : "<none>" );
+	log_infof( HASH_RENDER, "Vendor:     %s", vendor ? vendor : "<unknown>" );
+	log_infof( HASH_RENDER, "Renderer:   %s", renderer ? renderer : "<unknown>" );
+	log_infof( HASH_RENDER, "Version:    %s", version ? version : "<unknown>" );
+	log_infof( HASH_RENDER, "Extensions: %s", ext ? ext : "<none>" );
+#endif
 
 #if FOUNDATION_PLATFORM_WINDOWS
 	const char* wglext = 0;
