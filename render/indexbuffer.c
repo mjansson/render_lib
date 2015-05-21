@@ -35,7 +35,7 @@ object_t render_indexbuffer_create( render_backend_t* backend, render_usage_t us
 	}
 
 	memory_context_push( HASH_RENDER );
-	
+
 	render_indexbuffer_t* buffer = memory_allocate( HASH_RENDER, sizeof( render_indexbuffer_t ), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED );
 	buffer->id         = id;
 	buffer->backend    = backend;
@@ -45,7 +45,7 @@ object_t render_indexbuffer_create( render_backend_t* backend, render_usage_t us
 	buffer->size       = 2;
 	atomic_store32( &buffer->ref, 1 );
 	objectmap_set( _render_map_buffer, id, buffer );
-	
+
 	if( indices )
 	{
 		buffer->allocated = indices;
@@ -57,15 +57,16 @@ object_t render_indexbuffer_create( render_backend_t* backend, render_usage_t us
 			buffer->flags |= RENDERBUFFER_DIRTY;
 		}
 	}
-	
+
 	memory_context_pop();
-	
+
 	return buffer->id;
 }
 
 
 object_t render_indexbuffer_load( const uuid_t uuid )
 {
+	FOUNDATION_UNUSED( uuid );
 	return 0;
 }
 
@@ -227,12 +228,12 @@ void render_indexbuffer_restore( object_t id )
 	if( buffer )
 	{
 		buffer->backend->vtable.allocate_buffer( buffer->backend, (render_buffer_t*)buffer );
-		
+
 		//...
 		//All loadable resources should have a stream identifier, an offset and a size
 		//to be able to repoen the stream and read the raw buffer back
 		//...
-		
+
 		buffer->flags |= RENDERBUFFER_DIRTY;
 	}
 }

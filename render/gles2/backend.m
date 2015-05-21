@@ -40,14 +40,14 @@ const void* _rb_gles2_ios_create_egl_context( void )
 		log_warn( HASH_RENDER, WARNING_UNSUPPORTED, "Unable to allocate GLES2 EAGL context" );
 		return 0;
 	}
-	
+
 	[EAGLContext setCurrentContext:context];
-	
+
 	unsigned int major, minor;
 	EAGLGetVersion( &major, &minor);
-	
+
 	log_debugf( HASH_RENDER, "Initialized GLES2 EAGL context %p version %d.%d", context, major, minor );
-	
+
 	return CFBridgingRetain(context);
 }
 
@@ -81,17 +81,17 @@ bool _rb_gles2_ios_render_buffer_storage_from_drawable( const void* context, con
 {
 	EAGLContext* eagl_context = (__bridge EAGLContext*)context;
 	CAEAGLLayer* layer = (__bridge CAEAGLLayer*)drawable;
-	
+
 	[EAGLContext setCurrentContext:eagl_context];
-	
+
 	glBindRenderbuffer( GL_RENDERBUFFER, colorbuffer );
-	
+
 	if( ![eagl_context renderbufferStorage:GL_RENDERBUFFER fromDrawable:layer] )
 	{
 		log_errorf( HASH_RENDER, ERROR_OUT_OF_MEMORY, "Unable to allocate render buffer storage" );
 		return false;
 	}
-	
+
 	int backing_width = 0, backing_height = 0;
 	glGetRenderbufferParameteriv( GL_RENDERBUFFER, GL_RENDERBUFFER_WIDTH, &backing_width );
     glGetRenderbufferParameteriv( GL_RENDERBUFFER, GL_RENDERBUFFER_HEIGHT, &backing_height );
@@ -106,7 +106,7 @@ void _rb_gles2_ios_present_render_buffer( const void* context )
 	EAGLContext* eagl_context = (__bridge EAGLContext*)context;
 
 	[EAGLContext setCurrentContext:eagl_context];
-	
+
 	if( ![eagl_context presentRenderbuffer:GL_RENDERBUFFER] )
 		log_warnf( HASH_RENDER, WARNING_SUSPICIOUS, "Failed presentRenderbuffer" );
 }

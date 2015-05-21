@@ -207,14 +207,13 @@ typedef struct render_vertex_decl_t
 } render_vertex_decl_t;
 
 #define RENDER_DECLARE_BUFFER \
-	RENDER_DECLARE_OBJECT;	                         \
+	RENDER_DECLARE_OBJECT;                           \
 	uint8_t                       usage;             \
-	uint8_t                       buffertype;		 \
-	uint8_t                       policy;			 \
+	uint8_t                       buffertype;        \
+	uint8_t                       policy;            \
 	uint8_t                       __unused_buffer_0; \
-	unsigned int                  bufferflags;       \
 	atomic32_t                    locks;             \
-	unsigned int                  allocated;		 \
+	unsigned int                  allocated;         \
 	unsigned int                  used;              \
 	unsigned int                  size;              \
 	void*                         store;             \

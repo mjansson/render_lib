@@ -30,7 +30,7 @@ object_t render_vertexbuffer_create( render_backend_t* backend, render_usage_t u
 	object_t id = objectmap_reserve( _render_map_buffer );
 	if( !id )
 	{
-		log_errorf( HASH_RENDER, ERROR_OUT_OF_MEMORY, "Unable to create vertex buffer, out of slots in object map" );
+		log_errorf( HASH_RENDER, ERROR_OUT_OF_MEMORY, "Unable to allocate vertex buffer, out of slots in object map" );
 		return 0;
 	}
 
@@ -60,14 +60,8 @@ object_t render_vertexbuffer_create( render_backend_t* backend, render_usage_t u
 	}
 	
 	memory_context_pop();
-	
-	return buffer->id;
-}
 
-
-object_t render_vertexbuffer_load( const uuid_t uuid )
-{
-	return 0;
+	return id;
 }
 
 
