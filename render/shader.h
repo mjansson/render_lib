@@ -24,18 +24,26 @@
 
 #include <render/types.h>
 
+RENDER_API object_t
+render_pixelshader_create(render_backend_t* backend);
 
-RENDER_API object_t                        render_pixelshader_create( render_backend_t* backend );
-RENDER_API object_t                        render_vertexshader_create( render_backend_t* backend );
+RENDER_API object_t
+render_vertexshader_create(render_backend_t* backend);
 
-RENDER_API object_t                        render_shader_load( const uuid_t uuid );
-RENDER_API void                            render_shader_ref( object_t shader );
+RENDER_API object_t
+render_shader_load(const uuid_t uuid);
 
-RENDER_API void                            render_shader_destroy( object_t shader );
+RENDER_API void
+render_shader_ref(object_t shader);
 
-RENDER_API void                            render_shader_upload( object_t shader, const void* buffer, unsigned int size );
+RENDER_API void
+render_shader_destroy(object_t shader);
 
-RENDER_API uuid_t                          render_shader_uuid( object_t shader );
-RENDER_API void                            render_shader_set_uuid( object_t shader, const uuid_t uuid );
+RENDER_API void
+render_shader_upload(object_t shader, const void* buffer, size_t size);
 
-#endif
+RENDER_API uuid_t
+render_shader_uuid(object_t shader);
+
+RENDER_API void
+render_shader_set_uuid(object_t shader, const uuid_t uuid);

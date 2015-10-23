@@ -24,8 +24,15 @@
 
 #include <render/types.h>
 
+RENDER_API void
+render_sort_merge(render_context_t** contexts, size_t num_contexts);
 
-RENDER_API void             render_sort_merge( render_context_t** contexts, unsigned int num_contexts );
-RENDER_API void             render_sort_reset( render_context_t* context );
-RENDER_API uint64_t         render_sort_sequential_key( render_context_t* context );
-RENDER_API uint64_t         render_sort_render_key( render_context_t* context, uint64_t vertexbuffer, uint64_t indexbuffer, uint64_t blend_state );
+RENDER_API void
+render_sort_reset(render_context_t* context);
+
+RENDER_API uint64_t
+render_sort_sequential_key(render_context_t* context);
+
+RENDER_API uint64_t
+render_sort_render_key(render_context_t* context, object_t vertexbuffer, object_t indexbuffer,
+                       object_t blend_state);

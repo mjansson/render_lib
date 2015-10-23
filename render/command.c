@@ -21,21 +21,19 @@
 #include <render/render.h>
 #include <render/internal.h>
 
-
-render_command_t* render_command_allocate( void )
-{
-	return memory_allocate( HASH_RENDER, sizeof( render_command_t ), 0, MEMORY_PERSISTENT );
+render_command_t*
+render_command_allocate(void) {
+	return memory_allocate(HASH_RENDER, sizeof(render_command_t), 0, MEMORY_PERSISTENT);
 }
 
-
-void render_command_null( render_command_t* command )
-{
+void
+render_command_null(render_command_t* command) {
 	command->type = RENDERCOMMAND_INVALID;
 }
 
-
-void render_command_clear( render_command_t* command, unsigned int buffer_mask, uint32_t color, unsigned int color_mask, uint32_t depth, uint32_t stencil )
-{
+void
+render_command_clear(render_command_t* command, unsigned int buffer_mask, uint32_t color,
+                     unsigned int color_mask, uint32_t depth, uint32_t stencil) {
 	command->type                   = RENDERCOMMAND_CLEAR;
 	command->data.clear.buffer_mask = buffer_mask;
 	command->data.clear.color       = color;
@@ -44,9 +42,9 @@ void render_command_clear( render_command_t* command, unsigned int buffer_mask, 
 	command->data.clear.stencil     = stencil;
 }
 
-
-void render_command_viewport( render_command_t* command, unsigned int x, unsigned int y, unsigned int width, unsigned int height, real min_z, real max_z )
-{
+void
+render_command_viewport(render_command_t* command, unsigned int x, unsigned int y,
+                        unsigned int width, unsigned int height, real min_z, real max_z) {
 	command->type                   = RENDERCOMMAND_VIEWPORT;
 	command->data.viewport.x        = (uint16_t)x;
 	command->data.viewport.y        = (uint16_t)y;
@@ -56,9 +54,10 @@ void render_command_viewport( render_command_t* command, unsigned int x, unsigne
 	command->data.viewport.max_z    = max_z;
 }
 
-
-void render_command_render( render_command_t* command, render_primitive_t type, uint16_t num, object_t vertexshader, object_t pixelshader, object_t vertexbuffer, object_t indexbuffer, object_t parameter_block, uint64_t blend_state )
-{
+void
+render_command_render(render_command_t* command, render_primitive_t type, uint16_t num,
+                      object_t vertexshader, object_t pixelshader, object_t vertexbuffer, object_t indexbuffer,
+                      object_t parameter_block, uint64_t blend_state) {
 	command->type                         = RENDERCOMMAND_RENDER_TRIANGLELIST + type;
 	command->count                        = num;
 	command->data.render.vertexshader     = vertexshader;
@@ -67,7 +66,7 @@ void render_command_render( render_command_t* command, render_primitive_t type, 
 	command->data.render.indexbuffer      = indexbuffer;
 	command->data.render.parameterblock   = parameter_block;
 	command->data.render.blend_state      = blend_state;
-	
+
 #if FOUNDATION_BUILD_DEBUG
 	/*void* vbuffer = pool_lookup( _global_pool_renderbuffer, vertexbuffer );
 	void* ibuffer  = pool_lookup( _global_pool_renderbuffer, indexbuffer );

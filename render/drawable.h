@@ -24,21 +24,32 @@
 
 #include <render/types.h>
 
+RENDER_API render_drawable_t*
+render_drawable_allocate();
 
-RENDER_API render_drawable_t*        render_drawable_allocate();
-RENDER_API void                      render_drawable_deallocate( render_drawable_t* drawable );
+RENDER_API void
+render_drawable_deallocate(render_drawable_t* drawable);
 
 #if FOUNDATION_PLATFORM_IOS
-RENDER_API void                      render_drawable_set_window( render_drawable_t* drawable, window_t* window, int tag );
+RENDER_API void
+render_drawable_set_window(render_drawable_t* drawable, window_t* window, int tag);
 #else
-RENDER_API void                      render_drawable_set_window( render_drawable_t* drawable, window_t* window );
+RENDER_API void
+render_drawable_set_window(render_drawable_t* drawable, window_t* window);
 #endif
 
-RENDER_API void                      render_drawable_set_offscreen( render_drawable_t* drawable, object_t buffer );
-RENDER_API void                      render_drawable_set_fullscreen( render_drawable_t* drawable, unsigned int adapter, unsigned int width, unsigned int height, unsigned int refresh );
+RENDER_API void
+render_drawable_set_offscreen(render_drawable_t* drawable, object_t buffer);
 
-RENDER_API render_drawable_type_t    render_drawable_type( render_drawable_t* drawable );
+RENDER_API void
+render_drawable_set_fullscreen(render_drawable_t* drawable, unsigned int adapter,
+                               unsigned int width, unsigned int height, unsigned int refresh);
 
-RENDER_API unsigned int              render_drawable_width( render_drawable_t* drawable );
-RENDER_API unsigned int              render_drawable_height( render_drawable_t* drawable );
+RENDER_API render_drawable_type_t
+render_drawable_type(render_drawable_t* drawable);
 
+RENDER_API unsigned int
+render_drawable_width(render_drawable_t* drawable);
+
+RENDER_API unsigned int
+render_drawable_height(render_drawable_t* drawable);

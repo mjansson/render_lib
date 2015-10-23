@@ -20,128 +20,115 @@
 #include <render/render.h>
 #include <render/internal.h>
 
-
 objectmap_t* _render_map_target = 0;
 
-
-int render_target_initialize( void )
-{
-	memory_context_push( HASH_RENDER );
-	_render_map_target = objectmap_allocate( BUILD_SIZE_RENDER_TARGET_MAP );
+int
+render_target_initialize(void) {
+	memory_context_push(HASH_RENDER);
+	_render_map_target = objectmap_allocate(BUILD_SIZE_RENDER_TARGET_MAP);
 	memory_context_pop();
 	return 0;
 }
 
-
-void render_target_shutdown( void )
-{
-	objectmap_deallocate( _render_map_target );
+void
+render_target_finalize(void) {
+	objectmap_deallocate(_render_map_target);
 	_render_map_target = 0;
 }
 
-
-object_t render_target_create( render_backend_t* backend )
-{
+object_t
+render_target_create(render_backend_t* backend) {
 	render_target_t* target;
 	object_t id;
-	
-	memory_context_push( HASH_RENDER );
 
-	id = objectmap_reserve( _render_map_target );
-	if( !id )
-	{
-		log_errorf( HASH_RENDER, ERROR_OUT_OF_MEMORY, "Unable to create render target, out of slots in object map" );
+	memory_context_push(HASH_RENDER);
+
+	id = objectmap_reserve(_render_map_target);
+	if (!id) {
+		log_error(HASH_RENDER, ERROR_OUT_OF_MEMORY,
+		          STRING_CONST("Unable to create render target, out of slots in object map"));
 		return 0;
 	}
-	
-	target = memory_allocate( HASH_RENDER, sizeof( render_target_t ), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED );
+
+	target = memory_allocate(HASH_RENDER, sizeof(render_target_t), 0,
+	                         MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 	target->id = id;
 	target->backend = backend;
-	atomic_store32( &target->ref, 1 );
-	
-	objectmap_set( _render_map_target, id, target );
-	
+	atomic_store32(&target->ref, 1);
+
+	objectmap_set(_render_map_target, id, target);
+
 	return id;
 }
 
-
-object_t render_target_create_framebuffer( render_backend_t* backend )
-{
-	return render_target_create( backend );
+object_t
+render_target_create_framebuffer(render_backend_t* backend) {
+	return render_target_create(backend);
 }
 
-
-object_t render_target_ref( object_t id )
-{
+object_t
+render_target_ref(object_t id) {
 	int32_t ref;
-	render_target_t* target = objectmap_lookup( _render_map_target, id );
-	if( target ) do
-	{
-		ref = atomic_load32( &target->ref );
-		if( ( ref > 0 ) && atomic_cas32( &target->ref, ref + 1, ref ) )
-			return id;
-	} while( ref > 0 );
+	render_target_t* target = objectmap_lookup(_render_map_target, id);
+	if (target) do {
+			ref = atomic_load32(&target->ref);
+			if ((ref > 0) && atomic_cas32(&target->ref, ref + 1, ref))
+				return id;
+		}
+		while (ref > 0);
 	return 0;
 }
 
-
-void render_target_destroy( object_t id )
-{
+void
+render_target_destroy(object_t id) {
 	int32_t ref;
-	render_target_t* target = objectmap_lookup( _render_map_target, id );
-	if( target ) do
-	{
-		ref = atomic_load32( &target->ref );
-		if( ( ref > 0 ) && atomic_cas32( &target->ref, ref - 1, ref ) )
-		{
-			if( ref == 1 )
-			{
-				objectmap_free( _render_map_target, id );
-				memory_deallocate( target );
+	render_target_t* target = objectmap_lookup(_render_map_target, id);
+	if (target) do {
+			ref = atomic_load32(&target->ref);
+			if ((ref > 0) && atomic_cas32(&target->ref, ref - 1, ref)) {
+				if (ref == 1) {
+					objectmap_free(_render_map_target, id);
+					memory_deallocate(target);
+				}
+				return;
 			}
-			return;
 		}
-	} while( ref > 0 );
+		while (ref > 0);
 }
 
-
-render_target_t* render_target_lookup( object_t id )
-{
-	return objectmap_lookup( _render_map_target, id );
+render_target_t*
+render_target_lookup(object_t id) {
+	return objectmap_lookup(_render_map_target, id);
 }
 
-
-unsigned int render_target_width( object_t id )
-{
-	render_target_t* target = objectmap_lookup( _render_map_target, id );
-	if( !target )
+int
+render_target_width(object_t id) {
+	render_target_t* target = objectmap_lookup(_render_map_target, id);
+	if (!target)
 		return 0;
 	return target->width;
 }
 
-
-unsigned int render_target_height( object_t id )
-{
-	render_target_t* target = objectmap_lookup( _render_map_target, id );
-	if( !target )
+int
+render_target_height(object_t id) {
+	render_target_t* target = objectmap_lookup(_render_map_target, id);
+	if (!target)
 		return 0;
 	return target->height;
 }
 
-
-pixelformat_t render_target_pixelformat( object_t id )
-{
-	render_target_t* target = objectmap_lookup( _render_map_target, id );
-	if( !target )
+pixelformat_t
+render_target_pixelformat(object_t id) {
+	render_target_t* target = objectmap_lookup(_render_map_target, id);
+	if (!target)
 		return PIXELFORMAT_INVALID;
 	return target->pixelformat;
 }
 
-
-colorspace_t render_target_colorspace( object_t id )
-{
-	render_target_t* target = objectmap_lookup( _render_map_target, id );
-	if( !target )
+colorspace_t
+render_target_colorspace(object_t id) {
+	render_target_t* target = objectmap_lookup(_render_map_target, id);
+	if (!target)
 		return COLORSPACE_INVALID;
 	return target->colorspace;
 }

@@ -24,28 +24,60 @@
 
 #include <render/types.h>
 
+RENDER_API object_t
+render_indexbuffer_create(render_backend_t* backend, render_usage_t type, size_t indices,
+                          const uint16_t* data);
 
-RENDER_API object_t                        render_indexbuffer_create( render_backend_t* backend, render_usage_t type, unsigned int indices, const uint16_t* data );
-RENDER_API object_t                        render_indexbuffer_load( const uuid_t uuid );
-RENDER_API object_t                        render_indexbuffer_ref( object_t buffer );
-RENDER_API void                            render_indexbuffer_destroy( object_t buffer );
+RENDER_API object_t
+render_indexbuffer_load(const uuid_t uuid);
 
-RENDER_API render_usage_t                  render_indexbuffer_usage( object_t buffer );
-RENDER_API unsigned int                    render_indexbuffer_num_allocated( object_t buffer );
-RENDER_API unsigned int                    render_indexbuffer_num_elements( object_t buffer );
-RENDER_API void                            render_indexbuffer_set_num_elements( object_t buffer, unsigned int num );
+RENDER_API object_t
+render_indexbuffer_ref(object_t buffer);
 
-RENDER_API void                            render_indexbuffer_lock( object_t buffer, unsigned int lock );
-RENDER_API void                            render_indexbuffer_unlock( object_t buffer );
+RENDER_API void
+render_indexbuffer_destroy(object_t buffer);
 
-RENDER_API render_buffer_uploadpolicy_t    render_indexbuffer_upload_policy( object_t buffer );
-RENDER_API void                            render_indexbuffer_set_upload_policy( object_t buffer, render_buffer_uploadpolicy_t policy );
-RENDER_API void                            render_indexbuffer_upload( object_t buffer );
+RENDER_API render_usage_t
+render_indexbuffer_usage(object_t buffer);
 
-RENDER_API uint16_t*                       render_indexbuffer_element( object_t buffer, unsigned int element );
+RENDER_API size_t
+render_indexbuffer_num_allocated(object_t buffer);
 
-RENDER_API void                            render_indexbuffer_release( object_t buffer, bool sys, bool aux );
-RENDER_API void                            render_indexbuffer_restore( object_t buffer );
+RENDER_API size_t
+render_indexbuffer_num_elements(object_t buffer);
 
-RENDER_API uuid_t                          render_indexbuffer_uuid( object_t buffer );
-RENDER_API void                            render_indexbuffer_set_uuid( object_t buffer, const uuid_t uuid );
+RENDER_API void
+render_indexbuffer_set_num_elements(object_t buffer, size_t num);
+
+RENDER_API void
+render_indexbuffer_lock(object_t buffer, unsigned int lock);
+
+RENDER_API void
+render_indexbuffer_unlock(object_t buffer);
+
+RENDER_API render_buffer_uploadpolicy_t
+render_indexbuffer_upload_policy(object_t buffer);
+
+RENDER_API void
+render_indexbuffer_set_upload_policy(object_t buffer, render_buffer_uploadpolicy_t policy);
+
+RENDER_API void
+render_indexbuffer_upload(object_t buffer);
+
+RENDER_API uint16_t*
+render_indexbuffer_element(object_t buffer, size_t element);
+
+RENDER_API size_t
+render_indexbuffer_element_size(object_t buffer)
+
+RENDER_API void
+render_indexbuffer_release(object_t buffer, bool sys, bool aux);
+
+RENDER_API void
+render_indexbuffer_restore(object_t buffer);
+
+RENDER_API uuid_t
+render_indexbuffer_uuid(object_t buffer);
+
+RENDER_API void
+render_indexbuffer_set_uuid(object_t buffer, const uuid_t uuid);

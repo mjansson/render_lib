@@ -22,7 +22,6 @@
 
 #include <foundation/platform.h>
 
-
 #if defined( RENDER_COMPILE ) && RENDER_COMPILE
 #  ifdef __cplusplus
 #  define RENDER_EXTERN extern "C"
@@ -41,9 +40,7 @@
 #  endif
 #endif
 
-
 #define RENDER_ENABLE_NVGLEXPERT                     0
-
 
 // Allocation sizes
 

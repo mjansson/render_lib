@@ -30,7 +30,6 @@
 #include <render/types.h>
 #include <render/hashstrings.h>
 
-
 typedef bool                                   (* render_backend_construct_fn)( render_backend_t* );
 typedef void                                   (* render_backend_destruct_fn)( render_backend_t* );
 typedef unsigned int*                          (* render_backend_enumerate_adapters_fn)( render_backend_t* );

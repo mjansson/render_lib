@@ -24,13 +24,24 @@
 
 #include <render/types.h>
 
+RENDER_API object_t
+render_target_create(render_backend_t* backend);
 
-RENDER_API object_t              render_target_create( render_backend_t* backend );
-RENDER_API object_t              render_target_ref( object_t target );
-RENDER_API void                  render_target_destroy( object_t target );
+RENDER_API object_t
+render_target_ref(object_t target);
 
-RENDER_API unsigned int          render_target_width( object_t target );
-RENDER_API unsigned int          render_target_height( object_t target );
-RENDER_API pixelformat_t         render_target_pixelformat( object_t target );
-RENDER_API colorspace_t          render_target_colorspace( object_t target );
+RENDER_API void
+render_target_destroy(object_t target);
+
+RENDER_API int
+render_target_width(object_t target);
+
+RENDER_API int
+render_target_height(object_t target);
+
+RENDER_API pixelformat_t
+render_target_pixelformat(object_t target);
+
+RENDER_API colorspace_t
+render_target_colorspace(object_t target);
 
