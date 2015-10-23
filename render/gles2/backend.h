@@ -23,5 +23,5 @@
 #include <foundation/platform.h>
 #include <render/types.h>
 
-
-FOUNDATION_API render_backend_t*  render_backend_gles2_allocate( void );
+RENDER_API render_backend_t*
+render_backend_gles2_allocate(void);

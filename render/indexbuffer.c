@@ -24,7 +24,7 @@
 #define GET_BUFFER( id ) objectmap_lookup( _render_map_buffer, (id) )
 
 object_t
-render_indexbuffer_create(render_backend_t* backend, render_usage_t usage, unsigned int indices,
+render_indexbuffer_create(render_backend_t* backend, render_usage_t usage, size_t indices,
                           const uint16_t* data) {
 	object_t id = objectmap_reserve(_render_map_buffer);
 	if (!id) {
@@ -47,7 +47,7 @@ render_indexbuffer_create(render_backend_t* backend, render_usage_t usage, unsig
 	objectmap_set(_render_map_buffer, id, buffer);
 
 	if (indices) {
-		buffer->allocated = indices;
+		buffer->allocated = (int32_t)indices;
 		buffer->used = indices;
 		buffer->store = backend->vtable.allocate_buffer(backend, (render_buffer_t*)buffer);
 		if (data) {

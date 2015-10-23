@@ -23,5 +23,5 @@ OpenGL 4 render backend */
 #include <foundation/platform.h>
 #include <render/types.h>
 
-
-FOUNDATION_API render_backend_t*  render_backend_gl4_allocate( void );
+RENDER_API render_backend_t*
+render_backend_gl4_allocate(void);

@@ -68,7 +68,7 @@ RENDER_API uint16_t*
 render_indexbuffer_element(object_t buffer, size_t element);
 
 RENDER_API size_t
-render_indexbuffer_element_size(object_t buffer)
+render_indexbuffer_element_size(object_t buffer);
 
 RENDER_API void
 render_indexbuffer_release(object_t buffer, bool sys, bool aux);

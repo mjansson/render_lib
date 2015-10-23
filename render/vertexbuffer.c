@@ -179,7 +179,7 @@ render_verexbuffer_upload(object_t id) {
 }
 
 void*
-render_vertexbuffer_element(object_t id, unsigned int element) {
+render_vertexbuffer_element(object_t id, size_t element) {
 	render_vertexbuffer_t* buffer = GET_BUFFER(id);
 	return pointer_offset(buffer->access, buffer->size * element);
 }
@@ -257,11 +257,11 @@ render_vertex_decl_allocate_buffer(size_t num_elements, render_vertex_decl_eleme
 	if (num_elements > VERTEXATTRIBUTE_NUMATTRIBUTES)
 		num_elements = VERTEXATTRIBUTE_NUMATTRIBUTES;
 
-	uint16_t offset = 0;
+	size_t offset = 0;
 	for (unsigned int i = 0; i < num_elements; ++i) {
 		decl->attribute[elements[i].attribute].format = elements[i].format;
 		decl->attribute[elements[i].attribute].binding = 0;
-		decl->attribute[elements[i].attribute].offset = offset;
+		decl->attribute[elements[i].attribute].offset = (uint16_t)offset;
 
 		offset += _vertex_format_size[ elements[i].format ];
 	}
@@ -277,7 +277,7 @@ render_vertex_decl_allocate(render_vertex_format_t format, render_vertex_attribu
 	for (int i = 0; i < VERTEXATTRIBUTE_NUMATTRIBUTES; ++i)
 		decl->attribute[i].format = VERTEXFORMAT_UNKNOWN;
 
-	uint16_t offset = 0;
+	size_t offset = 0;
 
 	va_list list;
 	va_start(list, attribute);
@@ -286,7 +286,7 @@ render_vertex_decl_allocate(render_vertex_format_t format, render_vertex_attribu
 		if (attribute < VERTEXATTRIBUTE_NUMATTRIBUTES) {
 			decl->attribute[attribute].format = format;
 			decl->attribute[attribute].binding = 0;
-			decl->attribute[attribute].offset = offset;
+			decl->attribute[attribute].offset = (uint16_t)offset;
 
 			offset += _vertex_format_size[ format ];
 		}

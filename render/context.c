@@ -31,7 +31,7 @@ render_context_allocate(size_t commands) {
 	context = memory_allocate(HASH_RENDER, sizeof(render_context_t), 0,
 	                          MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 
-	context->allocated = commands;
+	context->allocated = (int32_t)commands;
 	context->commands  = memory_allocate(HASH_RENDER, sizeof(render_command_t) * commands, 0,
 	                                     MEMORY_PERSISTENT);
 	context->keys      = memory_allocate(HASH_RENDER, sizeof(uint64_t) * commands, 0,

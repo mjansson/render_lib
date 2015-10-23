@@ -104,19 +104,37 @@ extern PFNGLVERTEXATTRIBPOINTERPROC          glVertexAttribPointer;
 
 #endif
 
-typedef void (*glfn)( void );
+typedef void (*glfn)(void);
 
-RENDER_EXTERN glfn  _rb_gl_get_proc_address( const char* name );
+RENDER_EXTERN glfn
+_rb_gl_get_proc_address(const char* name);
 
-RENDER_EXTERN bool  _rb_gl_get_texture_procs( void );
-RENDER_EXTERN bool  _rb_gl_get_query_procs( void );
-RENDER_EXTERN bool  _rb_gl_get_buffer_procs( void );
-RENDER_EXTERN bool  _rb_gl_get_shader_procs( void );
+RENDER_EXTERN bool
+_rb_gl_get_texture_procs(void);
 
-RENDER_EXTERN bool  _rb_gl_get_standard_procs( int major, int minor );
+RENDER_EXTERN bool
+_rb_gl_get_query_procs(void);
 
-RENDER_EXTERN bool  _rb_gl_check_error( const char* message );
-RENDER_EXTERN bool  _rb_gl_check_context( int major, int minor );
-RENDER_EXTERN bool  _rb_gl_check_extension( const char* name );
-RENDER_EXTERN void* _rb_gl_create_context( render_drawable_t* drawable, int major, int minor, void* share_context );
-RENDER_EXTERN void  _rb_gl_destroy_context( render_drawable_t* drawable, void* context );
+RENDER_EXTERN bool
+_rb_gl_get_buffer_procs(void);
+
+RENDER_EXTERN bool
+_rb_gl_get_shader_procs(void);
+
+RENDER_EXTERN bool
+_rb_gl_get_standard_procs(int major, int minor);
+
+RENDER_EXTERN bool
+_rb_gl_check_error(const char* message);
+
+RENDER_EXTERN bool
+_rb_gl_check_context(int major, int minor);
+
+RENDER_EXTERN bool
+_rb_gl_check_extension(const char* name);
+
+RENDER_EXTERN void*
+_rb_gl_create_context(render_drawable_t* drawable, int major, int minor, void* share_context);
+
+RENDER_EXTERN void
+_rb_gl_destroy_context(render_drawable_t* drawable, void* context);

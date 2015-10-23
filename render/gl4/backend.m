@@ -28,9 +28,9 @@
 #import <AppKit/NSOpenGL.h>
 #import <OpenGL/OpenGL.h>
 
-
-void* _rb_gl_create_agl_context( void* view, unsigned int displaymask, unsigned int color, unsigned int depth, unsigned int stencil, void** pixelformat )
-{
+void*
+_rb_gl_create_agl_context(void* view, unsigned int displaymask, unsigned int color,
+                          unsigned int depth, unsigned int stencil, void** pixelformat) {
 	NSView* nsview = (__bridge NSView*)view;
 
 	NSOpenGLPixelFormatAttribute attribs[] = {
@@ -39,57 +39,56 @@ void* _rb_gl_create_agl_context( void* view, unsigned int displaymask, unsigned 
 		NSOpenGLPFAMinimumPolicy,
 		NSOpenGLPFAWindow,
 		NSOpenGLPFANoRecovery,
-		NSOpenGLPFAColorSize,       ( color > 16 ) ? color : 16,
-		NSOpenGLPFADepthSize,       ( depth > 15 ) ? depth : 15,
+		NSOpenGLPFAColorSize, (color > 16) ? color : 16,
+		NSOpenGLPFADepthSize, (depth > 15) ? depth : 15,
 		NSOpenGLPFAStencilSize,     stencil,
-		0 };
-	
-	if( !stencil )
+		0
+	};
+
+	if (!stencil)
 		attribs[ 10 ] = attribs[ 11 ] = 0;
-	
+
 	NSOpenGLPixelFormat* format = [[NSOpenGLPixelFormat alloc] initWithAttributes:attribs];
-	if( !format )
+	if (!format)
 		return 0;
-	
+
 	NSOpenGLContext* context = [[NSOpenGLContext alloc] initWithFormat:format shareContext:nil];
-	if( view )
+	if (view)
 		[context setView:nsview];
 	[context makeCurrentContext];
-		
+
 	//void* context_cgl = [context CGLContextObj];
-	//*pixelformat = [format CGLPixelFormatObj]; 
-	
-	log_infof( HASH_RENDER, "Created gl context %p for view %p", context, view );
-	
+	//*pixelformat = [format CGLPixelFormatObj];
+
+	log_infof(HASH_RENDER, STRING_CONST("Created gl context %" PRIfixPTR " for view %" PRIfixPTR),
+	          context, view);
+
 	return (__bridge_retained void*)context;
 }
 
-
-void _rb_gl_make_agl_context_current( void* context )
-{
-	if( !context )
+void
+_rb_gl_make_agl_context_current(void* context) {
+	if (!context)
 		[NSOpenGLContext clearCurrentContext];
 	else
 		[(__bridge NSOpenGLContext*)context makeCurrentContext];
 }
 
-
-void _rb_gl_destroy_agl_context( void* context )
-{
-	if( !context )
+void
+_rb_gl_destroy_agl_context(void* context) {
+	if (!context)
 		return;
-	
+
 	NSOpenGLContext* last_context = (__bridge_transfer NSOpenGLContext*)context;
 	NSOpenGLContext* current_context = [NSOpenGLContext currentContext];
-	if( current_context == last_context )
+	if (current_context == last_context)
 		[NSOpenGLContext clearCurrentContext];
 	[last_context clearDrawable];
 }
 
-
-void _rb_gl_flush_drawable( void* context )
-{
-	if( context )
+void
+_rb_gl_flush_drawable(void* context) {
+	if (context)
 		[(__bridge NSOpenGLContext*)context flushBuffer];
 }
 

@@ -23,5 +23,5 @@
 #include <foundation/platform.h>
 #include <render/types.h>
 
-FOUNDATION_API render_backend_t*
+RENDER_API render_backend_t*
 render_backend_null_allocate(void);

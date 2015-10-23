@@ -208,7 +208,7 @@ render_backend_enumerate_modes(render_backend_t* backend, unsigned int adapter) 
 void
 render_backend_set_format(render_backend_t* backend, const pixelformat_t format,
                           const colorspace_t space) {
-	if (!FOUNDATION_VALIDATE(!backend->drawable,
+	if (!FOUNDATION_VALIDATE_MSG(!backend->drawable,
 	                         "Unable to change format when drawable is already set"))
 		return;
 	backend->pixelformat = format;

@@ -53,7 +53,7 @@ _rb_null_set_drawable(render_backend_t* backend, render_drawable_t* drawable) {
 
 static void
 _rb_null_dispatch(render_backend_t* backend, render_context_t** contexts,
-                  unsigned int num_contexts) {
+                  size_t num_contexts) {
 }
 
 static void
@@ -78,7 +78,7 @@ _rb_null_upload_buffer(render_backend_t* backend, render_buffer_t* buffer) {
 
 static void
 _rb_null_upload_shader(render_backend_t* backend, render_shader_t* shader, const void* buffer,
-                       unsigned int size) {
+                       size_t size) {
 }
 
 static void*

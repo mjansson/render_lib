@@ -25,7 +25,7 @@
 #include <render/types.h>
 
 RENDER_API render_vertex_decl_t*
-render_vertex_decl_allocate_buffer(size_T num, render_vertex_decl_element_t* elements);
+render_vertex_decl_allocate_buffer(size_t num, render_vertex_decl_element_t* elements);
 
 RENDER_API render_vertex_decl_t*
 render_vertex_decl_allocate(render_vertex_format_t format, render_vertex_attribute_id attribute,
