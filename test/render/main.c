@@ -356,7 +356,7 @@ DECLARE_TEST(render, gl2_clear) {
 }
 
 DECLARE_TEST(render, gl2_box) {
-	return _test_render_clear(RENDERAPI_OPENGL2);
+	return _test_render_box(RENDERAPI_OPENGL2);
 }
 
 #endif
@@ -372,7 +372,7 @@ DECLARE_TEST(render, gles2_clear) {
 }
 
 DECLARE_TEST(render, gles2_box) {
-	return _test_render_clear(RENDERAPI_GLES2);
+	return _test_render_box(RENDERAPI_GLES2);
 }
 
 #endif

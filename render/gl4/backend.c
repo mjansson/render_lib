@@ -43,6 +43,9 @@ typedef struct render_backend_gl4_t {
 	RENDER_DECLARE_BACKEND;
 
 	void* context;
+#if FOUNDATION_PLATFORM_WINDOWS
+	HDC hdc;
+#endif
 	render_resolution_t resolution;
 
 	bool use_clear_scissor;
@@ -120,14 +123,6 @@ _rb_gl_create_context(render_drawable_t* drawable, int major, int minor, void* s
 
 #if FOUNDATION_PLATFORM_WINDOWS
 
-	int* attributes = 0;
-	array_push(attributes, WGL_CONTEXT_MAJOR_VERSION_ARB); array_push(attributes, major);
-	array_push(attributes, WGL_CONTEXT_MINOR_VERSION_ARB); array_push(attributes, minor);
-	array_push(attributes, WGL_CONTEXT_FLAGS_ARB); array_push(attributes, 0);
-	array_push(attributes, WGL_CONTEXT_PROFILE_MASK_ARB);
-	array_push(attributes, WGL_CONTEXT_CORE_PROFILE_BIT_ARB);
-	array_push(attributes, 0);
-
 	HDC hdc = 0;
 	HGLRC hglrc_default = 0;
 	HGLRC hglrc = 0;
@@ -144,16 +139,32 @@ _rb_gl_create_context(render_drawable_t* drawable, int major, int minor, void* s
 	pfd.iLayerType   = PFD_MAIN_PLANE;
 
 	hdc = (HDC)drawable->hdc;
-	FOUNDATION_ASSERT(hdc);
+	if (!hdc) {
+		log_warn(HASH_RENDER, WARNING_INVALID_VALUE,
+		         STRING_CONST("Unable to create context, window has no device context"));
+		return nullptr;
+	}
 
 	int pixelformat = ChoosePixelFormat(hdc, &pfd);
 	SetPixelFormat(hdc, pixelformat, &pfd);
 	hglrc_default = wglCreateContext(hdc);
-	FOUNDATION_ASSERT(hglrc_default);
+	if (!hglrc_default) {
+		log_warn(HASH_RENDER, WARNING_INVALID_VALUE,
+		         STRING_CONST("Unable to create context, unable to create default GL context"));
+		return nullptr;
+	}
 
 	wglMakeCurrent(hdc, hglrc_default);
 
 	//Create real context
+	int* attributes = 0;
+	array_push(attributes, WGL_CONTEXT_MAJOR_VERSION_ARB); array_push(attributes, major);
+	array_push(attributes, WGL_CONTEXT_MINOR_VERSION_ARB); array_push(attributes, minor);
+	array_push(attributes, WGL_CONTEXT_FLAGS_ARB); array_push(attributes, 0); //WGL_CONTEXT_DEBUG_BIT_ARB
+	array_push(attributes, WGL_CONTEXT_PROFILE_MASK_ARB);
+	array_push(attributes, WGL_CONTEXT_CORE_PROFILE_BIT_ARB);
+	array_push(attributes, 0);
+
 	int err = 0;
 	PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)
 	        _rb_gl_get_proc_address("wglCreateContextAttribsARB");
@@ -173,8 +184,8 @@ _rb_gl_create_context(render_drawable_t* drawable, int major, int minor, void* s
 			const char* version = (const char*)glGetString(GL_VERSION);
 			int have_major = 0, have_minor = 0, have_revision = 0;
 			string_const_t version_arr[3];
-			size_t arrsize = string_explode(version, string_length(version), STRING_CONST("."), version_arr, 3,
-			                                false);
+			size_t arrsize = string_explode(version, string_length(version), STRING_CONST("."),
+			                                version_arr, 3, false);
 
 			have_major    = (arrsize > 0) ? string_to_uint(STRING_ARGS(version_arr[0]), false) : 0;
 			have_minor    = (arrsize > 1) ? string_to_uint(STRING_ARGS(version_arr[1]), false) : 0;
@@ -186,8 +197,8 @@ _rb_gl_create_context(render_drawable_t* drawable, int major, int minor, void* s
 
 			if (!supported) {
 				log_warnf(HASH_RENDER, WARNING_UNSUPPORTED,
-				          STRING_CONST("GL version %d.%d not supported, got %d.%d (%s)"), major, minor, have_major,
-				          have_minor, version);
+				          STRING_CONST("GL version %d.%d not supported, got %d.%d (%s)"),
+				          major, minor, have_major, have_minor, version);
 				wglMakeCurrent(0, 0);
 				wglDeleteContext(hglrc);
 				hglrc = 0;
@@ -398,6 +409,12 @@ _rb_gl4_set_drawable(render_backend_t* backend, render_drawable_t* drawable) {
 		return false;
 	}
 
+#if FOUNDATION_PLATFORM_WINDOWS
+
+	backend_gl4->hdc = (HDC)drawable->hdc;
+
+#endif
+
 #if FOUNDATION_PLATFORM_LINUX
 
 	glXMakeCurrent(drawable->display, drawable->drawable, backend_gl4->context);
@@ -419,6 +436,7 @@ _rb_gl4_set_drawable(render_backend_t* backend, render_drawable_t* drawable) {
 	const char* renderer = (const char*)glGetString(GL_RENDERER);
 	const char* version  = (const char*)glGetString(GL_VERSION);
 	const char* ext      = (const char*)glGetString(GL_EXTENSIONS);
+	glGetError();
 
 	log_infof(HASH_RENDER, STRING_CONST("Vendor:     %s"), vendor ? vendor : "<unknown>");
 	log_infof(HASH_RENDER, STRING_CONST("Renderer:   %s"), renderer ? renderer : "<unknown>");
@@ -825,15 +843,16 @@ _rb_gl4_dispatch(render_backend_t* backend, render_context_t** contexts, size_t 
 
 static void
 _rb_gl4_flip(render_backend_t* backend) {
-	//render_backend_gl4_t* backend_gl4 = (render_backend_gl4_t*)backend;
+	render_backend_gl4_t* backend_gl4 = (render_backend_gl4_t*)backend;
 
 #if FOUNDATION_PLATFORM_WINDOWS
 
-	/*if( _hdc )
-	{
-		if( !SwapBuffers( _hdc ) )
-			core::Core::get()->error( core::ERROR, "render::opengl::Device", "flip", "Unable to flip buffers: " + core::Core::getWindowsErrorMessage() );
-	}*/
+	if (backend_gl4->hdc) {
+		if (!SwapBuffers(backend_gl4->hdc)) {
+			string_const_t errmsg = system_error_message(0);
+			log_warnf(HASH_RENDER, WARNING_SYSTEM_CALL_FAIL, STRING_CONST("SwapBuffers failed: %.*s"), STRING_FORMAT(errmsg));
+		}
+	}
 
 #elif FOUNDATION_PLATFORM_MACOSX
 
