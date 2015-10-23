@@ -20,13 +20,14 @@
 #include <render/render.h>
 #include <render/internal.h>
 
-#define GET_SHADER( id ) objectmap_lookup( _render_map_shader, (id) )
+#define GET_SHADER(id) objectmap_lookup(_render_map_shader, (id))
 
 object_t
 render_shader_ref(object_t id) {
 	int32_t ref;
 	render_shader_t* shader = objectmap_lookup(_render_map_shader, id);
-	if (shader) do {
+	if (shader)
+		do {
 			ref = atomic_load32(&shader->ref);
 			if ((ref > 0) && atomic_cas32(&shader->ref, ref + 1, ref))
 				return id;
@@ -39,7 +40,8 @@ void
 render_shader_destroy(object_t id) {
 	int32_t ref;
 	render_shader_t* shader = GET_SHADER(id);
-	if (shader) do {
+	if (shader) 
+		do {
 			ref = atomic_load32(&shader->ref);
 			if ((ref > 0) && atomic_cas32(&shader->ref, ref - 1, ref)) {
 				if (ref == 1) {

@@ -21,7 +21,7 @@
 #include <render/render.h>
 #include <render/internal.h>
 
-#define GET_BUFFER( id ) objectmap_lookup( _render_map_buffer, (id) )
+#define GET_BUFFER(id) objectmap_lookup(_render_map_buffer, (id))
 
 object_t
 render_indexbuffer_create(render_backend_t* backend, render_usage_t usage, size_t indices,
@@ -71,7 +71,8 @@ object_t
 render_indexbuffer_ref(object_t id) {
 	int32_t ref;
 	render_indexbuffer_t* buffer = objectmap_lookup(_render_map_buffer, id);
-	if (buffer) do {
+	if (buffer)
+		do {
 			ref = atomic_load32(&buffer->ref);
 			if ((ref > 0) && atomic_cas32(&buffer->ref, ref + 1, ref))
 				return id;
@@ -84,7 +85,8 @@ void
 render_indexbuffer_destroy(object_t id) {
 	int32_t ref;
 	render_indexbuffer_t* buffer = GET_BUFFER(id);
-	if (buffer) do {
+	if (buffer)
+		do {
 			ref = atomic_load32(&buffer->ref);
 			if ((ref > 0) && atomic_cas32(&buffer->ref, ref - 1, ref)) {
 				if (ref == 1) {
