@@ -25,8 +25,8 @@
 
 #  include <foundation/windows.h>
 #  include <gl/GL.h>
-#  include <gl/glext.h>
-#  include <gl/wglext.h>
+#  include "gl/glext.h"
+#  include "gl/wglext.h"
 
 #elif FOUNDATION_PLATFORM_MACOSX
 

@@ -117,10 +117,10 @@ _rb_gl2_set_drawable(render_backend_t* backend, render_drawable_t* drawable) {
 	PFNWGLGETEXTENSIONSSTRINGARBPROC wglGetExtensionsStringARB = 0;
 	PFNWGLGETEXTENSIONSSTRINGEXTPROC wglGetExtensionsStringEXT = 0;
 	if ((wglGetExtensionsStringARB = (PFNWGLGETEXTENSIONSSTRINGARBPROC)
-	                                 glGetProcAddress("wglGetExtensionsStringARB")) != 0)
+	                                 _rb_gl_get_proc_address("wglGetExtensionsStringARB")) != 0)
 		wglext = wglGetExtensionsStringARB((HDC)drawable->hdc);
 	else if ((wglGetExtensionsStringEXT = (PFNWGLGETEXTENSIONSSTRINGEXTPROC)
-	                                      glGetProcAddress("wglGetExtensionsStringEXT")) != 0)
+	                                      _rb_gl_get_proc_address("wglGetExtensionsStringEXT")) != 0)
 		wglext = wglGetExtensionsStringEXT();
 	log_debugf(HASH_RENDER, STRING_CONST("WGL Extensions: %s"), wglext ? wglext : "<none>");
 #endif

@@ -34,7 +34,7 @@ if target.is_macosx():
 elif target.is_ios():
   glframeworks = [ 'QuartzCore', 'OpenGLES' ]
 if target.is_windows():
-  gllibs = [ 'gdi32' ]
+  gllibs = [ 'opengl32', 'gdi32' ]
 
 test_cases = [
   'render'

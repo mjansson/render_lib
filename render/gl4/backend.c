@@ -73,13 +73,14 @@ _rb_gl_error_message(GLenum err) {
 	return "<UNKNOWN>";
 }
 
-bool _rb_gl_check_error(const char* message, size_t length) {
+bool
+_rb_gl_check_error(const char* message) {
 	GLenum err = glGetError();
 	if (err != GL_NONE) {
-		log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("%.*s: %s"), (int)length, message,
+		log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("%s: %s"), message,
 		           _rb_gl_error_message(err));
-		FOUNDATION_ASSERT_FAILFORMAT("OpenGL error: %.*s: %s", (int)length, message,
-		                             _rb_gl_error_message(err));
+		FOUNDATION_ASSERT_FAILFORMAT("OpenGL error: %.*s: %s",
+		                             message, _rb_gl_error_message(err));
 		return true;
 	}
 	return false;
@@ -90,7 +91,7 @@ bool _rb_gl_check_error(const char* message, size_t length) {
 void STDCALL
 _rb_gl_debug_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length,
                       const GLchar* message, GLvoid* userParam) {
-	log_debugf(HASH_RENDER, STRING_CONST("OpenGL debug message: %.*s", (int)length, message);
+	log_debugf(HASH_RENDER, STRING_CONST("OpenGL debug message: %.*s"), (int)length, message);
 }
 
 #endif
@@ -143,12 +144,12 @@ _rb_gl_create_context(render_drawable_t* drawable, int major, int minor, void* s
 	pfd.iLayerType   = PFD_MAIN_PLANE;
 
 	hdc = (HDC)drawable->hdc;
-	NEO_ASSERT(hdc);
+	FOUNDATION_ASSERT(hdc);
 
 	int pixelformat = ChoosePixelFormat(hdc, &pfd);
 	SetPixelFormat(hdc, pixelformat, &pfd);
 	hglrc_default = wglCreateContext(hdc);
-	NEO_ASSERT(hglrc_default);
+	FOUNDATION_ASSERT(hglrc_default);
 
 	wglMakeCurrent(hdc, hglrc_default);
 
@@ -171,13 +172,13 @@ _rb_gl_create_context(render_drawable_t* drawable, int major, int minor, void* s
 
 			const char* version = (const char*)glGetString(GL_VERSION);
 			int have_major = 0, have_minor = 0, have_revision = 0;
-			char** version_arr = string_explode(version, ".", false);
+			string_const_t version_arr[3];
+			size_t arrsize = string_explode(version, string_length(version), STRING_CONST("."), version_arr, 3,
+			                                false);
 
-			have_major    = (array_size(version_arr) > 0) ? string_to_uint(version_arr[0], false) : 0;
-			have_minor    = (array_size(version_arr) > 1) ? string_to_uint(version_arr[1], false) : 0;
-			have_revision = (array_size(version_arr) > 2) ? string_to_uint(version_arr[2], false) : 0;
-
-			string_array_deallocate(version_arr);
+			have_major    = (arrsize > 0) ? string_to_uint(STRING_ARGS(version_arr[0]), false) : 0;
+			have_minor    = (arrsize > 1) ? string_to_uint(STRING_ARGS(version_arr[1]), false) : 0;
+			have_revision = (arrsize > 2) ? string_to_uint(STRING_ARGS(version_arr[2]), false) : 0;
 
 			bool supported = (have_major > major);
 			if (!supported && ((have_major == major) && (have_minor >= minor)))
@@ -334,11 +335,12 @@ _rb_gl_check_context(int major, int minor) {
 
 #if FOUNDATION_PLATFORM_WINDOWS
 
-	object_t window_check = window_create(0, "__render_gl_check", 10, 10, false);
+	window_t* window_check = window_create(WINDOW_ADAPTER_DEFAULT, STRING_CONST("__render_gl_check"),
+	                                       10, 10, false);
 	render_drawable_t* drawable = render_drawable_allocate();
 	render_drawable_set_window(drawable, window_check);
-	context = _create_gl_context(drawable, major, minor, 0);
-	window_destroy(window_check);
+	context = _rb_gl_create_context(drawable, major, minor, 0);
+	window_deallocate(window_check);
 	render_drawable_deallocate(drawable);
 	wglMakeCurrent(0, 0);
 	if (context)
@@ -429,10 +431,10 @@ _rb_gl4_set_drawable(render_backend_t* backend, render_drawable_t* drawable) {
 	PFNWGLGETEXTENSIONSSTRINGARBPROC wglGetExtensionsStringARB = 0;
 	PFNWGLGETEXTENSIONSSTRINGEXTPROC wglGetExtensionsStringEXT = 0;
 	if ((wglGetExtensionsStringARB = (PFNWGLGETEXTENSIONSSTRINGARBPROC)
-	                                 glGetProcAddress("wglGetExtensionsStringARB")) != 0)
+	                                 _rb_gl_get_proc_address("wglGetExtensionsStringARB")) != 0)
 		wglext = wglGetExtensionsStringARB((HDC)drawable->hdc);
 	else if ((wglGetExtensionsStringEXT = (PFNWGLGETEXTENSIONSSTRINGEXTPROC)
-	                                      glGetProcAddress("wglGetExtensionsStringEXT")) != 0)
+	                                      _rb_gl_get_proc_address("wglGetExtensionsStringEXT")) != 0)
 		wglext = wglGetExtensionsStringEXT();
 	log_debugf(HASH_RENDER, STRING_CONST("WGL Extensions: %s"), wglext ? wglext : "<none>");
 #endif
