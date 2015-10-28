@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -42,7 +42,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v110</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <UseIntelIPP>Sequential</UseIntelIPP>
     <InterproceduralOptimization>false</InterproceduralOptimization>
@@ -50,7 +50,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v110</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <UseIntelIPP>Sequential</UseIntelIPP>
     <InterproceduralOptimization>false</InterproceduralOptimization>
@@ -58,7 +58,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v110</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
     <UseIntelIPP>Sequential</UseIntelIPP>
@@ -67,7 +67,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Deploy|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v110</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
     <UseIntelIPP>Sequential</UseIntelIPP>
@@ -76,7 +76,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v110</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
     <UseIntelIPP>Sequential</UseIntelIPP>
@@ -85,7 +85,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v110</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
     <UseIntelIPP>Sequential</UseIntelIPP>
@@ -94,7 +94,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Deploy|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v110</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
     <UseIntelIPP>Sequential</UseIntelIPP>
@@ -103,7 +103,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v110</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
     <UseIntelIPP>Sequential</UseIntelIPP>
@@ -173,7 +173,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\..\..\foundation_lib;..\..</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..;..\..\..\foundation_lib;..\..\..\window_lib;..\..\..\resource_lib</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <CompileAsManaged>false</CompileAsManaged>
       <CompileAsWinRT>false</CompileAsWinRT>
@@ -208,7 +208,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\..\..\foundation_lib;..\..</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..;..\..\..\foundation_lib;..\..\..\window_lib;..\..\..\resource_lib</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <CompileAsManaged>false</CompileAsManaged>
       <CompileAsWinRT>false</CompileAsWinRT>
@@ -245,7 +245,7 @@
       <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>false</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\..\..\foundation_lib;..\..</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..;..\..\..\foundation_lib;..\..\..\window_lib;..\..\..\resource_lib</AdditionalIncludeDirectories>
       <CompileAsManaged>false</CompileAsManaged>
       <CompileAsWinRT>false</CompileAsWinRT>
       <TreatWarningAsError>true</TreatWarningAsError>
@@ -282,7 +282,7 @@
       <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>false</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\..\..\foundation_lib;..\..</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..;..\..\..\foundation_lib;..\..\..\window_lib;..\..\..\resource_lib</AdditionalIncludeDirectories>
       <CompileAsManaged>false</CompileAsManaged>
       <CompileAsWinRT>false</CompileAsWinRT>
       <TreatWarningAsError>true</TreatWarningAsError>
@@ -319,7 +319,7 @@
       <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>false</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\..\..\foundation_lib;..\..</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..;..\..\..\foundation_lib;..\..\..\window_lib;..\..\..\resource_lib</AdditionalIncludeDirectories>
       <CompileAsManaged>false</CompileAsManaged>
       <CompileAsWinRT>false</CompileAsWinRT>
       <TreatWarningAsError>true</TreatWarningAsError>
@@ -356,7 +356,7 @@
       <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>false</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\..\..\foundation_lib;..\..</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..;..\..\..\foundation_lib;..\..\..\window_lib;..\..\..\resource_lib</AdditionalIncludeDirectories>
       <CompileAsManaged>false</CompileAsManaged>
       <CompileAsWinRT>false</CompileAsWinRT>
       <TreatWarningAsError>true</TreatWarningAsError>
@@ -394,7 +394,7 @@
       <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>false</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\..\..\foundation_lib;..\..</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..;..\..\..\foundation_lib;..\..\..\window_lib;..\..\..\resource_lib</AdditionalIncludeDirectories>
       <CompileAsManaged>false</CompileAsManaged>
       <CompileAsWinRT>false</CompileAsWinRT>
       <TreatWarningAsError>true</TreatWarningAsError>
@@ -432,7 +432,7 @@
       <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>false</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\..\..\foundation_lib;..\..</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..;..\..\..\foundation_lib;..\..\..\window_lib;..\..\..\resource_lib</AdditionalIncludeDirectories>
       <CompileAsManaged>false</CompileAsManaged>
       <CompileAsWinRT>false</CompileAsWinRT>
       <TreatWarningAsError>true</TreatWarningAsError>
@@ -466,14 +466,43 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\render\backend.c" />
+    <ClCompile Include="..\..\render\command.c" />
+    <ClCompile Include="..\..\render\context.c" />
+    <ClCompile Include="..\..\render\drawable.c" />
+    <ClCompile Include="..\..\render\indexbuffer.c" />
+    <ClCompile Include="..\..\render\null\backend.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)null\</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Deploy|Win32'">$(IntDir)null\</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)null\</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">$(IntDir)null\</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)null\</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Deploy|x64'">$(IntDir)null\</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)null\</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)null\</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="..\..\render\render.c" />
+    <ClCompile Include="..\..\render\shader.c" />
+    <ClCompile Include="..\..\render\sort.c" />
+    <ClCompile Include="..\..\render\target.c" />
+    <ClCompile Include="..\..\render\vertexbuffer.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\render\backend.h" />
     <ClInclude Include="..\..\render\build.h" />
+    <ClInclude Include="..\..\render\command.h" />
+    <ClInclude Include="..\..\render\context.h" />
+    <ClInclude Include="..\..\render\drawable.h" />
     <ClInclude Include="..\..\render\hashstrings.h" />
+    <ClInclude Include="..\..\render\indexbuffer.h" />
+    <ClInclude Include="..\..\render\null\backend.h" />
     <ClInclude Include="..\..\render\render.h" />
     <ClInclude Include="..\..\render\internal.h" />
+    <ClInclude Include="..\..\render\shader.h" />
+    <ClInclude Include="..\..\render\sort.h" />
+    <ClInclude Include="..\..\render\target.h" />
     <ClInclude Include="..\..\render\types.h" />
+    <ClInclude Include="..\..\render\vertexbuffer.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\..\render\hashstrings.txt">
