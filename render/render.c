@@ -23,9 +23,11 @@
 static bool _render_initialized = false;
 
 int
-render_module_initialize(void) {
+render_module_initialize(render_config_t config) {
 	if (_render_initialized)
 		return 0;
+
+	FOUNDATION_UNUSED(config);
 
 	_render_api_disabled[RENDERAPI_UNKNOWN] = true;
 	_render_api_disabled[RENDERAPI_DEFAULT] = true;

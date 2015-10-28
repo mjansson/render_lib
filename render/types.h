@@ -237,6 +237,7 @@ typedef struct render_vertexshader_t render_vertexshader_t;
 typedef struct render_pixelshader_t render_pixelshader_t;
 typedef struct render_resolution_t render_resolution_t;
 typedef struct render_vertex_decl_element_t render_vertex_decl_element_t;
+typedef struct render_config_t render_config_t;
 
 typedef bool (* render_backend_construct_fn)(render_backend_t*);
 typedef void (* render_backend_destruct_fn)(render_backend_t*);
@@ -255,6 +256,10 @@ typedef void (* render_backend_upload_shader_fn)(render_backend_t*, render_shade
                                                  size_t);
 typedef void* (* render_backend_read_shader_fn)(render_backend_t*, render_shader_t*, size_t*);
 typedef void (* render_backend_deallocate_shader_fn)(render_backend_t*, render_shader_t*);
+
+struct render_config_t {
+	int unused;
+};
 
 struct render_backend_vtable_t {
 	render_backend_construct_fn           construct;

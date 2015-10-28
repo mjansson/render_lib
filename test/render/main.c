@@ -55,7 +55,9 @@ test_render_initialize(void) {
 	if (resource_module_initialize(resource_config))
 		return -1;
 
-	return render_module_initialize();
+	render_config_t render_config;
+	memset(&render_config, 0, sizeof(render_config));
+	return render_module_initialize(render_config);
 }
 
 static void
@@ -66,6 +68,7 @@ test_render_finalize(void) {
 }
 
 DECLARE_TEST(render, initialize) {
+	render_config_t config;
 	render_backend_t* backend;
 	window_t* window;
 
@@ -75,7 +78,8 @@ DECLARE_TEST(render, initialize) {
 
 	EXPECT_FALSE(render_module_is_initialized());
 
-	render_module_initialize();
+	memset(&config, 0, sizeof(render_config_t));
+	render_module_initialize(config);
 
 #if FOUNDATION_PLATFORM_MACOSX
 	window = window_allocate_from_nswindow(delegate_nswindow());

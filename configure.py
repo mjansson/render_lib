@@ -25,8 +25,6 @@ render_lib = generator.lib( module = 'render', sources = [
   os.path.join( 'null', 'backend.c' )
 ] )
 
-includepaths = generator.test_includepaths()
-
 gllibs = []
 glframeworks = []
 if target.is_macosx():
@@ -35,6 +33,13 @@ elif target.is_ios():
   glframeworks = [ 'QuartzCore', 'OpenGLES' ]
 if target.is_windows():
   gllibs = [ 'opengl32', 'gdi32' ]
+
+if not target.is_ios() and not target.is_android() and not target.is_tizen():
+  configs = [ config for config in toolchain.configs if config not in [ 'profile', 'deploy' ] ]
+  if not configs == []:
+    generator.bin( 'renderimport', [ 'main.c' ], 'renderimport', basepath = 'tools', implicit_deps = [ render_lib ], libs = [ 'render', 'window', 'resource', 'foundation' ], configs = configs, extralibs = gllibs, extraframeworks = glframeworks )
+
+includepaths = generator.test_includepaths()
 
 test_cases = [
   'render'

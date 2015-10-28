@@ -36,7 +36,7 @@
 /*! Initialize render library
     \return 0 if success, <0 if error */
 RENDER_API int
-render_module_initialize(void);
+render_module_initialize(render_config_t config);
 
 //! Finalize render library
 RENDER_API void
