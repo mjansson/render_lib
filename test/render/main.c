@@ -52,6 +52,8 @@ test_render_initialize(void) {
 
 	resource_config_t resource_config;
 	memset(&resource_config, 0, sizeof(resource_config));
+	resource_config.enable_local_cache = true;
+	resource_config.enable_local_source = true;
 	if (resource_module_initialize(resource_config))
 		return -1;
 
