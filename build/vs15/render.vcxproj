@@ -35,7 +35,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{1e18ec45-59e8-491d-a8b7-35dd841a648c}</ProjectGuid>
+    <ProjectGuid>{82382f68-6cbd-4fc2-aba8-47659c37bcdd}</ProjectGuid>
     <RootNamespace>render</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />

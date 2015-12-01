@@ -68,27 +68,59 @@
 	"buffers":
 	[
 		{
-			"file": "/Users/mjansson/projects/render_lib/configure.py",
+			"file": "/D/render_lib/tools/renderimport/main.c",
 			"settings":
 			{
-				"buffer_size": 4264,
+				"buffer_size": 6420,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "/D/neoengine/neon/resource/shader.c",
+			"settings":
+			{
+				"buffer_size": 8229,
 				"line_ending": "Unix"
 			}
 		},
 		{
-			"file": "/Users/mjansson/projects/render_lib/render/indexbuffer.c",
+			"file": "/D/neoengine/neon/object.c",
 			"settings":
 			{
-				"buffer_size": 6620,
+				"buffer_size": 4910,
 				"line_ending": "Unix"
 			}
 		},
 		{
-			"file": "/Users/mjansson/projects/foundation_lib/configure.py",
+			"file": "/D/neoengine/asset/source/neon.map",
 			"settings":
 			{
-				"buffer_size": 4868,
+				"buffer_size": 2997,
 				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/D/neoengine/asset/engine/b6/07/21b41f7e-26fbe107-1c5329002851c8b6",
+			"settings":
+			{
+				"buffer_size": 2321,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/D/neoengine/asset/engine/ae/30/21b41f7e-26e56430-288f5ba8ac3865ae",
+			"settings":
+			{
+				"buffer_size": 891,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/D/render_lib/render/types.h",
+			"settings":
+			{
+				"buffer_size": 11987,
+				"line_ending": "Windows"
 			}
 		}
 	],
@@ -124,17 +156,30 @@
 	},
 	"expanded_folders":
 	[
-		"/Users/mjansson/projects/render_lib/render",
-		"/Users/mjansson/projects/render_lib/render/gl2",
-		"/Users/mjansson/projects/render_lib/render/gl4",
-		"/Users/mjansson/projects/render_lib/render/gles2",
-		"/Users/mjansson/projects/render_lib/render/null",
-		"/Users/mjansson/projects/render_lib/test",
-		"/Users/mjansson/projects/render_lib/test/render",
-		"/Users/mjansson/projects/render_lib/doc"
+		"/D/render_lib/render",
+		"/D/render_lib/tools",
+		"/D/render_lib/tools/renderimport"
 	],
 	"file_history":
 	[
+		"/D/render_lib/build/vs15/render.vcxproj",
+		"/D/render_lib/build/vs15/render.sln",
+		"/D/render_lib/build/vs15/test/all.vcxproj",
+		"/D/render_lib/build/vs15/test/render.vcxproj.filters",
+		"/D/render_lib/build/vs15/test/render.vcxproj",
+		"/D/resource_lib/build/vs15/test/resource.vcxproj.filters",
+		"/D/resource_lib/build/vs15/test/resource.vcxproj",
+		"/D/resource_lib/build/vs15/test/all.vcxproj.filters",
+		"/D/resource_lib/build/vs15/test/all.vcxproj",
+		"/D/resource_lib/build/vs15/resource.vcxproj.filters",
+		"/D/resource_lib/build/vs15/resource.vcxproj",
+		"/D/foundation_lib/README.md",
+		"/D/foundation_lib/index.html",
+		"/D/resource_lib/build/vs15/resource.sln",
+		"/D/neoengine/asset/source/technique/font.tech",
+		"/Users/mjansson/projects/foundation_lib/configure.py",
+		"/Users/mjansson/projects/render_lib/configure.py",
+		"/Users/mjansson/projects/render_lib/render/indexbuffer.c",
 		"/Users/mjansson/projects/resource_lib/resource/types.h",
 		"/Users/mjansson/projects/render_lib/render/vertexbuffer.c",
 		"/Users/mjansson/projects/foundation_lib/foundation/types.h",
@@ -157,7 +202,6 @@
 		"/Users/mjansson/projects/render_lib/render/context.h",
 		"/Users/mjansson/projects/render_lib/render/drawable.c",
 		"/Users/mjansson/projects/render_lib/render/drawable.h",
-		"/Users/mjansson/projects/render_lib/render/indexbuffer.c",
 		"/Users/mjansson/projects/render_lib/render/indexbuffer.h",
 		"/Users/mjansson/projects/render_lib/render/render.c",
 		"/Users/mjansson/projects/render_lib/render/render.h",
@@ -179,12 +223,10 @@
 		"/Users/mjansson/projects/render_lib/render/null/backend.c",
 		"/Users/mjansson/projects/render_lib/render/null/backend.h",
 		"/Users/mjansson/projects/render_lib/render/backend.c",
-		"/Users/mjansson/projects/render_lib/configure.py",
 		"/Users/mjansson/projects/resource_lib/resource/remote.h",
 		"/Users/mjansson/projects/render_lib/build/ninja/toolchain.py",
 		"/Users/mjansson/projects/window_lib/window/types.h",
 		"/Users/mjansson/projects/window_lib/configure.py",
-		"/Users/mjansson/projects/foundation_lib/configure.py",
 		"/Users/mjansson/projects/window_lib/window/window_osx.m",
 		"/Users/mjansson/projects/window_lib/window/internal.h",
 		"/Users/mjansson/projects/render_lib/build/render.sublime-project",
@@ -247,26 +289,11 @@
 		"/Users/mjansson/Library/Application Support/Sublime Text 3/Packages/User/Preferences.sublime-settings",
 		"/Users/mjansson/Library/Application Support/Sublime Text 3/Packages/Default/Preferences.sublime-settings",
 		"/Users/mjansson/projects/foundation_lib/foundation/android.h",
-		"/Users/mjansson/projects/foundation_lib/doc/assert.dox",
-		"/Users/mjansson/projects/foundation_lib/doc/array.dox",
-		"/Users/mjansson/projects/foundation_lib/foundation/assert.c",
-		"/Users/mjansson/projects/foundation_lib/foundation/build.h",
-		"/Users/mjansson/projects/foundation_lib/foundation/array.h",
-		"/Users/mjansson/projects/foundation_lib/doc/android.dox",
-		"/Users/mjansson/projects/foundation_lib/foundation/fs.h",
-		"/Users/mjansson/projects/foundation_lib/foundation/random.h",
-		"/Users/mjansson/projects/foundation_lib/foundation/string.h",
-		"/Users/mjansson/projects/foundation_lib/foundation/system.h",
-		"/Users/mjansson/projects/foundation_lib/foundation/thread.h",
-		"/Users/mjansson/projects/foundation_lib/foundation/bufferstream.h",
-		"/Users/mjansson/projects/foundation_lib/doc/build.dox",
-		"/Users/mjansson/projects/foundation_lib/foundation/android.c",
-		"/Users/mjansson/projects/foundation_lib/foundation/hashmap.c",
-		"/Users/mjansson/projects/foundation_lib/foundation/fs.m"
+		"/Users/mjansson/projects/foundation_lib/doc/assert.dox"
 	],
 	"find":
 	{
-		"height": 35.0
+		"height": 34.0
 	},
 	"find_in_files":
 	{
@@ -294,6 +321,7 @@
 		"case_sensitive": true,
 		"find_history":
 		[
+			"render",
 			"ALIGNED_STRUCT",
 			"flags",
 			"bufferflags",
@@ -420,8 +448,7 @@
 			"[32;47m",
 			"dm_set_",
 			"bsa_sv_dm_set_config",
-			"[34;47m",
-			"[32;47m"
+			"[34;47m"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -463,47 +490,19 @@
 			[
 				{
 					"buffer": 0,
-					"file": "/Users/mjansson/projects/render_lib/configure.py",
+					"file": "/D/render_lib/tools/renderimport/main.c",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 4264,
+						"buffer_size": 6420,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								893,
-								893
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/Python/Python.tmLanguage"
-						},
-						"translation.x": 0.0,
-						"translation.y": 21.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 1,
-					"type": "text"
-				},
-				{
-					"buffer": 1,
-					"file": "/Users/mjansson/projects/render_lib/render/indexbuffer.c",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 6620,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								2035,
-								2035
+								1193,
+								1193
 							]
 						],
 						"settings":
@@ -511,8 +510,37 @@
 							"syntax": "Packages/C++/C++.tmLanguage",
 							"translate_tabs_to_spaces": false
 						},
-						"translation.x": -0.0,
-						"translation.y": 464.0,
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 6,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "/D/neoengine/neon/resource/shader.c",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 8229,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								828,
+								828
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 89.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
@@ -520,30 +548,144 @@
 				},
 				{
 					"buffer": 2,
-					"file": "/Users/mjansson/projects/foundation_lib/configure.py",
+					"file": "/D/neoengine/neon/object.c",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 4868,
+						"buffer_size": 4910,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								2768,
-								4401
+								2937,
+								2937
 							]
 						],
 						"settings":
 						{
-							"syntax": "Packages/Python/Python.tmLanguage"
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"translate_tabs_to_spaces": false
 						},
-						"translation.x": -0.0,
-						"translation.y": 8.0,
+						"translation.x": 0.0,
+						"translation.y": 1559.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "/D/neoengine/asset/source/neon.map",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2997,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Text/Plain text.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 3,
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "/D/neoengine/asset/engine/b6/07/21b41f7e-26fbe107-1c5329002851c8b6",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2321,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Text/Plain text.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 2,
+					"type": "text"
+				},
+				{
+					"buffer": 5,
+					"file": "/D/neoengine/asset/engine/ae/30/21b41f7e-26e56430-288f5ba8ac3865ae",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 891,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Text/Plain text.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 4,
+					"type": "text"
+				},
+				{
+					"buffer": 6,
+					"file": "/D/render_lib/render/types.h",
+					"semi_transient": true,
+					"settings":
+					{
+						"buffer_size": 11987,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 4492.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 5,
 					"type": "text"
 				}
 			]
