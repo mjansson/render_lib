@@ -7,6 +7,10 @@
 		},
 		{
 			"follow_symlinks": true,
+			"path": "../resource"
+		},
+		{
+			"follow_symlinks": true,
 			"path": "../test"
 		},
 		{

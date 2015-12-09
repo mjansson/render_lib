@@ -11,3 +11,6 @@ HASH_GLES2                                 gles2
 HASH_D3D_DEVICE_REF                        d3d_device_ref
 HASH_D3D_DEVICE_DEBUG                      d3d_device_debug
 HASH_D3D_SHADER_DEBUG                      d3d_shader_debug
+
+HASH_SOURCE                                source
+HASH_PARAMETER_COUNT                       parameter_count

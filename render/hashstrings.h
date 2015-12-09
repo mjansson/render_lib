@@ -18,3 +18,5 @@
 #define HASH_D3D_DEVICE_REF static_hash_string("d3d_device_ref", 14, 0xd5556aa98d2b4461ULL)
 #define HASH_D3D_DEVICE_DEBUG static_hash_string("d3d_device_debug", 16, 0x88f632265968bc35ULL)
 #define HASH_D3D_SHADER_DEBUG static_hash_string("d3d_shader_debug", 16, 0xd1be125e006c56e3ULL)
+#define HASH_SOURCE static_hash_string("source", 6, 0x2154da52f04042d3ULL)
+#define HASH_PARAMETER_COUNT static_hash_string("parameter_count", 15, 0x2b2a2cd816c9cf3dULL)

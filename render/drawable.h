@@ -43,13 +43,13 @@ render_drawable_set_offscreen(render_drawable_t* drawable, object_t buffer);
 
 RENDER_API void
 render_drawable_set_fullscreen(render_drawable_t* drawable, unsigned int adapter,
-                               unsigned int width, unsigned int height, unsigned int refresh);
+                               int width, int height, int refresh);
 
 RENDER_API render_drawable_type_t
 render_drawable_type(render_drawable_t* drawable);
 
-RENDER_API unsigned int
+RENDER_API int
 render_drawable_width(render_drawable_t* drawable);
 
-RENDER_API unsigned int
+RENDER_API int
 render_drawable_height(render_drawable_t* drawable);

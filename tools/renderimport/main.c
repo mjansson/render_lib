@@ -1,8 +1,7 @@
 /* main.c  -  Render library importer  -  Public Domain  -  2014 Mattias Jansson / Rampant Pixels
  *
- * This library provides a cross-platform resource I/O library in C11 providing
- * basic resource loading, saving and streaming functionality for projects based
- * on our foundation library.
+ * This library provides a cross-platform rendering library in C11 providing
+ * basic 2D/3D rendering functionality for projects based on our foundation library.
  *
  * The latest source code maintained by Rampant Pixels is always available at
  *
@@ -22,6 +21,13 @@
 #include <render/render.h>
 
 #include "errorcodes.h"
+#include "glsl.h"
+
+typedef enum {
+	IMPORTTYPE_UNKNOWN,
+	IMPORTTYPE_GLSL_VERTEXSHADER,
+	IMPORTTYPE_GLSL_PIXELSHADER
+} renderimport_type_t;
 
 typedef struct {
 	bool              display_help;
@@ -38,7 +44,56 @@ renderimport_print_usage(void);
 
 static int
 renderimport_import(stream_t* stream) {
-	return RENDERIMPORT_RESULT_UNSUPPORTED_INPUT;
+	renderimport_type_t type = IMPORTTYPE_UNKNOWN;
+	renderimport_type_t guess = IMPORTTYPE_UNKNOWN;
+	uuid_t uuid;
+	string_const_t path;
+	int ret;
+	char buffer[1024];
+
+	while (!stream_eos(stream)) {
+		string_t line = stream_read_line_buffer(stream, buffer, sizeof(buffer), '\n');
+		if (string_find_string(STRING_ARGS(line), STRING_CONST("gl_FragColor"), 0) != STRING_NPOS) {
+			type = IMPORTTYPE_GLSL_PIXELSHADER;
+			break;
+		}
+		else if (string_find_string(STRING_ARGS(line), STRING_CONST("gl_Position"), 0) != STRING_NPOS) {
+			type = IMPORTTYPE_GLSL_VERTEXSHADER;
+			break;
+		}
+	}
+
+	if ((type == IMPORTTYPE_UNKNOWN) && (guess != IMPORTTYPE_UNKNOWN))
+		type = guess;
+
+	if (type == IMPORTTYPE_UNKNOWN)
+		return RENDERIMPORT_RESULT_UNSUPPORTED_INPUT;
+
+	stream_seek(stream, 0, STREAM_SEEK_BEGIN);
+
+	path = stream_path(stream);
+	uuid = resource_import_map_lookup(STRING_ARGS(path));
+	if (uuid_is_null(uuid)) {
+		uuid = uuid_generate_random();
+		if (!resource_import_map_store(STRING_ARGS(path), &uuid)) {
+			log_warn(HASH_RESOURCE, WARNING_SUSPICIOUS,
+			         STRING_CONST("Unable to open import map file to store new resource"));
+			return RENDERIMPORT_RESULT_UNABLE_TO_OPEN_MAP_FILE;
+		}
+	}
+
+	switch (type) {
+	case IMPORTTYPE_GLSL_VERTEXSHADER:
+		ret = renderimport_import_glsl_vertexshader(stream, uuid);
+		break;
+	case IMPORTTYPE_GLSL_PIXELSHADER:
+		ret = renderimport_import_glsl_pixelshader(stream, uuid);
+		break;
+	default:
+		return RENDERIMPORT_RESULT_UNSUPPORTED_INPUT;
+	}
+
+	return ret;
 }
 
 int
@@ -77,7 +132,7 @@ main_initialize(void) {
 	if ((ret = render_module_initialize(render_config)) < 0)
 		return ret;
 
-	log_set_suppress(HASH_RESOURCE, ERRORLEVEL_INFO);
+	log_set_suppress(HASH_RESOURCE, ERRORLEVEL_DEBUG);
 
 	return 0;
 }
@@ -98,8 +153,14 @@ main_run(void* main_arg) {
 	resource_import_register(renderimport_import);
 
 	size_t ifile, fsize;
-	for (ifile = 0, fsize = array_size(input.input_files); ifile < fsize; ++ifile)
-		resource_import(input.input_files[ifile].str, input.input_files[ifile].length);
+	for (ifile = 0, fsize = array_size(input.input_files); ifile < fsize; ++ifile) {
+		if (resource_import(STRING_ARGS(input.input_files[ifile])))
+			log_infof(HASH_RESOURCE, STRING_CONST("Successfully imported: %.*s"),
+			          STRING_FORMAT(input.input_files[ifile]));
+		else
+			log_warnf(HASH_RESOURCE, WARNING_UNSUPPORTED, STRING_CONST("Failed to import: %.*s"),
+			          STRING_FORMAT(input.input_files[ifile]));
+	}
 
 exit:
 

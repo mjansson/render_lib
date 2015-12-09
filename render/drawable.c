@@ -92,7 +92,7 @@ render_drawable_set_offscreen(render_drawable_t* drawable, object_t buffer) {
 
 void
 render_drawable_set_fullscreen(render_drawable_t* drawable, unsigned int adapter,
-                               unsigned int width, unsigned int height, unsigned int refresh) {
+                               int width, int height, int refresh) {
 	drawable->type = RENDERDRAWABLE_FULLSCREEN;
 	drawable->adapter = adapter;
 	drawable->width = width;
@@ -108,12 +108,12 @@ render_drawable_type(render_drawable_t* drawable) {
 	return drawable->type;
 }
 
-unsigned int
+int
 render_drawable_width(render_drawable_t* drawable) {
 	return drawable->width;
 }
 
-unsigned int
+int
 render_drawable_height(render_drawable_t* drawable) {
 	return drawable->height;
 }

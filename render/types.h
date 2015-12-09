@@ -294,8 +294,8 @@ struct render_backend_t {
 
 struct render_drawable_t {
 	render_drawable_type_t type;
-	unsigned int           adapter;
-	window_t*              window;
+	unsigned int adapter;
+	window_t*    window;
 #if FOUNDATION_PLATFORM_WINDOWS
 	void* hwnd;
 	void* hdc;

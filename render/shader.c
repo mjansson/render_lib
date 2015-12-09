@@ -116,7 +116,7 @@ render_vertexshader_upload(object_t id, const void* buffer, size_t size) {
 }
 
 uuid_t
-render_shader_guid(object_t id) {
+render_shader_uuid(object_t id) {
 	render_shader_t* shader = GET_SHADER(id);
 	return shader ? shader->uuid : uuid_null();
 }
