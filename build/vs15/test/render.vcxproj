@@ -35,9 +35,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{e3271f86-7ad4-4561-90b1-602a60f75542}</ProjectGuid>
+    <ProjectGuid>{0741c629-8ac4-4b4d-981a-6d56408d6afe}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>http</RootNamespace>
+    <RootNamespace>render</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
