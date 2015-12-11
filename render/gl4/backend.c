@@ -655,26 +655,30 @@ _rb_gl4_deallocate_buffer(render_backend_t* backend, render_buffer_t* buffer, bo
 	}
 }
 
-static void
+static bool
 _rb_gl4_upload_buffer(render_backend_t* backend, render_buffer_t* buffer) {
 	GLuint buffer_object = (GLuint)buffer->backend_data[0];
 	if (!buffer_object) {
 		glGenBuffers(1, &buffer_object);
-		_rb_gl_check_error("Unable to create buffer object");
+		if (_rb_gl_check_error("Unable to create buffer object"))
+			return false;
 		buffer->backend_data[0] = buffer_object;
 	}
 
 	glBindBuffer(GL_ARRAY_BUFFER, buffer_object);
 	glBufferData(GL_ARRAY_BUFFER, buffer->size * buffer->allocated, buffer->store,
 	             (buffer->usage == RENDERUSAGE_DYNAMIC) ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
-	_rb_gl_check_error("Unable to upload buffer object data");
+	if (_rb_gl_check_error("Unable to upload buffer object data"))
+		return false;
 
 	buffer->flags &= ~RENDERBUFFER_DIRTY;
+	return true;
 }
 
-static void
+static bool
 _rb_gl4_upload_shader(render_backend_t* backend, render_shader_t* shader, const void* buffer,
                       size_t size) {
+	bool ret = false;
 	//render_backend_gl4_t* backend_gl4 = (render_backend_gl4_t*)backend;
 
 	switch (shader->shadertype) {
@@ -702,6 +706,7 @@ _rb_gl4_upload_shader(render_backend_t* backend, render_shader_t* shader, const 
 			else
 			{
 				shader->backend_data[0] = handle;
+				ret = true;
 			}*/
 
 			break;
@@ -710,6 +715,12 @@ _rb_gl4_upload_shader(render_backend_t* backend, render_shader_t* shader, const 
 	default:
 		break;
 	}
+	return ret;
+}
+
+static bool
+_rb_gl4_upload_program(render_backend_t* backend, render_program_t* program) {
+	return false;
 }
 
 static void
@@ -767,6 +778,10 @@ static void _rb_gl4_deallocate_texture(render_backend_t* backend, render_texture
 	memory_deallocate(texture);
 }
 #endif
+
+static void
+_rb_gl4_deallocate_program(render_backend_t* backend, render_program_t* program) {
+}
 
 static void
 _rb_gl4_dispatch(render_backend_t* backend, render_context_t** contexts, size_t num_contexts) {
@@ -882,10 +897,12 @@ static render_backend_vtable_t _render_backend_vtable_gl4 = {
 	.enable_thread = _rb_gl4_enable_thread,
 	.disable_thread = _rb_gl4_disable_thread,
 	.allocate_buffer = _rb_gl4_allocate_buffer,
-	.deallocate_buffer = _rb_gl4_deallocate_buffer,
 	.upload_buffer = _rb_gl4_upload_buffer,
 	.upload_shader = _rb_gl4_upload_shader,
+	.upload_program = _rb_gl4_upload_program,
+	.deallocate_buffer = _rb_gl4_deallocate_buffer,
 	.deallocate_shader = _rb_gl4_deallocate_shader,
+	.deallocate_program = _rb_gl4_deallocate_program,
 	/*.allocate_parameter_block = _rb_gl4_allocate_parameter_block,
 	.bind_parameter_block = _rb_gl4_bind_parameter_block,
 	.deallocate_parameter_block = _rb_gl4_deallocate_parameter_block,

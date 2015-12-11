@@ -34,15 +34,20 @@ render_api_fallback(render_api_t api) {
 
 	case RENDERAPI_DEFAULT:
 #if FOUNDATION_PLATFORM_WINDOWS
-		return RENDERAPI_DIRECTX11;
+		return RENDERAPI_DIRECTX;
 #elif FOUNDATION_PLATFORM_IOS || FOUNDATION_PLATFORM_ANDROID || FOUNDATION_PLATFORM_LINUX_RASPBERRYPI
-		return RENDERAPI_GLES2;
+		return RENDERAPI_GLES;
 #else
-		return RENDERAPI_OPENGL4;
+		return RENDERAPI_OPENGL;
 #endif
 		break;
 
 	case RENDERAPI_NULL:      return RENDERAPI_UNKNOWN;
+
+	case RENDERAPI_OPENGL:    return RENDERAPI_OPENGL4;
+	case RENDERAPI_DIRECTX:   return RENDERAPI_DIRECTX11;
+	case RENDERAPI_GLES:      return RENDERAPI_GLES3;
+
 	case RENDERAPI_OPENGL3:   return RENDERAPI_OPENGL2;
 #if FOUNDATION_PLATFORM_WINDOWS
 	case RENDERAPI_OPENGL4:   return RENDERAPI_DIRECTX10;
@@ -51,8 +56,8 @@ render_api_fallback(render_api_t api) {
 #endif
 	case RENDERAPI_DIRECTX10: return RENDERAPI_OPENGL3;
 	case RENDERAPI_DIRECTX11: return RENDERAPI_OPENGL4;
-	case RENDERAPI_GLES1:     return RENDERAPI_NULL;
-	case RENDERAPI_GLES2:     return RENDERAPI_GLES1;
+	case RENDERAPI_GLES3:     return RENDERAPI_GLES2;
+	case RENDERAPI_GLES2:     return RENDERAPI_NULL;
 	case RENDERAPI_OPENGL2:   return RENDERAPI_NULL;
 
 	default:                  break;
@@ -79,12 +84,11 @@ render_backend_allocate(render_api_t api, bool allow_fallback) {
 				break;
 			}
 
-		case RENDERAPI_GLES1: {
-				/*backend = render_backend_gles1_allocate();
-				if( !backend || !backend->vtable.construct( backend ) )
-				{
-					log_info( HASH_RENDER, "Failed to initialize OpenGL ES 1 render backend" );
-					render_deallocate( backend ), backend = 0;
+		case RENDERAPI_GLES3: {
+				/*backend = render_backend_gles3_allocate();
+				if (!backend || !backend->vtable.construct(backend)) {
+					log_info(HASH_RENDER, STRING_CONST("Failed to initialize OpenGL ES 3 render backend"));
+					render_backend_deallocate(backend), backend = 0;
 				}*/
 				break;
 			}

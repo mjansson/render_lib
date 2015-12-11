@@ -17,7 +17,7 @@ writer = generator.writer
 toolchain = generator.toolchain
 
 render_lib = generator.lib( module = 'render', sources = [
-  'backend.c', 'command.c', 'context.c', 'drawable.c', 'indexbuffer.c', 'render.c',
+  'backend.c', 'command.c', 'context.c', 'drawable.c', 'indexbuffer.c', 'program.c', 'render.c',
   'shader.c', 'sort.c', 'target.c', 'version.c', 'vertexbuffer.c',
   os.path.join( 'gl4', 'backend.c' ), os.path.join( 'gl4', 'backend.m' ), os.path.join( 'gl4', 'glprocs.c' ),
   os.path.join( 'gl2', 'backend.c' ),

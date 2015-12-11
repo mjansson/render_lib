@@ -847,26 +847,30 @@ _rb_gles2_deallocate_buffer(render_backend_t* backend, render_buffer_t* buffer, 
 	}
 }
 
-static void
+static bool
 _rb_gles2_upload_buffer(render_backend_t* backend, render_buffer_t* buffer) {
 	GLuint buffer_object = (GLuint)buffer->backend_data[0];
 	if (!buffer_object) {
 		glGenBuffers(1, &buffer_object);
-		_rb_gles2_check_error("Unable to create buffer object");
+		if (_rb_gles2_check_error("Unable to create buffer object"))
+			return false;
 		buffer->backend_data[0] = buffer_object;
 	}
 
 	glBindBuffer(GL_ARRAY_BUFFER, buffer_object);
 	glBufferData(GL_ARRAY_BUFFER, buffer->size * buffer->allocated, buffer->store,
 	             (buffer->usage == RENDERUSAGE_DYNAMIC) ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
-	_rb_gles2_check_error("Unable to upload buffer object data");
+	if (_rb_gles2_check_error("Unable to upload buffer object data"))
+		return false;
 
 	buffer->flags &= ~RENDERBUFFER_DIRTY;
+	return true;
 }
 
-static void
+static bool
 _rb_gles2_upload_shader(render_backend_t* backend, render_shader_t* shader, const void* buffer,
                         size_t size) {
+	bool ret = false;
 	switch (shader->shadertype) {
 	case SHADER_VERTEX:
 		//Vertex program backend data:
@@ -904,11 +908,13 @@ _rb_gles2_upload_shader(render_backend_t* backend, render_shader_t* shader, cons
 			           STRING_CONST("Unable to compile vertex shader: %.*s"), (int)log_length, log);
 			memory_deallocate(log);
 			log_debugf(HASH_RENDER, STRING_CONST("Shader source:\n%.*s"), (int)size, (const char*)buffer);
-			return;
+			break;
 		}
 
-		_rb_gles2_check_error("Error uploading and compiling vertex shader");
+		if (_rb_gles2_check_error("Error uploading and compiling vertex shader"))
+			break;
 
+		ret = true;
 		break;
 
 	case SHADER_PIXEL:
@@ -947,16 +953,19 @@ _rb_gles2_upload_shader(render_backend_t* backend, render_shader_t* shader, cons
 			           STRING_CONST("Unable to compile pixel shader: %.*s"), (int)log_length, log);
 			memory_deallocate(log);
 			log_debugf(HASH_RENDER, STRING_CONST("Shader source:\n%.*s"), (int)size, (const char*)buffer);
-			return;
+			break;
 		}
 
-		_rb_gles2_check_error("Error uploading and compiling pixel shader");
+		if (_rb_gles2_check_error("Error uploading and compiling pixel shader"))
+			break;
 
+		ret = true;
 		break;
 
 	default:
 		break;
 	}
+	return ret;
 }
 
 static void*
@@ -1002,6 +1011,10 @@ _rb_gles2_deallocate_shader(render_backend_t* backend, render_shader_t* shader) 
 			break;
 		}
 	}
+}
+
+static void
+_rb_gles2_deallocate_program(render_backend_t* backend, render_program_t* program) {
 }
 
 static render_backend_vtable_t _render_backend_vtable_gles2 = {

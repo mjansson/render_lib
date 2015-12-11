@@ -72,13 +72,20 @@ _rb_null_deallocate_buffer(render_backend_t* backend, render_buffer_t* buffer, b
 		memory_deallocate(buffer->store);
 }
 
-static void
+static bool
 _rb_null_upload_buffer(render_backend_t* backend, render_buffer_t* buffer) {
+	return true;
 }
 
-static void
+static bool
 _rb_null_upload_shader(render_backend_t* backend, render_shader_t* shader, const void* buffer,
                        size_t size) {
+	return true;
+}
+
+static bool
+_rb_null_upload_program(render_backend_t* backend, render_program_t* program) {
+	return true;
 }
 
 static void*
@@ -88,6 +95,10 @@ _rb_null_read_shader(render_backend_t* backend, render_shader_t* shader, size_t*
 
 static void
 _rb_null_deallocate_shader(render_backend_t* backend, render_shader_t* shader) {
+}
+
+static void
+_rb_null_deallocate_program(render_backend_t* backend, render_program_t* program) {
 }
 
 
@@ -100,11 +111,13 @@ static render_backend_vtable_t _render_backend_vtable_null = {
 	.dispatch = _rb_null_dispatch,
 	.flip = _rb_null_flip,
 	.allocate_buffer = _rb_null_allocate_buffer,
-	.deallocate_buffer = _rb_null_deallocate_buffer,
 	.upload_buffer = _rb_null_upload_buffer,
 	.upload_shader = _rb_null_upload_shader,
+	.upload_program = _rb_null_upload_program,
 	.read_shader = _rb_null_read_shader,
-	.deallocate_shader = _rb_null_deallocate_shader
+	.deallocate_buffer = _rb_null_deallocate_buffer,
+	.deallocate_shader = _rb_null_deallocate_shader,
+	.deallocate_program = _rb_null_deallocate_program
 };
 
 render_backend_t*

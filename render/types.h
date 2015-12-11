@@ -32,20 +32,31 @@ typedef enum render_api_t {
 	RENDERAPI_UNKNOWN = 0,
 	RENDERAPI_DEFAULT,
 	RENDERAPI_NULL,
+	RENDERAPI_OPENGL,
 	RENDERAPI_OPENGL2,
 	RENDERAPI_OPENGL3,
 	RENDERAPI_OPENGL4,
+	RENDERAPI_DIRECTX,
 	RENDERAPI_DIRECTX10,
 	RENDERAPI_DIRECTX11,
 	RENDERAPI_PS3,
 	RENDERAPI_PS4,
 	RENDERAPI_XBOX360,
 	RENDERAPI_XBOXONE,
-	RENDERAPI_GLES1,
+	RENDERAPI_GLES,
 	RENDERAPI_GLES2,
+	RENDERAPI_GLES3,
 
 	RENDERAPI_NUM
 } render_api_t;
+
+typedef enum render_api_group_t {
+	RENDERAPIGROUP_OPENGL = 0,
+	RENDERAPIGROUP_DIRECTX,
+	RENDERAPIGROUP_GLES,
+
+	RENDERAPIGROUP_NUM
+} render_api_group_t;
 
 typedef enum render_drawable_type_t {
 	RENDERDRAWABLE_INVALID = 0,
@@ -235,6 +246,7 @@ typedef struct render_indexbuffer_t render_indexbuffer_t;
 typedef struct render_shader_t render_shader_t;
 typedef struct render_vertexshader_t render_vertexshader_t;
 typedef struct render_pixelshader_t render_pixelshader_t;
+typedef struct render_program_t render_program_t;
 typedef struct render_resolution_t render_resolution_t;
 typedef struct render_vertex_decl_element_t render_vertex_decl_element_t;
 typedef struct render_config_t render_config_t;
@@ -251,11 +263,13 @@ typedef void (* render_backend_flip_fn)(render_backend_t*);
 typedef void* (* render_backend_allocate_buffer_fn)(render_backend_t*, render_buffer_t*);
 typedef void (* render_backend_deallocate_buffer_fn)(render_backend_t*, render_buffer_t*, bool,
                                                      bool);
-typedef void (* render_backend_upload_buffer_fn)(render_backend_t*, render_buffer_t*);
-typedef void (* render_backend_upload_shader_fn)(render_backend_t*, render_shader_t*, const void*,
+typedef bool (* render_backend_upload_buffer_fn)(render_backend_t*, render_buffer_t*);
+typedef bool (* render_backend_upload_shader_fn)(render_backend_t*, render_shader_t*, const void*,
                                                  size_t);
+typedef bool (* render_backend_upload_program_fn)(render_backend_t*, render_program_t*);
 typedef void* (* render_backend_read_shader_fn)(render_backend_t*, render_shader_t*, size_t*);
 typedef void (* render_backend_deallocate_shader_fn)(render_backend_t*, render_shader_t*);
+typedef void (* render_backend_deallocate_program_fn)(render_backend_t*, render_program_t*);
 
 struct render_config_t {
 	int unused;
@@ -272,11 +286,13 @@ struct render_backend_vtable_t {
 	render_backend_dispatch_fn            dispatch;
 	render_backend_flip_fn                flip;
 	render_backend_allocate_buffer_fn     allocate_buffer;
-	render_backend_deallocate_buffer_fn   deallocate_buffer;
 	render_backend_upload_buffer_fn       upload_buffer;
 	render_backend_upload_shader_fn       upload_shader;
+	render_backend_upload_program_fn      upload_program;
 	render_backend_read_shader_fn         read_shader;
+	render_backend_deallocate_buffer_fn   deallocate_buffer;
 	render_backend_deallocate_shader_fn   deallocate_shader;
+	render_backend_deallocate_program_fn  deallocate_program;
 };
 
 #define RENDER_DECLARE_BACKEND \
@@ -415,10 +431,10 @@ struct render_vertex_decl_t {
 	uintptr_t  backend_data[4]
 
 #define RENDER_DECLARE_SHADER \
-	RENDER_DECLARE_OBJECT; \
+	render_backend_t* backend; \
 	unsigned int shadertype:8; \
 	unsigned int unused:24; \
-	uintptr_t    backend_data[4]
+	uintptr_t backend_data[4]
 
 struct render_buffer_t {
 	RENDER_DECLARE_BUFFER;
@@ -443,6 +459,13 @@ struct render_vertexshader_t {
 
 struct render_pixelshader_t {
 	RENDER_DECLARE_SHADER;
+};
+
+struct render_program_t {
+	render_backend_t* backend;
+	render_vertexshader_t* vertexshader;
+	render_pixelshader_t* pixelshader;
+	uintptr_t backend_data[4];
 };
 
 struct render_resolution_t {

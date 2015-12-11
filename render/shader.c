@@ -18,113 +18,67 @@
 #include <foundation/foundation.h>
 
 #include <render/render.h>
-#include <render/internal.h>
 
-#define GET_SHADER(id) objectmap_lookup(_render_map_shader, (id))
-
-object_t
-render_shader_ref(object_t id) {
-	int32_t ref;
-	render_shader_t* shader = objectmap_lookup(_render_map_shader, id);
-	if (shader)
-		do {
-			ref = atomic_load32(&shader->ref);
-			if ((ref > 0) && atomic_cas32(&shader->ref, ref + 1, ref))
-				return id;
-		}
-		while (ref > 0);
-	return 0;
+render_pixelshader_t*
+render_pixelshader_allocate(void) {
+	render_pixelshader_t* shader = memory_allocate(HASH_RENDER, sizeof(render_pixelshader_t), 0,
+	                                               MEMORY_PERSISTENT);
+	render_pixelshader_initialize(shader);
+	return shader;
 }
 
 void
-render_shader_destroy(object_t id) {
-	int32_t ref;
-	render_shader_t* shader = GET_SHADER(id);
-	if (shader) 
-		do {
-			ref = atomic_load32(&shader->ref);
-			if ((ref > 0) && atomic_cas32(&shader->ref, ref - 1, ref)) {
-				if (ref == 1) {
-					objectmap_free(_render_map_shader, id);
-					shader->backend->vtable.deallocate_shader(shader->backend, (render_shader_t*)shader);
-					memory_deallocate(shader);
-				}
-				return;
-			}
-		}
-		while (ref > 0);
-}
-
-object_t
-render_pixelshader_create(render_backend_t* backend) {
-	object_t id = objectmap_reserve(_render_map_shader);
-	if (!id) {
-		log_error(HASH_RENDER, ERROR_OUT_OF_MEMORY,
-		          STRING_CONST("Unable to create pixel shader, out of slots in object map"));
-		return 0;
-	}
-
-	memory_context_push(HASH_RENDER);
-
-	render_pixelshader_t* shader = memory_allocate(HASH_RENDER, sizeof(render_pixelshader_t), 16,
-	                                               MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
-	shader->id      = id;
-	shader->backend = backend;
+render_pixelshader_initialize(render_pixelshader_t* shader) {
+	memset(shader, 0, sizeof(render_pixelshader_t));
 	shader->shadertype = SHADER_PIXEL;
-	atomic_store32(&shader->ref, 1);
-	objectmap_set(_render_map_shader, id, shader);
-
-	memory_context_pop();
-
-	return shader->id;
 }
 
 void
-render_pixelshader_upload(object_t id, const void* buffer, size_t size) {
-	render_pixelshader_t* shader = GET_SHADER(id);
-	shader->backend->vtable.upload_shader(shader->backend, (render_shader_t*)shader, buffer, size);
-}
-
-object_t
-render_vertexshader_create(render_backend_t* backend) {
-	object_t id = objectmap_reserve(_render_map_shader);
-	if (!id) {
-		log_error(HASH_RENDER, ERROR_OUT_OF_MEMORY,
-		          STRING_CONST("Unable to create pixel shader, out of slots in object map"));
-		return 0;
-	}
-
-	memory_context_push(HASH_RENDER);
-
-	render_vertexshader_t* shader = memory_allocate(HASH_RENDER, sizeof(render_vertexshader_t), 16,
-	                                                MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
-	shader->id      = id;
-	shader->backend = backend;
-	shader->shadertype = SHADER_VERTEX;
-	atomic_store32(&shader->ref, 1);
-	objectmap_set(_render_map_shader, id, shader);
-
-	memory_context_pop();
-
-	return shader->id;
+render_pixelshader_finalize(render_pixelshader_t* shader) {
+	if (shader->backend)
+		shader->backend->vtable.deallocate_shader(shader->backend, (render_shader_t*)shader);
 }
 
 void
-render_vertexshader_upload(object_t id, const void* buffer, size_t size) {
-	render_vertexshader_t* shader = GET_SHADER(id);
-	shader->backend->vtable.upload_shader(shader->backend, (render_shader_t*)shader, buffer, size);
-}
-
-uuid_t
-render_shader_uuid(object_t id) {
-	render_shader_t* shader = GET_SHADER(id);
-	return shader ? shader->uuid : uuid_null();
-}
-
-void
-render_shader_set_uuid(object_t id, const uuid_t uuid) {
-	render_shader_t* shader = GET_SHADER(id);
+render_pixelshader_deallocate(render_pixelshader_t* shader) {
 	if (shader)
-		shader->uuid = uuid;
+		render_pixelshader_finalize(shader);
+	memory_deallocate(shader);
 }
 
+void
+render_pixelshader_upload(render_pixelshader_t* shader, const void* buffer, size_t size) {
+	shader->backend->vtable.upload_shader(shader->backend, (render_shader_t*)shader, buffer, size);
+}
+
+render_vertexshader_t*
+render_vertexshader_allocate(void) {
+	render_vertexshader_t* shader = memory_allocate(HASH_RENDER, sizeof(render_vertexshader_t), 16,
+	                                                MEMORY_PERSISTENT);
+	render_vertexshader_initialize(shader);
+	return shader;
+}
+
+void
+render_vertexshader_initialize(render_vertexshader_t* shader) {
+	memset(shader, 0, sizeof(render_vertexshader_t));
+	shader->shadertype = SHADER_VERTEX;
+}
+
+void
+render_vertexshader_finalize(render_vertexshader_t* shader) {
+	if (shader->backend)
+		shader->backend->vtable.deallocate_shader(shader->backend, (render_shader_t*)shader);
+}
+
+void
+render_vertexshader_deallocate(render_vertexshader_t* shader) {
+	if (shader)
+		render_vertexshader_finalize(shader);
+	memory_deallocate(shader);
+}
+
+void
+render_vertexshader_upload(render_vertexshader_t* shader, const void* buffer, size_t size) {
+	shader->backend->vtable.upload_shader(shader->backend, (render_shader_t*)shader, buffer, size);
+}

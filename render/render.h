@@ -32,6 +32,8 @@
 #include <render/sort.h>
 #include <render/indexbuffer.h>
 #include <render/vertexbuffer.h>
+#include <render/shader.h>
+#include <render/program.h>
 
 /*! Initialize render library
     \return 0 if success, <0 if error */

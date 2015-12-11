@@ -31,6 +31,9 @@ render_module_initialize(render_config_t config) {
 
 	_render_api_disabled[RENDERAPI_UNKNOWN] = true;
 	_render_api_disabled[RENDERAPI_DEFAULT] = true;
+	_render_api_disabled[RENDERAPI_OPENGL] = true;
+	_render_api_disabled[RENDERAPI_DIRECTX] = true;
+	_render_api_disabled[RENDERAPI_GLES] = true;
 
 	if (render_target_initialize() < 0)
 		return -1;
@@ -58,8 +61,12 @@ render_module_is_initialized(void) {
 void
 render_api_enable(const render_api_t* api, size_t num) {
 	for (size_t i = 0; i < num; ++i) {
-		if ((api[i] > RENDERAPI_DEFAULT) && (api[i] < RENDERAPI_NUM))
-			_render_api_disabled[api[i]] = false;
+		if ((api[i] > RENDERAPI_DEFAULT) && (api[i] < RENDERAPI_NUM)) {
+			if ((api[i] != RENDERAPI_OPENGL) &&
+			        (api[i] != RENDERAPI_DIRECTX) &&
+			        (api[i] != RENDERAPI_GLES))
+				_render_api_disabled[api[i]] = false;
+		}
 	}
 }
 
