@@ -249,6 +249,8 @@ typedef struct render_pixelshader_t render_pixelshader_t;
 typedef struct render_program_t render_program_t;
 typedef struct render_resolution_t render_resolution_t;
 typedef struct render_vertex_decl_element_t render_vertex_decl_element_t;
+typedef struct render_parameter_t render_parameter_t;
+typedef struct render_parameter_decl_t render_parameter_decl_t;
 typedef struct render_config_t render_config_t;
 
 typedef bool (* render_backend_construct_fn)(render_backend_t*);
@@ -413,6 +415,19 @@ struct render_vertex_attribute_t {
 
 struct render_vertex_decl_t {
 	render_vertex_attribute_t attribute[VERTEXATTRIBUTE_NUMATTRIBUTES];
+};
+
+struct render_parameter_t
+{
+	render_parameter_type_t type;
+	unsigned int            dim;
+	unsigned int            offset;
+	unsigned int            stages;
+	hash_t                  name;
+};
+
+struct render_parameter_decl_t {
+	render_parameter_t* parameters;
 };
 
 #define RENDER_DECLARE_BUFFER \

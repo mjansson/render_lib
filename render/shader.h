@@ -55,3 +55,22 @@ render_vertexshader_deallocate(render_vertexshader_t* shader);
 RENDER_API void
 render_vertexshader_upload(render_vertexshader_t* shader, const void* buffer, size_t size);
 
+
+#if RESOURCE_ENABLE_LOCAL_SOURCE
+
+/* Compile shader resource
+\param uuid Shader UUID
+\param platform Resource platform
+\param source Shader resource source representation
+\param type Type string
+\param type_length Length of type string
+\return 0 if successful, <0 if error */
+RENDER_API int
+render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* source,
+                      const char* type, size_t type_length);
+
+#else
+
+#define render_shader_compile(uuid, platform, source, type, type_length) ((void)sizeof(uuid)), ((void)sizeof(platform)), ((void)sizeof(source)), ((void)sizeof(type)), ((void)sizeof(type_length)), -1
+
+#endif

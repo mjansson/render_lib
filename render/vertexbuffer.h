@@ -24,22 +24,83 @@
 
 #include <render/types.h>
 
+/*! Allocate a new vertex declaration from array of elements
+\param elements Vertex declaration elements
+\param num Number of vertex declaration elements in array
+\return New allocated vertex declaration */
 RENDER_API render_vertex_decl_t*
-render_vertex_decl_allocate_buffer(size_t num, render_vertex_decl_element_t* elements);
+render_vertex_decl_allocate(render_vertex_decl_element_t* elements, size_t num);
 
+/*! Allocate a new vertex declaration from variable number of elements.
+Argument list must be pairs of (render_vertex_format_t, render_vertex_attribute_id)
+arguments. Terminate argument list with a VERTEXFORMAT_UNKNOWN format identifier.
+\param format Element format identifier
+\param attribute Element attribute identifier
+\return New allocated vertex declaration */
 RENDER_API render_vertex_decl_t*
-render_vertex_decl_allocate(render_vertex_format_t format, render_vertex_attribute_id attribute,
-                            ...);
+render_vertex_decl_allocate_varg(render_vertex_format_t format,
+                                 render_vertex_attribute_id attribute, ...);
 
+/*! Allocate a new vertex declaration from variable number of elements.
+Argument list must be pairs of (render_vertex_format_t, render_vertex_attribute_id)
+arguments. Terminate argument list with a VERTEXFORMAT_UNKNOWN format identifier.
+\param format Element format identifier
+\param attribute Element attribute identifier
+\param list Variable argument list
+\return New allocated vertex declaration */
+RENDER_API render_vertex_decl_t*
+render_vertex_decl_allocate_vlist(render_vertex_format_t format,
+                                  render_vertex_attribute_id attribute, va_list list);
+
+/*! Initialize a vertex declaration from array of elements
+\param decl Vertex declaration
+\param elements Vertex declaration elements
+\param num Number of vertex declaration elements in array */
+RENDER_API void
+render_vertex_decl_initialize(render_vertex_decl_t* decl, render_vertex_decl_element_t* elements,
+                              size_t num);
+
+/*! Initialize a vertex declaration from variable number of elements.
+Argument list must be pairs of (render_vertex_format_t, render_vertex_attribute_id)
+arguments. Terminate argument list with a VERTEXFORMAT_UNKNOWN format identifier.
+\param decl Vertex declaration
+\param format Element format identifier
+\param attribute Element attribute identifier */
+RENDER_API void
+render_vertex_decl_initialize_varg(render_vertex_decl_t* decl, render_vertex_format_t format,
+                                   render_vertex_attribute_id attribute, ...);
+
+/*! Initialize a vertex declaration from variable number of elements.
+Argument list must be pairs of (render_vertex_format_t, render_vertex_attribute_id)
+arguments. Terminate argument list with a VERTEXFORMAT_UNKNOWN format identifier.
+\param decl Vertex declaration
+\param format Element format identifier
+\param attribute Element attribute identifier
+\param list Variable argument list */
+RENDER_API void
+render_vertex_decl_initialize_vlist(render_vertex_decl_t* decl, render_vertex_format_t format,
+                                    render_vertex_attribute_id attribute, va_list list);
+
+/*! Finalize a vertex declaration
+\param decl Vertex declaration */
+RENDER_API void
+render_vertex_decl_finalize(render_vertex_decl_t* decl);
+
+/*! Deallocate a vertex declaration
+\param decl Vertex declaration */
+RENDER_API void
+render_vertex_decl_deallocate(render_vertex_decl_t* decl);
+
+/*! Get vertex size from declaration
+\param decl Vertex declaration
+\return Vertex size */
 RENDER_API size_t
 render_vertex_decl_size(const render_vertex_decl_t* decl);
+
 
 RENDER_API object_t
 render_vertexbuffer_create(render_backend_t* backend, render_usage_t usage, size_t vertices,
                            const render_vertex_decl_t* decl, const void* data);
-
-RENDER_API object_t
-render_vertexbuffer_load(render_backend_t* backend, const uuid_t uuid);
 
 RENDER_API object_t
 render_vertexbuffer_ref(object_t buffer);

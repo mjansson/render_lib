@@ -57,7 +57,7 @@ glsl_name_from_token(const string_const_t token) {
 }
 
 int
-renderimport_import_glsl_vertexshader(stream_t* stream, const uuid_t uuid) {
+renderimport_import_glsl_shader(stream_t* stream, const uuid_t uuid, const char* type, size_t type_length) {
 	resource_source_t source;
 	void* blob;
 	size_t size;
@@ -161,6 +161,9 @@ renderimport_import_glsl_vertexshader(stream_t* stream, const uuid_t uuid) {
 	resource_source_set(&source, timestamp, HASH_PARAMETER_COUNT,
 	                    platform, STRING_ARGS(valstr));
 
+	resource_source_set(&source, timestamp, HASH_RESOURCE_TYPE,
+	                    0, type, type_length);
+
 	if (!resource_source_write(&source, uuid, false)) {
 		ret = RENDERIMPORT_RESULT_UNABLE_TO_WRITE_SOURCE;
 		goto finalize;
@@ -174,6 +177,11 @@ finalize:
 }
 
 int
+renderimport_import_glsl_vertexshader(stream_t* stream, const uuid_t uuid) {
+	return renderimport_import_glsl_shader(stream, uuid, STRING_CONST("vertexshader"));
+}
+
+int
 renderimport_import_glsl_pixelshader(stream_t* stream, const uuid_t uuid) {
-	return renderimport_import_glsl_vertexshader(stream, uuid);
+	return renderimport_import_glsl_shader(stream, uuid, STRING_CONST("pixelshader"));
 }

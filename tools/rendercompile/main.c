@@ -1,4 +1,4 @@
-/* main.c  -  Render library importer  -  Public Domain  -  2014 Mattias Jansson / Rampant Pixels
+/* main.c  -  Render library compiler  -  Public Domain  -  2014 Mattias Jansson / Rampant Pixels
  *
  * This library provides a cross-platform rendering library in C11 providing
  * basic 2D/3D rendering functionality for projects based on our foundation library.
@@ -21,80 +21,19 @@
 #include <render/render.h>
 
 #include "errorcodes.h"
-#include "glsl.h"
-
-typedef enum {
-	IMPORTTYPE_UNKNOWN,
-	IMPORTTYPE_GLSL_VERTEXSHADER,
-	IMPORTTYPE_GLSL_PIXELSHADER
-} renderimport_type_t;
 
 typedef struct {
 	bool              display_help;
 	int               binary;
 	string_const_t    source_path;
 	string_const_t*   input_files;
-} renderimport_input_t;
+} rendercompile_input_t;
 
-static renderimport_input_t
-renderimport_parse_command_line(const string_const_t* cmdline);
+static rendercompile_input_t
+rendercompile_parse_command_line(const string_const_t* cmdline);
 
 static void
-renderimport_print_usage(void);
-
-static int
-renderimport_import(stream_t* stream) {
-	renderimport_type_t type = IMPORTTYPE_UNKNOWN;
-	renderimport_type_t guess = IMPORTTYPE_UNKNOWN;
-	uuid_t uuid;
-	string_const_t path;
-	int ret;
-	char buffer[1024];
-
-	while (!stream_eos(stream)) {
-		string_t line = stream_read_line_buffer(stream, buffer, sizeof(buffer), '\n');
-		if (string_find_string(STRING_ARGS(line), STRING_CONST("gl_FragColor"), 0) != STRING_NPOS) {
-			type = IMPORTTYPE_GLSL_PIXELSHADER;
-			break;
-		}
-		else if (string_find_string(STRING_ARGS(line), STRING_CONST("gl_Position"), 0) != STRING_NPOS) {
-			type = IMPORTTYPE_GLSL_VERTEXSHADER;
-			break;
-		}
-	}
-
-	if ((type == IMPORTTYPE_UNKNOWN) && (guess != IMPORTTYPE_UNKNOWN))
-		type = guess;
-
-	if (type == IMPORTTYPE_UNKNOWN)
-		return RENDERIMPORT_RESULT_UNSUPPORTED_INPUT;
-
-	stream_seek(stream, 0, STREAM_SEEK_BEGIN);
-
-	path = stream_path(stream);
-	uuid = resource_import_map_lookup(STRING_ARGS(path));
-	if (uuid_is_null(uuid)) {
-		uuid = uuid_generate_random();
-		if (!resource_import_map_store(STRING_ARGS(path), &uuid)) {
-			log_warn(HASH_RESOURCE, WARNING_SUSPICIOUS,
-			         STRING_CONST("Unable to open import map file to store new resource"));
-			return RENDERIMPORT_RESULT_UNABLE_TO_OPEN_MAP_FILE;
-		}
-	}
-
-	switch (type) {
-	case IMPORTTYPE_GLSL_VERTEXSHADER:
-		ret = renderimport_import_glsl_vertexshader(stream, uuid);
-		break;
-	case IMPORTTYPE_GLSL_PIXELSHADER:
-		ret = renderimport_import_glsl_pixelshader(stream, uuid);
-		break;
-	default:
-		return RENDERIMPORT_RESULT_UNSUPPORTED_INPUT;
-	}
-
-	return ret;
-}
+rendercompile_print_usage(void);
 
 int
 main_initialize(void) {
@@ -111,9 +50,9 @@ main_initialize(void) {
 	memset(&render_config, 0, sizeof(render_config));
 
 	memset(&application, 0, sizeof(application));
-	application.name = string_const(STRING_CONST("renderimport"));
-	application.short_name = string_const(STRING_CONST("renderimport"));
-	application.config_dir = string_const(STRING_CONST("renderimport"));
+	application.name = string_const(STRING_CONST("rendercompile"));
+	application.short_name = string_const(STRING_CONST("rendercompile"));
+	application.config_dir = string_const(STRING_CONST("rendercompile"));
 	application.flags = APPLICATION_UTILITY;
 
 	log_enable_prefix(false);
@@ -133,33 +72,49 @@ main_initialize(void) {
 		return ret;
 
 	log_set_suppress(HASH_RESOURCE, ERRORLEVEL_DEBUG);
+	log_set_suppress(HASH_RENDER, ERRORLEVEL_DEBUG);
 
 	return 0;
 }
 
 int
 main_run(void* main_arg) {
-	int result = RENDERIMPORT_RESULT_OK;
-	renderimport_input_t input = renderimport_parse_command_line(environment_command_line());
+	int result = RENDERCOMPILE_RESULT_OK;
+	rendercompile_input_t input = rendercompile_parse_command_line(environment_command_line());
 
 	FOUNDATION_UNUSED(main_arg);
 
 	if (input.display_help) {
-		renderimport_print_usage();
+		rendercompile_print_usage();
 		goto exit;
 	}
 
 	resource_source_set_path(STRING_ARGS(input.source_path));
-	resource_import_register(renderimport_import);
+	resource_compile_register(render_compile);
 
 	size_t ifile, fsize;
 	for (ifile = 0, fsize = array_size(input.input_files); ifile < fsize; ++ifile) {
-		if (resource_import(STRING_ARGS(input.input_files[ifile])))
-			log_infof(HASH_RESOURCE, STRING_CONST("Successfully imported: %.*s"),
-			          STRING_FORMAT(input.input_files[ifile]));
+		uuid_t uuid = string_to_uuid(STRING_ARGS(input.input_files[ifile]));
+		if (uuid_is_null(uuid)) {
+			char buffer[BUILD_MAX_PATHLEN];
+			string_t pathstr = string_copy(buffer, sizeof(buffer), STRING_ARGS(input.input_files[ifile]));
+			pathstr = path_clean(STRING_ARGS(pathstr), sizeof(buffer));
+			pathstr = path_absolute(STRING_ARGS(pathstr), sizeof(buffer));
+			uuid = resource_import_map_lookup(STRING_ARGS(pathstr));
+		}
+		if (uuid_is_null(uuid)) {
+			log_warnf(HASH_RESOURCE, WARNING_INVALID_VALUE, STRING_CONST("Failed to lookup: %.*s"), STRING_FORMAT(input.input_files[ifile]));
+			result = RENDERCOMPILE_RESULT_INVALID_INPUT;
+			break;
+		}
+
+		string_const_t uuidstr = string_from_uuid_static(uuid);
+		if (resource_compile(uuid, RESOURCE_PLATFORM_ALL))
+			log_infof(HASH_RESOURCE, STRING_CONST("Successfully compiled: %.*s (%.*s)"),
+			          STRING_FORMAT(uuidstr), STRING_FORMAT(input.input_files[ifile]));
 		else
-			log_warnf(HASH_RESOURCE, WARNING_UNSUPPORTED, STRING_CONST("Failed to import: %.*s"),
-			          STRING_FORMAT(input.input_files[ifile]));
+			log_warnf(HASH_RESOURCE, WARNING_UNSUPPORTED, STRING_CONST("Failed to compile: %.*s (%.*s)"),
+			          STRING_FORMAT(uuidstr), STRING_FORMAT(input.input_files[ifile]));
 	}
 
 exit:
@@ -177,9 +132,9 @@ main_finalize(void) {
 	foundation_finalize();
 }
 
-renderimport_input_t
-renderimport_parse_command_line(const string_const_t* cmdline) {
-	renderimport_input_t input;
+rendercompile_input_t
+rendercompile_parse_command_line(const string_const_t* cmdline) {
+	rendercompile_input_t input;
 	size_t arg, asize;
 
 	memset(&input, 0, sizeof(input));
@@ -241,14 +196,14 @@ renderimport_parse_command_line(const string_const_t* cmdline) {
 }
 
 static void
-renderimport_print_usage(void) {
+rendercompile_print_usage(void) {
 	const error_level_t saved_level = log_suppress(0);
 	log_set_suppress(0, ERRORLEVEL_DEBUG);
 	log_info(0, STRING_CONST(
-	             "renderimport usage:\n"
-	             "  renderimport [--source <path>] [--ascii] [--binary] [--debug] [--help] <file> <file> ... [--]\n"
+	             "rendercompile usage:\n"
+	             "  rendercompile [--source <path>] [--ascii] [--binary] [--debug] [--help] <file> <uuid> ... [--]\n"
 	             "    Arguments:\n"
-	             "      <file> <file> ...            Any number of input files\n"
+	             "      <file> <uuid> ...            Any number of input files or UUIDs\n"
 	             "    Optional arguments:\n"
 	             "      --source <path>              Operate on resource file source structure given by <path>\n"
 	             "      --binary                     Write binary files\n"

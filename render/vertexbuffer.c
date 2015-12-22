@@ -250,9 +250,37 @@ render_vertex_decl_size(const render_vertex_decl_t* decl) {
 }
 
 render_vertex_decl_t*
-render_vertex_decl_allocate_buffer(size_t num_elements, render_vertex_decl_element_t* elements) {
+render_vertex_decl_allocate(render_vertex_decl_element_t* elements, size_t num_elements) {
+	render_vertex_decl_t* decl = memory_allocate(HASH_RENDER, sizeof(render_vertex_decl_t), 0,
+	                                             MEMORY_PERSISTENT);
+	render_vertex_decl_initialize(decl, elements, num_elements);
+	return decl;
+}
+
+render_vertex_decl_t*
+render_vertex_decl_allocate_varg(render_vertex_format_t format,
+                                 render_vertex_attribute_id attribute, ...) {
 	render_vertex_decl_t* decl = memory_allocate(HASH_RENDER, sizeof(render_vertex_decl_t), 0,
 	                                             MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	va_list list;
+	va_start(list, attribute);
+	render_vertex_decl_initialize_vlist(decl, format, attribute, list);
+	va_end(list);
+	return decl;
+}
+
+render_vertex_decl_t*
+render_vertex_decl_allocate_vlist(render_vertex_format_t format,
+                                 render_vertex_attribute_id attribute, va_list list) {
+	render_vertex_decl_t* decl = memory_allocate(HASH_RENDER, sizeof(render_vertex_decl_t), 0,
+	                                             MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	render_vertex_decl_initialize_vlist(decl, format, attribute, list);
+	return decl;
+}
+
+void
+render_vertex_decl_initialize(render_vertex_decl_t* decl, render_vertex_decl_element_t* elements,
+                              size_t num_elements) {
 	for (int i = 0; i < VERTEXATTRIBUTE_NUMATTRIBUTES; ++i)
 		decl->attribute[i].format = VERTEXFORMAT_UNKNOWN;
 
@@ -267,22 +295,28 @@ render_vertex_decl_allocate_buffer(size_t num_elements, render_vertex_decl_eleme
 
 		offset += _vertex_format_size[ elements[i].format ];
 	}
-
-	return decl;
 }
 
-render_vertex_decl_t*
-render_vertex_decl_allocate(render_vertex_format_t format, render_vertex_attribute_id attribute,
-                            ...) {
-	render_vertex_decl_t* decl = memory_allocate(HASH_RENDER, sizeof(render_vertex_decl_t), 0,
-	                                             MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+void
+render_vertex_decl_initialize_varg(render_vertex_decl_t* decl, render_vertex_format_t format,
+                                   render_vertex_attribute_id attribute, ...) {
+	va_list list;
+	va_start(list, attribute);
+	render_vertex_decl_initialize_vlist(decl, format, attribute, list);
+	va_end(list);
+}
+
+void
+render_vertex_decl_initialize_vlist(render_vertex_decl_t* decl, render_vertex_format_t format,
+                                   render_vertex_attribute_id attribute, va_list list) {
+
 	for (int i = 0; i < VERTEXATTRIBUTE_NUMATTRIBUTES; ++i)
 		decl->attribute[i].format = VERTEXFORMAT_UNKNOWN;
 
 	size_t offset = 0;
 
-	va_list list;
-	va_start(list, attribute);
+	va_list clist;
+	va_copy(clist, list);
 
 	while (format < VERTEXFORMAT_UNKNOWN) {
 		if (attribute < VERTEXATTRIBUTE_NUMATTRIBUTES) {
@@ -293,14 +327,23 @@ render_vertex_decl_allocate(render_vertex_format_t format, render_vertex_attribu
 			offset += _vertex_format_size[ format ];
 		}
 
-		format = va_arg(list, render_vertex_format_t);
+		format = va_arg(clist, render_vertex_format_t);
 		if (format <= VERTEXFORMAT_UNKNOWN)
-			attribute = va_arg(list, render_vertex_attribute_id);
+			attribute = va_arg(clist, render_vertex_attribute_id);
 	}
 
-	va_end(list);
+	va_end(clist);
+}
 
-	return decl;
+void
+render_vertex_decl_finalize(render_vertex_decl_t* decl) {
+	FOUNDATION_UNUSED(decl);
+}
+
+void
+render_vertex_decl_deallocate(render_vertex_decl_t* decl) {
+	render_vertex_decl_finalize(decl);
+	memory_deallocate(decl);
 }
 
 uuid_t

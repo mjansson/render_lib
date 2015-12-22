@@ -17,7 +17,7 @@ writer = generator.writer
 toolchain = generator.toolchain
 
 render_lib = generator.lib( module = 'render', sources = [
-  'backend.c', 'command.c', 'context.c', 'drawable.c', 'indexbuffer.c', 'program.c', 'render.c',
+  'backend.c', 'command.c', 'context.c', 'compile.c', 'drawable.c', 'indexbuffer.c', 'program.c', 'render.c',
   'shader.c', 'sort.c', 'target.c', 'version.c', 'vertexbuffer.c',
   os.path.join( 'gl4', 'backend.c' ), os.path.join( 'gl4', 'backend.m' ), os.path.join( 'gl4', 'glprocs.c' ),
   os.path.join( 'gl2', 'backend.c' ),
@@ -38,6 +38,7 @@ if not target.is_ios() and not target.is_android() and not target.is_tizen():
   configs = [ config for config in toolchain.configs if config not in [ 'profile', 'deploy' ] ]
   if not configs == []:
     generator.bin( 'renderimport', [ 'main.c', 'glsl.c' ], 'renderimport', basepath = 'tools', implicit_deps = [ render_lib ], libs = [ 'render', 'window', 'resource', 'foundation' ], configs = configs, extralibs = gllibs, extraframeworks = glframeworks )
+    generator.bin( 'rendercompile', [ 'main.c' ], 'rendercompile', basepath = 'tools', implicit_deps = [ render_lib ], libs = [ 'render', 'window', 'resource', 'foundation' ], configs = configs, extralibs = gllibs, extraframeworks = glframeworks )
 
 includepaths = generator.test_includepaths()
 
