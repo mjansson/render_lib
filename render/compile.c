@@ -34,15 +34,27 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
                       const char* type, size_t type_length) {
 	int result = -1;
 
+	FOUNDATION_UNUSED(uuid);
 	FOUNDATION_UNUSED(platform);
+	FOUNDATION_UNUSED(source);
 
-	if (string_equal(type, type_length, STRING_CONST("vertexshader"))) {
-		log_info(HASH_RESOURCE, STRING_CONST("Compiling vertex shader"));
-		result = 0;
-	}
-	else if (string_equal(type, type_length, STRING_CONST("pixelshader"))) {
-		log_info(HASH_RESOURCE, STRING_CONST("Compiling pixel shader"));
-		result = 0;
+	if (string_equal(type, type_length, STRING_CONST("vertexshader")) ||
+	        string_equal(type, type_length, STRING_CONST("pixelshader"))) {
+		/* 1) Walk change list in source and build distinct platforms to build
+		   2) Iterate over platforms to build and:
+		stream_t* stream = resource_local_create_static(uuid, platform);
+		if (stream) {
+			... Compile for platform
+			stream_deallocate(stream);
+			... Write static
+			stream_t* stream = resource_local_create_dynamic(uuid, platform);
+			... Write dynamic
+			stream_deallocate(stream);
+			result = 0;
+		}
+		else {
+			... failed, warning
+		}*/
 	}
 
 	return result;
