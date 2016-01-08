@@ -19,6 +19,9 @@
 #include <render/render.h>
 #include <resource/resource.h>
 
+#include "gl4/glwrap.h"
+#include "gl4/glprocs.h"
+
 #if RESOURCE_ENABLE_LOCAL_SOURCE
 
 int
@@ -29,33 +32,127 @@ render_compile(const uuid_t uuid, uint64_t platform, resource_source_t* source,
 	return -1;
 }
 
+static resource_change_t*
+resource_source_platform_reduce(resource_change_t* change, resource_change_t* best, void* data) {
+	uint64_t* subplatforms = data;
+	uint64_t platform = subplatforms[0];
+	size_t iplat, psize;
+	if ((platform == RESOURCE_PLATFORM_ALL) ||
+	        resource_platform_is_equal_or_more_specific(change->platform, platform)) {
+		for (iplat = 1, psize = array_size(subplatforms); iplat != psize; ++iplat) {
+			if (subplatforms[iplat] == change->platform)
+				break;
+		}
+		if (iplat >= psize)
+			array_push(subplatforms, change->platform);
+	}
+	return 0;
+}
+
 int
 render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* source,
                       const char* type, size_t type_length) {
 	int result = -1;
+	resource_platform_t platform_decl;
+	uint64_t* subplatforms = 0;
+	size_t iplat, psize;
+	hashmap_fixed_t fixedmap;
+	hashmap_t* map = (hashmap_t*)&fixedmap;
+	render_backend_t* backend;
+	//render_pixelshader_t pixelshader;
+	//render_vertexshader_t vertexshader;
 
-	FOUNDATION_UNUSED(uuid);
-	FOUNDATION_UNUSED(platform);
-	FOUNDATION_UNUSED(source);
+	if (!string_equal(type, type_length, STRING_CONST("vertexshader")) &&
+	        !string_equal(type, type_length, STRING_CONST("pixelshader")))
+		return result;
 
-	if (string_equal(type, type_length, STRING_CONST("vertexshader")) ||
-	        string_equal(type, type_length, STRING_CONST("pixelshader"))) {
-		/* 1) Walk change list in source and build distinct platforms to build
-		   2) Iterate over platforms to build and:
-		stream_t* stream = resource_local_create_static(uuid, platform);
+	array_push(subplatforms, platform);
+
+	hashmap_initialize(map, sizeof(fixedmap.bucket) / sizeof(fixedmap.bucket[0]), 8);
+	resource_source_map_all(source, map, false);
+	resource_source_map_reduce(source, map, subplatforms, resource_source_platform_reduce);
+	resource_source_map_clear(map);
+
+	for (iplat = 1, psize = array_size(subplatforms); iplat != psize; ++iplat) {
+		uint64_t subplatform = subplatforms[iplat];
+		if (subplatform == 0)
+			continue; //Shaders are always platform specific
+
+		platform_decl = resource_platform_decompose(subplatform);
+		if (platform_decl.render_api <= RENDERAPI_DEFAULT) {
+			if (platform_decl.render_api_group == RENDERAPIGROUP_OPENGL)
+				platform_decl.render_api = RENDERAPI_OPENGL;
+			else if (platform_decl.render_api_group == RENDERAPIGROUP_DIRECTX)
+				platform_decl.render_api = RENDERAPI_DIRECTX;
+			else if (platform_decl.render_api_group == RENDERAPIGROUP_GLES)
+				platform_decl.render_api = RENDERAPI_GLES;
+			else
+				continue; //Nonspecific render api
+		}
+
+		backend = render_backend_allocate(platform_decl.render_api, true);
+		if (!backend) {
+			log_warn(HASH_RESOURCE, WARNING_UNSUPPORTED,
+			         STRING_CONST("Unable to create render backend for shader compilation"));
+			continue;
+		}
+
+		if ((platform_decl.render_api >= RENDERAPI_OPENGL) &&
+		        (platform_decl.render_api <= RENDERAPI_OPENGL4)) {
+			char* sourcebuffer = 0;
+			resource_change_t* sourcechange = resource_source_get(source, HASH_SOURCE, subplatform);
+			if (sourcechange && (sourcechange->flags & RESOURCE_SOURCEFLAG_BLOB)) {
+				sourcebuffer = memory_allocate(HASH_RESOURCE, sourcechange->value.blob.size, 0, MEMORY_PERSISTENT);
+				if (!resource_source_read_blob(uuid, HASH_SOURCE, subplatform, sourcechange->value.blob.checksum,
+				                               sourcebuffer, sourcechange->value.blob.size)) {
+					memory_deallocate(sourcebuffer);
+					sourcebuffer = 0;
+				}
+			}
+			if (sourcebuffer) {
+				GLuint handle = glCreateShader(
+				                    string_equal(type, type_length, STRING_CONST("vertexshader")) ?
+				                    GL_VERTEX_SHADER_ARB : GL_FRAGMENT_SHADER_ARB);
+				GLchar* glsource = (GLchar*)sourcebuffer;
+				GLint source_size = (GLint)sourcechange->value.blob.size;
+				glShaderSource(handle, 1, &glsource, &source_size);
+				glCompileShader(handle);
+
+				GLint log_length = 2048;
+				GLchar* log_buffer = memory_allocate(HASH_RESOURCE, log_length, 0, MEMORY_TEMPORARY);
+				GLint compiled = 0;
+				glGetShaderiv(handle, GL_COMPILE_STATUS, &compiled);
+				glGetShaderInfoLog(handle, log_length, &log_length, log_buffer);
+				if (!compiled) {
+					log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Unable to compile shader: %.*s"), (int)log_length, log_buffer);
+				}
+				else {
+					log_infof(HASH_RESOURCE, STRING_CONST("Successfully compiled shader: %.*s"), (int)log_length, log_buffer);
+				}
+				memory_deallocate(log_buffer);
+				memory_deallocate(sourcebuffer);
+				glDeleteShader(handle);
+			}
+		}
+	}
+
+	render_backend_deallocate(backend);
+
+	/*stream_t* stream = resource_local_create_static(uuid, subplatform);
+	if (stream) {
+		... Write static
+		stream_deallocate(stream);
+
+		stream = resource_local_create_dynamic(uuid, subplatform);
 		if (stream) {
-			... Compile for platform
-			stream_deallocate(stream);
-			... Write static
-			stream_t* stream = resource_local_create_dynamic(uuid, platform);
 			... Write dynamic
 			stream_deallocate(stream);
 			result = 0;
 		}
-		else {
-			... failed, warning
-		}*/
 	}
+	else {
+		... failed, warning
+	}*/
 
 	return result;
 }

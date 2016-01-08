@@ -54,7 +54,7 @@ _rb_gl_flush_drawable(void* context);
 
 #elif FOUNDATION_PLATFORM_LINUX
 
-#  include <foundation/posix.>
+#  include <foundation/posix.h>
 #  include <X11/Xlib.h>
 #  include <X11/extensions/xf86vmode.h>
 #  include <GL/gl.h>
