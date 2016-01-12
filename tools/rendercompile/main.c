@@ -72,7 +72,7 @@ main_initialize(void) {
 		return ret;
 
 	log_set_suppress(HASH_RESOURCE, ERRORLEVEL_DEBUG);
-	log_set_suppress(HASH_RENDER, ERRORLEVEL_DEBUG);
+	log_set_suppress(HASH_RENDER, ERRORLEVEL_INFO);
 
 	return 0;
 }
@@ -108,13 +108,16 @@ main_run(void* main_arg) {
 			break;
 		}
 
-		string_const_t uuidstr = string_from_uuid_static(uuid);
-		if (resource_compile(uuid, RESOURCE_PLATFORM_ALL))
+		if (resource_compile(uuid, RESOURCE_PLATFORM_ALL)) {
+			string_const_t uuidstr = string_from_uuid_static(uuid);
 			log_infof(HASH_RESOURCE, STRING_CONST("Successfully compiled: %.*s (%.*s)"),
 			          STRING_FORMAT(uuidstr), STRING_FORMAT(input.input_files[ifile]));
-		else
+		}
+		else {
+			string_const_t uuidstr = string_from_uuid_static(uuid);
 			log_warnf(HASH_RESOURCE, WARNING_UNSUPPORTED, STRING_CONST("Failed to compile: %.*s (%.*s)"),
 			          STRING_FORMAT(uuidstr), STRING_FORMAT(input.input_files[ifile]));
+		}
 	}
 
 exit:
