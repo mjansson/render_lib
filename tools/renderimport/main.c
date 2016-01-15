@@ -20,14 +20,10 @@
 #include <window/window.h>
 #include <render/render.h>
 
+#include "main.h"
 #include "errorcodes.h"
+#include "shader.h"
 #include "glsl.h"
-
-typedef enum {
-	IMPORTTYPE_UNKNOWN,
-	IMPORTTYPE_GLSL_VERTEXSHADER,
-	IMPORTTYPE_GLSL_PIXELSHADER
-} renderimport_type_t;
 
 typedef struct {
 	bool              display_help;
@@ -42,26 +38,22 @@ renderimport_parse_command_line(const string_const_t* cmdline);
 static void
 renderimport_print_usage(void);
 
-static int
+int
 renderimport_import(stream_t* stream) {
 	renderimport_type_t type = IMPORTTYPE_UNKNOWN;
 	renderimport_type_t guess = IMPORTTYPE_UNKNOWN;
 	uuid_t uuid;
 	string_const_t path;
+	string_const_t extension;
 	int ret;
-	char buffer[1024];
+	bool store_import = false;
 
-	while (!stream_eos(stream)) {
-		string_t line = stream_read_line_buffer(stream, buffer, sizeof(buffer), '\n');
-		if (string_find_string(STRING_ARGS(line), STRING_CONST("gl_FragColor"), 0) != STRING_NPOS) {
-			type = IMPORTTYPE_GLSL_PIXELSHADER;
-			break;
-		}
-		else if (string_find_string(STRING_ARGS(line), STRING_CONST("gl_Position"), 0) != STRING_NPOS) {
-			type = IMPORTTYPE_GLSL_VERTEXSHADER;
-			break;
-		}
-	}
+	path = stream_path(stream);
+	extension = path_file_extension(STRING_ARGS(path));
+	if (string_equal_nocase(STRING_ARGS(extension), STRING_CONST("shader")))
+		guess = IMPORTTYPE_SHADER;
+
+	type = renderimport_shader_guess_type(stream);
 
 	if ((type == IMPORTTYPE_UNKNOWN) && (guess != IMPORTTYPE_UNKNOWN))
 		type = guess;
@@ -69,12 +61,16 @@ renderimport_import(stream_t* stream) {
 	if (type == IMPORTTYPE_UNKNOWN)
 		return RENDERIMPORT_RESULT_UNSUPPORTED_INPUT;
 
-	stream_seek(stream, 0, STREAM_SEEK_BEGIN);
-
-	path = stream_path(stream);
 	uuid = resource_import_map_lookup(STRING_ARGS(path));
+	if (uuid_is_null(uuid) && (type == IMPORTTYPE_SHADER)) {
+		uuid = renderimport_shader_check_referenced_uuid(stream);
+		store_import = true;
+	}
 	if (uuid_is_null(uuid)) {
 		uuid = uuid_generate_random();
+		store_import = true;
+	}
+	if (store_import) {
 		if (!resource_import_map_store(STRING_ARGS(path), &uuid)) {
 			log_warn(HASH_RESOURCE, WARNING_SUSPICIOUS,
 			         STRING_CONST("Unable to open import map file to store new resource"));
@@ -83,6 +79,9 @@ renderimport_import(stream_t* stream) {
 	}
 
 	switch (type) {
+	case IMPORTTYPE_SHADER:
+		ret = renderimport_import_shader(stream, uuid);
+		break;
 	case IMPORTTYPE_GLSL_VERTEXSHADER:
 		ret = renderimport_import_glsl_vertexshader(stream, uuid);
 		break;

@@ -40,6 +40,7 @@ render_command_viewport(render_command_t* command, unsigned int x, unsigned int 
 
 RENDER_API void
 render_command_render(render_command_t* command, render_primitive_t type, uint16_t num,
-                      object_t vertexshader, object_t pixelshader, object_t vertexbuffer, object_t indexbuffer,
+                      render_vertexshader_t* vertexshader, render_pixelshader_t* pixelshader,
+                      object_t vertexbuffer, object_t indexbuffer,
                       object_t parameterbuffer, uint64_t blend_state);
 

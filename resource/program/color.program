@@ -1,0 +1,2 @@
+pixelshader shader/color.pixel.shader
+vertexshader shader/color.vertex.shader

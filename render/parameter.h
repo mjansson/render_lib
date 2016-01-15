@@ -25,10 +25,10 @@
 #include <render/types.h>
 
 RENDER_API render_parameter_decl_t*
-render_parameter_decl_allocate(void);
+render_parameter_decl_allocate(size_t num);
 
 RENDER_API void
-render_parameter_decl_initialize(render_parameter_decl_t* decl);
+render_parameter_decl_initialize(render_parameter_decl_t* decl, size_t num);
 
 RENDER_API void
 render_parameter_decl_finalize(render_parameter_decl_t* decl);

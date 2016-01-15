@@ -25,10 +25,10 @@
 #include <render/types.h>
 
 RENDER_API render_program_t*
-render_program_allocate(void);
+render_program_allocate(size_t num_parameters);
 
 RENDER_API void
-render_program_initialize(render_program_t* program);
+render_program_initialize(render_program_t* program, size_t num_parameters);
 
 RENDER_API void
 render_program_finalize(render_program_t* program);

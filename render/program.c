@@ -22,16 +22,17 @@
 #include <render/render.h>
 
 render_program_t*
-render_program_allocate(void) {
-	render_program_t* program = memory_allocate(HASH_RENDER, sizeof(render_program_t), 0,
-	                                            MEMORY_PERSISTENT);
-	render_program_initialize(program);
+render_program_allocate(size_t num_parameters) {
+	size_t size = sizeof(render_program_t) + (sizeof(render_parameter_t) * num_parameters);
+	render_program_t* program = memory_allocate(HASH_RENDER, size, 0, MEMORY_PERSISTENT);
+	render_program_initialize(program, num_parameters);
 	return program;
 }
 
 void
-render_program_initialize(render_program_t* program) {
+render_program_initialize(render_program_t* program, size_t num_parameters) {
 	memset(program, 0, sizeof(render_program_t));
+	program->parameters.num_parameters = num_parameters;
 }
 
 void

@@ -56,15 +56,16 @@ render_command_viewport(render_command_t* command, unsigned int x, unsigned int 
 
 void
 render_command_render(render_command_t* command, render_primitive_t type, uint16_t num,
-                      object_t vertexshader, object_t pixelshader, object_t vertexbuffer, object_t indexbuffer,
-                      object_t parameter_block, uint64_t blend_state) {
+                      render_vertexshader_t* vertexshader, render_pixelshader_t* pixelshader,
+                      object_t vertexbuffer, object_t indexbuffer,
+                      object_t parameterbuffer, uint64_t blend_state) {
 	command->type                         = RENDERCOMMAND_RENDER_TRIANGLELIST + type;
 	command->count                        = num;
 	command->data.render.vertexshader     = vertexshader;
 	command->data.render.pixelshader      = pixelshader;
 	command->data.render.vertexbuffer     = vertexbuffer;
 	command->data.render.indexbuffer      = indexbuffer;
-	command->data.render.parameterblock   = parameter_block;
+	command->data.render.parameterbuffer  = parameterbuffer;
 	command->data.render.blend_state      = blend_state;
 
 #if FOUNDATION_BUILD_DEBUG

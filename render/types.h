@@ -387,11 +387,11 @@ struct render_command_viewport_t {
 };
 
 struct render_command_render_t {
-	object_t vertexshader;
-	object_t pixelshader;
+	render_vertexshader_t* vertexshader;
+	render_pixelshader_t* pixelshader;
 	object_t vertexbuffer;
 	object_t indexbuffer;
-	object_t parameterblock;
+	object_t parameterbuffer;
 	uint64_t blend_state;
 };
 
@@ -417,8 +417,7 @@ struct render_vertex_decl_t {
 	render_vertex_attribute_t attribute[VERTEXATTRIBUTE_NUMATTRIBUTES];
 };
 
-struct render_parameter_t
-{
+struct render_parameter_t {
 	render_parameter_type_t type;
 	unsigned int            dim;
 	unsigned int            offset;
@@ -427,7 +426,8 @@ struct render_parameter_t
 };
 
 struct render_parameter_decl_t {
-	render_parameter_t* parameters;
+	size_t num_parameters;
+	render_parameter_t parameters[];
 };
 
 #define RENDER_DECLARE_BUFFER \
@@ -464,6 +464,11 @@ struct render_indexbuffer_t {
 	RENDER_DECLARE_BUFFER;
 };
 
+struct render_parameterbuffer_t {
+	RENDER_DECLARE_BUFFER;
+	render_parameter_decl_t decl;
+};
+
 struct render_shader_t {
 	RENDER_DECLARE_SHADER;
 };
@@ -481,6 +486,7 @@ struct render_program_t {
 	render_vertexshader_t* vertexshader;
 	render_pixelshader_t* pixelshader;
 	uintptr_t backend_data[4];
+	render_parameter_decl_t parameters;
 };
 
 struct render_resolution_t {
