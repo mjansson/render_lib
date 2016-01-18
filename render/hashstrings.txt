@@ -14,3 +14,5 @@ HASH_D3D_SHADER_DEBUG                      d3d_shader_debug
 
 HASH_SOURCE                                source
 HASH_PARAMETER_COUNT                       parameter_count
+HASH_VERTEXSHADER                          vertexshader
+HASH_PIXELSHADER                           pixelshader

@@ -1,4 +1,4 @@
-/* shader.h  -  Render library importer  -  Public Domain  -  2014 Mattias Jansson / Rampant Pixels
+/* shader.c  -  Render library importer  -  Public Domain  -  2014 Mattias Jansson / Rampant Pixels
  *
  * This library provides a cross-platform rendering library in C11 providing
  * basic 2D/3D rendering functionality for projects based on our foundation library.
@@ -44,6 +44,7 @@ renderimport_shader_check_referenced_uuid(stream_t* stream) {
 				                                STRING_ARGS(path), STRING_ARGS(ref));
 				uuid = resource_import_map_lookup(STRING_ARGS(fullpath));
 			}
+
 			if (!uuid_is_null(uuid))
 				break;
 		}
@@ -88,23 +89,31 @@ renderimport_import_shader(stream_t* stream, const uuid_t uuid) {
 		if (ref.length) {
 			string_const_t fullpath;
 			uuid_t shaderuuid;
+
 			if (path_is_absolute(STRING_ARGS(ref))) {
 				fullpath = ref;
 			}
 			else {
+				string_t full;
 				string_const_t path = stream_path(stream);
 				path = path_directory_name(STRING_ARGS(path));
-				path = path_concat(pathbuf, sizeof(pathbuf),
+				full = path_concat(pathbuf, sizeof(pathbuf),
 				                   STRING_ARGS(path), STRING_ARGS(ref));
-				fullpath = string_const(STRING_ARGS(path));
+				fullpath = string_const(STRING_ARGS(full));
 			}
-			shaderuuid = resource_import_map_lookup(STRING_ARGS(ref));
+
+			shaderuuid = resource_import_map_lookup(STRING_ARGS(fullpath));
 			if (!uuid_is_null(uuid) && !uuid_equal(uuid, shaderuuid)) {
-				log_warn(HASH_RESOURCE, WARNING_SUSPICIOUS, STRING_CONST("Shader UUID mismatch"));
+				log_warnf(HASH_RESOURCE, WARNING_SUSPICIOUS, STRING_CONST("Shader UUID mismatch: %.*s"),
+				          STRING_FORMAT(fullpath));
 				return RENDERIMPORT_RESULT_UUID_MISMATCH;
 			}
 
-			if (renderimport_import())
+			if (!resource_import(STRING_ARGS(fullpath), uuid)) {
+				log_warnf(HASH_RESOURCE, WARNING_SUSPICIOUS, STRING_CONST("Unable to import linked shader: %.*s"),
+				          STRING_FORMAT(fullpath));
+				return RENDERIMPORT_RESULT_INVALID_INPUT;
+			}
 		}
 	}
 

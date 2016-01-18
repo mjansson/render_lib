@@ -37,7 +37,7 @@ if target.is_windows():
 if not target.is_ios() and not target.is_android() and not target.is_tizen():
   configs = [ config for config in toolchain.configs if config not in [ 'profile', 'deploy' ] ]
   if not configs == []:
-    generator.bin( 'renderimport', [ 'main.c', 'glsl.c', 'shader.c' ], 'renderimport', basepath = 'tools', implicit_deps = [ render_lib ], libs = [ 'render', 'window', 'resource', 'foundation' ], configs = configs, extralibs = gllibs, extraframeworks = glframeworks )
+    generator.bin( 'renderimport', [ 'main.c', 'glsl.c', 'program.c', 'shader.c' ], 'renderimport', basepath = 'tools', implicit_deps = [ render_lib ], libs = [ 'render', 'window', 'resource', 'foundation' ], configs = configs, extralibs = gllibs, extraframeworks = glframeworks )
     generator.bin( 'rendercompile', [ 'main.c' ], 'rendercompile', basepath = 'tools', implicit_deps = [ render_lib ], libs = [ 'render', 'window', 'resource', 'foundation' ], configs = configs, extralibs = gllibs, extraframeworks = glframeworks )
 
 includepaths = generator.test_includepaths()

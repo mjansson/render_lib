@@ -20,3 +20,5 @@
 #define HASH_D3D_SHADER_DEBUG static_hash_string("d3d_shader_debug", 16, 0xd1be125e006c56e3ULL)
 #define HASH_SOURCE static_hash_string("source", 6, 0x2154da52f04042d3ULL)
 #define HASH_PARAMETER_COUNT static_hash_string("parameter_count", 15, 0x2b2a2cd816c9cf3dULL)
+#define HASH_VERTEXSHADER static_hash_string("vertexshader", 12, 0xe7e819c6e280dde3ULL)
+#define HASH_PIXELSHADER static_hash_string("pixelshader", 11, 0x2792ba8c77e0f0ceULL)

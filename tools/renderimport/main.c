@@ -23,6 +23,7 @@
 #include "main.h"
 #include "errorcodes.h"
 #include "shader.h"
+#include "program.h"
 #include "glsl.h"
 
 typedef struct {
@@ -39,10 +40,10 @@ static void
 renderimport_print_usage(void);
 
 int
-renderimport_import(stream_t* stream) {
+renderimport_import(stream_t* stream, const uuid_t uuid_given) {
 	renderimport_type_t type = IMPORTTYPE_UNKNOWN;
 	renderimport_type_t guess = IMPORTTYPE_UNKNOWN;
-	uuid_t uuid;
+	uuid_t uuid = uuid_given;
 	string_const_t path;
 	string_const_t extension;
 	int ret;
@@ -52,6 +53,8 @@ renderimport_import(stream_t* stream) {
 	extension = path_file_extension(STRING_ARGS(path));
 	if (string_equal_nocase(STRING_ARGS(extension), STRING_CONST("shader")))
 		guess = IMPORTTYPE_SHADER;
+	else if (string_equal_nocase(STRING_ARGS(extension), STRING_CONST("program")))
+		guess = IMPORTTYPE_PROGRAM;
 
 	type = renderimport_shader_guess_type(stream);
 
@@ -61,15 +64,19 @@ renderimport_import(stream_t* stream) {
 	if (type == IMPORTTYPE_UNKNOWN)
 		return RENDERIMPORT_RESULT_UNSUPPORTED_INPUT;
 
-	uuid = resource_import_map_lookup(STRING_ARGS(path));
+	if (uuid_is_null(uuid))
+		uuid = resource_import_map_lookup(STRING_ARGS(path));
+	
 	if (uuid_is_null(uuid) && (type == IMPORTTYPE_SHADER)) {
 		uuid = renderimport_shader_check_referenced_uuid(stream);
 		store_import = true;
 	}
+
 	if (uuid_is_null(uuid)) {
 		uuid = uuid_generate_random();
 		store_import = true;
 	}
+	
 	if (store_import) {
 		if (!resource_import_map_store(STRING_ARGS(path), &uuid)) {
 			log_warn(HASH_RESOURCE, WARNING_SUSPICIOUS,
@@ -79,6 +86,9 @@ renderimport_import(stream_t* stream) {
 	}
 
 	switch (type) {
+	case IMPORTTYPE_PROGRAM:
+		ret = renderimport_import_program(stream, uuid);
+		break;
 	case IMPORTTYPE_SHADER:
 		ret = renderimport_import_shader(stream, uuid);
 		break;
@@ -153,7 +163,7 @@ main_run(void* main_arg) {
 
 	size_t ifile, fsize;
 	for (ifile = 0, fsize = array_size(input.input_files); ifile < fsize; ++ifile) {
-		if (resource_import(STRING_ARGS(input.input_files[ifile])))
+		if (resource_import(STRING_ARGS(input.input_files[ifile]), uuid_null()))
 			log_infof(HASH_RESOURCE, STRING_CONST("Successfully imported: %.*s"),
 			          STRING_FORMAT(input.input_files[ifile]));
 		else
