@@ -160,7 +160,8 @@ _rb_gl_create_context(render_drawable_t* drawable, int major, int minor, void* s
 	int* attributes = 0;
 	array_push(attributes, WGL_CONTEXT_MAJOR_VERSION_ARB); array_push(attributes, major);
 	array_push(attributes, WGL_CONTEXT_MINOR_VERSION_ARB); array_push(attributes, minor);
-	array_push(attributes, WGL_CONTEXT_FLAGS_ARB); array_push(attributes, 0); //WGL_CONTEXT_DEBUG_BIT_ARB
+	array_push(attributes, WGL_CONTEXT_FLAGS_ARB);
+	array_push(attributes, 0); //WGL_CONTEXT_DEBUG_BIT_ARB
 	array_push(attributes, WGL_CONTEXT_PROFILE_MASK_ARB);
 	array_push(attributes, WGL_CONTEXT_CORE_PROFILE_BIT_ARB);
 	array_push(attributes, 0);
@@ -682,35 +683,33 @@ _rb_gl4_upload_shader(render_backend_t* backend, render_shader_t* shader, const 
 	//render_backend_gl4_t* backend_gl4 = (render_backend_gl4_t*)backend;
 
 	switch (shader->shadertype) {
-	case SHADER_VERTEX: {
-			//Vertex shader backend data:
-			//  0 - Shader object
-			/*if( shader->backend_data[0] )
-				glDeleteObject( shader->backend_data[0] );
-			shader->backend_data[0] = 0;
-
-			GLuint handle = glCreateShaderObject( GL_VERTEX_SHADER_ARB );
+	case SHADER_PIXEL:
+	case SHADER_VERTEX:
+		//Vertex shader backend data:
+		//  0 - Shader object
+		if (shader->backend_data[0])
+			glDeleteShader((GLuint)shader->backend_data[0]);
+		{
+			bool is_pixel_shader = (shader->shadertype == SHADER_PIXEL);
+			GLuint handle = glCreateShader(is_pixel_shader ? GL_FRAGMENT_SHADER_ARB : GL_VERTEX_SHADER_ARB);
 			GLchar* source = (GLchar*)buffer;
-			GLint source_size = size;
-			glShaderSource( handle, &buffer, &size );
-			glCompileShader( handle );
+			GLint source_size = (GLint)size;
+			glShaderSource(handle, 1, &source, &source_size);
+			glCompileShader(handle);
 
 			GLint compiled = 0;
-			glGetObjectParameteriv( handle, GL_OBJECT_COMPILE_STATUS_ARB, &compiled );
+			glGetShaderiv(handle, GL_COMPILE_STATUS, &compiled);
 
-			if( !compiled )
-			{
-				//...
-				glDeleteObject( handle );
+			if (!compiled) {
+				glDeleteShader(handle);
+				shader->backend_data[0] = 0;
 			}
-			else
-			{
+			else {
 				shader->backend_data[0] = handle;
 				ret = true;
-			}*/
-
-			break;
+			}
 		}
+		break;
 
 	default:
 		break;
@@ -725,9 +724,9 @@ _rb_gl4_upload_program(render_backend_t* backend, render_program_t* program) {
 
 static void
 _rb_gl4_deallocate_shader(render_backend_t* backend, render_shader_t* shader) {
-	/*if( shader->backend_data[0] )
-		glDeleteObject( shader->backend_data[0] );
-	shader->backend_data[0] = 0;*/
+	if (shader->backend_data[0])
+		glDeleteShader((GLuint)shader->backend_data[0]);
+	shader->backend_data[0] = 0;
 }
 
 #if 0
@@ -865,7 +864,8 @@ _rb_gl4_flip(render_backend_t* backend) {
 	if (backend_gl4->hdc) {
 		if (!SwapBuffers(backend_gl4->hdc)) {
 			string_const_t errmsg = system_error_message(0);
-			log_warnf(HASH_RENDER, WARNING_SYSTEM_CALL_FAIL, STRING_CONST("SwapBuffers failed: %.*s"), STRING_FORMAT(errmsg));
+			log_warnf(HASH_RENDER, WARNING_SYSTEM_CALL_FAIL, STRING_CONST("SwapBuffers failed: %.*s"),
+			          STRING_FORMAT(errmsg));
 		}
 	}
 
@@ -929,6 +929,7 @@ render_backend_gl4_allocate() {
 	render_backend_gl4_t* backend = memory_allocate(HASH_RENDER, sizeof(render_backend_gl4_t), 0,
 	                                                MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 	backend->api = RENDERAPI_OPENGL4;
+	backend->api_group = RENDERAPIGROUP_OPENGL;
 	backend->vtable = _render_backend_vtable_gl4;
 	return (render_backend_t*)backend;
 }

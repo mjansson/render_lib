@@ -37,7 +37,10 @@ RENDER_API void
 render_pixelshader_deallocate(render_pixelshader_t* shader);
 
 RENDER_API void
-render_pixelshader_upload(render_pixelshader_t* shader, const void* buffer, size_t size);
+render_pixelshader_upload(render_backend_t* backend, render_pixelshader_t* shader, const void* buffer, size_t size);
+
+RENDER_API render_pixelshader_t*
+render_pixelshader_load(render_backend_t* backend, const uuid_t uuid);
 
 
 RENDER_API render_vertexshader_t*
@@ -53,7 +56,10 @@ RENDER_API void
 render_vertexshader_deallocate(render_vertexshader_t* shader);
 
 RENDER_API void
-render_vertexshader_upload(render_vertexshader_t* shader, const void* buffer, size_t size);
+render_vertexshader_upload(render_backend_t* backend, render_vertexshader_t* shader, const void* buffer, size_t size);
+
+RENDER_API render_vertexshader_t*
+render_vertexshader_load(render_backend_t* backend, const uuid_t uuid);
 
 
 #if RESOURCE_ENABLE_LOCAL_SOURCE

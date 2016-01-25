@@ -49,6 +49,9 @@ render_program_deallocate(render_program_t* program) {
 }
 
 bool
-render_program_upload(render_program_t* program) {
-	return program->backend->vtable.upload_program(program->backend, program);
+render_program_upload(render_backend_t* backend, render_program_t* program) {
+	if (program->backend && (program->backend != backend))
+		program->backend->vtable.deallocate_program(program->backend, program);
+	program->backend = backend;
+	return backend->vtable.upload_program(backend, program);
 }

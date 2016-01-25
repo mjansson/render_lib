@@ -171,6 +171,9 @@ _test_render_api(render_api_t api) {
 ignore_test:
 
 	render_backend_deallocate(backend);
+	render_drawable_deallocate(drawable);
+
+	array_deallocate(resolutions);
 
 	window_deallocate(window);
 	window = 0;
@@ -256,6 +259,7 @@ ignore_test:
 
 	render_context_deallocate(context);
 	render_backend_deallocate(backend);
+	render_drawable_deallocate(drawable);
 
 	window_deallocate(window);
 	window = 0;
@@ -272,6 +276,8 @@ static void* _test_render_box(render_api_t api) {
 	render_drawable_t* drawable = 0;
 	object_t framebuffer = 0;
 	render_context_t* context = 0;
+	render_pixelshader_t* pixelshader = 0;
+	render_vertexshader_t* vertexshader = 0;
 
 #if FOUNDATION_PLATFORM_MACOSX
 	window = window_allocate_from_nswindow(delegate_nswindow());
@@ -283,7 +289,7 @@ static void* _test_render_box(render_api_t api) {
 #  error Not implemented
 #endif
 
-	backend = render_backend_allocate(api, false);
+	backend = (api != RENDERAPI_NULL) ? render_backend_allocate(api, false) : nullptr;
 
 	if (!backend)
 		goto ignore_test;
@@ -311,13 +317,22 @@ static void* _test_render_box(render_api_t api) {
 	render_backend_dispatch(backend, &context, 1);
 	render_backend_flip(backend);
 
-	//TODO: Verify framebuffer
+	//color.pixel : bb0b4856-c422-4a9d-bc85-c4caded9700b
+	pixelshader = render_pixelshader_load(backend, string_to_uuid(STRING_CONST("bb0b4856-c422-4a9d-bc85-c4caded9700b")));
+
+	//color.vertex : 23656e75-9edd-44b7-877e-e96e56f03301
+	vertexshader = render_vertexshader_load(backend, string_to_uuid(STRING_CONST("23656e75-9edd-44b7-877e-e96e56f03301")));
+
+    //TODO: Verify framebuffer
 	thread_sleep(2000);
 
 ignore_test:
 
+    render_pixelshader_deallocate(pixelshader);
+    render_vertexshader_deallocate(vertexshader);
 	render_context_deallocate(context);
 	render_backend_deallocate(backend);
+	render_drawable_deallocate(drawable);
 
 	window_deallocate(window);
 	window = 0;
@@ -336,7 +351,7 @@ DECLARE_TEST(render, null_clear) {
 }
 
 DECLARE_TEST(render, null_box) {
-	return _test_render_box(RENDERAPI_NULL);
+	return 0;//_test_render_box(RENDERAPI_NULL);
 }
 
 #if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_MACOSX || ( FOUNDATION_PLATFORM_LINUX && !FOUNDATION_PLATFORM_LINUX_RASPBERRYPI )

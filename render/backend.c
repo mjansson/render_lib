@@ -25,6 +25,8 @@
 #include <render/gl4/backend.h>
 #include <render/gles2/backend.h>
 
+#include <resource/platform.h>
+
 bool _render_api_disabled[RENDERAPI_NUM] = {0};
 
 static render_api_t
@@ -174,6 +176,8 @@ render_backend_allocate(render_api_t api, bool allow_fallback) {
 	backend->framebuffer = render_target_create_framebuffer(backend);
 	backend->framecount = 1;
 
+    render_backend_set_resource_platform(backend, 0);
+
 	memory_context_pop();
 
 	return backend;
@@ -186,8 +190,6 @@ render_backend_deallocate(render_backend_t* backend) {
 
 	backend->vtable.destruct(backend);
 
-	if (backend->drawable)
-		render_drawable_deallocate(backend->drawable);
 	if (backend->framebuffer)
 		render_target_destroy(backend->framebuffer);
 
@@ -279,5 +281,18 @@ render_backend_enable_thread(render_backend_t* backend) {
 void
 render_backend_disable_thread(render_backend_t* backend) {
 	backend->vtable.disable_thread(backend);
+}
+
+uint64_t
+render_backend_resource_platform(render_backend_t* backend) {
+	return backend->platform;
+}
+
+void
+render_backend_set_resource_platform(render_backend_t* backend, uint64_t platform) {
+	resource_platform_t decl = resource_platform_decompose(platform);
+	decl.render_api_group = backend->api_group;
+	decl.render_api = backend->api;
+	backend->platform = resource_platform(decl);
 }
 

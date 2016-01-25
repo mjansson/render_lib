@@ -1040,6 +1040,7 @@ render_backend_gles2_allocate() {
 	render_backend_t* backend = memory_allocate(HASH_RENDER, sizeof(render_backend_gles2_t), 0,
 	                                            MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 	backend->api = RENDERAPI_GLES2;
+	backend->api_group = RENDERAPIGROUP_GLES;
 	backend->vtable = _render_backend_vtable_gles2;
 	return backend;
 }

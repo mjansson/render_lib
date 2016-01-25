@@ -30,6 +30,8 @@ render_compile(const uuid_t uuid, uint64_t platform, resource_source_t* source,
                const char* type, size_t type_length) {
 	if (render_shader_compile(uuid, platform, source, type, type_length) == 0)
 		return 0;
+	if (render_program_compile(uuid, platform, source, type, type_length) == 0)
+		return 0;
 	return -1;
 }
 
@@ -62,11 +64,13 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 	render_backend_t* backend = 0;
 	window_t* window = 0;
 	render_drawable_t* drawable = 0;
+	hash_t resource_type_hash;
 	//render_pixelshader_t pixelshader;
 	//render_vertexshader_t vertexshader;
 
-	if (!string_equal(type, type_length, STRING_CONST("vertexshader")) &&
-	        !string_equal(type, type_length, STRING_CONST("pixelshader")))
+	resource_type_hash = hash(type, type_length);
+
+	if ((resource_type_hash != HASH_VERTEXSHADER) && (resource_type_hash != HASH_PIXELSHADER))
 		return -1;
 
 	array_push(subplatforms, platform);
@@ -170,7 +174,10 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 
 		stream = resource_local_create_static(uuid, subplatform);
 		if (stream) {
-			if (string_equal(type, type_length, STRING_CONST("vertexshader"))) {
+			uint32_t version = 1;
+			stream_write_uint64(stream, resource_type_hash);
+			stream_write_uint32(stream, version);
+			if (resource_type_hash == HASH_VERTEXSHADER) {
 				render_vertexshader_t shader;
 				render_vertexshader_initialize(&shader);
 				stream_write(stream, &shader, sizeof(shader));
@@ -185,6 +192,8 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 			if (compiled_size > 0) {
 				stream = resource_local_create_dynamic(uuid, subplatform);
 				if (stream) {
+					stream_write_uint32(stream, version);
+					stream_write_uint64(stream, compiled_size);
 					stream_write(stream, compiled_blob, compiled_size);
 					stream_deallocate(stream);
 				}
@@ -203,6 +212,17 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 
 		memory_deallocate(compiled_blob);
 	}
+
+	return result;
+}
+
+int
+render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* source,
+                      const char* type, size_t type_length) {
+	int result = 0;
+
+	if (!string_equal(type, type_length, STRING_CONST("program")))
+		return -1;
 
 	return result;
 }

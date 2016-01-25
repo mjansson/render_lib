@@ -361,35 +361,33 @@ _rb_gl2_upload_shader(render_backend_t* backend, render_shader_t* shader, const 
 	//render_backend_gl2_t* backend_gl2 = (render_backend_gl4_t*)backend;
 
 	switch (shader->shadertype) {
-	case SHADER_VERTEX: {
-			//Vertex shader backend data:
-			//  0 - Shader object
-			/*if( shader->backend_data[0] )
-				glDeleteObject( shader->backend_data[0] );
-			shader->backend_data[0] = 0;
-
-			GLuint handle = glCreateShaderObject( GL_VERTEX_SHADER_ARB );
+	case SHADER_PIXEL:
+	case SHADER_VERTEX:
+		//Vertex shader backend data:
+		//  0 - Shader object
+		if (shader->backend_data[0])
+			glDeleteShader((GLuint)shader->backend_data[0]);
+		{
+			bool is_pixel_shader = (shader->shadertype == SHADER_PIXEL);
+			GLuint handle = glCreateShader(is_pixel_shader ? GL_FRAGMENT_SHADER_ARB : GL_VERTEX_SHADER_ARB);
 			GLchar* source = (GLchar*)buffer;
-			GLint source_size = size;
-			glShaderSource( handle, &buffer, &size );
-			glCompileShader( handle );
+			GLint source_size = (GLint)size;
+			glShaderSource(handle, 1, &source, &source_size);
+			glCompileShader(handle);
 
 			GLint compiled = 0;
-			glGetObjectParameteriv( handle, GL_OBJECT_COMPILE_STATUS_ARB, &compiled );
+			glGetShaderiv(handle, GL_COMPILE_STATUS, &compiled);
 
-			if( !compiled )
-			{
-				//...
-				glDeleteObject( handle );
+			if (!compiled) {
+				glDeleteShader(handle);
+				shader->backend_data[0] = 0;
 			}
-			else
-			{
+			else {
 				shader->backend_data[0] = handle;
 				ret = true;
-			}*/
-
-			break;
+			}
 		}
+		break;
 
 	default:
 		break;
@@ -404,9 +402,9 @@ _rb_gl2_upload_program(render_backend_t* backend, render_program_t* program) {
 
 static void
 _rb_gl2_deallocate_shader(render_backend_t* backend, render_shader_t* shader) {
-	/*if( shader->backend_data[0] )
-		glDeleteObject( shader->backend_data[0] );
-	shader->backend_data[0] = 0;*/
+	if (shader->backend_data[0])
+		glDeleteShader((GLuint)shader->backend_data[0]);
+	shader->backend_data[0] = 0;
 }
 
 static void
@@ -610,6 +608,7 @@ render_backend_gl2_allocate() {
 	render_backend_gl2_t* backend = memory_allocate(HASH_RENDER, sizeof(render_backend_gl2_t), 0,
 	                                                MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 	backend->api = RENDERAPI_OPENGL2;
+	backend->api_group = RENDERAPIGROUP_OPENGL;
 	backend->vtable = _render_backend_vtable_gl2;
 	return (render_backend_t*)backend;
 }

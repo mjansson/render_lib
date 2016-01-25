@@ -125,6 +125,7 @@ render_backend_null_allocate() {
 	render_backend_t* backend = memory_allocate(HASH_RENDER, sizeof(render_backend_t), 0,
 	                                            MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 	backend->api = RENDERAPI_NULL;
+	backend->api_group = RENDERAPIGROUP_NONE;
 	backend->vtable = _render_backend_vtable_null;
 	return backend;
 }

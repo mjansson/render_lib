@@ -51,7 +51,8 @@ typedef enum render_api_t {
 } render_api_t;
 
 typedef enum render_api_group_t {
-	RENDERAPIGROUP_OPENGL = 0,
+	RENDERAPIGROUP_NONE = 0,
+	RENDERAPIGROUP_OPENGL,
 	RENDERAPIGROUP_DIRECTX,
 	RENDERAPIGROUP_GLES,
 
@@ -299,12 +300,14 @@ struct render_backend_vtable_t {
 
 #define RENDER_DECLARE_BACKEND \
 	render_api_t             api; \
+	render_api_group_t       api_group; \
 	render_backend_vtable_t  vtable; \
 	render_drawable_t*       drawable; \
 	pixelformat_t            pixelformat; \
 	colorspace_t             colorspace; \
 	object_t                 framebuffer; \
-	uint64_t                 framecount
+	uint64_t                 framecount; \
+	uint64_t                 platform
 
 struct render_backend_t {
 	RENDER_DECLARE_BACKEND;

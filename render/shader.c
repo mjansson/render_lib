@@ -19,6 +19,9 @@
 
 #include <render/render.h>
 
+#include <resource/local.h>
+#include <resource/platform.h>
+
 render_pixelshader_t*
 render_pixelshader_allocate(void) {
 	render_pixelshader_t* shader = memory_allocate(HASH_RENDER, sizeof(render_pixelshader_t), 0,
@@ -47,8 +50,87 @@ render_pixelshader_deallocate(render_pixelshader_t* shader) {
 }
 
 void
-render_pixelshader_upload(render_pixelshader_t* shader, const void* buffer, size_t size) {
-	shader->backend->vtable.upload_shader(shader->backend, (render_shader_t*)shader, buffer, size);
+render_pixelshader_upload(render_backend_t* backend, render_pixelshader_t* shader,
+                          const void* buffer, size_t size) {
+	if (shader->backend && (shader->backend != backend))
+		shader->backend->vtable.deallocate_shader(shader->backend, (render_shader_t*)shader);
+	backend->vtable.upload_shader(backend, (render_shader_t*)shader, buffer, size);
+	shader->backend = backend;
+}
+
+static void*
+render_shader_load(render_backend_t* backend, const uuid_t uuid, hash_t type) {
+	void* shader = nullptr;
+
+#if RESOURCE_ENABLE_LOCAL_CACHE
+	const uint32_t expected_version = 1;
+	uint64_t platform = render_backend_resource_platform(backend);
+	stream_t* stream;
+	bool success = false;
+	stream = resource_local_open_static(uuid, platform);
+	if (stream) {
+		hash_t type_hash = stream_read_uint64(stream);
+		uint32_t version = stream_read_uint32(stream);
+		if ((type_hash == type) && (version == expected_version)) {
+			if (type == HASH_PIXELSHADER) {
+				shader = render_pixelshader_allocate();
+				stream_read(stream, shader, sizeof(render_pixelshader_t));
+			}
+			else {
+				shader = render_vertexshader_allocate();
+				stream_read(stream, shader, sizeof(render_vertexshader_t));
+			}
+		}
+		else {
+			log_warnf(HASH_RENDER, WARNING_INVALID_VALUE,
+			          STRING_CONST("Got unexpected type/version when loading shader: %" PRIx64 " : %u"),
+			          type_hash, version);
+		}
+		stream_deallocate(stream);
+		stream = nullptr;
+	}
+	if (shader)
+		stream = resource_local_open_dynamic(uuid, platform);
+	if (stream) {
+		void* buffer;
+		uint32_t version = stream_read_uint32(stream);
+		size_t size = (size_t)stream_read_uint64(stream);
+		if (version == expected_version) {
+			buffer = memory_allocate(HASH_RENDER, size, 0, MEMORY_TEMPORARY);
+			if (stream_read(stream, buffer, size) == size) {
+				if (type == HASH_PIXELSHADER)
+					render_pixelshader_upload(backend, shader, buffer, size);
+				else
+					render_vertexshader_upload(backend, shader, buffer, size);
+				success = true;
+			}
+			memory_deallocate(buffer);
+		}
+		else {
+			log_warnf(HASH_RENDER, WARNING_INVALID_VALUE,
+			          STRING_CONST("Got unexpected type/version when loading shader blob: %u"),
+			          version);
+		}
+		stream_deallocate(stream);
+		stream = nullptr;
+	}
+
+	if (!success) {
+		if (type == HASH_PIXELSHADER)
+			render_pixelshader_deallocate(shader);
+		else
+			render_vertexshader_deallocate(shader);
+		shader = nullptr;
+	}
+
+#endif
+
+	return shader;
+}
+
+render_pixelshader_t*
+render_pixelshader_load(render_backend_t* backend, const uuid_t uuid) {
+	return render_shader_load(backend, uuid, HASH_PIXELSHADER);
 }
 
 render_vertexshader_t*
@@ -79,6 +161,15 @@ render_vertexshader_deallocate(render_vertexshader_t* shader) {
 }
 
 void
-render_vertexshader_upload(render_vertexshader_t* shader, const void* buffer, size_t size) {
-	shader->backend->vtable.upload_shader(shader->backend, (render_shader_t*)shader, buffer, size);
+render_vertexshader_upload(render_backend_t* backend, render_vertexshader_t* shader,
+                           const void* buffer, size_t size) {
+	if (shader->backend && (shader->backend != backend))
+		shader->backend->vtable.deallocate_shader(shader->backend, (render_shader_t*)shader);
+	backend->vtable.upload_shader(backend, (render_shader_t*)shader, buffer, size);
+	shader->backend = backend;
+}
+
+render_vertexshader_t*
+render_vertexshader_load(render_backend_t* backend, const uuid_t uuid) {
+	return render_shader_load(backend, uuid, HASH_VERTEXSHADER);
 }
