@@ -9,7 +9,7 @@ sys.path.insert( 0, os.path.join( 'build', 'ninja' ) )
 
 import generator
 
-dependlibs = [ 'resource', 'window', 'foundation' ]
+dependlibs = [ 'resource', 'vector', 'window', 'foundation' ]
 
 generator = generator.Generator( project = 'render', dependlibs = dependlibs, variables = [ ( 'bundleidentifier', 'com.rampantpixels.render.$(binname)' ) ] )
 target = generator.target
@@ -17,8 +17,8 @@ writer = generator.writer
 toolchain = generator.toolchain
 
 render_lib = generator.lib( module = 'render', sources = [
-  'backend.c', 'command.c', 'context.c', 'compile.c', 'drawable.c', 'indexbuffer.c', 'program.c', 'render.c',
-  'shader.c', 'sort.c', 'target.c', 'version.c', 'vertexbuffer.c',
+  'backend.c', 'command.c', 'context.c', 'compile.c', 'drawable.c', 'indexbuffer.c', 'parameter.c', 'program.c',
+  'render.c', 'shader.c', 'sort.c', 'target.c', 'version.c', 'vertexbuffer.c',
   os.path.join( 'gl4', 'backend.c' ), os.path.join( 'gl4', 'backend.m' ), os.path.join( 'gl4', 'glprocs.c' ),
   os.path.join( 'gl2', 'backend.c' ),
   os.path.join( 'gles2', 'backend.c' ),

@@ -19,6 +19,7 @@
 #include <window/window.h>
 #include <resource/resource.h>
 #include <render/render.h>
+#include <vector/matrix.h>
 #include <test/test.h>
 
 static application_t
@@ -57,6 +58,11 @@ test_render_initialize(void) {
 	if (resource_module_initialize(resource_config))
 		return -1;
 
+	vector_config_t vector_config;
+	memset(&vector_config, 0, sizeof(vector_config));
+	if (vector_module_initialize(vector_config))
+		return -1;
+
 	render_config_t render_config;
 	memset(&render_config, 0, sizeof(render_config));
 	return render_module_initialize(render_config);
@@ -65,6 +71,7 @@ test_render_initialize(void) {
 static void
 test_render_finalize(void) {
 	render_module_finalize();
+	vector_module_finalize();
 	resource_module_finalize();
 	window_module_finalize();
 }
@@ -269,15 +276,16 @@ ignore_test:
 	return 0;
 }
 
-
 static void* _test_render_box(render_api_t api) {
 	render_backend_t* backend = 0;
 	window_t* window = 0;
 	render_drawable_t* drawable = 0;
 	object_t framebuffer = 0;
+	object_t parameterbuffer = 0;
 	render_context_t* context = 0;
-	render_pixelshader_t* pixelshader = 0;
-	render_vertexshader_t* vertexshader = 0;
+	render_program_t* program = 0;
+	render_parameter_decl_t* parameter_decl = 0;
+	matrix_t mvp;
 
 #if FOUNDATION_PLATFORM_MACOSX
 	window = window_allocate_from_nswindow(delegate_nswindow());
@@ -318,18 +326,35 @@ static void* _test_render_box(render_api_t api) {
 	render_backend_flip(backend);
 
 	//color.pixel : bb0b4856-c422-4a9d-bc85-c4caded9700b
-	pixelshader = render_pixelshader_load(backend, string_to_uuid(STRING_CONST("bb0b4856-c422-4a9d-bc85-c4caded9700b")));
+	//pixelshader = render_pixelshader_load(backend, string_to_uuid(STRING_CONST("bb0b4856-c422-4a9d-bc85-c4caded9700b")));
 
 	//color.vertex : 23656e75-9edd-44b7-877e-e96e56f03301
-	vertexshader = render_vertexshader_load(backend, string_to_uuid(STRING_CONST("23656e75-9edd-44b7-877e-e96e56f03301")));
+	//vertexshader = render_vertexshader_load(backend, string_to_uuid(STRING_CONST("23656e75-9edd-44b7-877e-e96e56f03301")));
 
+	//color.program : 
+	program = render_program_load(backend, string_to_uuid(STRING_CONST("1ab9bba8-3f2f-4649-86bb-8b8b07e99af2")));
+
+	parameter_decl = render_parameter_decl_allocate(1);
+	parameter_decl->parameters[0].name = hash(STRING_CONST("mvp"));
+	parameter_decl->parameters[0].type = RENDERPARAMETER_MATRIX;
+	parameter_decl->parameters[0].dim = 0;
+	parameter_decl->parameters[0].stages = SHADER_VERTEX;
+
+	mvp = matrix_identity();
+
+	parameterbuffer = render_parameterbuffer_create(backend, parameter_decl, &mvp);
+
+	//TODO: Create vertex and index buffers
+	//TODO: Render and flip
     //TODO: Verify framebuffer
+
 	thread_sleep(2000);
 
 ignore_test:
 
-    render_pixelshader_deallocate(pixelshader);
-    render_vertexshader_deallocate(vertexshader);
+	render_parameterbuffer_destroy(parameterbuffer);
+	render_parameter_decl_deallocate(parameter_decl);
+    render_program_deallocate(program);
 	render_context_deallocate(context);
 	render_backend_deallocate(backend);
 	render_drawable_deallocate(drawable);

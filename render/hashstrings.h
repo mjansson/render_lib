@@ -22,3 +22,4 @@
 #define HASH_PARAMETER_COUNT static_hash_string("parameter_count", 15, 0x2b2a2cd816c9cf3dULL)
 #define HASH_VERTEXSHADER static_hash_string("vertexshader", 12, 0xe7e819c6e280dde3ULL)
 #define HASH_PIXELSHADER static_hash_string("pixelshader", 11, 0x2792ba8c77e0f0ceULL)
+#define HASH_PROGRAM static_hash_string("program", 7, 0x6fed8207d1b48fc0ULL)

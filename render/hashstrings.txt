@@ -16,3 +16,4 @@ HASH_SOURCE                                source
 HASH_PARAMETER_COUNT                       parameter_count
 HASH_VERTEXSHADER                          vertexshader
 HASH_PIXELSHADER                           pixelshader
+HASH_PROGRAM                               program

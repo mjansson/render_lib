@@ -38,13 +38,17 @@ render_parameter_decl_deallocate(render_parameter_decl_t* decl);
 
 
 RENDER_API object_t
-render_parameterbuffer_create(render_backend_t* backend, const render_parameter_decl_t* decl, const void* data);
+render_parameterbuffer_create(render_backend_t* backend, const render_parameter_decl_t* decl,
+                              const void* data);
 
 RENDER_API object_t
 render_parameterbuffer_ref(object_t buffer);
 
 RENDER_API void
 render_parameterbuffer_destroy(object_t buffer);
+
+RENDER_API void
+render_parameterbuffer_link(object_t buffer, render_program_t* program);
 
 RENDER_API const render_parameter_decl_t*
 render_parameterbuffer_decl(object_t buffer);

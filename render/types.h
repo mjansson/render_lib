@@ -421,11 +421,10 @@ struct render_vertex_decl_t {
 };
 
 struct render_parameter_t {
+	hash_t                  name;
 	render_parameter_type_t type;
 	unsigned int            dim;
-	unsigned int            offset;
 	unsigned int            stages;
-	hash_t                  name;
 };
 
 struct render_parameter_decl_t {

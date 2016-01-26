@@ -685,7 +685,7 @@ _rb_gl4_upload_shader(render_backend_t* backend, render_shader_t* shader, const 
 	switch (shader->shadertype) {
 	case SHADER_PIXEL:
 	case SHADER_VERTEX:
-		//Vertex shader backend data:
+		//Shader backend data:
 		//  0 - Shader object
 		if (shader->backend_data[0])
 			glDeleteShader((GLuint)shader->backend_data[0]);
