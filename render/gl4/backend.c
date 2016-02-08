@@ -717,16 +717,72 @@ _rb_gl4_upload_shader(render_backend_t* backend, render_shader_t* shader, const 
 	return ret;
 }
 
-static bool
-_rb_gl4_upload_program(render_backend_t* backend, render_program_t* program) {
-	return false;
-}
-
 static void
 _rb_gl4_deallocate_shader(render_backend_t* backend, render_shader_t* shader) {
 	if (shader->backend_data[0])
 		glDeleteShader((GLuint)shader->backend_data[0]);
 	shader->backend_data[0] = 0;
+}
+
+static bool
+_rb_gl4_upload_program(render_backend_t* backend, render_program_t* program) {
+	if (program->backend_data[0])
+		glDeleteProgram((GLuint)program->backend_data[0]);
+
+	GLint result = 0;
+	GLuint handle = glCreateProgram();
+
+	glAttachShader(handle, (GLuint)program->vertexshader->backend_data[0]);
+	glAttachShader(handle, (GLuint)program->pixelshader->backend_data[0]);
+	glLinkProgram(handle);
+	glGetProgramiv(handle, GL_LINK_STATUS, &result);
+
+	if (!result) {
+		GLsizei buffer_size = 4096;
+		GLint log_length = 0;
+		GLchar* log = 0;
+
+		glGetProgramiv(handle, GL_INFO_LOG_LENGTH, &buffer_size);
+		log = memory_allocate(HASH_RENDER, buffer_size + 1, 0, MEMORY_TEMPORARY);
+		glGetProgramInfoLog(handle, buffer_size, &log_length, log);
+
+		log_errorf(ERRORLEVEL_ERROR, ERROR_SYSTEM_CALL_FAIL, "Unable to compile program: %.*s",
+		           (int)log_length, log);
+		memory_deallocate(log);
+
+		glDeleteProgram(handle);
+
+		return false;
+	}
+
+	GLint uniforms = 0;
+	glGetProgramiv(handle, GL_ACTIVE_UNIFORMS, &uniforms);
+	for (GLint iu = 0; iu < uniforms; ++iu) {
+		GLsizei num_chars = 0;
+		GLint size = 0;
+		GLenum type = GL_NONE;
+		hash_t name_hash;
+		char name[256];
+		glGetActiveUniform(handle, iu, sizeof(name), &num_chars, &size, &type, name);
+
+		name_hash = hash(name, num_chars);
+		for (size_t iparam = 0; iparam < program->parameters.num_parameters; ++iparam) {
+			render_parameter_t* parameter = program->parameters.parameters + iparam;
+			if (parameter->name == name_hash)
+				parameter->location = glGetUniformLocation(handle, name);
+		}
+	}
+
+	program->backend_data[0] = handle;
+
+	return true;
+}
+
+static void
+_rb_gl4_deallocate_program(render_backend_t* backend, render_program_t* program) {
+	if (program->backend_data[0])
+		glDeleteProgram((GLuint)program->backend_data[0]);
+	program->backend_data[0] = 0;
 }
 
 #if 0
@@ -777,10 +833,6 @@ static void _rb_gl4_deallocate_texture(render_backend_t* backend, render_texture
 	memory_deallocate(texture);
 }
 #endif
-
-static void
-_rb_gl4_deallocate_program(render_backend_t* backend, render_program_t* program) {
-}
 
 static void
 _rb_gl4_dispatch(render_backend_t* backend, render_context_t** contexts, size_t num_contexts) {

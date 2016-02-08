@@ -45,11 +45,13 @@ render_context_allocate(size_t commands) {
 
 void
 render_context_deallocate(render_context_t* context) {
-	render_target_destroy(context->target);
-	radixsort_deallocate(context->sort);
-	memory_deallocate(context->commands);
-	memory_deallocate(context->keys);
-	memory_deallocate(context);
+	if (context) {
+		render_target_destroy(context->target);
+		radixsort_deallocate(context->sort);
+		memory_deallocate(context->commands);
+		memory_deallocate(context->keys);
+		memory_deallocate(context);
+	}
 }
 
 object_t

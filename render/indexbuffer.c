@@ -69,35 +69,12 @@ render_indexbuffer_load(const uuid_t uuid) {
 
 object_t
 render_indexbuffer_ref(object_t id) {
-	int32_t ref;
-	render_indexbuffer_t* buffer = objectmap_lookup(_render_map_buffer, id);
-	if (buffer)
-		do {
-			ref = atomic_load32(&buffer->ref);
-			if ((ref > 0) && atomic_cas32(&buffer->ref, ref + 1, ref))
-				return id;
-		}
-		while (ref > 0);
-	return 0;
+	return render_buffer_ref(id);
 }
 
 void
 render_indexbuffer_destroy(object_t id) {
-	int32_t ref;
-	render_indexbuffer_t* buffer = GET_BUFFER(id);
-	if (buffer)
-		do {
-			ref = atomic_load32(&buffer->ref);
-			if ((ref > 0) && atomic_cas32(&buffer->ref, ref - 1, ref)) {
-				if (ref == 1) {
-					objectmap_free(_render_map_buffer, id);
-					buffer->backend->vtable.deallocate_buffer(buffer->backend, (render_buffer_t*)buffer, true, true);
-					memory_deallocate(buffer);
-				}
-				return;
-			}
-		}
-		while (ref > 0);
+	render_buffer_destroy(id);
 }
 
 render_usage_t

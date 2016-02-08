@@ -27,8 +27,6 @@
 
 #include <resource/platform.h>
 
-bool _render_api_disabled[RENDERAPI_NUM] = {0};
-
 static render_api_t
 render_api_fallback(render_api_t api) {
 	switch (api) {

@@ -24,10 +24,16 @@
 #include <resource/local.h>
 #include <resource/platform.h>
 
+//Size expectations for the program compiler and loader
+FOUNDATION_STATIC_ASSERT(sizeof(render_vertex_decl_t) == 72, "invalid vertex decl size");
+FOUNDATION_STATIC_ASSERT(sizeof(render_parameter_decl_t) == 8, "invalid parameter decl size");
+FOUNDATION_STATIC_ASSERT(sizeof(render_program_t) == 64 + sizeof(render_vertex_decl_t) + sizeof(
+                             render_parameter_decl_t), "invalid program size");
+
 render_program_t*
 render_program_allocate(size_t num_parameters) {
 	size_t size = sizeof(render_program_t) + (sizeof(render_parameter_t) * num_parameters);
-	render_program_t* program = memory_allocate(HASH_RENDER, size, 0, MEMORY_PERSISTENT);
+	render_program_t* program = memory_allocate(HASH_RENDER, size, 8, MEMORY_PERSISTENT);
 	render_program_initialize(program, num_parameters);
 	return program;
 }
@@ -35,7 +41,7 @@ render_program_allocate(size_t num_parameters) {
 void
 render_program_initialize(render_program_t* program, size_t num_parameters) {
 	memset(program, 0, sizeof(render_program_t));
-	program->parameters.num_parameters = num_parameters;
+	program->parameters.num_parameters = (unsigned int)num_parameters;
 }
 
 void
@@ -68,6 +74,10 @@ render_program_load(render_backend_t* backend, const uuid_t uuid) {
 	uint64_t platform = render_backend_resource_platform(backend);
 	stream_t* stream;
 	bool success = false;
+	hash_t type_hash;
+	uint32_t version;
+	uuid_t shaderuuid;
+	size_t remain, uuid_size;
 	render_vertexshader_t* vertexshader = 0;
 	render_pixelshader_t* pixelshader = 0;
 
@@ -75,15 +85,16 @@ render_program_load(render_backend_t* backend, const uuid_t uuid) {
 	if (!stream)
 		goto finalize;
 
-	hash_t type_hash = stream_read_uint64(stream);
-	uint32_t version = stream_read_uint32(stream);
-	uuid_t shaderuuid;
+	type_hash = stream_read_uint64(stream);
+	version = stream_read_uint32(stream);
 	if ((type_hash != HASH_PROGRAM) || (version != expected_version)) {
 		log_warnf(HASH_RENDER, WARNING_INVALID_VALUE,
 		          STRING_CONST("Got unexpected type/version when loading program: %" PRIx64 " : %u"),
 		          type_hash, version);
 		goto finalize;
 	}
+
+	//TODO: Local dependency tracking, check if shaders need recompilation
 
 	shaderuuid = stream_read_uint128(stream);
 	vertexshader = render_vertexshader_load(backend, shaderuuid);
@@ -105,12 +116,18 @@ render_program_load(render_backend_t* backend, const uuid_t uuid) {
 		goto finalize;
 	}
 
-	program = render_program_allocate(1);
+	uuid_size = sizeof(uuid_t) * 2;
+	remain = stream_size(stream) - stream_tell(stream);
+	program = memory_allocate(HASH_RENDER, uuid_size + remain, 8, MEMORY_PERSISTENT);
+
+	stream_read(stream, pointer_offset(program, uuid_size), remain);
+
+	program->backend = 0;
 	program->vertexshader = vertexshader;
 	program->pixelshader = pixelshader;
-	render_program_upload(backend, program);
+	memset(program->backend_data, 0, sizeof(program->backend_data));
 
-	success = true;
+	success = render_program_upload(backend, program);
 
 finalize:
 	stream_deallocate(stream);

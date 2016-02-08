@@ -20,8 +20,6 @@
 #include <render/render.h>
 #include <render/internal.h>
 
-objectmap_t* _render_map_target = 0;
-
 int
 render_target_initialize(void) {
 	memory_context_push(HASH_RENDER);

@@ -22,6 +22,11 @@
 
 static bool _render_initialized = false;
 
+//Global data
+bool _render_api_disabled[RENDERAPI_NUM] = {0};
+objectmap_t* _render_map_target = 0;
+objectmap_t* _render_map_buffer = 0;
+
 int
 render_module_initialize(render_config_t config) {
 	if (_render_initialized)

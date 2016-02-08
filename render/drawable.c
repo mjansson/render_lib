@@ -35,14 +35,16 @@ render_drawable_allocate() {
 
 void
 render_drawable_deallocate(render_drawable_t* drawable) {
+	if (drawable) {
 #if FOUNDATION_PLATFORM_WINDOWS
-	if (drawable->hdc)
-		window_release_hdc(drawable->hwnd, drawable->hdc);
+		if (drawable->hdc)
+			window_release_hdc(drawable->hwnd, drawable->hdc);
 #elif FOUNDATION_PLATFORM_LINUX_RASPBERRYPI
-	if (drawable->native)
-		memory_deallocate(drawable->native);
+		if (drawable->native)
+			memory_deallocate(drawable->native);
 #endif
-	memory_deallocate(drawable);
+		memory_deallocate(drawable);
+	}
 }
 
 #if FOUNDATION_PLATFORM_IOS

@@ -75,12 +75,13 @@ typedef enum render_usage_t {
 } render_usage_t;
 
 typedef enum render_buffer_type_t {
-	RENDERBUFFER_COLOR   = 0x01,
-	RENDERBUFFER_DEPTH   = 0x02,
-	RENDERBUFFER_STENCIL = 0x04,
+	RENDERBUFFER_COLOR     = 0x01,
+	RENDERBUFFER_DEPTH     = 0x02,
+	RENDERBUFFER_STENCIL   = 0x04,
 
-	RENDERBUFFER_VERTEX  = 0x10,
-	RENDERBUFFER_INDEX   = 0x20
+	RENDERBUFFER_VERTEX    = 0x10,
+	RENDERBUFFER_INDEX     = 0x20,
+	RENDERBUFFER_PARAMETER = 0x40
 } render_buffer_type_t;
 
 typedef enum render_buffer_uploadpolicy_t {
@@ -156,8 +157,8 @@ typedef enum render_parameter_type_t {
 	RENDERPARAMETER_FLOAT4 = 0,
 	RENDERPARAMETER_INT4,
 	RENDERPARAMETER_MATRIX,
-	RENDERPARAMETER_TEXTURE
-	//If adding new, increase storage size in render_parameter_info_t
+	RENDERPARAMETER_TEXTURE,
+	RENDERPARAMETER_ATTRIBUTE
 } render_parameter_type_t;
 
 typedef enum render_texture_type_t {
@@ -252,6 +253,7 @@ typedef struct render_resolution_t render_resolution_t;
 typedef struct render_vertex_decl_element_t render_vertex_decl_element_t;
 typedef struct render_parameter_t render_parameter_t;
 typedef struct render_parameter_decl_t render_parameter_decl_t;
+typedef struct render_parameterbuffer_t render_parameterbuffer_t;
 typedef struct render_config_t render_config_t;
 
 typedef bool (* render_backend_construct_fn)(render_backend_t*);
@@ -417,18 +419,23 @@ struct render_vertex_attribute_t {
 };
 
 struct render_vertex_decl_t {
+	unsigned int num_attributes;
+	unsigned int size;
 	render_vertex_attribute_t attribute[VERTEXATTRIBUTE_NUMATTRIBUTES];
 };
 
 struct render_parameter_t {
 	hash_t                  name;
 	render_parameter_type_t type;
-	unsigned int            dim;
+	uint16_t                dim;
+	uint16_t                offset;
 	unsigned int            stages;
+	unsigned int            location;
 };
 
 struct render_parameter_decl_t {
-	size_t num_parameters;
+	unsigned int num_parameters;
+	unsigned int size;
 	render_parameter_t parameters[];
 };
 
@@ -487,7 +494,15 @@ struct render_program_t {
 	render_backend_t* backend;
 	render_vertexshader_t* vertexshader;
 	render_pixelshader_t* pixelshader;
+	void* __unused;
+#if FOUNDATION_SIZE_POINTER == 4
+	uint32_t __padding_ptr[4];
+#endif
 	uintptr_t backend_data[4];
+#if FOUNDATION_SIZE_POINTER == 4
+	uint32_t __padding_data[4];
+#endif
+	render_vertex_decl_t attributes;
 	render_parameter_decl_t parameters;
 };
 

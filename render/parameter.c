@@ -31,7 +31,7 @@ render_parameter_decl_allocate(size_t num) {
 
 void
 render_parameter_decl_initialize(render_parameter_decl_t* decl, size_t num) {
-	decl->num_parameters = num;
+	decl->num_parameters = (unsigned int)num;
 }
 
 void
@@ -46,18 +46,54 @@ render_parameter_decl_deallocate(render_parameter_decl_t* decl) {
 }
 
 object_t
-render_parameterbuffer_create(render_backend_t* backend, const render_parameter_decl_t* decl,
-                              const void* data) {
-	return 0;
+render_parameterbuffer_create(render_backend_t* backend, render_usage_t usage,
+                              const render_parameter_decl_t* decl, const void* data) {
+	object_t id = objectmap_reserve(_render_map_buffer);
+	if (!id) {
+		log_error(HASH_RENDER, ERROR_OUT_OF_MEMORY,
+		          STRING_CONST("Unable to allocate parameter buffer, out of slots in object map"));
+		return 0;
+	}
+
+	memory_context_push(HASH_RENDER);
+
+	size_t paramsize = sizeof(render_parameter_t) * decl->num_parameters;
+	render_parameterbuffer_t* buffer = memory_allocate(HASH_RENDER,
+	                                                   sizeof(render_parameterbuffer_t) + paramsize, 0,
+	                                                   MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	buffer->id         = id;
+	buffer->backend    = backend;
+	buffer->usage      = usage;
+	buffer->buffertype = RENDERBUFFER_PARAMETER;
+	buffer->policy     = RENDERBUFFER_UPLOAD_ONDISPATCH;
+	buffer->size       = decl->size;
+	memcpy(&buffer->decl, decl, sizeof(render_parameter_decl_t) + paramsize);
+	atomic_store32(&buffer->ref, 1);
+	objectmap_set(_render_map_buffer, id, buffer);
+
+	if (data) {
+		buffer->allocated = decl->num_parameters;
+		buffer->used = decl->num_parameters;
+		buffer->store = backend->vtable.allocate_buffer(backend, (render_buffer_t*)buffer);
+		if (data) {
+			memcpy(buffer->store, data, decl->size);
+			buffer->flags |= RENDERBUFFER_DIRTY;
+		}
+	}
+
+	memory_context_pop();
+
+	return id;
 }
 
 object_t
 render_parameterbuffer_ref(object_t buffer) {
-	return 0;
+	return render_buffer_ref(buffer);
 }
 
 void
 render_parameterbuffer_destroy(object_t buffer) {
+	render_buffer_destroy(buffer);
 }
 
 void

@@ -24,6 +24,12 @@
 
 #include <render/types.h>
 
+/*! Get vertex attribute size from format
+\param decl Vertex attribute format
+\return Vertex attribute size */
+RENDER_API uint16_t
+render_vertex_attribute_size(render_vertex_format_t format);
+
 /*! Allocate a new vertex declaration from array of elements
 \param elements Vertex declaration elements
 \param num Number of vertex declaration elements in array
@@ -91,11 +97,11 @@ render_vertex_decl_finalize(render_vertex_decl_t* decl);
 RENDER_API void
 render_vertex_decl_deallocate(render_vertex_decl_t* decl);
 
-/*! Get vertex size from declaration
+/*! Calculate vertex size from declaration
 \param decl Vertex declaration
 \return Vertex size */
 RENDER_API size_t
-render_vertex_decl_size(const render_vertex_decl_t* decl);
+render_vertex_decl_calculate_size(const render_vertex_decl_t* decl);
 
 
 RENDER_API object_t

@@ -331,22 +331,19 @@ static void* _test_render_box(render_api_t api) {
 	//color.vertex : 23656e75-9edd-44b7-877e-e96e56f03301
 	//vertexshader = render_vertexshader_load(backend, string_to_uuid(STRING_CONST("23656e75-9edd-44b7-877e-e96e56f03301")));
 
-	//color.program : 
-	program = render_program_load(backend, string_to_uuid(STRING_CONST("1ab9bba8-3f2f-4649-86bb-8b8b07e99af2")));
-
-	parameter_decl = render_parameter_decl_allocate(1);
-	parameter_decl->parameters[0].name = hash(STRING_CONST("mvp"));
-	parameter_decl->parameters[0].type = RENDERPARAMETER_MATRIX;
-	parameter_decl->parameters[0].dim = 0;
-	parameter_decl->parameters[0].stages = SHADER_VERTEX;
+	//color.program : 1ab9bba8-3f2f-4649-86bb-8b8b07e99af2
+	program = render_program_load(backend,
+	                              string_to_uuid(STRING_CONST("1ab9bba8-3f2f-4649-86bb-8b8b07e99af2")));
+	EXPECT_NE(program, nullptr);
 
 	mvp = matrix_identity();
 
-	parameterbuffer = render_parameterbuffer_create(backend, parameter_decl, &mvp);
+	parameterbuffer = render_parameterbuffer_create(backend, RENDERUSAGE_DYNAMIC, &program->parameters, &mvp);
+	EXPECT_TYPENE(parameterbuffer, 0, object_t, PRIx64);
 
 	//TODO: Create vertex and index buffers
 	//TODO: Render and flip
-    //TODO: Verify framebuffer
+	//TODO: Verify framebuffer
 
 	thread_sleep(2000);
 
@@ -354,7 +351,7 @@ ignore_test:
 
 	render_parameterbuffer_destroy(parameterbuffer);
 	render_parameter_decl_deallocate(parameter_decl);
-    render_program_deallocate(program);
+	render_program_deallocate(program);
 	render_context_deallocate(context);
 	render_backend_deallocate(backend);
 	render_drawable_deallocate(drawable);
@@ -376,7 +373,7 @@ DECLARE_TEST(render, null_clear) {
 }
 
 DECLARE_TEST(render, null_box) {
-	return 0;//_test_render_box(RENDERAPI_NULL);
+	return _test_render_box(RENDERAPI_NULL);
 }
 
 #if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_MACOSX || ( FOUNDATION_PLATFORM_LINUX && !FOUNDATION_PLATFORM_LINUX_RASPBERRYPI )
