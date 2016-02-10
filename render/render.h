@@ -35,6 +35,7 @@
 #include <render/parameter.h>
 #include <render/shader.h>
 #include <render/program.h>
+#include <render/state.h>
 #include <render/compile.h>
 
 /*! Initialize render library

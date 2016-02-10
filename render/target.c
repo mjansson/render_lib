@@ -23,7 +23,7 @@
 int
 render_target_initialize(void) {
 	memory_context_push(HASH_RENDER);
-	_render_map_target = objectmap_allocate(BUILD_SIZE_RENDER_TARGET_MAP);
+	_render_map_target = objectmap_allocate(_render_config.target_max);
 	memory_context_pop();
 	return 0;
 }

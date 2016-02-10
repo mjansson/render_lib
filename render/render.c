@@ -20,19 +20,24 @@
 #include <render/render.h>
 #include <render/internal.h>
 
-static bool _render_initialized = false;
+static bool _render_initialized;
 
 //Global data
-bool _render_api_disabled[RENDERAPI_NUM] = {0};
-objectmap_t* _render_map_target = 0;
-objectmap_t* _render_map_buffer = 0;
+render_config_t _render_config;
+bool _render_api_disabled[RENDERAPI_NUM];
+objectmap_t* _render_map_target;
+objectmap_t* _render_map_buffer;
 
 int
 render_module_initialize(render_config_t config) {
 	if (_render_initialized)
 		return 0;
 
-	FOUNDATION_UNUSED(config);
+	_render_config.target_max = config.target_max    ?
+	                            config.target_max    : 32;
+
+	_render_config.buffer_max = config.buffer_max    ?
+	                            config.buffer_max    : 1024;
 
 	_render_api_disabled[RENDERAPI_UNKNOWN] = true;
 	_render_api_disabled[RENDERAPI_DEFAULT] = true;
@@ -41,6 +46,9 @@ render_module_initialize(render_config_t config) {
 	_render_api_disabled[RENDERAPI_GLES] = true;
 
 	if (render_target_initialize() < 0)
+		return -1;
+
+	if (render_buffer_initialize() < 0)
 		return -1;
 
 	_render_initialized = true;
@@ -53,6 +61,7 @@ render_module_finalize(void) {
 	if (!_render_initialized)
 		return;
 
+	render_buffer_finalize();
 	render_target_finalize();
 
 	_render_initialized = false;

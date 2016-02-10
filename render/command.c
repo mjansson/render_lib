@@ -33,7 +33,7 @@ render_command_null(render_command_t* command) {
 
 void
 render_command_clear(render_command_t* command, unsigned int buffer_mask, uint32_t color,
-                     unsigned int color_mask, uint32_t depth, uint32_t stencil) {
+                     unsigned int color_mask, float depth, uint32_t stencil) {
 	command->type                   = RENDERCOMMAND_CLEAR;
 	command->data.clear.buffer_mask = buffer_mask;
 	command->data.clear.color       = color;
@@ -56,24 +56,14 @@ render_command_viewport(render_command_t* command, unsigned int x, unsigned int 
 
 void
 render_command_render(render_command_t* command, render_primitive_t type, uint16_t num,
-                      render_vertexshader_t* vertexshader, render_pixelshader_t* pixelshader,
-                      object_t vertexbuffer, object_t indexbuffer,
-                      object_t parameterbuffer, uint64_t blend_state) {
+                      render_program_t* program, object_t vertexbuffer,
+                      object_t indexbuffer, object_t parameterbuffer,
+                      object_t statebuffer) {
 	command->type                         = RENDERCOMMAND_RENDER_TRIANGLELIST + type;
 	command->count                        = num;
-	command->data.render.vertexshader     = vertexshader;
-	command->data.render.pixelshader      = pixelshader;
+	command->data.render.program          = program;
 	command->data.render.vertexbuffer     = vertexbuffer;
 	command->data.render.indexbuffer      = indexbuffer;
 	command->data.render.parameterbuffer  = parameterbuffer;
-	command->data.render.blend_state      = blend_state;
-
-#if FOUNDATION_BUILD_DEBUG
-	/*void* vbuffer = pool_lookup( _global_pool_renderbuffer, vertexbuffer );
-	void* ibuffer  = pool_lookup( _global_pool_renderbuffer, indexbuffer );
-	void* vshader = pool_lookup( _global_pool_shader, vertexshader );
-	void* pshader  = pool_lookup( _global_pool_shader, pixelshader );
-	if( !FOUNDATION_VALIDATE_MSG( vbuffer && ibuffer && vshader && pshader, "Render command using invalid resources" ) )
-		render_command_null( command );*/
-#endif
+	command->data.render.statebuffer      = statebuffer;
 }

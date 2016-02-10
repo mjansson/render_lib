@@ -23,41 +23,6 @@
 #define GET_BUFFER(id) objectmap_lookup(_render_map_buffer, (id))
 
 object_t
-render_buffer_ref(object_t id) {
-	int32_t ref;
-	render_buffer_t* buffer = objectmap_lookup(_render_map_buffer, id);
-	if (buffer)
-		do {
-			ref = atomic_load32(&buffer->ref);
-			if ((ref > 0) && atomic_cas32(&buffer->ref, ref + 1, ref))
-				return id;
-		}
-		while (ref > 0);
-	return 0;
-}
-
-void
-render_buffer_destroy(object_t id) {
-	int32_t ref;
-	render_buffer_t* buffer = GET_BUFFER(id);
-	if (buffer) {
-		do {
-			ref = atomic_load32(&buffer->ref);
-			if ((ref > 0) && atomic_cas32(&buffer->ref, ref - 1, ref)) {
-				if (ref == 1) {
-					objectmap_free(_render_map_buffer, id);
-					buffer->backend->vtable.deallocate_buffer(buffer->backend, buffer, true, true);
-					memory_deallocate(buffer);
-				}
-				return;
-			}
-		}
-		while (ref > 0);
-	}
-}
-
-
-object_t
 render_vertexbuffer_create(render_backend_t* backend, render_usage_t usage, size_t vertices,
                            const render_vertex_decl_t* decl, const void* data) {
 	object_t id = objectmap_reserve(_render_map_buffer);
@@ -140,36 +105,12 @@ void render_vertexbuffer_set_num_elements(object_t id, size_t num) {
 
 void
 render_vertexbuffer_lock(object_t id, unsigned int lock) {
-	render_vertexbuffer_t* buffer = GET_BUFFER(id);
-	if (render_vertexbuffer_ref(id) != id)
-		return;
-	if (lock & RENDERBUFFER_LOCK_WRITE) {
-		atomic_incr32(&buffer->locks);
-		buffer->access = buffer->store;
-	}
-	else if (lock & RENDERBUFFER_LOCK_READ) {
-		atomic_incr32(&buffer->locks);
-		buffer->access = buffer->store;
-	}
-	buffer->flags |= (lock & RENDERBUFFER_LOCK_BITS);
+	render_buffer_lock(id, lock);
 }
 
 void
 render_vertexbuffer_unlock(object_t id) {
-	render_vertexbuffer_t* buffer = GET_BUFFER(id);
-	if (!atomic_load32(&buffer->locks))
-		return;
-	if (atomic_decr32(&buffer->locks) == 0) {
-		buffer->access = 0;
-		if ((buffer->flags & RENDERBUFFER_LOCK_WRITE) && !(buffer->flags & RENDERBUFFER_LOCK_NOUPLOAD)) {
-			buffer->flags |= RENDERBUFFER_DIRTY;
-			if ((buffer->policy == RENDERBUFFER_UPLOAD_ONUNLOCK) ||
-			        (buffer->flags & RENDERBUFFER_LOCK_FORCEUPLOAD))
-				render_indexbuffer_upload(id);
-		}
-		buffer->flags &= ~RENDERBUFFER_LOCK_BITS;
-	}
-	render_indexbuffer_destroy(id);
+	render_buffer_unlock(id);
 }
 
 render_buffer_uploadpolicy_t
@@ -187,9 +128,9 @@ render_vertexbuffer_set_upload_policy(object_t id, render_buffer_uploadpolicy_t 
 
 void
 render_verexbuffer_upload(object_t id) {
-	render_vertexbuffer_t* buffer = GET_BUFFER(id);
-	if (buffer->flags & RENDERBUFFER_DIRTY)
-		buffer->backend->vtable.upload_buffer(buffer->backend, (render_buffer_t*)buffer);
+	render_buffer_t* buffer = GET_BUFFER(id);
+	if (buffer)
+		render_buffer_upload(buffer);
 }
 
 void*
@@ -288,7 +229,7 @@ render_vertex_decl_allocate_varg(render_vertex_format_t format,
 
 render_vertex_decl_t*
 render_vertex_decl_allocate_vlist(render_vertex_format_t format,
-                                 render_vertex_attribute_id attribute, va_list list) {
+                                  render_vertex_attribute_id attribute, va_list list) {
 	render_vertex_decl_t* decl = memory_allocate(HASH_RENDER, sizeof(render_vertex_decl_t), 0,
 	                                             MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 	render_vertex_decl_initialize_vlist(decl, format, attribute, list);
@@ -298,19 +239,25 @@ render_vertex_decl_allocate_vlist(render_vertex_format_t format,
 void
 render_vertex_decl_initialize(render_vertex_decl_t* decl, render_vertex_decl_element_t* elements,
                               size_t num_elements) {
+	size_t i;
+	unsigned int offset = 0;
+
 	if (num_elements > VERTEXATTRIBUTE_NUMATTRIBUTES)
 		num_elements = VERTEXATTRIBUTE_NUMATTRIBUTES;
-	
-	decl->num_attributes = (unsigned int)num_elements;
 
-	size_t offset = 0;
-	for (unsigned int i = 0; i < num_elements; ++i) {
+	for (i = 0; i < VERTEXATTRIBUTE_NUMATTRIBUTES; ++i)
+		decl->attribute[i].format = VERTEXFORMAT_UNKNOWN;
+
+	for (i = 0; i < num_elements; ++i) {
 		decl->attribute[elements[i].attribute].format = elements[i].format;
 		decl->attribute[elements[i].attribute].binding = 0;
 		decl->attribute[elements[i].attribute].offset = (uint16_t)offset;
 
 		offset += _vertex_format_size[ elements[i].format ];
 	}
+
+	decl->num_attributes = (unsigned int)num_elements;
+	decl->size = offset;
 }
 
 void
@@ -324,10 +271,13 @@ render_vertex_decl_initialize_varg(render_vertex_decl_t* decl, render_vertex_for
 
 void
 render_vertex_decl_initialize_vlist(render_vertex_decl_t* decl, render_vertex_format_t format,
-                                   render_vertex_attribute_id attribute, va_list list) {
-	size_t offset = 0;
+                                    render_vertex_attribute_id attribute, va_list list) {
+	unsigned int offset = 0;
 
 	decl->num_attributes = 0;
+
+	for (size_t i = 0; i < VERTEXATTRIBUTE_NUMATTRIBUTES; ++i)
+		decl->attribute[i].format = VERTEXFORMAT_UNKNOWN;
 
 	va_list clist;
 	va_copy(clist, list);
@@ -348,6 +298,8 @@ render_vertex_decl_initialize_vlist(render_vertex_decl_t* decl, render_vertex_fo
 	}
 
 	va_end(clist);
+
+	decl->size = offset;
 }
 
 void

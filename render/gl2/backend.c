@@ -24,6 +24,8 @@
 
 #include <render/gl4/glwrap.h>
 
+#define GET_BUFFER(id) objectmap_lookup(_render_map_buffer, (id))
+
 #if RENDER_ENABLE_NVGLEXPERT
 #  include <nvapi.h>
 
@@ -51,6 +53,9 @@ typedef struct render_backend_gl2_t {
 
 	bool use_clear_scissor;
 } render_backend_gl2_t;
+
+static void
+_rb_gl2_set_default_state(void);
 
 static bool
 _rb_gl2_construct(render_backend_t* backend) {
@@ -146,6 +151,12 @@ _rb_gl2_set_drawable(render_backend_t* backend, render_drawable_t* drawable) {
 	glDrawBuffer(GL_BACK);
 
 	glViewport(0, 0, render_drawable_width(drawable), render_drawable_height(drawable));
+
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+	glCullFace(GL_BACK);
+
+	_rb_gl2_set_default_state();
 
 	_rb_gl_check_error("Error setting up default state");
 
@@ -336,6 +347,9 @@ _rb_gl2_deallocate_buffer(render_backend_t* backend, render_buffer_t* buffer, bo
 
 static bool
 _rb_gl2_upload_buffer(render_backend_t* backend, render_buffer_t* buffer) {
+	if ((buffer->buffertype == RENDERBUFFER_PARAMETER) || (buffer->buffertype == RENDERBUFFER_STATE))
+		return true;
+
 	GLuint buffer_object = (GLuint)buffer->backend_data[0];
 	if (!buffer_object) {
 		glGenBuffers(1, &buffer_object);
@@ -352,6 +366,13 @@ _rb_gl2_upload_buffer(render_backend_t* backend, render_buffer_t* buffer) {
 
 	buffer->flags &= ~RENDERBUFFER_DIRTY;
 	return true;
+}
+
+static void
+_rb_gl2_link_buffer(render_backend_t* backend, render_buffer_t* buffer, render_program_t* program) {
+	FOUNDATION_UNUSED(backend);
+	FOUNDATION_UNUSED(buffer);
+	FOUNDATION_UNUSED(program);
 }
 
 static bool
@@ -403,18 +424,9 @@ _rb_gl2_deallocate_shader(render_backend_t* backend, render_shader_t* shader) {
 }
 
 static bool
-_rb_gl2_upload_program(render_backend_t* backend, render_program_t* program) {
-	if (program->backend_data[0])
-		glDeleteProgram((GLuint)program->backend_data[0]);
-
+_rb_gl2_check_program_link(GLuint handle) {
 	GLint result = 0;
-	GLuint handle = glCreateProgram();
-
-	glAttachShader(handle, (GLuint)program->vertexshader->backend_data[0]);
-	glAttachShader(handle, (GLuint)program->pixelshader->backend_data[0]);
-	glLinkProgram(handle);
 	glGetProgramiv(handle, GL_LINK_STATUS, &result);
-
 	if (!result) {
 		GLsizei buffer_size = 4096;
 		GLint log_length = 0;
@@ -432,15 +444,58 @@ _rb_gl2_upload_program(render_backend_t* backend, render_program_t* program) {
 
 		return false;
 	}
+	return true;
+}
 
+static bool
+_rb_gl2_upload_program(render_backend_t* backend, render_program_t* program) {
+	if (program->backend_data[0])
+		glDeleteProgram((GLuint)program->backend_data[0]);
+
+	GLint result = 0;
+	GLint attributes = 0;
 	GLint uniforms = 0;
+	GLint ia, iu;
+	GLsizei num_chars = 0;
+	GLint size = 0;
+	GLenum type = GL_NONE;
+	hash_t name_hash;
+	char name[256];
+	GLuint handle = glCreateProgram();
+
+	glAttachShader(handle, (GLuint)program->vertexshader->backend_data[0]);
+	glAttachShader(handle, (GLuint)program->pixelshader->backend_data[0]);
+	glLinkProgram(handle);
+	if (!_rb_gl2_check_program_link(handle))
+		return false;
+
+	//TODO: By storing name strings in render_program_t we can avoid double link
+	//      by doing all glBindAttribLocation after attach but before link
+	glGetProgramiv(handle, GL_ACTIVE_ATTRIBUTES, &attributes);
+	for (ia = 0; ia < attributes; ++ia) {
+		num_chars = 0;
+		size = 0;
+		type = GL_NONE;
+		glGetActiveAttrib(handle, ia, sizeof(name), &num_chars, &size, &type, name);
+
+		name_hash = hash(name, num_chars);
+		for (size_t iattrib = 0; iattrib < program->attributes.num_attributes; ++iattrib) {
+			if (program->attribute_name[iattrib] == name_hash) {
+				render_vertex_attribute_t* attribute = program->attributes.attribute + iattrib;
+				glBindAttribLocation(handle, attribute->binding, name);
+				break;
+			}
+		}
+	}
+	glLinkProgram(handle);
+	if (!_rb_gl2_check_program_link(handle))
+		return false;
+
 	glGetProgramiv(handle, GL_ACTIVE_UNIFORMS, &uniforms);
-	for (GLint iu = 0; iu < uniforms; ++iu) {
-		GLsizei num_chars = 0;
-		GLint size = 0;
-		GLenum type = GL_NONE;
-		hash_t name_hash;
-		char name[256];
+	for (iu = 0; iu < uniforms; ++iu) {
+		num_chars = 0;
+		size = 0;
+		type = GL_NONE;
 		glGetActiveUniform(handle, iu, sizeof(name), &num_chars, &size, &type, name);
 
 		name_hash = hash(name, num_chars);
@@ -513,6 +568,187 @@ static void _rb_gl2_deallocate_texture(render_backend_t* backend, render_texture
 #endif
 
 static void
+_rb_gl2_clear(render_backend_gl2_t* backend, render_context_t* context, render_command_t* command) {
+	unsigned int buffer_mask = command->data.clear.buffer_mask;
+	unsigned int bits = 0;
+
+	if (buffer_mask & RENDERBUFFER_COLOR) {
+		unsigned int color_mask = command->data.clear.color_mask;
+		uint32_t color = command->data.clear.color;
+		glColorMask((color_mask & 0x01) ? GL_TRUE : GL_FALSE, (color_mask & 0x02) ? GL_TRUE : GL_FALSE,
+		            (color_mask & 0x04) ? GL_TRUE : GL_FALSE, (color_mask & 0x08) ? GL_TRUE : GL_FALSE);
+		bits |= GL_COLOR_BUFFER_BIT;
+		//color_linear_t color = uint32_to_color( command->data.clear.color );
+		//glClearColor( vector_x( color ), vector_y( color ), vector_z( color ), vector_w( color ) );
+		glClearColor((float)(color & 0xFF) / 255.0f, (float)((color >> 8) & 0xFF) / 255.0f,
+		             (float)((color >> 16) & 0xFF) / 255.0f, (float)((color >> 24) & 0xFF) / 255.0f);
+	}
+
+	if (buffer_mask & RENDERBUFFER_DEPTH) {
+		glDepthMask(GL_TRUE);
+		bits |= GL_DEPTH_BUFFER_BIT;
+		glClearDepth(command->data.clear.depth);
+	}
+
+	if (buffer_mask & RENDERBUFFER_STENCIL) {
+		glClearStencil(command->data.clear.stencil);
+		bits |= GL_STENCIL_BUFFER_BIT;
+	}
+
+	if (backend->use_clear_scissor)
+		glEnable(GL_SCISSOR_TEST);
+
+	glClear(bits);
+
+	if (backend->use_clear_scissor)
+		glDisable(GL_SCISSOR_TEST);
+	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+}
+
+static void
+_rb_gl2_viewport(render_backend_gl2_t* backend, render_context_t* context,
+                 render_command_t* command) {
+	int target_width = render_target_width(context->target);
+	int target_height = render_target_height(context->target);
+
+	GLint x = command->data.viewport.x;
+	GLint y = command->data.viewport.y;
+	GLsizei w = command->data.viewport.width;
+	GLsizei h = command->data.viewport.height;
+
+	glViewport(x, y, w, h);
+	glScissor(x, y, w, h);
+
+	backend->use_clear_scissor = (x || y || (w != target_width) || (h != target_height));
+}
+
+static const GLint        _rb_gl2_vertex_format_size[VERTEXFORMAT_NUMTYPES] = { 1,        2,        3,        4,        4,                4,                1,        2,        4,        1,        2,        4        };
+static const GLenum       _rb_gl2_vertex_format_type[VERTEXFORMAT_NUMTYPES] = { GL_FLOAT, GL_FLOAT, GL_FLOAT, GL_FLOAT, GL_UNSIGNED_BYTE, GL_BYTE,          GL_SHORT, GL_SHORT, GL_SHORT, GL_INT,   GL_INT,   GL_INT   };
+static const GLboolean    _rb_gl2_vertex_format_norm[VERTEXFORMAT_NUMTYPES] = { GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE, GL_TRUE,          GL_TRUE,          GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE };
+
+static const GLenum       _rb_gl2_primitive_type[RENDERPRIMITIVE_NUMTYPES] = { GL_TRIANGLES };
+static const unsigned int _rb_gl2_primitive_mult[RENDERPRIMITIVE_NUMTYPES] = { 3 };
+static const unsigned int _rb_gl2_primitive_add[RENDERPRIMITIVE_NUMTYPES]  = { 0 };
+
+//                                                 BLEND_ZERO, BLEND_ONE, BLEND_SRCCOLOR, BLEND_INVSRCCOLOR,      BLEND_DESTCOLOR, BLEND_INVDESTCOLOR,     BLEND_SRCALPHA, BLEND_INVSRCALPHA,      BLEND_DESTALPHA, BLEND_INVDESTALPHA,     BLEND_FACTOR,      BLEND_INVFACTOR,             BLEND_SRCALPHASAT
+static const GLenum       _rb_gl2_blend_func[] = { GL_ZERO,    GL_ONE,    GL_SRC_COLOR,   GL_ONE_MINUS_SRC_COLOR, GL_DST_COLOR,    GL_ONE_MINUS_DST_COLOR, GL_SRC_ALPHA,   GL_ONE_MINUS_SRC_ALPHA, GL_DST_ALPHA,    GL_ONE_MINUS_DST_ALPHA, GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA, GL_SRC_ALPHA_SATURATE };
+
+static void
+_rb_gl2_set_default_state(void) {
+	glBlendFunc(GL_ONE, GL_ZERO);
+	glDepthFunc(GL_LEQUAL);
+	glDepthMask(GL_TRUE);
+	glFrontFace(GL_CCW);
+	glEnable(GL_CULL_FACE);
+}
+
+static void
+_rb_gl2_set_state(render_state_t* state) {
+
+}
+
+static void
+_rb_gl2_render(render_backend_gl2_t* backend, render_context_t* context,
+               render_command_t* command) {
+	render_vertexbuffer_t* vertexbuffer = GET_BUFFER(command->data.render.vertexbuffer);
+	render_indexbuffer_t* indexbuffer  = GET_BUFFER(command->data.render.indexbuffer);
+	render_parameterbuffer_t* parameterbuffer = GET_BUFFER(command->data.render.parameterbuffer);
+	render_program_t* program = command->data.render.program;
+
+	if (!vertexbuffer || !indexbuffer || !parameterbuffer || !program) { //Outdated references
+		FOUNDATION_ASSERT_FAIL("Render command using invalid resources");
+		return;
+	}
+
+	if (vertexbuffer->flags & RENDERBUFFER_DIRTY)
+		_rb_gl2_upload_buffer((render_backend_t*)backend, (render_buffer_t*)vertexbuffer);
+	if (indexbuffer->flags & RENDERBUFFER_DIRTY)
+		_rb_gl2_upload_buffer((render_backend_t*)backend, (render_buffer_t*)indexbuffer);
+
+	//Bind vertex attributes
+	glBindBuffer(GL_ARRAY_BUFFER, (GLuint)vertexbuffer->backend_data[0]);
+
+	const render_vertex_decl_t* decl = &vertexbuffer->decl;
+	for (unsigned int attrib = 0; attrib < VERTEXATTRIBUTE_NUMATTRIBUTES; ++attrib) {
+		const uint8_t format = decl->attribute[attrib].format;
+		if (format < VERTEXFORMAT_NUMTYPES) {
+			glVertexAttribPointer(attrib, _rb_gl2_vertex_format_size[format],
+			                      _rb_gl2_vertex_format_type[format], _rb_gl2_vertex_format_norm[format],
+			                      (GLsizei)vertexbuffer->size,
+			                      (const void*)(uintptr_t)decl->attribute[attrib].offset);
+			glEnableVertexAttribArray(attrib);
+		}
+		else {
+			glDisableVertexAttribArray(attrib);
+		}
+	}
+
+	//Index buffer
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, (GLuint)indexbuffer->backend_data[0]);
+
+	//Bind programs/shaders
+	glUseProgram((GLuint)program->backend_data[0]);
+
+	// Bind the parameter blocks
+	render_parameter_decl_t* paramdecl = &parameterbuffer->decl;
+	render_parameter_t* param = paramdecl->parameters;
+	for (unsigned int ip = 0; ip < paramdecl->num_parameters; ++ip, ++param) {
+		/*if (param->type == RENDERPARAMETER_TEXTURE) {
+			//TODO: Dynamic use of texture units, reusing unit that already have correct texture bound, and least-recently-used evicting old bindings to free a new unit
+			glActiveTexture(GL_TEXTURE0 + param_info->unit);
+			glEnable(GL_TEXTURE_2D);
+
+			object_t object = *(object_t*)pointer_offset(block, param_info->offset);
+			render_texture_gl2_t* texture = object ? pool_lookup(_global_pool_texture, object) : 0;
+			NEO_ASSERT_MSGFORMAT(!object ||
+			                     texture, "Parameter block using old/invalid texture 0x%llx", object);
+
+			glBindTexture(GL_TEXTURE_2D, texture ? texture->object : 0);
+
+			for (unsigned int iu = 0; iu < program->num_uniforms; ++iu) {
+				if (program->uniforms[iu].name == *param_name) {
+					glUniform1i(program->uniforms[iu].location, param_info->unit);
+					break;
+				}
+			}
+		}
+		else*/ {
+			void* data = pointer_offset(parameterbuffer->store, param->offset);
+			if (param->type == RENDERPARAMETER_FLOAT4)
+				glUniform4fv(param->location, param->dim, data);
+			else if (param->type == RENDERPARAMETER_INT4)
+				glUniform4iv(param->location, param->dim, data);
+			else if (param->type == RENDERPARAMETER_MATRIX)
+				glUniformMatrix4fv(param->location, param->dim, GL_TRUE, data);
+		}
+	}
+
+	//TODO: Proper states
+	/*ID3D10Device_RSSetState( device, backend_dx10->rasterizer_state[0].state );
+
+	FLOAT blend_factors[] = { 0.7f, 0.7f, 0.7f, 0.7f, 0.7f, 0.7f, 0.7f, 0.7f };
+	ID3D10Device_OMSetBlendState( device, backend_dx10->blend_state[ ( command->data.render.blend_state >> 48ULL ) & 0xFFFFULL ].state, blend_factors, 0xFFFFFFFF );
+	ID3D10Device_OMSetDepthStencilState( device, backend_dx10->depthstencil_state[0].state, 0xFFFFFFFF );*/
+
+	if (command->data.render.statebuffer) {
+		//Set state from buffer
+		render_statebuffer_t* buffer = GET_BUFFER(command->data.render.statebuffer);
+		_rb_gl2_set_state(&buffer->state);
+	}
+	else {
+		//Set default state
+		_rb_gl2_set_default_state();
+	}
+
+	unsigned int primitive = command->type - RENDERCOMMAND_RENDER_TRIANGLELIST;
+	unsigned int num = command->count;
+	unsigned int pnum = _rb_gl2_primitive_mult[primitive] * num + _rb_gl2_primitive_add[primitive];
+
+	glDrawElements(_rb_gl2_primitive_type[primitive], pnum,
+	               (indexbuffer->size == 2) ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT, 0);
+}
+
+static void
 _rb_gl2_dispatch(render_backend_t* backend, render_context_t** contexts, size_t num_contexts) {
 	render_backend_gl2_t* backend_gl2 = (render_backend_gl2_t*)backend;
 
@@ -526,60 +762,17 @@ _rb_gl2_dispatch(render_backend_t* backend, render_context_t** contexts, size_t 
 		        ++cmd_index, ++order) {
 			command = context->commands + *order;
 			switch (command->type) {
-			case RENDERCOMMAND_CLEAR: {
-					unsigned int buffer_mask = command->data.clear.buffer_mask;
-					unsigned int bits = 0;
+			case RENDERCOMMAND_CLEAR:
+				_rb_gl2_clear(backend_gl2, context, command);
+				break;
 
-					if (buffer_mask & RENDERBUFFER_COLOR) {
-						unsigned int color_mask = command->data.clear.color_mask;
-						uint32_t color = command->data.clear.color;
-						glColorMask((color_mask & 0x01) ? GL_TRUE : GL_FALSE, (color_mask & 0x02) ? GL_TRUE : GL_FALSE,
-						            (color_mask & 0x04) ? GL_TRUE : GL_FALSE, (color_mask & 0x08) ? GL_TRUE : GL_FALSE);
-						bits |= GL_COLOR_BUFFER_BIT;
-						//color_linear_t color = uint32_to_color( command->data.clear.color );
-						//glClearColor( vector_x( color ), vector_y( color ), vector_z( color ), vector_w( color ) );
-						glClearColor((float)(color & 0xFF) / 255.0f, (float)((color >> 8) & 0xFF) / 255.0f,
-						             (float)((color >> 16) & 0xFF) / 255.0f, (float)((color >> 24) & 0xFF) / 255.0f);
-					}
+			case RENDERCOMMAND_VIEWPORT:
+				_rb_gl2_viewport(backend_gl2, context, command);
+				break;
 
-					if (buffer_mask & RENDERBUFFER_DEPTH) {
-						glDepthMask(GL_TRUE);
-						bits |= GL_DEPTH_BUFFER_BIT;
-						glClearDepth(command->data.clear.depth);
-					}
-
-					if (buffer_mask & RENDERBUFFER_STENCIL) {
-						glClearStencil(command->data.clear.stencil);
-						bits |= GL_STENCIL_BUFFER_BIT;
-					}
-
-					if (backend_gl2->use_clear_scissor)
-						glEnable(GL_SCISSOR_TEST);
-
-					glClear(bits);
-
-					if (backend_gl2->use_clear_scissor)
-						glDisable(GL_SCISSOR_TEST);
-					glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-
-					break;
-				}
-
-			case RENDERCOMMAND_VIEWPORT: {
-					int target_width = render_target_width(context->target);
-					int target_height = render_target_height(context->target);
-
-					GLint x = command->data.viewport.x;
-					GLint y = command->data.viewport.y;
-					GLsizei w = command->data.viewport.width;
-					GLsizei h = command->data.viewport.height;
-
-					glViewport(x, y, w, h);
-					glScissor(x, y, w, h);
-
-					backend_gl2->use_clear_scissor = (x || y || (w != target_width) || (h != target_height));
-					break;
-				}
+			case RENDERCOMMAND_RENDER_TRIANGLELIST:
+				_rb_gl2_render(backend_gl2, context, command);
+				break;
 			}
 		}
 	}
@@ -632,15 +825,15 @@ static render_backend_vtable_t _render_backend_vtable_gl2 = {
 	.upload_buffer = _rb_gl2_upload_buffer,
 	.upload_shader = _rb_gl2_upload_shader,
 	.upload_program = _rb_gl2_upload_program,
+	.link_buffer = _rb_gl2_link_buffer,
 	.deallocate_buffer = _rb_gl2_deallocate_buffer,
 	.deallocate_shader = _rb_gl2_deallocate_shader,
 	.deallocate_program = _rb_gl2_deallocate_program,
-	/*.allocate_parameter_block = _rb_gl2_allocate_parameter_block,
-	.bind_parameter_block = _rb_gl2_bind_parameter_block,
-	.deallocate_parameter_block = _rb_gl2_deallocate_parameter_block,
+	/*
 	.allocate_texture = _rb_gl2_allocate_texture,
 	.upload_texture = _rb_gl2_upload_texture,
-	.deallocate_texture = _rb_gl2_deallocate_texture,*/
+	.deallocate_texture = _rb_gl2_deallocate_texture,
+	*/
 	.dispatch = _rb_gl2_dispatch,
 	.flip = _rb_gl2_flip
 };

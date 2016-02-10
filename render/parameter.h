@@ -65,6 +65,9 @@ render_parameterbuffer_upload_policy(object_t buffer);
 RENDER_API void
 render_parameterbuffer_set_upload_policy(object_t buffer, render_buffer_uploadpolicy_t policy);
 
+RENDER_API void*
+render_parameterbuffer_data(object_t buffer);
+
 RENDER_API void
 render_parameterbuffer_upload(object_t buffer);
 

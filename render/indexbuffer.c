@@ -106,36 +106,12 @@ render_indexbuffer_set_num_elements(object_t id, size_t num) {
 
 void
 render_indexbuffer_lock(object_t id, unsigned int lock) {
-	render_indexbuffer_t* buffer = GET_BUFFER(id);
-	if (render_indexbuffer_ref(id) != id)
-		return;
-	if (lock & RENDERBUFFER_LOCK_WRITE) {
-		atomic_incr32(&buffer->locks);
-		buffer->access = buffer->store;
-	}
-	else if (lock & RENDERBUFFER_LOCK_READ) {
-		atomic_incr32(&buffer->locks);
-		buffer->access = buffer->store;
-	}
-	buffer->flags |= (lock & RENDERBUFFER_LOCK_BITS);
+	render_buffer_lock(id, lock);
 }
 
 void
 render_indexbuffer_unlock(object_t id) {
-	render_indexbuffer_t* buffer = GET_BUFFER(id);
-	if (!atomic_load32(&buffer->locks))
-		return;
-	if (atomic_decr32(&buffer->locks) == 0) {
-		buffer->access = 0;
-		if ((buffer->flags & RENDERBUFFER_LOCK_WRITE) && !(buffer->flags & RENDERBUFFER_LOCK_NOUPLOAD)) {
-			buffer->flags |= RENDERBUFFER_DIRTY;
-			if ((buffer->policy == RENDERBUFFER_UPLOAD_ONUNLOCK) ||
-			        (buffer->flags & RENDERBUFFER_LOCK_FORCEUPLOAD))
-				render_indexbuffer_upload(id);
-		}
-		buffer->flags &= ~RENDERBUFFER_LOCK_BITS;
-	}
-	render_indexbuffer_destroy(id);
+	render_buffer_unlock(id);
 }
 
 render_buffer_uploadpolicy_t
@@ -153,9 +129,9 @@ render_indexbuffer_set_upload_policy(object_t id, render_buffer_uploadpolicy_t p
 
 void
 render_indexbuffer_upload(object_t id) {
-	render_indexbuffer_t* buffer = GET_BUFFER(id);
-	if (buffer->flags & RENDERBUFFER_DIRTY)
-		buffer->backend->vtable.upload_buffer(buffer->backend, (render_buffer_t*)buffer);
+	render_buffer_t* buffer = GET_BUFFER(id);
+	if (buffer)
+		render_buffer_upload(buffer);
 }
 
 uint16_t*

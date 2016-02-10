@@ -88,9 +88,9 @@ _rb_null_upload_program(render_backend_t* backend, render_program_t* program) {
 	return true;
 }
 
-static void*
-_rb_null_read_shader(render_backend_t* backend, render_shader_t* shader, size_t* size) {
-	return 0;
+static void
+_rb_null_link_buffer(render_backend_t* backend, render_buffer_t* buffer,
+                     render_program_t* program) {
 }
 
 static void
@@ -114,7 +114,7 @@ static render_backend_vtable_t _render_backend_vtable_null = {
 	.upload_buffer = _rb_null_upload_buffer,
 	.upload_shader = _rb_null_upload_shader,
 	.upload_program = _rb_null_upload_program,
-	.read_shader = _rb_null_read_shader,
+	.link_buffer = _rb_null_link_buffer,
 	.deallocate_buffer = _rb_null_deallocate_buffer,
 	.deallocate_shader = _rb_null_deallocate_shader,
 	.deallocate_program = _rb_null_deallocate_program

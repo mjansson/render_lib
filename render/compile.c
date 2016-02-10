@@ -480,6 +480,8 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 						break;
 					}
 
+					program->attribute_name[ia] = hash(name, num_chars);
+
 					switch (type) {
 					case GL_FLOAT:
 						attribute->format = VERTEXFORMAT_FLOAT;
@@ -524,10 +526,13 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 						render_vertex_attribute_t* first_attribute = program->attributes.attribute + ia;
 						render_vertex_attribute_t* second_attribute = first_attribute + 1;
 						if ((second_attribute->binding < first_attribute->binding)) {
-							render_vertex_attribute_t tmp;
-							tmp = *first_attribute;
+							render_vertex_attribute_t tmp = *first_attribute;
 							*first_attribute = *second_attribute;
 							*second_attribute = tmp;
+
+							hash_t tmpname = program->attribute_name[ia];
+							program->attribute_name[ia] = program->attribute_name[ia + 1];
+							program->attribute_name[ia + 1] = tmpname;
 						}
 					}
 				}
@@ -585,6 +590,7 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 
 					++program->parameters.num_parameters;
 				}
+				program->parameters.size = offset;
 			}
 			while (false);
 

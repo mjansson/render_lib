@@ -849,6 +849,9 @@ _rb_gles2_deallocate_buffer(render_backend_t* backend, render_buffer_t* buffer, 
 
 static bool
 _rb_gles2_upload_buffer(render_backend_t* backend, render_buffer_t* buffer) {
+	if ((buffer->buffertype == RENDERBUFFER_PARAMETER) || (buffer->buffertype == RENDERBUFFER_STATE))
+		return true;
+
 	GLuint buffer_object = (GLuint)buffer->backend_data[0];
 	if (!buffer_object) {
 		glGenBuffers(1, &buffer_object);
@@ -968,11 +971,6 @@ _rb_gles2_upload_shader(render_backend_t* backend, render_shader_t* shader, cons
 	return ret;
 }
 
-static void*
-_rb_gles2_read_shader(render_backend_t* backend, render_shader_t* shader, size_t* size) {
-	return 0;
-}
-
 static void
 _rb_gles2_program_unmap(GLuint vertex_shader, GLuint pixel_shader) {
 	/*for( int ip = 0; ip < 512; ++ip )
@@ -984,6 +982,14 @@ _rb_gles2_program_unmap(GLuint vertex_shader, GLuint pixel_shader) {
 			memset( _rb_gles2_programs + ip, 0, sizeof( render_program_gles2_t ) );
 		}
 	}*/
+}
+
+static void
+_rb_gles2_link_buffer(render_backend_t* backend, render_buffer_t* buffer,
+                      render_program_t* program) {
+	FOUNDATION_UNUSED(backend);
+	FOUNDATION_UNUSED(buffer);
+	FOUNDATION_UNUSED(program);
 }
 
 static void
@@ -1028,10 +1034,10 @@ static render_backend_vtable_t _render_backend_vtable_gles2 = {
 	.dispatch = _rb_gles2_dispatch,
 	.flip = _rb_gles2_flip,
 	.allocate_buffer = _rb_gles2_allocate_buffer,
+	.link_buffer = _rb_gles2_link_buffer,
 	.deallocate_buffer = _rb_gles2_deallocate_buffer,
 	.upload_buffer = _rb_gles2_upload_buffer,
 	.upload_shader = _rb_gles2_upload_shader,
-	.read_shader = _rb_gles2_read_shader,
 	.deallocate_shader = _rb_gles2_deallocate_shader
 };
 

@@ -81,7 +81,8 @@ typedef enum render_buffer_type_t {
 
 	RENDERBUFFER_VERTEX    = 0x10,
 	RENDERBUFFER_INDEX     = 0x20,
-	RENDERBUFFER_PARAMETER = 0x40
+	RENDERBUFFER_PARAMETER = 0x40,
+	RENDERBUFFER_STATE     = 0x80
 } render_buffer_type_t;
 
 typedef enum render_buffer_uploadpolicy_t {
@@ -192,6 +193,18 @@ typedef enum render_blend_op_t {
 	BLEND_OP_MAX
 } render_blend_op_t;
 
+typedef enum render_compare_func_t
+{
+	RENDER_CMP_NEVER = 0,
+	RENDER_CMP_LESS,
+	RENDER_CMP_LESSEQUAL,
+	RENDER_CMP_EQUAL,
+	RENDER_CMP_NOTEQUAL,
+	RENDER_CMP_GREATEREQUAL,
+	RENDER_CMP_GREATER,
+	RENDER_CMP_ALWAYS
+} render_compare_func_t;
+
 typedef enum render_pixelformat_t {
 	PIXELFORMAT_INVALID = 0,
 
@@ -249,11 +262,13 @@ typedef struct render_shader_t render_shader_t;
 typedef struct render_vertexshader_t render_vertexshader_t;
 typedef struct render_pixelshader_t render_pixelshader_t;
 typedef struct render_program_t render_program_t;
+typedef struct render_state_t render_state_t;
 typedef struct render_resolution_t render_resolution_t;
 typedef struct render_vertex_decl_element_t render_vertex_decl_element_t;
 typedef struct render_parameter_t render_parameter_t;
 typedef struct render_parameter_decl_t render_parameter_decl_t;
 typedef struct render_parameterbuffer_t render_parameterbuffer_t;
+typedef struct render_statebuffer_t render_statebuffer_t;
 typedef struct render_config_t render_config_t;
 
 typedef bool (* render_backend_construct_fn)(render_backend_t*);
@@ -272,12 +287,16 @@ typedef bool (* render_backend_upload_buffer_fn)(render_backend_t*, render_buffe
 typedef bool (* render_backend_upload_shader_fn)(render_backend_t*, render_shader_t*, const void*,
                                                  size_t);
 typedef bool (* render_backend_upload_program_fn)(render_backend_t*, render_program_t*);
-typedef void* (* render_backend_read_shader_fn)(render_backend_t*, render_shader_t*, size_t*);
 typedef void (* render_backend_deallocate_shader_fn)(render_backend_t*, render_shader_t*);
 typedef void (* render_backend_deallocate_program_fn)(render_backend_t*, render_program_t*);
+typedef void (* render_backend_link_buffer_fn)(render_backend_t*, render_buffer_t*,
+                                               render_program_t* program);
 
 struct render_config_t {
-	int unused;
+	/*! Maximum number of concurrently allocated render targets */
+	size_t target_max;
+	/*! Maximum number of concurrently allocated buffers */
+	size_t buffer_max;
 };
 
 struct render_backend_vtable_t {
@@ -294,7 +313,7 @@ struct render_backend_vtable_t {
 	render_backend_upload_buffer_fn       upload_buffer;
 	render_backend_upload_shader_fn       upload_shader;
 	render_backend_upload_program_fn      upload_program;
-	render_backend_read_shader_fn         read_shader;
+	render_backend_link_buffer_fn         link_buffer;
 	render_backend_deallocate_buffer_fn   deallocate_buffer;
 	render_backend_deallocate_shader_fn   deallocate_shader;
 	render_backend_deallocate_program_fn  deallocate_program;
@@ -374,11 +393,27 @@ struct render_context_t {
 	const radixsort_index_t* order;
 };
 
+struct render_state_t
+{
+	render_blend_factor_t blend_source_color; 
+	render_blend_factor_t blend_dest_color;
+	render_blend_op_t     blend_op_color;
+	render_blend_factor_t blend_source_alpha;
+	render_blend_factor_t blend_dest_alpha;
+	render_blend_op_t     blend_op_alpha;
+	render_compare_func_t depth_func;
+	bool                  blend_enable[8];
+	bool                  target_write[8];
+	bool                  depth_write;
+	bool                  alpha_to_coverage;
+	uint32_t              _padding;
+};
+
 struct render_command_clear_t {
 	unsigned int buffer_mask;
 	uint32_t     color;
 	unsigned int color_mask;
-	uint32_t     depth;
+	float        depth;
 	uint32_t     stencil;
 };
 
@@ -392,12 +427,11 @@ struct render_command_viewport_t {
 };
 
 struct render_command_render_t {
-	render_vertexshader_t* vertexshader;
-	render_pixelshader_t* pixelshader;
+	render_program_t* program;
 	object_t vertexbuffer;
 	object_t indexbuffer;
 	object_t parameterbuffer;
-	uint64_t blend_state;
+	object_t statebuffer;
 };
 
 struct render_command_t {
@@ -478,6 +512,11 @@ struct render_parameterbuffer_t {
 	render_parameter_decl_t decl;
 };
 
+struct render_statebuffer_t {
+	RENDER_DECLARE_BUFFER;
+	render_state_t state;
+};
+
 struct render_shader_t {
 	RENDER_DECLARE_SHADER;
 };
@@ -503,6 +542,7 @@ struct render_program_t {
 	uint32_t __padding_data[4];
 #endif
 	render_vertex_decl_t attributes;
+	hash_t attribute_name[VERTEXATTRIBUTE_NUMATTRIBUTES];
 	render_parameter_decl_t parameters;
 };
 

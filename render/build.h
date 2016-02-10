@@ -44,6 +44,3 @@
 
 // Allocation sizes
 
-//! Maximum number of concurrently allocated render targets
-#define BUILD_SIZE_RENDER_TARGET_MAP                 128
-

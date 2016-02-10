@@ -32,7 +32,7 @@ render_command_null(render_command_t* command);
 
 RENDER_API void
 render_command_clear(render_command_t* command, unsigned int buffer_mask, uint32_t color,
-                     unsigned int color_mask, uint32_t depth, uint32_t stencil);
+                     unsigned int color_mask, float depth, uint32_t stencil);
 
 RENDER_API void
 render_command_viewport(render_command_t* command, unsigned int x, unsigned int y,
@@ -40,7 +40,7 @@ render_command_viewport(render_command_t* command, unsigned int x, unsigned int 
 
 RENDER_API void
 render_command_render(render_command_t* command, render_primitive_t type, uint16_t num,
-                      render_vertexshader_t* vertexshader, render_pixelshader_t* pixelshader,
-                      object_t vertexbuffer, object_t indexbuffer,
-                      object_t parameterbuffer, uint64_t blend_state);
+                      render_program_t* program, object_t vertexbuffer,
+                      object_t indexbuffer, object_t parameterbuffer,
+                      object_t statebuffer);
 

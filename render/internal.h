@@ -33,7 +33,7 @@
 RENDER_EXTERN bool         _render_api_disabled[];
 RENDER_EXTERN objectmap_t* _render_map_target;
 RENDER_EXTERN objectmap_t* _render_map_buffer;
-
+RENDER_EXTERN render_config_t _render_config;
 
 // INTERNAL FUNCTIONS
 RENDER_EXTERN int
@@ -48,8 +48,23 @@ render_target_create_framebuffer(render_backend_t* backend);
 RENDER_EXTERN render_target_t*
 render_target_lookup(object_t id);
 
+RENDER_EXTERN int
+render_buffer_initialize(void);
+
+RENDER_EXTERN void
+render_buffer_finalize(void);
+
 RENDER_EXTERN object_t
 render_buffer_ref(object_t buffer);
 
 RENDER_EXTERN void
 render_buffer_destroy(object_t id);
+
+RENDER_EXTERN void
+render_buffer_upload(render_buffer_t* buffer);
+
+RENDER_EXTERN void
+render_buffer_lock(object_t id, unsigned int lock);
+
+RENDER_EXTERN void
+render_buffer_unlock(object_t id);

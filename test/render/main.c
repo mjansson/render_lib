@@ -282,10 +282,34 @@ static void* _test_render_box(render_api_t api) {
 	render_drawable_t* drawable = 0;
 	object_t framebuffer = 0;
 	object_t parameterbuffer = 0;
+	object_t vertexbuffer = 0;
+	object_t indexbuffer = 0;
 	render_context_t* context = 0;
 	render_program_t* program = 0;
 	render_parameter_decl_t* parameter_decl = 0;
+	render_vertex_decl_t* vertex_decl = 0;
 	matrix_t mvp;
+
+	float32_t vertexdata[8 * 7] = {
+		-0.5f,  0.5f,  0.5f,   1, 1, 1, 1,
+		-0.5f, -0.5f,  0.5f,   0, 1, 0, 1,
+		0.5f, -0.5f,  0.5f,   0, 0, 1, 1,
+		0.5f,  0.5f,  0.5f,   1, 0, 0, 1,
+
+		-0.5f,  0.5f, -0.5f,   1, 1, 0, 1,
+		-0.5f, -0.5f, -0.5f,   1, 0, 1, 1,
+		0.5f, -0.5f, -0.5f,   0, 1, 1, 1,
+		0.5f,  0.5f, -0.5f,   0, 0, 0, 1
+	};
+
+	uint16_t indexdata[6 * 6] = {
+		0, 1, 2,  0, 2, 3,
+		1, 5, 6,  1, 6, 2,
+		3, 2, 6,  3, 6, 7,
+		7, 6, 5,  7, 5, 4,
+		4, 3, 1,  4, 1, 0,
+		4, 0, 3,  4, 3, 7
+	};
 
 #if FOUNDATION_PLATFORM_MACOSX
 	window = window_allocate_from_nswindow(delegate_nswindow());
@@ -338,19 +362,51 @@ static void* _test_render_box(render_api_t api) {
 
 	mvp = matrix_identity();
 
-	parameterbuffer = render_parameterbuffer_create(backend, RENDERUSAGE_DYNAMIC, &program->parameters, &mvp);
+	parameterbuffer = render_parameterbuffer_create(backend, RENDERUSAGE_DYNAMIC,
+	                                                &program->parameters, &mvp);
 	EXPECT_TYPENE(parameterbuffer, 0, object_t, PRIx64);
 
-	//TODO: Create vertex and index buffers
-	//TODO: Render and flip
+	render_parameterbuffer_link(parameterbuffer, program);
+
+	vertex_decl = render_vertex_decl_allocate_varg(VERTEXFORMAT_FLOAT3, VERTEXATTRIBUTE_POSITION,
+	                                               VERTEXFORMAT_FLOAT4, VERTEXATTRIBUTE_PRIMARYCOLOR,
+	                                               VERTEXFORMAT_UNKNOWN);
+
+	vertexbuffer = render_vertexbuffer_create(backend, RENDERUSAGE_STATIC, 8, vertex_decl, vertexdata);
+	EXPECT_TYPENE(vertexbuffer, 0, object_t, PRIx64);
+
+	indexbuffer = render_indexbuffer_create(backend, RENDERUSAGE_STATIC, 36, indexdata);
+	EXPECT_TYPENE(indexbuffer, 0, object_t, PRIx64);
+
+	render_sort_reset(context);
+
+	render_command_viewport(render_context_reserve(context, render_sort_sequential_key(context)), 0, 0,
+	                        render_target_width(framebuffer), render_target_height(framebuffer), 0, 1);
+	render_command_clear(render_context_reserve(context, render_sort_sequential_key(context)),
+	                     RENDERBUFFER_COLOR | RENDERBUFFER_DEPTH | RENDERBUFFER_STENCIL, 0x00000000, 0xFFFFFFFF, 1, 0);
+	render_command_render(render_context_reserve(context, render_sort_sequential_key(context)),
+	                      RENDERPRIMITIVE_TRIANGLELIST, 12,
+	                      program, vertexbuffer, indexbuffer, parameterbuffer, 0);
+
+	render_sort_merge(&context, 1);
+	render_backend_dispatch(backend, &context, 1);
+	render_backend_flip(backend);
+
 	//TODO: Verify framebuffer
 
 	thread_sleep(2000);
 
 ignore_test:
 
+	render_indexbuffer_destroy(indexbuffer);
+	render_vertexbuffer_destroy(vertexbuffer);
+	render_vertex_decl_deallocate(vertex_decl);
 	render_parameterbuffer_destroy(parameterbuffer);
 	render_parameter_decl_deallocate(parameter_decl);
+	if (program) {
+		render_vertexshader_deallocate(program->vertexshader);
+		render_pixelshader_deallocate(program->pixelshader);
+	}
 	render_program_deallocate(program);
 	render_context_deallocate(context);
 	render_backend_deallocate(backend);
@@ -428,10 +484,10 @@ test_render_declare(void) {
 	ADD_TEST(render, null_box);
 #if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_MACOSX || FOUNDATION_PLATFORM_LINUX
 	ADD_TEST(render, gl4);
-	ADD_TEST(render, gl4_clear);
+	//ADD_TEST(render, gl4_clear);
 	ADD_TEST(render, gl4_box);
 	ADD_TEST(render, gl2);
-	ADD_TEST(render, gl2_clear);
+	//ADD_TEST(render, gl2_clear);
 	ADD_TEST(render, gl2_box);
 #endif
 #if FOUNDATION_PLATFORM_IOS || FOUNDATION_PLATFORM_ANDROID || FOUNDATION_PLATFORM_LINUX_RASPBERRYPI

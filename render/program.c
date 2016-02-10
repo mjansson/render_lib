@@ -27,8 +27,9 @@
 //Size expectations for the program compiler and loader
 FOUNDATION_STATIC_ASSERT(sizeof(render_vertex_decl_t) == 72, "invalid vertex decl size");
 FOUNDATION_STATIC_ASSERT(sizeof(render_parameter_decl_t) == 8, "invalid parameter decl size");
-FOUNDATION_STATIC_ASSERT(sizeof(render_program_t) == 64 + sizeof(render_vertex_decl_t) + sizeof(
-                             render_parameter_decl_t), "invalid program size");
+FOUNDATION_STATIC_ASSERT(sizeof(render_program_t) == 64 + sizeof(render_vertex_decl_t) +
+                         (sizeof(hash_t) * VERTEXATTRIBUTE_NUMATTRIBUTES) +
+                         sizeof(render_parameter_decl_t), "invalid program size");
 
 render_program_t*
 render_program_allocate(size_t num_parameters) {
