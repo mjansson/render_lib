@@ -19,7 +19,7 @@
 
 #include <render/render.h>
 
-#include <resource/local.h>
+#include <resource/stream.h>
 #include <resource/platform.h>
 
 render_pixelshader_t*
@@ -67,7 +67,7 @@ render_shader_load(render_backend_t* backend, const uuid_t uuid, hash_t type) {
 	uint64_t platform = render_backend_resource_platform(backend);
 	stream_t* stream;
 	bool success = false;
-	stream = resource_local_open_static(uuid, platform);
+	stream = resource_stream_open_static(uuid, platform);
 	if (stream) {
 		hash_t type_hash = stream_read_uint64(stream);
 		uint32_t version = stream_read_uint32(stream);
@@ -90,7 +90,7 @@ render_shader_load(render_backend_t* backend, const uuid_t uuid, hash_t type) {
 		stream = nullptr;
 	}
 	if (shader)
-		stream = resource_local_open_dynamic(uuid, platform);
+		stream = resource_stream_open_dynamic(uuid, platform);
 	if (stream) {
 		void* buffer;
 		uint32_t version = stream_read_uint32(stream);

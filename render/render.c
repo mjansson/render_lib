@@ -16,7 +16,9 @@
  */
 
 #include <foundation/foundation.h>
-#include <window/window.h>
+
+#include <resource/compile.h>
+
 #include <render/render.h>
 #include <render/internal.h>
 
@@ -50,6 +52,10 @@ render_module_initialize(render_config_t config) {
 
 	if (render_buffer_initialize() < 0)
 		return -1;
+
+#if RESOURCE_ENABLE_LOCAL_CACHE && RESOURCE_ENABLE_LOCAL_SOURCE
+	resource_compile_register(render_compile);
+#endif
 
 	_render_initialized = true;
 

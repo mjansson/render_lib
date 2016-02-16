@@ -21,7 +21,7 @@
 
 #include <render/render.h>
 
-#include <resource/local.h>
+#include <resource/stream.h>
 #include <resource/platform.h>
 
 //Size expectations for the program compiler and loader
@@ -82,7 +82,7 @@ render_program_load(render_backend_t* backend, const uuid_t uuid) {
 	render_vertexshader_t* vertexshader = 0;
 	render_pixelshader_t* pixelshader = 0;
 
-	stream = resource_local_open_static(uuid, platform);
+	stream = resource_stream_open_static(uuid, platform);
 	if (!stream)
 		goto finalize;
 

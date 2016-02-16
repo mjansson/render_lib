@@ -27,10 +27,10 @@
 
 int
 render_compile(const uuid_t uuid, uint64_t platform, resource_source_t* source,
-               const char* type, size_t type_length) {
-	if (render_shader_compile(uuid, platform, source, type, type_length) == 0)
+               const uint256_t source_hash, const char* type, size_t type_length) {
+	if (render_shader_compile(uuid, platform, source, source_hash, type, type_length) == 0)
 		return 0;
-	if (render_program_compile(uuid, platform, source, type, type_length) == 0)
+	if (render_program_compile(uuid, platform, source, source_hash, type, type_length) == 0)
 		return 0;
 	return -1;
 }
@@ -42,7 +42,7 @@ resource_source_platform_reduce(resource_change_t* change, resource_change_t* be
 	size_t iplat, psize;
 	if ((platform == RESOURCE_PLATFORM_ALL) ||
 	        resource_platform_is_equal_or_more_specific(change->platform, platform)) {
-		for (iplat = 1, psize = array_size(*subplatforms); iplat != psize; ++iplat) {
+		for (iplat = 0, psize = array_size(*subplatforms); iplat != psize; ++iplat) {
 			if ((*subplatforms)[iplat] == change->platform)
 				break;
 		}
@@ -54,7 +54,7 @@ resource_source_platform_reduce(resource_change_t* change, resource_change_t* be
 
 int
 render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* source,
-                      const char* type, size_t type_length) {
+                      const uint256_t source_hash, const char* type, size_t type_length) {
 	int result = 0;
 	uint64_t* subplatforms = 0;
 	size_t iplat, psize;
@@ -78,7 +78,7 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 	resource_source_map_reduce(source, map, &subplatforms, resource_source_platform_reduce);
 	resource_source_map_clear(map);
 
-	for (iplat = 1, psize = array_size(subplatforms); (iplat != psize) && (result == 0); ++iplat) {
+	for (iplat = 0, psize = array_size(subplatforms); (iplat != psize) && (result == 0); ++iplat) {
 		void* compiled_blob = 0;
 		size_t compiled_size = 0;
 		stream_t* stream;
@@ -176,8 +176,12 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 		stream = resource_local_create_static(uuid, subplatform);
 		if (stream) {
 			uint32_t version = 1;
-			stream_write_uint64(stream, resource_type_hash);
-			stream_write_uint32(stream, version);
+			resource_header_t header = {
+				.type = resource_type_hash,
+				.version = version,
+				.source_hash = source_hash
+			};
+			resource_stream_write_header(stream, header);
 			if (resource_type_hash == HASH_VERTEXSHADER) {
 				render_vertexshader_t shader;
 				render_vertexshader_initialize(&shader);
@@ -214,12 +218,14 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 		memory_deallocate(compiled_blob);
 	}
 
+	array_deallocate(subplatforms);
+
 	return result;
 }
 
 int
 render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* source,
-                       const char* type, size_t type_length) {
+                       const uint256_t source_hash, const char* type, size_t type_length) {
 	int result = 0;
 	hash_t resource_type_hash;
 	uint64_t* subplatforms = 0;
@@ -247,7 +253,7 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 
 	//First make sure we catch specialized platforms from shaders since
 	//programs are the sum of the shaders
-	for (iplat = 1, psize = array_size(subplatforms); (iplat != psize) && (result == 0); ++iplat) {
+	for (iplat = 0, psize = array_size(subplatforms); (iplat != psize) && (result == 0); ++iplat) {
 		uuid_t vertexshader, pixelshader;
 		uint64_t subplatform = subplatforms[iplat];
 
@@ -308,7 +314,7 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 	}
 
 	for (imore = 0, moresize = array_size(moreplatforms); imore != moresize; ++imore) {
-		for (iplat = 1, psize = array_size(subplatforms); (iplat != psize) && (result == 0); ++iplat) {
+		for (iplat = 0, psize = array_size(subplatforms); (iplat != psize) && (result == 0); ++iplat) {
 			if (moreplatforms[imore] == subplatforms[iplat])
 				break;
 		}
@@ -316,7 +322,7 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 			array_push(subplatforms, moreplatforms[imore]);
 	}
 
-	for (iplat = 1, psize = array_size(subplatforms); (iplat != psize) && (result == 0); ++iplat) {
+	for (iplat = 0, psize = array_size(subplatforms); (iplat != psize) && (result == 0); ++iplat) {
 		stream_t* stream;
 		uuid_t vertexshader, pixelshader;
 		render_program_t* program = 0;
@@ -607,11 +613,15 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 			stream = resource_local_create_static(uuid, subplatform);
 			if (stream) {
 				uint32_t version = 1;
+				resource_header_t header = {
+					.type = resource_type_hash,
+					.version = version,
+					.source_hash = source_hash
+				};
 				size_t uuid_size = sizeof(uuid_t) * 2;
 				size_t program_size = sizeof(render_program_t) +
 				                      sizeof(render_parameter_t) * program->parameters.num_parameters;
-				stream_write_uint64(stream, resource_type_hash);
-				stream_write_uint32(stream, version);
+				resource_stream_write_header(stream, header);
 				stream_write_uint128(stream, vertexshader);
 				stream_write_uint128(stream, pixelshader);
 				stream_write(stream, pointer_offset(program, uuid_size), program_size - uuid_size);
@@ -630,6 +640,8 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 		render_drawable_deallocate(drawable);
 		window_deallocate(window);
 	}
+
+	array_deallocate(subplatforms);
 
 	return result;
 }

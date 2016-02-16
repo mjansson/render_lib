@@ -53,10 +53,10 @@ render_program_load(render_backend_t* backend, const uuid_t uuid);
 \return 0 if successful, <0 if error */
 RENDER_API int
 render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* source,
-                       const char* type, size_t type_length);
+                       const uint256_t source_hash, const char* type, size_t type_length);
 
 #else
 
-#define render_program_compile(uuid, platform, source, type, type_length) ((void)sizeof(uuid)), ((void)sizeof(platform)), ((void)sizeof(source)), ((void)sizeof(type)), ((void)sizeof(type_length)), -1
+#define render_program_compile(uuid, platform, source, source_hash, type, type_length) ((void)sizeof(uuid)), ((void)sizeof(platform)), ((void)sizeof(source)), ((void)sizeof(source_hash)), ((void)sizeof(type)), ((void)sizeof(type_length)), -1
 
 #endif
