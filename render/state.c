@@ -48,6 +48,7 @@ render_statebuffer_create(render_backend_t* backend, render_usage_t usage,
 
 	buffer->allocated = 1;
 	buffer->used = 1;
+	buffer->state = state;
 	buffer->store = &buffer->state;
 
 	memory_context_pop();

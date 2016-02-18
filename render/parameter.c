@@ -38,6 +38,7 @@ render_parameter_decl_initialize(render_parameter_decl_t* decl, size_t num) {
 
 void
 render_parameter_decl_finalize(render_parameter_decl_t* decl) {
+	FOUNDATION_UNUSED(decl);
 }
 
 void

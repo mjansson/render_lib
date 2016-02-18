@@ -22,18 +22,21 @@
 
 static bool
 _rb_null_construct(render_backend_t* backend) {
+	FOUNDATION_UNUSED(backend);
 	log_debug(HASH_RENDER, STRING_CONST("Constructed NULL render backend"));
 	return true;
 }
 
 static void
 _rb_null_destruct(render_backend_t* backend) {
+	FOUNDATION_UNUSED(backend);
 	log_debug(HASH_RENDER, STRING_CONST("Destructed NULL render backend"));
 }
 
 static unsigned int*
 _rb_null_enumerate_adapters(render_backend_t* backend) {
 	unsigned int* adapters = 0;
+	FOUNDATION_UNUSED(backend);
 	array_push(adapters, WINDOW_ADAPTER_DEFAULT);
 	return adapters;
 }
@@ -42,18 +45,25 @@ static render_resolution_t*
 _rb_null_enumerate_modes(render_backend_t* backend, unsigned int adapter) {
 	render_resolution_t* modes = 0;
 	render_resolution_t mode = { 0, 800, 600, PIXELFORMAT_R8G8B8X8, COLORSPACE_LINEAR, 60 };
+	FOUNDATION_UNUSED(backend);
+	FOUNDATION_UNUSED(adapter);
 	array_push(modes, mode);
 	return modes;
 }
 
 static bool
 _rb_null_set_drawable(render_backend_t* backend, render_drawable_t* drawable) {
+	FOUNDATION_UNUSED(backend);
+	FOUNDATION_UNUSED(drawable);
 	return true;
 }
 
 static void
 _rb_null_dispatch(render_backend_t* backend, render_context_t** contexts,
                   size_t num_contexts) {
+	FOUNDATION_UNUSED(backend);
+	FOUNDATION_UNUSED(contexts);
+	FOUNDATION_UNUSED(num_contexts);
 }
 
 static void
@@ -63,44 +73,61 @@ _rb_null_flip(render_backend_t* backend) {
 
 static void*
 _rb_null_allocate_buffer(render_backend_t* backend, render_buffer_t* buffer) {
+	FOUNDATION_UNUSED(backend);
 	return memory_allocate(HASH_RENDER, buffer->size * buffer->allocated, 16, MEMORY_PERSISTENT);
 }
 
 static void
 _rb_null_deallocate_buffer(render_backend_t* backend, render_buffer_t* buffer, bool sys, bool aux) {
+	FOUNDATION_UNUSED(backend);
+	FOUNDATION_UNUSED(aux);
 	if (sys)
 		memory_deallocate(buffer->store);
 }
 
 static bool
 _rb_null_upload_buffer(render_backend_t* backend, render_buffer_t* buffer) {
+	FOUNDATION_UNUSED(backend);
+	FOUNDATION_UNUSED(buffer);
 	return true;
 }
 
 static bool
 _rb_null_upload_shader(render_backend_t* backend, render_shader_t* shader, const void* buffer,
                        size_t size) {
+	FOUNDATION_UNUSED(backend);
+	FOUNDATION_UNUSED(shader);
+	FOUNDATION_UNUSED(buffer);
+	FOUNDATION_UNUSED(size);
 	return true;
 }
 
 static bool
 _rb_null_upload_program(render_backend_t* backend, render_program_t* program) {
+	FOUNDATION_UNUSED(backend);
+	FOUNDATION_UNUSED(program);
 	return true;
 }
 
 static void
 _rb_null_link_buffer(render_backend_t* backend, render_buffer_t* buffer,
                      render_program_t* program) {
+	FOUNDATION_UNUSED(backend);
+	FOUNDATION_UNUSED(buffer);
+	FOUNDATION_UNUSED(program);
 }
 
 static void
 _rb_null_deallocate_shader(render_backend_t* backend, render_shader_t* shader) {
+	FOUNDATION_UNUSED(backend);
+	FOUNDATION_UNUSED(shader);
 }
 
 static void
 _rb_null_deallocate_program(render_backend_t* backend, render_program_t* program) {
+	FOUNDATION_UNUSED(backend);
+	FOUNDATION_UNUSED(program);
 }
-
 
 static render_backend_vtable_t _render_backend_vtable_null = {
 	.construct = _rb_null_construct,

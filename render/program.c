@@ -15,8 +15,6 @@
  *
  */
 
-#pragma once
-
 #include <foundation/foundation.h>
 
 #include <render/render.h>

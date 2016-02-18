@@ -40,6 +40,7 @@ resource_source_platform_reduce(resource_change_t* change, resource_change_t* be
 	uint64_t** subplatforms = data;
 	uint64_t platform = (*subplatforms)[0];
 	size_t iplat, psize;
+	FOUNDATION_UNUSED(best);
 	if ((platform == RESOURCE_PLATFORM_ALL) ||
 	        resource_platform_is_equal_or_more_specific(change->platform, platform)) {
 		for (iplat = 0, psize = array_size(*subplatforms); iplat != psize; ++iplat) {
@@ -132,7 +133,7 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 				GLuint handle = glCreateShader(
 				                    string_equal(type, type_length, STRING_CONST("vertexshader")) ?
 				                    GL_VERTEX_SHADER_ARB : GL_FRAGMENT_SHADER_ARB);
-				GLchar* glsource = (GLchar*)sourcebuffer;
+				const GLchar* glsource = (GLchar*)sourcebuffer;
 				GLint source_size = (GLint)sourcechange->value.blob.size;
 				glShaderSource(handle, 1, &glsource, &source_size);
 				glCompileShader(handle);

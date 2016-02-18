@@ -380,18 +380,20 @@ _rb_gl2_upload_shader(render_backend_t* backend, render_shader_t* shader, const 
                       size_t size) {
 	bool ret = false;
 	//render_backend_gl2_t* backend_gl2 = (render_backend_gl4_t*)backend;
+	FOUNDATION_UNUSED(backend);
+
+	//Shader backend data:
+	//  0 - Shader object
+	if (shader->backend_data[0])
+		glDeleteShader((GLuint)shader->backend_data[0]);
 
 	switch (shader->shadertype) {
 	case SHADER_PIXEL:
 	case SHADER_VERTEX:
-		//Shader backend data:
-		//  0 - Shader object
-		if (shader->backend_data[0])
-			glDeleteShader((GLuint)shader->backend_data[0]);
 		{
 			bool is_pixel_shader = (shader->shadertype == SHADER_PIXEL);
 			GLuint handle = glCreateShader(is_pixel_shader ? GL_FRAGMENT_SHADER_ARB : GL_VERTEX_SHADER_ARB);
-			GLchar* source = (GLchar*)buffer;
+			const GLchar* source = (GLchar*)buffer;
 			GLint source_size = (GLint)size;
 			glShaderSource(handle, 1, &source, &source_size);
 			glCompileShader(handle);
@@ -418,6 +420,7 @@ _rb_gl2_upload_shader(render_backend_t* backend, render_shader_t* shader, const 
 
 static void
 _rb_gl2_deallocate_shader(render_backend_t* backend, render_shader_t* shader) {
+	FOUNDATION_UNUSED(backend);
 	if (shader->backend_data[0])
 		glDeleteShader((GLuint)shader->backend_data[0]);
 	shader->backend_data[0] = 0;
@@ -425,7 +428,6 @@ _rb_gl2_deallocate_shader(render_backend_t* backend, render_shader_t* shader) {
 
 static bool
 _rb_gl2_check_program_link(GLuint handle) {
-	GLint result = 0;
 	glGetProgramiv(handle, GL_LINK_STATUS, &result);
 	if (!result) {
 		GLsizei buffer_size = 4096;
@@ -644,7 +646,7 @@ _rb_gl2_set_default_state(void) {
 
 static void
 _rb_gl2_set_state(render_state_t* state) {
-
+	FOUNDATION_UNUSED(state);
 }
 
 static void
@@ -654,6 +656,7 @@ _rb_gl2_render(render_backend_gl2_t* backend, render_context_t* context,
 	render_indexbuffer_t* indexbuffer  = GET_BUFFER(command->data.render.indexbuffer);
 	render_parameterbuffer_t* parameterbuffer = GET_BUFFER(command->data.render.parameterbuffer);
 	render_program_t* program = command->data.render.program;
+	FOUNDATION_UNUSED(context);
 
 	if (!vertexbuffer || !indexbuffer || !parameterbuffer || !program) { //Outdated references
 		FOUNDATION_ASSERT_FAIL("Render command using invalid resources");

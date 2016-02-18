@@ -28,6 +28,10 @@
 
 #include <render/build.h>
 
+#if FOUNDATION_COMPILER_GCC
+#  pragma GCC diagnostic ignored "-Wpedantic"
+#endif
+
 typedef enum render_api_t {
 	RENDERAPI_UNKNOWN = 0,
 	RENDERAPI_DEFAULT,

@@ -524,6 +524,7 @@ _rb_gl4_enumerate_adapters(render_backend_t* backend) {
 render_resolution_t*
 _rb_gl4_enumerate_modes(render_backend_t* backend, unsigned int adapter) {
 	render_resolution_t* modes = 0;
+	FOUNDATION_UNUSED(backend);
 
 #if FOUNDATION_PLATFORM_LINUX
 
@@ -643,11 +644,13 @@ exit:
 
 static void*
 _rb_gl4_allocate_buffer(render_backend_t* backend, render_buffer_t* buffer) {
+	FOUNDATION_UNUSED(backend);
 	return memory_allocate(HASH_RENDER, buffer->size * buffer->allocated, 16, MEMORY_PERSISTENT);
 }
 
 static void
 _rb_gl4_deallocate_buffer(render_backend_t* backend, render_buffer_t* buffer, bool sys, bool aux) {
+	FOUNDATION_UNUSED(backend);
 	if (sys)
 		memory_deallocate(buffer->store);
 
@@ -660,6 +663,7 @@ _rb_gl4_deallocate_buffer(render_backend_t* backend, render_buffer_t* buffer, bo
 
 static bool
 _rb_gl4_upload_buffer(render_backend_t* backend, render_buffer_t* buffer) {
+	FOUNDATION_UNUSED(backend);
 	if ((buffer->buffertype == RENDERBUFFER_PARAMETER) || (buffer->buffertype == RENDERBUFFER_STATE))
 		return true;
 
@@ -693,18 +697,20 @@ _rb_gl4_upload_shader(render_backend_t* backend, render_shader_t* shader, const 
                       size_t size) {
 	bool ret = false;
 	//render_backend_gl4_t* backend_gl4 = (render_backend_gl4_t*)backend;
+	FOUNDATION_UNUSED(backend);
+
+	//Shader backend data:
+	//  0 - Shader object
+	if (shader->backend_data[0])
+		glDeleteShader((GLuint)shader->backend_data[0]);
 
 	switch (shader->shadertype) {
 	case SHADER_PIXEL:
 	case SHADER_VERTEX:
-		//Shader backend data:
-		//  0 - Shader object
-		if (shader->backend_data[0])
-			glDeleteShader((GLuint)shader->backend_data[0]);
 		{
 			bool is_pixel_shader = (shader->shadertype == SHADER_PIXEL);
 			GLuint handle = glCreateShader(is_pixel_shader ? GL_FRAGMENT_SHADER_ARB : GL_VERTEX_SHADER_ARB);
-			GLchar* source = (GLchar*)buffer;
+			const GLchar* source = (GLchar*)buffer;
 			GLint source_size = (GLint)size;
 			glShaderSource(handle, 1, &source, &source_size);
 			glCompileShader(handle);
@@ -731,6 +737,7 @@ _rb_gl4_upload_shader(render_backend_t* backend, render_shader_t* shader, const 
 
 static void
 _rb_gl4_deallocate_shader(render_backend_t* backend, render_shader_t* shader) {
+	FOUNDATION_UNUSED(backend);
 	if (shader->backend_data[0])
 		glDeleteShader((GLuint)shader->backend_data[0]);
 	shader->backend_data[0] = 0;
@@ -749,7 +756,7 @@ _rb_gl4_check_program_link(GLuint handle) {
 		log = memory_allocate(HASH_RENDER, buffer_size + 1, 0, MEMORY_TEMPORARY);
 		glGetProgramInfoLog(handle, buffer_size, &log_length, log);
 
-		log_errorf(ERRORLEVEL_ERROR, ERROR_SYSTEM_CALL_FAIL, "Unable to compile program: %.*s",
+		log_errorf(ERRORLEVEL_ERROR, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Unable to compile program: %.*s"),
 		           (int)log_length, log);
 		memory_deallocate(log);
 
@@ -762,10 +769,10 @@ _rb_gl4_check_program_link(GLuint handle) {
 
 static bool
 _rb_gl4_upload_program(render_backend_t* backend, render_program_t* program) {
+	FOUNDATION_UNUSED(backend);
 	if (program->backend_data[0])
 		glDeleteProgram((GLuint)program->backend_data[0]);
 
-	GLint result = 0;
 	GLint attributes = 0;
 	GLint uniforms = 0;
 	GLint ia, iu;
@@ -824,6 +831,7 @@ _rb_gl4_upload_program(render_backend_t* backend, render_program_t* program) {
 
 static void
 _rb_gl4_deallocate_program(render_backend_t* backend, render_program_t* program) {
+	FOUNDATION_UNUSED(backend);
 	if (program->backend_data[0])
 		glDeleteProgram((GLuint)program->backend_data[0]);
 	program->backend_data[0] = 0;
@@ -857,6 +865,7 @@ static void
 _rb_gl4_clear(render_backend_gl4_t* backend, render_context_t* context, render_command_t* command) {
 	unsigned int buffer_mask = command->data.clear.buffer_mask;
 	unsigned int bits = 0;
+	FOUNDATION_UNUSED(context);
 
 	if (buffer_mask & RENDERBUFFER_COLOR) {
 		unsigned int color_mask = command->data.clear.color_mask;
@@ -930,6 +939,7 @@ _rb_gl4_render(render_backend_gl4_t* backend, render_context_t* context,
 	render_indexbuffer_t* indexbuffer  = GET_BUFFER(command->data.render.indexbuffer);
 	render_parameterbuffer_t* parameterbuffer = GET_BUFFER(command->data.render.parameterbuffer);
 	render_program_t* program = command->data.render.program;
+	FOUNDATION_UNUSED(context);
 
 	if (!vertexbuffer || !indexbuffer || !parameterbuffer || !program) { //Outdated references
 		FOUNDATION_ASSERT_FAIL("Render command using invalid resources");
