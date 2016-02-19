@@ -428,6 +428,7 @@ _rb_gl2_deallocate_shader(render_backend_t* backend, render_shader_t* shader) {
 
 static bool
 _rb_gl2_check_program_link(GLuint handle) {
+	GLuint result = 0;
 	glGetProgramiv(handle, GL_LINK_STATUS, &result);
 	if (!result) {
 		GLsizei buffer_size = 4096;
