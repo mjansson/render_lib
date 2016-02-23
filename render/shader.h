@@ -36,7 +36,7 @@ render_pixelshader_finalize(render_pixelshader_t* shader);
 RENDER_API void
 render_pixelshader_deallocate(render_pixelshader_t* shader);
 
-RENDER_API void
+RENDER_API bool
 render_pixelshader_upload(render_backend_t* backend, render_pixelshader_t* shader, const void* buffer, size_t size);
 
 RENDER_API render_pixelshader_t*
@@ -55,7 +55,7 @@ render_vertexshader_finalize(render_vertexshader_t* shader);
 RENDER_API void
 render_vertexshader_deallocate(render_vertexshader_t* shader);
 
-RENDER_API void
+RENDER_API bool
 render_vertexshader_upload(render_backend_t* backend, render_vertexshader_t* shader, const void* buffer, size_t size);
 
 RENDER_API render_vertexshader_t*

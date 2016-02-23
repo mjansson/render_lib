@@ -43,9 +43,31 @@ resource_source_platform_reduce(resource_change_t* change, resource_change_t* be
 	FOUNDATION_UNUSED(best);
 	if ((platform == RESOURCE_PLATFORM_ALL) ||
 	        resource_platform_is_equal_or_more_specific(change->platform, platform)) {
-		for (iplat = 0, psize = array_size(*subplatforms); iplat != psize; ++iplat) {
+		for (iplat = 1, psize = array_size(*subplatforms); iplat != psize; ++iplat) {
 			if ((*subplatforms)[iplat] == change->platform)
 				break;
+		}
+		if (iplat >= psize)
+			array_push(*subplatforms, change->platform);
+	}
+	return 0;
+}
+
+static resource_change_t*
+resource_source_platform_superset(resource_change_t* change, resource_change_t* best, void* data) {
+	uint64_t** subplatforms = data;
+	uint64_t platform = (*subplatforms)[0];
+	size_t iplat, psize;
+	FOUNDATION_UNUSED(best);
+	if ((platform == RESOURCE_PLATFORM_ALL) ||
+	        resource_platform_is_equal_or_more_specific(platform, change->platform)) {
+		for (iplat = 1, psize = array_size(*subplatforms); iplat != psize; ++iplat) {
+			if ((*subplatforms)[iplat] == change->platform)
+				break;
+			if (resource_platform_is_equal_or_more_specific(change->platform, (*subplatforms)[iplat])) {
+				array_insert(*subplatforms, iplat, change->platform);
+				break;
+			}
 		}
 		if (iplat >= psize)
 			array_push(*subplatforms, change->platform);
@@ -79,7 +101,15 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 	resource_source_map_reduce(source, map, &subplatforms, resource_source_platform_reduce);
 	resource_source_map_clear(map);
 
-	for (iplat = 0, psize = array_size(subplatforms); (iplat != psize) && (result == 0); ++iplat) {
+	if (array_size(subplatforms) == 1) {
+		//The requested platform had no values, find most specialized platform
+		//which is a superset of the requested platform
+		resource_source_map_all(source, map, false);
+		resource_source_map_reduce(source, map, &subplatforms, resource_source_platform_superset);
+		resource_source_map_clear(map);
+	}
+
+	for (iplat = 1, psize = array_size(subplatforms); (iplat != psize) && (result == 0); ++iplat) {
 		void* compiled_blob = 0;
 		size_t compiled_size = 0;
 		stream_t* stream;
@@ -125,6 +155,8 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 				sourcebuffer = memory_allocate(HASH_RESOURCE, sourcechange->value.blob.size, 0, MEMORY_PERSISTENT);
 				if (!resource_source_read_blob(uuid, HASH_SOURCE, subplatform, sourcechange->value.blob.checksum,
 				                               sourcebuffer, sourcechange->value.blob.size)) {
+					log_error(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL,
+					          STRING_CONST("Unable to compile shader: Failed to read full source blob"));
 					memory_deallocate(sourcebuffer);
 					sourcebuffer = 0;
 				}
@@ -138,12 +170,12 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 				glShaderSource(handle, 1, &glsource, &source_size);
 				glCompileShader(handle);
 
-				size_t log_capacity = 2048;
+				GLsizei log_capacity = 2048;
 				GLchar* log_buffer = memory_allocate(HASH_RESOURCE, log_capacity, 0, MEMORY_TEMPORARY);
-				GLint log_length = (GLint)log_capacity;
+				GLint log_length = 0;
 				GLint compiled = 0;
 				glGetShaderiv(handle, GL_COMPILE_STATUS, &compiled);
-				glGetShaderInfoLog(handle, log_length, &log_length, log_buffer);
+				glGetShaderInfoLog(handle, log_capacity, &log_length, log_buffer);
 				if (!compiled) {
 					log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Unable to compile shader: %.*s"),
 					           (int)log_length, log_buffer);
@@ -171,8 +203,10 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 		render_drawable_deallocate(drawable);
 		window_deallocate(window);
 
-		if (compiled_size <= 0)
+		if (compiled_size <= 0) {
+			result = -1;
 			continue;
+		}
 
 		stream = resource_local_create_static(uuid, subplatform);
 		if (stream) {
@@ -202,6 +236,8 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 					stream_write_uint64(stream, compiled_size);
 					stream_write(stream, compiled_blob, compiled_size);
 					stream_deallocate(stream);
+
+					result = 0;
 				}
 				else {
 					log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL,
@@ -233,6 +269,7 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 	uint64_t* moreplatforms = 0;
 	size_t iplat, psize;
 	size_t imore, moresize;
+	bool superplatform = false;
 	hashmap_fixed_t fixedmap;
 	hashmap_t* map = (hashmap_t*)&fixedmap;
 	resource_platform_t platform_decl;
@@ -252,9 +289,18 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 	resource_source_map_reduce(source, map, &subplatforms, resource_source_platform_reduce);
 	resource_source_map_clear(map);
 
+	if (array_size(subplatforms) == 1) {
+		//The requested platform had no values, find most specialized platform
+		//which is a superset of the requested platform
+		superplatform = true;
+		resource_source_map_all(source, map, false);
+		resource_source_map_reduce(source, map, &subplatforms, resource_source_platform_superset);
+		resource_source_map_clear(map);
+	}
+
 	//First make sure we catch specialized platforms from shaders since
 	//programs are the sum of the shaders
-	for (iplat = 0, psize = array_size(subplatforms); (iplat != psize) && (result == 0); ++iplat) {
+	for (iplat = 1, psize = array_size(subplatforms); (iplat != psize) && (result == 0); ++iplat) {
 		uuid_t vertexshader, pixelshader;
 		uint64_t subplatform = subplatforms[iplat];
 
@@ -304,6 +350,11 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 			uint64_t moreplatform = shaderplatforms[ishaderplat];
 			if ((moreplatform != subplatform) &&
 			        resource_platform_is_equal_or_more_specific(moreplatform, subplatform)) {
+				//If we're looking at supersets of requested platform, make sure shader platform
+				//is also a superset (not a different branch from the subplatform we're iterating)
+				if (superplatform &&
+				        !resource_platform_is_equal_or_more_specific(platform, moreplatform))
+					continue;
 				for (imore = 0, moresize = array_size(moreplatforms); imore != moresize; ++imore) {
 					if (moreplatforms[imore] == moreplatform)
 						break;
@@ -314,8 +365,11 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 		}
 	}
 
+	if (superplatform)
+		array_resize(subplatforms, 1); //Clear out superplatforms
+
 	for (imore = 0, moresize = array_size(moreplatforms); imore != moresize; ++imore) {
-		for (iplat = 0, psize = array_size(subplatforms); (iplat != psize) && (result == 0); ++iplat) {
+		for (iplat = 1, psize = array_size(subplatforms); (iplat != psize) && (result == 0); ++iplat) {
 			if (moreplatforms[imore] == subplatforms[iplat])
 				break;
 		}
@@ -323,7 +377,7 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 			array_push(subplatforms, moreplatforms[imore]);
 	}
 
-	for (iplat = 0, psize = array_size(subplatforms); (iplat != psize) && (result == 0); ++iplat) {
+	for (iplat = 1, psize = array_size(subplatforms); (iplat != psize) && (result == 0); ++iplat) {
 		stream_t* stream;
 		uuid_t vertexshader, pixelshader;
 		render_program_t* program = 0;
@@ -385,9 +439,9 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 			render_pixelshader_t* pshader;
 
 			GLuint handle = 0;
-			size_t log_capacity = 2048;
+			GLsizei log_capacity = 2048;
 			GLchar* log_buffer = memory_allocate(HASH_RESOURCE, log_capacity, 0, MEMORY_TEMPORARY);
-			GLint log_length = (GLint)log_capacity;
+			GLint log_length = 0;
 			GLint compiled = 0;
 
 			vshader = render_vertexshader_load(backend, vertexshader);
@@ -399,12 +453,18 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 				uint16_t offset = 0;
 
 				handle = glCreateProgram();
+				if (!handle) {
+					log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL,
+					           STRING_CONST("Unable to compile program: Unable to create program object"));
+					result = -1;
+					break;
+				}
 
 				glAttachShader(handle, (GLuint)vshader->backend_data[0]);
 				glAttachShader(handle, (GLuint)pshader->backend_data[0]);
 				glLinkProgram(handle);
 				glGetProgramiv(handle, GL_LINK_STATUS, &compiled);
-				glGetProgramInfoLog(handle, log_length, &log_length, log_buffer);
+				glGetProgramInfoLog(handle, log_capacity, &log_length, log_buffer);
 
 				if (!compiled) {
 					log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Unable to link program: %.*s"),
@@ -627,6 +687,8 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 				stream_write_uint128(stream, pixelshader);
 				stream_write(stream, pointer_offset(program, uuid_size), program_size - uuid_size);
 				stream_deallocate(stream);
+
+				result = 0;
 			}
 			else {
 				log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL,

@@ -17,6 +17,7 @@
 
 #include <foundation/foundation.h>
 #include <window/window.h>
+#include <resource/hashstrings.h>
 #include <render/render.h>
 #include <render/internal.h>
 
@@ -175,12 +176,12 @@ _rb_gl2_enable_thread(render_backend_t* backend) {
 		set_thread_gl2_context(thread_context);
 	}
 
-#if NEO_PLATFORM_WINDOWS
+#if FOUNDATION_PLATFORM_WINDOWS
 	if (!wglMakeCurrent((HDC)backend->drawable->hdc, (HGLRC)thread_context))
 		_rb_gl_check_error("Unable to enable thread for rendering");
 	else
 		log_debug(HASH_RENDER, STRING_CONST("Enabled thread for GL2 rendering"));
-#elif NEO_PLATFORM_LINUX
+#elif FOUNDATION_PLATFORM_LINUX
 	glXMakeCurrent(backend->drawable->display, backend->drawable->drawable, thread_context);
 	_rb_gl_check_error("Unable to enable thread for rendering");
 #else
@@ -389,8 +390,7 @@ _rb_gl2_upload_shader(render_backend_t* backend, render_shader_t* shader, const 
 
 	switch (shader->shadertype) {
 	case SHADER_PIXEL:
-	case SHADER_VERTEX:
-		{
+	case SHADER_VERTEX: {
 			bool is_pixel_shader = (shader->shadertype == SHADER_PIXEL);
 			GLuint handle = glCreateShader(is_pixel_shader ? GL_FRAGMENT_SHADER_ARB : GL_VERTEX_SHADER_ARB);
 			const GLchar* source = (GLchar*)buffer;
@@ -402,6 +402,17 @@ _rb_gl2_upload_shader(render_backend_t* backend, render_shader_t* shader, const 
 			glGetShaderiv(handle, GL_COMPILE_STATUS, &compiled);
 
 			if (!compiled) {
+#if BUILD_DEBUG
+				GLsizei log_capacity = 2048;
+				GLchar* log_buffer = memory_allocate(HASH_RESOURCE, log_capacity, 0, MEMORY_TEMPORARY);
+				GLint log_length = 0;
+				GLint compiled = 0;
+				glGetShaderiv(handle, GL_COMPILE_STATUS, &compiled);
+				glGetShaderInfoLog(handle, log_capacity, &log_length, log_buffer);
+				log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Unable to compile shader: %.*s (handle %u)"),
+				           (int)log_length, log_buffer, (unsigned int)handle);
+				memory_deallocate(log_buffer);
+#endif
 				glDeleteShader(handle);
 				shader->backend_data[0] = 0;
 			}

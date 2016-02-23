@@ -73,23 +73,22 @@ render_program_load(render_backend_t* backend, const uuid_t uuid) {
 	uint64_t platform = render_backend_resource_platform(backend);
 	stream_t* stream;
 	bool success = false;
-	hash_t type_hash;
-	uint32_t version;
 	uuid_t shaderuuid;
 	size_t remain, uuid_size;
+	resource_header_t header;
 	render_vertexshader_t* vertexshader = 0;
 	render_pixelshader_t* pixelshader = 0;
 
 	stream = resource_stream_open_static(uuid, platform);
+	render_backend_enable_thread(backend);
 	if (!stream)
 		goto finalize;
 
-	type_hash = stream_read_uint64(stream);
-	version = stream_read_uint32(stream);
-	if ((type_hash != HASH_PROGRAM) || (version != expected_version)) {
+	header = resource_stream_read_header(stream);
+	if ((header.type != HASH_PROGRAM) || (header.version != expected_version)) {
 		log_warnf(HASH_RENDER, WARNING_INVALID_VALUE,
 		          STRING_CONST("Got unexpected type/version when loading program: %" PRIx64 " : %u"),
-		          type_hash, version);
+		          (uint64_t)header.type, (uint32_t)header.version);
 		goto finalize;
 	}
 

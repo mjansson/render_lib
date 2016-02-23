@@ -59,7 +59,7 @@ glsl_name_from_token(const string_const_t token) {
 int
 renderimport_import_glsl_shader(stream_t* stream, const uuid_t uuid, const char* type, size_t type_length) {
 	resource_source_t source;
-	void* blob;
+	void* blob = 0;
 	size_t size;
 	size_t read;
 	size_t begin;
@@ -170,6 +170,7 @@ renderimport_import_glsl_shader(stream_t* stream, const uuid_t uuid, const char*
 	}
 
 finalize:
+	memory_deallocate(blob);
 	memory_deallocate(token);
 	resource_source_finalize(&source);
 

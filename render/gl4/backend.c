@@ -17,6 +17,7 @@
 
 #include <foundation/foundation.h>
 #include <window/window.h>
+#include <resource/hashstrings.h>
 #include <render/render.h>
 #include <render/internal.h>
 
@@ -706,8 +707,7 @@ _rb_gl4_upload_shader(render_backend_t* backend, render_shader_t* shader, const 
 
 	switch (shader->shadertype) {
 	case SHADER_PIXEL:
-	case SHADER_VERTEX:
-		{
+	case SHADER_VERTEX: {
 			bool is_pixel_shader = (shader->shadertype == SHADER_PIXEL);
 			GLuint handle = glCreateShader(is_pixel_shader ? GL_FRAGMENT_SHADER_ARB : GL_VERTEX_SHADER_ARB);
 			const GLchar* source = (GLchar*)buffer;
@@ -719,6 +719,17 @@ _rb_gl4_upload_shader(render_backend_t* backend, render_shader_t* shader, const 
 			glGetShaderiv(handle, GL_COMPILE_STATUS, &compiled);
 
 			if (!compiled) {
+#if BUILD_DEBUG
+				GLsizei log_capacity = 2048;
+				GLchar* log_buffer = memory_allocate(HASH_RESOURCE, log_capacity, 0, MEMORY_TEMPORARY);
+				GLint log_length = 0;
+				GLint compiled = 0;
+				glGetShaderiv(handle, GL_COMPILE_STATUS, &compiled);
+				glGetShaderInfoLog(handle, log_capacity, &log_length, log_buffer);
+				log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Unable to compile shader: %.*s"),
+				           (int)log_length, log_buffer);
+				memory_deallocate(log_buffer);
+#endif
 				glDeleteShader(handle);
 				shader->backend_data[0] = 0;
 			}
@@ -756,7 +767,8 @@ _rb_gl4_check_program_link(GLuint handle) {
 		log = memory_allocate(HASH_RENDER, buffer_size + 1, 0, MEMORY_TEMPORARY);
 		glGetProgramInfoLog(handle, buffer_size, &log_length, log);
 
-		log_errorf(ERRORLEVEL_ERROR, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Unable to compile program: %.*s"),
+		log_errorf(ERRORLEVEL_ERROR, ERROR_SYSTEM_CALL_FAIL,
+		           STRING_CONST("Unable to compile program: %.*s"),
 		           (int)log_length, log);
 		memory_deallocate(log);
 

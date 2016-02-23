@@ -483,9 +483,9 @@ test_render_declare(void) {
 	ADD_TEST(render, null_clear);
 	ADD_TEST(render, null_box);
 #if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_MACOSX || FOUNDATION_PLATFORM_LINUX
-	ADD_TEST(render, gl4);
+	//ADD_TEST(render, gl4);
 	//ADD_TEST(render, gl4_clear);
-	ADD_TEST(render, gl4_box);
+	//ADD_TEST(render, gl4_box);
 	ADD_TEST(render, gl2);
 	//ADD_TEST(render, gl2_clear);
 	ADD_TEST(render, gl2_box);
