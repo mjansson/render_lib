@@ -100,7 +100,6 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 	resource_source_map_all(source, map, false);
 	resource_source_map_reduce(source, map, &subplatforms, resource_source_platform_reduce);
 	resource_source_map_clear(map);
-
 	if (array_size(subplatforms) == 1) {
 		//The requested platform had no values, find most specialized platform
 		//which is a superset of the requested platform
@@ -108,6 +107,7 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 		resource_source_map_reduce(source, map, &subplatforms, resource_source_platform_superset);
 		resource_source_map_clear(map);
 	}
+	hashmap_finalize(map);
 
 	for (iplat = 1, psize = array_size(subplatforms); (iplat != psize) && (result == 0); ++iplat) {
 		void* compiled_blob = 0;
@@ -288,7 +288,6 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 	resource_source_map_all(source, map, false);
 	resource_source_map_reduce(source, map, &subplatforms, resource_source_platform_reduce);
 	resource_source_map_clear(map);
-
 	if (array_size(subplatforms) == 1) {
 		//The requested platform had no values, find most specialized platform
 		//which is a superset of the requested platform
@@ -363,6 +362,7 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 					array_push(moreplatforms, shaderplatforms[ishaderplat]);
 			}
 		}
+		array_deallocate(shaderplatforms);
 	}
 
 	if (superplatform)
@@ -704,7 +704,9 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 		window_deallocate(window);
 	}
 
+	array_deallocate(moreplatforms);
 	array_deallocate(subplatforms);
+	hashmap_finalize(map);
 
 	return result;
 }
