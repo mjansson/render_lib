@@ -12,12 +12,14 @@
 
 #include <foundation/foundation.h>
 #include <window/window.h>
+#include <resource/resource.h>
 #include <render/render.h>
 #include <test/test.h>
 
 static volatile bool _test_should_start;
 static volatile bool _test_have_focus;
 static volatile bool _test_should_terminate;
+static volatile bool _test_memory_tracker;
 
 static void*
 event_loop(void* arg) {
@@ -30,7 +32,6 @@ event_loop(void* arg) {
 	while (!_test_should_terminate) {
 		block = event_stream_process(system_event_stream());
 		event = 0;
-
 		while ((event = event_next(block, event))) {
 			switch (event->id) {
 			case FOUNDATIONEVENT_START:
@@ -82,7 +83,7 @@ event_loop(void* arg) {
 #include <test/test.h>
 
 static void
-test_log_callback(hash_t context, error_level_t severity, const char* msg, size_t length) {
+test_log_handler(hash_t context, error_level_t severity, const char* msg, size_t length) {
 	FOUNDATION_UNUSED(context);
 	FOUNDATION_UNUSED(severity);
 
@@ -114,11 +115,32 @@ test_log_callback(hash_t context, error_level_t severity, const char* msg, size_
 #if !BUILD_MONOLITHIC
 
 void
-test_crash_handler(const char* dump_file, size_t length) {
+test_exception_handler(const char* dump_file, size_t length) {
 	FOUNDATION_UNUSED(dump_file);
 	FOUNDATION_UNUSED(length);
-	log_error(HASH_TEST, ERROR_EXCEPTION, STRING_CONST("Test crashed"));
+	log_error(HASH_TEST, ERROR_EXCEPTION, STRING_CONST("Test raised exception"));
 	process_exit(-1);
+}
+
+#else
+
+static void
+test_load_config(void) {
+	json_token_t tokens[64];
+	stream_t* configfile = stream_open(STRING_CONST("config/test.json"), STREAM_IN);
+	if (!configfile)
+		return;
+
+	size_t size = stream_size(configfile);
+	char* buffer = memory_allocate(0, size, 0, MEMORY_PERSISTENT);
+
+	stream_read(configfile, buffer, size);
+	stream_deallocate(configfile);
+
+	size_t numtokens = sjson_parse(buffer, size, tokens, sizeof(tokens)/sizeof(tokens[0]));
+	resource_module_parse_config(buffer, size, tokens, numtokens);
+
+	memory_deallocate(buffer);
 }
 
 #endif
@@ -133,21 +155,32 @@ main_initialize(void) {
 	foundation_config_t config;
 	application_t application;
 	int ret;
+	size_t iarg, asize;
+	const string_const_t* cmdline = environment_command_line();
+
+	_test_memory_tracker = true;
+	for (iarg = 0, asize = array_size(cmdline); iarg < asize; ++iarg) {
+		if (string_equal(STRING_ARGS(cmdline[iarg]), STRING_CONST("--no-memory-tracker")))
+			_test_memory_tracker = false;
+	}
+
+	if (_test_memory_tracker)
+		memory_set_tracker(memory_tracker_local());
 
 	memset(&config, 0, sizeof(config));
 
 	memset(&application, 0, sizeof(application));
 	application.name = string_const(STRING_CONST("Render library test suite"));
 	application.short_name = string_const(STRING_CONST("test_all"));
-	application.config_dir = string_const(STRING_CONST("test_all"));
+	application.company = string_const(STRING_CONST("Rampant Pixels"));
 	application.version = render_module_version();
 	application.flags = APPLICATION_UTILITY;
-	application.dump_callback = test_crash_handler;
+	application.exception_handler = test_exception_handler;
 
 	log_set_suppress(0, ERRORLEVEL_INFO);
 
 #if ( FOUNDATION_PLATFORM_IOS || FOUNDATION_PLATFORM_ANDROID ) && BUILD_ENABLE_LOG
-	log_set_callback(test_log_callback);
+	log_set_handler(test_log_handler);
 #endif
 
 #if !FOUNDATION_PLATFORM_IOS && !FOUNDATION_PLATFORM_ANDROID && !FOUNDATION_PLATFORM_PNACL
@@ -174,6 +207,9 @@ main_initialize(void) {
 	if (ret == 0) {
 		ret = render_module_initialize();
 	}
+
+	test_set_suitable_working_directory();
+	test_load_config();
 #endif
 	return ret;
 }
@@ -187,8 +223,7 @@ extern int test_render_run(void);
 typedef int (*test_run_fn)(void);
 
 static void*
-test_runner(object_t obj, void* arg) {
-	FOUNDATION_UNUSED(obj);
+test_runner(void* arg) {
 	test_run_fn* tests = (test_run_fn*)arg;
 	int test_fn = 0;
 	int process_result = 0;
@@ -228,6 +263,11 @@ main_run(void* main_arg) {
 #elif BUILD_DEPLOY
 	const string_const_t build_name = string_const(STRING_CONST("deploy"));
 #endif
+#if BUILD_MONOLITHIC
+	const string_const_t build_type = string_const(STRING_CONST(" monolithic"));
+#else
+	const string_const_t build_type = string_empty();
+#endif
 	char* pathbuf;
 	int process_result = 0;
 	thread_t event_thread;
@@ -236,12 +276,11 @@ main_run(void* main_arg) {
 
 	log_set_suppress(HASH_TEST, ERRORLEVEL_DEBUG);
 
-	log_infof(HASH_TEST, STRING_CONST("Render library v%s built for %s using %s (%s)"),
+	log_infof(HASH_TEST, STRING_CONST("Render library v%s built for %s using %s (%.*s%.*s)"),
 	          string_from_version_static(render_module_version()).str, FOUNDATION_PLATFORM_DESCRIPTION,
-	          FOUNDATION_COMPILER_DESCRIPTION, build_name.str);
+	          FOUNDATION_COMPILER_DESCRIPTION, STRING_FORMAT(build_name), STRING_FORMAT(build_type));
 
-	thread_initialize(&event_thread, event_loop, 0, STRING_CONST("event_thread"),
-	                  THREAD_PRIORITY_NORMAL, 0);
+	thread_initialize(&event_thread, event_loop, 0, STRING_CONST("event_thread"), THREAD_PRIORITY_NORMAL, 0);
 	thread_start(&event_thread);
 
 	pathbuf = memory_allocate(HASH_STRING, BUILD_MAX_PATHLEN, 0, MEMORY_PERSISTENT);
@@ -269,34 +308,31 @@ main_run(void* main_arg) {
 
 #if FOUNDATION_PLATFORM_ANDROID
 
-	object_t test_thread = thread_create(test_runner, STRING_CONST("test_runner"),
-	                                     THREAD_PRIORITY_NORMAL, 0);
-	thread_start(test_thread, tests);
+	thread_t test_thread;
+	thread_initialize(&test_thread, test_runner, tests, STRING_CONST("test_runner"),
+	                  THREAD_PRIORITY_NORMAL, 0);
+	thread_start(&test_thread);
 
 	log_debug(HASH_TEST, STRING_CONST("Starting test runner thread"));
 
-	while (!thread_is_running(test_thread)) {
+	while (!thread_is_running(&test_thread)) {
 		system_process_events();
 		thread_sleep(10);
 	}
 
-	while (thread_is_running(test_thread)) {
+	while (thread_is_running(&test_thread)) {
 		system_process_events();
 		thread_sleep(10);
 	}
 
-	test_result = thread_result(test_thread);
+	test_result = thread_join(&test_thread);
 	process_result = (int)(intptr_t)test_result;
-	thread_destroy(test_thread);
-
-	while (thread_is_thread(test_thread)) {
-		system_process_events();
-		thread_sleep(10);
-	}
+	
+	thread_finalize(&test_thread);
 
 #else
 
-	test_result = test_runner(0, tests);
+	test_result = test_runner(tests);
 	process_result = (int)(intptr_t)test_result;
 
 #endif
@@ -349,6 +385,7 @@ main_run(void* main_arg) {
 	regex_deallocate(app_regex);
 #endif
 	for (iexe = 0, exesize = array_size(exe_paths); iexe < exesize; ++iexe) {
+		string_const_t* process_args = 0;
 		string_const_t exe_file_name = path_base_file_name(STRING_ARGS(exe_paths[iexe]));
 		if (string_equal(STRING_ARGS(exe_file_name), STRING_ARGS(environment_executable_name())))
 			continue; //Don't run self
@@ -362,6 +399,10 @@ main_run(void* main_arg) {
 		process_set_working_directory(process, STRING_ARGS(environment_executable_directory()));
 		process_set_flags(process, PROCESS_ATTACHED | exe_flags[iexe]);
 
+		if (!_test_memory_tracker)
+			array_push(process_args, string_const(STRING_CONST("--no-memory-tracker")));
+		process_set_arguments(process, process_args, array_size(process_args));
+
 		log_infof(HASH_TEST, STRING_CONST("Running test executable: %.*s"),
 		          STRING_FORMAT(exe_paths[iexe]));
 
@@ -371,6 +412,7 @@ main_run(void* main_arg) {
 			process_result = process_wait(process);
 		}
 		process_deallocate(process);
+		array_deallocate(process_args);
 
 		if (process_result != 0) {
 			if (process_result >= PROCESS_INVALID_ARGS)
@@ -408,6 +450,9 @@ exit:
 	log_infof(HASH_TEST, STRING_CONST("Tests exiting: %s (%d)"),
 	          process_result ? "FAILED" : "PASSED", process_result);
 
+	if (process_result)
+		memory_set_tracker(memory_tracker_none());
+
 	return process_result;
 }
 
@@ -415,6 +460,12 @@ void
 main_finalize(void) {
 #if FOUNDATION_PLATFORM_ANDROID
 	thread_detach_jvm();
+#endif
+
+#if BUILD_MONOLITHIC
+	render_module_finalize();
+	resource_module_finalize();
+	window_module_finalize();
 #endif
 
 	foundation_finalize();

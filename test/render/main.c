@@ -27,8 +27,9 @@ test_render_application(void) {
 	application_t app = {0};
 	app.name = string_const(STRING_CONST("Render tests"));
 	app.short_name = string_const(STRING_CONST("test_render"));
-	app.config_dir = string_const(STRING_CONST("test_render"));
+	app.company = string_const(STRING_CONST("Rampant Pixels"));
 	app.version = render_module_version();
+	app.exception_handler = test_exception_handler;
 	return app;
 }
 
@@ -42,6 +43,25 @@ test_render_config(void) {
 	foundation_config_t config;
 	memset(&config, 0, sizeof(config));
 	return config;
+}
+
+static void
+test_load_config(void) {
+	json_token_t tokens[64];
+	stream_t* configfile = stream_open(STRING_CONST("config/test.json"), STREAM_IN);
+	if (!configfile)
+		return;
+
+	size_t size = stream_size(configfile);
+	char* buffer = memory_allocate(0, size, 0, MEMORY_PERSISTENT);
+
+	stream_read(configfile, buffer, size);
+	stream_deallocate(configfile);
+
+	size_t numtokens = sjson_parse(buffer, size, tokens, sizeof(tokens)/sizeof(tokens[0]));
+	resource_module_parse_config(buffer, size, tokens, numtokens);
+
+	memory_deallocate(buffer);
 }
 
 static int
@@ -65,7 +85,13 @@ test_render_initialize(void) {
 
 	render_config_t render_config;
 	memset(&render_config, 0, sizeof(render_config));
-	return render_module_initialize(render_config);
+	if (render_module_initialize(render_config))
+		return -1;
+
+	test_set_suitable_working_directory();
+	test_load_config();
+
+	return 0;
 }
 
 static void
@@ -507,7 +533,7 @@ test_suite_t test_render_suite = {
 };
 
 
-#if FOUNDATION_PLATFORM_ANDROID || FOUNDATION_PLATFORM_IOS
+#if BUILD_MONOLITHIC
 
 int
 test_render_run(void);

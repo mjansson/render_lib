@@ -1,0 +1,6 @@
+{
+	"resource" : {
+		"local_path":    "resource/bin",
+		"source_path":   "resource/source"
+	}
+}

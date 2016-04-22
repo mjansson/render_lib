@@ -30,6 +30,7 @@ typedef struct {
 	bool              display_help;
 	int               binary;
 	string_const_t    source_path;
+	string_const_t*   config_files;
 	string_const_t*   input_files;
 } renderimport_input_t;
 
@@ -38,6 +39,9 @@ renderimport_parse_command_line(const string_const_t* cmdline);
 
 static void
 renderimport_print_usage(void);
+
+static void
+renderimport_load_config(const char* path, size_t length);
 
 int
 renderimport_import(stream_t* stream, const uuid_t uuid_given) {
@@ -122,8 +126,9 @@ main_initialize(void) {
 	memset(&application, 0, sizeof(application));
 	application.name = string_const(STRING_CONST("renderimport"));
 	application.short_name = string_const(STRING_CONST("renderimport"));
-	application.config_dir = string_const(STRING_CONST("renderimport"));
+	application.company = string_const(STRING_CONST("Rampant Pixels"));
 	application.flags = APPLICATION_UTILITY;
+	application.version = render_module_version();
 
 	log_enable_prefix(false);
 	log_set_suppress(0, ERRORLEVEL_WARNING);
@@ -153,12 +158,22 @@ main_run(void* main_arg) {
 
 	FOUNDATION_UNUSED(main_arg);
 
+	for (size_t cfgfile = 0, fsize = array_size(input.config_files); cfgfile < fsize; ++cfgfile)
+		renderimport_load_config(STRING_ARGS(input.config_files[cfgfile]));
+
+	if (input.source_path.length)
+		resource_source_set_path(STRING_ARGS(input.source_path));
+
+	if (!resource_source_path().length) {
+		log_errorf(HASH_RESOURCE, ERROR_INVALID_VALUE, STRING_CONST("No source path given"));
+		input.display_help = true;
+	}
+
 	if (input.display_help) {
 		renderimport_print_usage();
 		goto exit;
 	}
 
-	resource_source_set_path(STRING_ARGS(input.source_path));
 	resource_import_register(renderimport_import);
 
 	size_t ifile, fsize;
@@ -173,6 +188,7 @@ main_run(void* main_arg) {
 
 exit:
 
+	array_deallocate(input.config_files);
 	array_deallocate(input.input_files);
 
 	return result;
@@ -186,7 +202,26 @@ main_finalize(void) {
 	foundation_finalize();
 }
 
-renderimport_input_t
+static void
+renderimport_load_config(const char* path, size_t length) {
+	json_token_t tokens[64];
+	stream_t* configfile = stream_open(path, length, STREAM_IN);
+	if (!configfile)
+		return;
+
+	size_t size = stream_size(configfile);
+	char* buffer = memory_allocate(0, size, 0, MEMORY_PERSISTENT);
+
+	stream_read(configfile, buffer, size);
+	stream_deallocate(configfile);
+
+	size_t numtokens = sjson_parse(buffer, size, tokens, sizeof(tokens)/sizeof(tokens[0]));
+	resource_module_parse_config(buffer, size, tokens, numtokens);
+
+	memory_deallocate(buffer);
+}
+
+static renderimport_input_t
 renderimport_parse_command_line(const string_const_t* cmdline) {
 	renderimport_input_t input;
 	size_t arg, asize;
@@ -199,6 +234,10 @@ renderimport_parse_command_line(const string_const_t* cmdline) {
 		else if (string_equal(STRING_ARGS(cmdline[arg]), STRING_CONST("--source"))) {
 			if (arg < asize - 1)
 				input.source_path = cmdline[++arg];
+		}
+		else if (string_equal(STRING_ARGS(cmdline[arg]), STRING_CONST("--config"))) {
+			if (arg < asize - 1)
+				array_push(input.config_files, cmdline[++arg]);
 		}
 		/*else if (string_equal(STRING_ARGS(cmdline[arg]), STRING_CONST("--uuid"))) {
 			if (arg < asize - 1) {
@@ -234,14 +273,7 @@ renderimport_parse_command_line(const string_const_t* cmdline) {
 	}
 	error_context_pop();
 
-	bool already_help = input.display_help;
-	if (!input.source_path.length)
-		input.source_path = resource_source_path();
-	if (!already_help && !input.source_path.length) {
-		log_errorf(HASH_RESOURCE, ERROR_INVALID_VALUE, STRING_CONST("No source path given"));
-		input.display_help = true;
-	}
-	if (!already_help && !array_size(input.input_files)) {
+	if (!array_size(input.input_files)) {
 		log_errorf(HASH_RESOURCE, ERROR_INVALID_VALUE, STRING_CONST("No input files given"));
 		input.display_help = true;
 	}
@@ -255,11 +287,13 @@ renderimport_print_usage(void) {
 	log_set_suppress(0, ERRORLEVEL_DEBUG);
 	log_info(0, STRING_CONST(
 	             "renderimport usage:\n"
-	             "  renderimport [--source <path>] [--ascii] [--binary] [--debug] [--help] <file> <file> ... [--]\n"
+	             "  renderimport [--source <path>] [--config <path> ...] [--ascii] [--binary]\n"
+	             "               [--debug] [--help] <file> <file> ... [--]\n"
 	             "    Arguments:\n"
 	             "      <file> <file> ...            Any number of input files\n"
 	             "    Optional arguments:\n"
 	             "      --source <path>              Operate on resource file source structure given by <path>\n"
+	             "      --config <file>              Read and parse config file given by <path>\n"
 	             "      --binary                     Write binary files\n"
 	             "      --ascii                      Write ASCII files (default)\n"
 	             "      --debug                      Enable debug output\n"
