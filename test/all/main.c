@@ -124,23 +124,10 @@ test_exception_handler(const char* dump_file, size_t length) {
 
 #else
 
-static void
-test_load_config(void) {
-	json_token_t tokens[64];
-	stream_t* configfile = stream_open(STRING_CONST("config/test.json"), STREAM_IN);
-	if (!configfile)
-		return;
-
-	size_t size = stream_size(configfile);
-	char* buffer = memory_allocate(0, size, 0, MEMORY_PERSISTENT);
-
-	stream_read(configfile, buffer, size);
-	stream_deallocate(configfile);
-
-	size_t numtokens = sjson_parse(buffer, size, tokens, sizeof(tokens)/sizeof(tokens[0]));
-	resource_module_parse_config(buffer, size, tokens, numtokens);
-
-	memory_deallocate(buffer);
+static void test_parse_config(const char* buffer, size_t size,
+                              const json_token_t* tokens, size_t num_tokens) {
+	resource_module_parse_config(buffer, size, tokens, num_tokens);
+	render_module_parse_config(buffer, size, tokens, num_tokens);
 }
 
 #endif
@@ -209,7 +196,7 @@ main_initialize(void) {
 	}
 
 	test_set_suitable_working_directory();
-	test_load_config();
+	test_load_config(test_parse_config);
 #endif
 	return ret;
 }

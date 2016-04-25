@@ -68,3 +68,12 @@ render_api_enable(const render_api_t* api, size_t num);
     \param num Number of elements in array */
 RENDER_API void
 render_api_disable(const render_api_t* api, size_t num);
+
+/*! Parse config declarations from JSON buffer
+\param buffer Data buffer
+\param size Size of data buffer
+\param tokens JSON tokens
+\param num_tokens Number of JSON tokens */
+RENDER_API void
+render_module_parse_config(const char* buffer, size_t size,
+                           const json_token_t* tokens, size_t num_tokens);

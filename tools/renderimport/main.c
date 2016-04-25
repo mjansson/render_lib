@@ -159,7 +159,7 @@ main_run(void* main_arg) {
 	FOUNDATION_UNUSED(main_arg);
 
 	for (size_t cfgfile = 0, fsize = array_size(input.config_files); cfgfile < fsize; ++cfgfile)
-		renderimport_load_config(STRING_ARGS(input.config_files[cfgfile]));
+		sjson_parse_path(STRING_ARGS(input.config_files[cfgfile]), resource_module_parse_config);
 
 	if (input.source_path.length)
 		resource_source_set_path(STRING_ARGS(input.source_path));
@@ -200,25 +200,6 @@ main_finalize(void) {
 	window_module_finalize();
 	resource_module_finalize();
 	foundation_finalize();
-}
-
-static void
-renderimport_load_config(const char* path, size_t length) {
-	json_token_t tokens[64];
-	stream_t* configfile = stream_open(path, length, STREAM_IN);
-	if (!configfile)
-		return;
-
-	size_t size = stream_size(configfile);
-	char* buffer = memory_allocate(0, size, 0, MEMORY_PERSISTENT);
-
-	stream_read(configfile, buffer, size);
-	stream_deallocate(configfile);
-
-	size_t numtokens = sjson_parse(buffer, size, tokens, sizeof(tokens)/sizeof(tokens[0]));
-	resource_module_parse_config(buffer, size, tokens, numtokens);
-
-	memory_deallocate(buffer);
 }
 
 static renderimport_input_t
@@ -294,6 +275,7 @@ renderimport_print_usage(void) {
 	             "    Optional arguments:\n"
 	             "      --source <path>              Operate on resource file source structure given by <path>\n"
 	             "      --config <file>              Read and parse config file given by <path>\n"
+	             "                                   Loads all .json/.sjson files in <path> if it is a directory\n"
 	             "      --binary                     Write binary files\n"
 	             "      --ascii                      Write ASCII files (default)\n"
 	             "      --debug                      Enable debug output\n"

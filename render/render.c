@@ -97,3 +97,12 @@ render_api_disable(const render_api_t* api, size_t num) {
 			_render_api_disabled[api[i]] = true;
 	}
 }
+
+void
+render_module_parse_config(const char* buffer, size_t size,
+                           const json_token_t* tokens, size_t num_tokens) {
+	FOUNDATION_UNUSED(buffer);
+	FOUNDATION_UNUSED(size);
+	FOUNDATION_UNUSED(tokens);
+	FOUNDATION_UNUSED(num_tokens);
+}
