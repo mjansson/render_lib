@@ -34,6 +34,10 @@ typedef struct {
 	string_const_t*   input_files;
 } renderimport_input_t;
 
+static void
+renderimport_parse_config(const char* buffer, size_t size, json_token_t* tokens,
+                          size_t numtokens);
+
 static renderimport_input_t
 renderimport_parse_command_line(const string_const_t* cmdline);
 
@@ -159,7 +163,7 @@ main_run(void* main_arg) {
 	FOUNDATION_UNUSED(main_arg);
 
 	for (size_t cfgfile = 0, fsize = array_size(input.config_files); cfgfile < fsize; ++cfgfile)
-		sjson_parse_path(STRING_ARGS(input.config_files[cfgfile]), resource_module_parse_config);
+		sjson_parse_path(STRING_ARGS(input.config_files[cfgfile]), renderimport_parse_config);
 
 	if (input.source_path.length)
 		resource_source_set_path(STRING_ARGS(input.source_path));
@@ -200,6 +204,13 @@ main_finalize(void) {
 	window_module_finalize();
 	resource_module_finalize();
 	foundation_finalize();
+}
+
+static void
+renderimport_parse_config(const char* buffer, size_t size, json_token_t* tokens,
+                          size_t numtokens) {
+	resource_module_parse_config(buffer, size, tokens, numtokens);
+	render_module_parse_config(buffer, size, tokens, numtokens);
 }
 
 static renderimport_input_t
