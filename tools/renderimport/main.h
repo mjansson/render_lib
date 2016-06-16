@@ -22,13 +22,3 @@
 
 #include "errorcodes.h"
 
-typedef enum {
-	IMPORTTYPE_UNKNOWN,
-	IMPORTTYPE_SHADER,
-	IMPORTTYPE_GLSL_VERTEXSHADER,
-	IMPORTTYPE_GLSL_PIXELSHADER,
-	IMPORTTYPE_PROGRAM
-} renderimport_type_t;
-
-RENDER_API int
-renderimport_import(stream_t* stream, const uuid_t uuid);

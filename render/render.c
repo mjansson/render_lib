@@ -17,6 +17,7 @@
 
 #include <foundation/foundation.h>
 
+#include <resource/import.h>
 #include <resource/compile.h>
 
 #include <render/render.h>
@@ -53,9 +54,8 @@ render_module_initialize(render_config_t config) {
 	if (render_buffer_initialize() < 0)
 		return -1;
 
-#if RESOURCE_ENABLE_LOCAL_CACHE && RESOURCE_ENABLE_LOCAL_SOURCE
+	resource_import_register(render_import);
 	resource_compile_register(render_compile);
-#endif
 
 	_render_initialized = true;
 
@@ -99,8 +99,11 @@ render_api_disable(const render_api_t* api, size_t num) {
 }
 
 void
-render_module_parse_config(const char* buffer, size_t size,
+render_module_parse_config(const char* path, size_t path_size,
+                           const char* buffer, size_t size,
                            const json_token_t* tokens, size_t num_tokens) {
+	FOUNDATION_UNUSED(path);
+	FOUNDATION_UNUSED(path_size);
 	FOUNDATION_UNUSED(buffer);
 	FOUNDATION_UNUSED(size);
 	FOUNDATION_UNUSED(tokens);

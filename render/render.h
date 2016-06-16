@@ -36,6 +36,8 @@
 #include <render/shader.h>
 #include <render/program.h>
 #include <render/state.h>
+
+#include <render/import.h>
 #include <render/compile.h>
 
 /*! Initialize render library
@@ -75,5 +77,6 @@ render_api_disable(const render_api_t* api, size_t num);
 \param tokens JSON tokens
 \param num_tokens Number of JSON tokens */
 RENDER_API void
-render_module_parse_config(const char* buffer, size_t size,
+render_module_parse_config(const char* path, size_t path_size,
+                           const char* buffer, size_t size,
                            const json_token_t* tokens, size_t num_tokens);

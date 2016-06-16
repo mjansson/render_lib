@@ -45,10 +45,11 @@ test_render_config(void) {
 	return config;
 }
 
-static void test_parse_config(const char* buffer, size_t size,
+static void test_parse_config(const char* path, size_t path_size,
+                              const char* buffer, size_t size,
                               const json_token_t* tokens, size_t num_tokens) {
-	resource_module_parse_config(buffer, size, tokens, num_tokens);
-	render_module_parse_config(buffer, size, tokens, num_tokens);
+	resource_module_parse_config(path, path_size, buffer, size, tokens, num_tokens);
+	render_module_parse_config(path, path_size, buffer, size, tokens, num_tokens);
 }
 
 

@@ -22,9 +22,6 @@
 
 #include "main.h"
 #include "errorcodes.h"
-#include "shader.h"
-#include "program.h"
-#include "glsl.h"
 
 typedef struct {
 	bool              display_help;
@@ -35,8 +32,9 @@ typedef struct {
 } renderimport_input_t;
 
 static void
-renderimport_parse_config(const char* buffer, size_t size, json_token_t* tokens,
-                          size_t numtokens);
+renderimport_parse_config(const char* path, size_t path_size,
+                          const char* buffer, size_t size,
+                          json_token_t* tokens, size_t numtokens);
 
 static renderimport_input_t
 renderimport_parse_command_line(const string_const_t* cmdline);
@@ -46,72 +44,6 @@ renderimport_print_usage(void);
 
 static void
 renderimport_load_config(const char* path, size_t length);
-
-int
-renderimport_import(stream_t* stream, const uuid_t uuid_given) {
-	renderimport_type_t type = IMPORTTYPE_UNKNOWN;
-	renderimport_type_t guess = IMPORTTYPE_UNKNOWN;
-	uuid_t uuid = uuid_given;
-	string_const_t path;
-	string_const_t extension;
-	int ret;
-	bool store_import = false;
-
-	path = stream_path(stream);
-	extension = path_file_extension(STRING_ARGS(path));
-	if (string_equal_nocase(STRING_ARGS(extension), STRING_CONST("shader")))
-		guess = IMPORTTYPE_SHADER;
-	else if (string_equal_nocase(STRING_ARGS(extension), STRING_CONST("program")))
-		guess = IMPORTTYPE_PROGRAM;
-
-	type = renderimport_shader_guess_type(stream);
-
-	if ((type == IMPORTTYPE_UNKNOWN) && (guess != IMPORTTYPE_UNKNOWN))
-		type = guess;
-
-	if (type == IMPORTTYPE_UNKNOWN)
-		return RENDERIMPORT_RESULT_UNSUPPORTED_INPUT;
-
-	if (uuid_is_null(uuid))
-		uuid = resource_import_map_lookup(STRING_ARGS(path));
-	
-	if (uuid_is_null(uuid) && (type == IMPORTTYPE_SHADER)) {
-		uuid = renderimport_shader_check_referenced_uuid(stream);
-		store_import = true;
-	}
-
-	if (uuid_is_null(uuid)) {
-		uuid = uuid_generate_random();
-		store_import = true;
-	}
-	
-	if (store_import) {
-		if (!resource_import_map_store(STRING_ARGS(path), &uuid)) {
-			log_warn(HASH_RESOURCE, WARNING_SUSPICIOUS,
-			         STRING_CONST("Unable to open import map file to store new resource"));
-			return RENDERIMPORT_RESULT_UNABLE_TO_OPEN_MAP_FILE;
-		}
-	}
-
-	switch (type) {
-	case IMPORTTYPE_PROGRAM:
-		ret = renderimport_import_program(stream, uuid);
-		break;
-	case IMPORTTYPE_SHADER:
-		ret = renderimport_import_shader(stream, uuid);
-		break;
-	case IMPORTTYPE_GLSL_VERTEXSHADER:
-		ret = renderimport_import_glsl_vertexshader(stream, uuid);
-		break;
-	case IMPORTTYPE_GLSL_PIXELSHADER:
-		ret = renderimport_import_glsl_pixelshader(stream, uuid);
-		break;
-	default:
-		return RENDERIMPORT_RESULT_UNSUPPORTED_INPUT;
-	}
-
-	return ret;
-}
 
 int
 main_initialize(void) {
@@ -178,7 +110,7 @@ main_run(void* main_arg) {
 		goto exit;
 	}
 
-	resource_import_register(renderimport_import);
+	resource_import_register(render_import);
 
 	size_t ifile, fsize;
 	for (ifile = 0, fsize = array_size(input.input_files); ifile < fsize; ++ifile) {
@@ -207,10 +139,11 @@ main_finalize(void) {
 }
 
 static void
-renderimport_parse_config(const char* buffer, size_t size, json_token_t* tokens,
-                          size_t numtokens) {
-	resource_module_parse_config(buffer, size, tokens, numtokens);
-	render_module_parse_config(buffer, size, tokens, numtokens);
+renderimport_parse_config(const char* path, size_t path_size,
+                          const char* buffer, size_t size,
+                          json_token_t* tokens, size_t numtokens) {
+	resource_module_parse_config(path, path_size, buffer, size, tokens, numtokens);
+	render_module_parse_config(path, path_size, buffer, size, tokens, numtokens);
 }
 
 static renderimport_input_t

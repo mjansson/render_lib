@@ -32,8 +32,9 @@ typedef struct {
 } rendercompile_input_t;
 
 static void
-rendercompile_parse_config(const char* buffer, size_t size, json_token_t* tokens,
-                           size_t numtokens);
+rendercompile_parse_config(const char* path, size_t path_size,
+                           const char* buffer, size_t size,
+                           json_token_t* tokens, size_t numtokens);
 
 static rendercompile_input_t
 rendercompile_parse_command_line(const string_const_t* cmdline);
@@ -118,6 +119,7 @@ main_run(void* main_arg) {
 		goto exit;
 	}
 
+	resource_import_register(render_import);
 	resource_compile_register(render_compile);
 
 	size_t ifile, fsize;
@@ -128,10 +130,11 @@ main_run(void* main_arg) {
 			string_t pathstr = string_copy(buffer, sizeof(buffer), STRING_ARGS(input.input_files[ifile]));
 			pathstr = path_clean(STRING_ARGS(pathstr), sizeof(buffer));
 			pathstr = path_absolute(STRING_ARGS(pathstr), sizeof(buffer));
-			uuid = resource_import_map_lookup(STRING_ARGS(pathstr));
+			uuid = resource_import_map_lookup(STRING_ARGS(pathstr)).uuid;
 		}
 		if (uuid_is_null(uuid)) {
-			log_warnf(HASH_RESOURCE, WARNING_INVALID_VALUE, STRING_CONST("Failed to lookup: %.*s"), STRING_FORMAT(input.input_files[ifile]));
+			log_warnf(HASH_RESOURCE, WARNING_INVALID_VALUE, STRING_CONST("Failed to lookup: %.*s"),
+			          STRING_FORMAT(input.input_files[ifile]));
 			result = RENDERCOMPILE_RESULT_INVALID_INPUT;
 			break;
 		}
@@ -166,10 +169,11 @@ main_finalize(void) {
 }
 
 static void
-rendercompile_parse_config(const char* buffer, size_t size, json_token_t* tokens,
-                           size_t numtokens) {
-	resource_module_parse_config(buffer, size, tokens, numtokens);
-	render_module_parse_config(buffer, size, tokens, numtokens);
+rendercompile_parse_config(const char* path, size_t path_size,
+                           const char* buffer, size_t size,
+                           json_token_t* tokens, size_t numtokens) {
+	resource_module_parse_config(path, path_size, buffer, size, tokens, numtokens);
+	render_module_parse_config(path, path_size, buffer, size, tokens, numtokens);
 }
 
 static rendercompile_input_t
