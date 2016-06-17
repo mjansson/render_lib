@@ -29,6 +29,16 @@ typedef enum {
 	IMPORTTYPE_PROGRAM
 } renderimport_type_t;
 
+static resource_platform_t
+render_import_parse_target(const char* target, size_t length, resource_platform_t base) {
+	resource_platform_t platform = base;
+	//TODO: Generalize
+	if (string_equal(target, length, STRING_CONST("glsl"))) {
+		platform.render_api_group = RENDERAPIGROUP_OPENGL;
+	}
+	return platform;
+}
+
 #define GLSL_TOKEN_DELIM " \t\n\r;(){}.,"
 
 static renderimport_type_t
@@ -50,39 +60,6 @@ render_import_shader_guess_type(stream_t* stream) {
 	stream_seek(stream, 0, STREAM_SEEK_BEGIN);
 
 	return type;
-}
-
-static uuid_t
-render_import_shader_check_referenced_uuid(stream_t* stream) {
-	char buffer[1024];
-	uuid_t uuid = uuid_null();
-
-	while (!stream_eos(stream)) {
-		string_const_t ref;
-		string_t line = stream_read_line_buffer(stream, buffer, sizeof(buffer), '\n');
-		string_split(STRING_ARGS(line), STRING_CONST(" \t"),
-		             nullptr, &ref, false);
-		ref = string_strip(STRING_ARGS(ref), STRING_CONST(STRING_WHITESPACE));
-		if (ref.length) {
-			if (path_is_absolute(STRING_ARGS(ref))) {
-				uuid = resource_import_map_lookup(STRING_ARGS(ref)).uuid;
-			}
-			else {
-				char pathbuf[BUILD_MAX_PATHLEN];
-				string_const_t path = stream_path(stream);
-				path = path_directory_name(STRING_ARGS(path));
-				string_t fullpath = path_concat(pathbuf, sizeof(pathbuf),
-				                                STRING_ARGS(path), STRING_ARGS(ref));
-				uuid = resource_import_map_lookup(STRING_ARGS(fullpath)).uuid;
-			}
-
-			if (!uuid_is_null(uuid))
-				break;
-		}
-	}
-	stream_seek(stream, 0, STREAM_SEEK_BEGIN);
-
-	return uuid;
 }
 
 static int
@@ -118,7 +95,8 @@ glsl_name_from_token(const string_const_t token) {
 }
 
 static int
-render_import_glsl_shader(stream_t* stream, const uuid_t uuid, const char* type, size_t type_length) {
+render_import_glsl_shader(stream_t* stream, const uuid_t uuid, const char* type,
+                          size_t type_length) {
 	resource_source_t source;
 	void* blob = 0;
 	size_t size;
@@ -134,7 +112,7 @@ render_import_glsl_shader(stream_t* stream, const uuid_t uuid, const char* type,
 	string_const_t valstr;
 	char buffer[128];
 	int ret = 0;
-	resource_platform_t platformdecl = {-1, RENDERAPIGROUP_OPENGL, -1, -1, -1};
+	resource_platform_t platformdecl = { -1, RENDERAPIGROUP_OPENGL, -1, -1, -1};
 
 	resource_source_initialize(&source);
 	resource_source_read(&source, uuid);
@@ -194,7 +172,7 @@ render_import_glsl_shader(stream_t* stream, const uuid_t uuid, const char* type,
 				dim = string_to_const(string_from_uint(dimbuf, sizeof(dimbuf), parameter_dim, false, 0, 0));
 
 				log_debugf(HASH_RESOURCE, STRING_CONST("parameter: %.*s type %.*s dim %.*s"),
-				          STRING_FORMAT(name), STRING_FORMAT(type), STRING_FORMAT(dim));
+				           STRING_FORMAT(name), STRING_FORMAT(type), STRING_FORMAT(dim));
 
 				string_t param = string_format(buffer, sizeof(buffer), STRING_CONST("parameter_type_%" PRIsize),
 				                               parameter);
@@ -252,17 +230,28 @@ static int
 render_import_shader(stream_t* stream, const uuid_t uuid) {
 	char buffer[1024];
 	char pathbuf[BUILD_MAX_PATHLEN];
+	resource_source_t source;
+	resource_platform_t platformdecl = { -1, -1, -1, -1, -1};
+	uint64_t platform;
+	tick_t timestamp;
+	int ret = 0;
+
+	resource_source_initialize(&source);
+	resource_source_read(&source, uuid);
+
+	platform = resource_platform(platformdecl);
+	timestamp = time_system();
 
 	while (!stream_eos(stream)) {
-		string_const_t ref;
+		uuid_t shaderuuid;
+		string_const_t target, ref, fullpath;
 		string_t line = stream_read_line_buffer(stream, buffer, sizeof(buffer), '\n');
 		string_split(STRING_ARGS(line), STRING_CONST(" \t"),
-		             nullptr, &ref, false);
-		ref = string_strip(STRING_ARGS(ref), STRING_CONST(STRING_WHITESPACE));
-		if (ref.length) {
-			string_const_t fullpath;
-			uuid_t shaderuuid;
+		             &target, &ref, false);
 
+		ref = string_strip(STRING_ARGS(ref), STRING_CONST(STRING_WHITESPACE));
+		shaderuuid = string_to_uuid(STRING_ARGS(ref));
+		if (uuid_is_null(shaderuuid)) {
 			if (path_is_absolute(STRING_ARGS(ref))) {
 				fullpath = ref;
 			}
@@ -272,23 +261,52 @@ render_import_shader(stream_t* stream, const uuid_t uuid) {
 				path = path_directory_name(STRING_ARGS(path));
 				full = path_concat(pathbuf, sizeof(pathbuf),
 				                   STRING_ARGS(path), STRING_ARGS(ref));
+				full = path_absolute(STRING_ARGS(full), sizeof(pathbuf));
 				fullpath = string_const(STRING_ARGS(full));
 			}
 
-			shaderuuid = resource_import_map_lookup(STRING_ARGS(fullpath)).uuid;
-			if (!uuid_is_null(uuid) && !uuid_equal(uuid, shaderuuid)) {
-				log_warnf(HASH_RESOURCE, WARNING_SUSPICIOUS, STRING_CONST("Shader UUID mismatch: %.*s"),
-				          STRING_FORMAT(fullpath));
-				return -1;
+			resource_signature_t sig = resource_import_map_lookup(STRING_ARGS(fullpath));
+			if (uuid_is_null(sig.uuid)) {
+				if (!resource_import(STRING_ARGS(fullpath), uuid_null())) {
+					log_warnf(HASH_RESOURCE, WARNING_SUSPICIOUS,
+					          STRING_CONST("Unable to import linked shader: %.*s"),
+					          STRING_FORMAT(fullpath));
+					ret = -1;
+					goto finalize;
+				}
+				sig = resource_import_map_lookup(STRING_ARGS(fullpath));
+				if (uuid_is_null(sig.uuid)) {
+					log_warnf(HASH_RESOURCE, WARNING_SUSPICIOUS,
+					          STRING_CONST("Import linked shader gave no UUID: %.*s"),
+					          STRING_FORMAT(fullpath));
+					ret = -1;
+					goto finalize;
+				}
 			}
+			shaderuuid = sig.uuid;
+		}
 
-			if (!resource_import(STRING_ARGS(fullpath), uuid)) {
-				log_warnf(HASH_RESOURCE, WARNING_SUSPICIOUS, STRING_CONST("Unable to import linked shader: %.*s"),
-				          STRING_FORMAT(fullpath));
-				return -1;
-			}
+		if (!uuid_is_null(shaderuuid)) {
+			resource_platform_t targetplatformdecl =
+			    render_import_parse_target(STRING_ARGS(target), platformdecl);
+			uint64_t targetplatform = resource_platform(targetplatformdecl);
+			const string_const_t uuidstr = string_from_uuid_static(shaderuuid);
+			resource_source_set(&source, timestamp, HASH_SHADER,
+			                    targetplatform, STRING_ARGS(uuidstr));
+			resource_source_set_dependencies(uuid, targetplatform, &shaderuuid, 1);
 		}
 	}
+
+	resource_source_set(&source, timestamp, HASH_RESOURCE_TYPE,
+	                    0, STRING_CONST("shader"));
+
+	if (!resource_source_write(&source, uuid, false)) {
+		ret = -1;
+		goto finalize;
+	}
+
+finalize:
+	resource_source_finalize(&source);
 
 	return 0;
 }
@@ -298,7 +316,7 @@ render_import_program(stream_t* stream, const uuid_t uuid) {
 	char buffer[1024];
 	char pathbuf[BUILD_MAX_PATHLEN];
 	resource_source_t source;
-	resource_platform_t platformdecl = {-1, -1, -1, -1, -1};
+	resource_platform_t platformdecl = { -1, -1, -1, -1, -1};
 	uint64_t platform;
 	tick_t timestamp;
 	int ret = 0;
@@ -318,8 +336,8 @@ render_import_program(stream_t* stream, const uuid_t uuid) {
 		string_t line = stream_read_line_buffer(stream, buffer, sizeof(buffer), '\n');
 		string_split(STRING_ARGS(line), STRING_CONST(" \t"),
 		             &type, &ref, false);
-		
-		type = string_strip(STRING_ARGS(type), STRING_CONST(STRING_WHITESPACE)); 
+
+		type = string_strip(STRING_ARGS(type), STRING_CONST(STRING_WHITESPACE));
 		ref = string_strip(STRING_ARGS(ref), STRING_CONST(STRING_WHITESPACE));
 		if (!type.length || !ref.length)
 			continue;
@@ -342,6 +360,7 @@ render_import_program(stream_t* stream, const uuid_t uuid) {
 				path = path_directory_name(STRING_ARGS(path));
 				full = path_concat(pathbuf, sizeof(pathbuf),
 				                   STRING_ARGS(path), STRING_ARGS(ref));
+				full = path_absolute(STRING_ARGS(full), sizeof(pathbuf));
 				fullpath = string_const(STRING_ARGS(full));
 			}
 
@@ -355,7 +374,8 @@ render_import_program(stream_t* stream, const uuid_t uuid) {
 				}
 				sig = resource_import_map_lookup(STRING_ARGS(fullpath));
 				if (uuid_is_null(sig.uuid)) {
-					log_warnf(HASH_RESOURCE, WARNING_SUSPICIOUS, STRING_CONST("Import linked shader gave no UUID: %.*s"),
+					log_warnf(HASH_RESOURCE, WARNING_SUSPICIOUS,
+					          STRING_CONST("Import linked shader gave no UUID: %.*s"),
 					          STRING_FORMAT(fullpath));
 					ret = -1;
 					goto finalize;
@@ -413,11 +433,6 @@ render_import(stream_t* stream, const uuid_t uuid_given) {
 	if (uuid_is_null(uuid))
 		uuid = resource_import_map_lookup(STRING_ARGS(path)).uuid;
 
-	if (uuid_is_null(uuid) && (type == IMPORTTYPE_SHADER)) {
-		uuid = render_import_shader_check_referenced_uuid(stream);
-		store_import = true;
-	}
-
 	if (uuid_is_null(uuid)) {
 		uuid = uuid_generate_random();
 		store_import = true;
@@ -449,6 +464,9 @@ render_import(stream_t* stream, const uuid_t uuid_given) {
 	default:
 		return -1;
 	}
+
+	if (ret == 0)
+		resource_import_map_store(STRING_ARGS(path), uuid, stream_sha256(stream));
 
 	return ret;
 }

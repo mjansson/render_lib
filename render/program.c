@@ -92,8 +92,6 @@ render_program_load(render_backend_t* backend, const uuid_t uuid) {
 		goto finalize;
 	}
 
-	//TODO: Local dependency tracking, check if shaders need recompilation
-
 	shaderuuid = stream_read_uint128(stream);
 	vertexshader = render_vertexshader_load(backend, shaderuuid);
 	if (!vertexshader) {

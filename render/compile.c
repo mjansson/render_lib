@@ -91,6 +91,39 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 
 	resource_type_hash = hash(type, type_length);
 
+	if (resource_type_hash == HASH_SHADER) {
+		//Defer compilation to target shader and copy successful result
+		int result = -1;
+		resource_change_t* shaderchange = resource_source_get(source, HASH_SHADER, platform);
+		uuid_t shaderuuid = shaderchange ? string_to_uuid(STRING_ARGS(shaderchange->value.value)) :
+		                    uuid_null();
+		if (uuid_is_null(shaderuuid))
+			return -1;
+		if (resource_compile_need_update(shaderuuid, platform) &&
+		        !resource_compile(shaderuuid, platform))
+			return -1;
+
+		stream_t* source = resource_local_open_static(shaderuuid, platform);
+		stream_t* target = resource_local_create_static(uuid, platform);
+		if (source && target) {
+			size_t source_size = stream_size(source) - sizeof(resource_header_t);
+
+			resource_header_t header;
+			stream_read(source, &header, sizeof(header));
+			header.source_hash = source_hash;
+
+			char* buffer = memory_allocate(HASH_RESOURCE, source_size, 0, MEMORY_PERSISTENT);
+			if (stream_read(source, buffer, source_size) == source_size) {
+				if (stream_write(target, buffer, source_size) == source_size)
+					result = 0;
+			}
+		}
+		stream_deallocate(target);
+		stream_deallocate(source);
+
+		return result;
+	}
+
 	if ((resource_type_hash != HASH_VERTEXSHADER) && (resource_type_hash != HASH_PIXELSHADER))
 		return -1;
 
@@ -162,9 +195,8 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 				}
 			}
 			if (sourcebuffer) {
-				GLuint handle = glCreateShader(
-				                    string_equal(type, type_length, STRING_CONST("vertexshader")) ?
-				                    GL_VERTEX_SHADER_ARB : GL_FRAGMENT_SHADER_ARB);
+				GLuint handle = glCreateShader(string_equal(type, type_length, STRING_CONST("vertexshader"))
+				                               ? GL_VERTEX_SHADER_ARB : GL_FRAGMENT_SHADER_ARB);
 				const GLchar* glsource = (GLchar*)sourcebuffer;
 				GLint source_size = (GLint)sourcechange->value.blob.size;
 				glShaderSource(handle, 1, &glsource, &source_size);
@@ -327,6 +359,20 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 
 		//Get additional more specialized platform targets from shaders
 		array_push(shaderplatforms, subplatform);
+
+		if (resource_autoimport_need_update(vertexshader, subplatform)) {
+			string_const_t uuidstr = string_from_uuid_static(vertexshader);
+			log_debugf(HASH_RESOURCE, STRING_CONST("Reimporting vertex shader resource %.*s"),
+			           STRING_FORMAT(uuidstr));
+			resource_autoimport(vertexshader);
+		}
+
+		if (resource_autoimport_need_update(pixelshader, subplatform)) {
+			string_const_t uuidstr = string_from_uuid_static(pixelshader);
+			log_debugf(HASH_RESOURCE, STRING_CONST("Reimporting pixel shader resource %.*s"),
+			           STRING_FORMAT(uuidstr));
+			resource_autoimport(pixelshader);
+		}
 
 		resource_source_initialize(&shadersource);
 		if (resource_source_read(&shadersource, vertexshader)) {
