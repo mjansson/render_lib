@@ -69,6 +69,12 @@ render_pixelshader_load(render_backend_t* backend, const uuid_t uuid) {
 	return render_shader_load(backend, uuid, HASH_PIXELSHADER);
 }
 
+bool
+render_pixelshader_reload(render_pixelshader_t* shader) {
+	FOUNDATION_UNUSED(shader);
+	return false;
+}
+
 render_vertexshader_t*
 render_vertexshader_allocate(void) {
 	render_vertexshader_t* shader = memory_allocate(HASH_RENDER, sizeof(render_vertexshader_t), 16,
@@ -111,6 +117,12 @@ render_vertexshader_upload(render_backend_t* backend, render_vertexshader_t* sha
 render_vertexshader_t*
 render_vertexshader_load(render_backend_t* backend, const uuid_t uuid) {
 	return render_shader_load(backend, uuid, HASH_VERTEXSHADER);
+}
+
+bool
+render_vertexshader_reload(render_vertexshader_t* shader) {
+	FOUNDATION_UNUSED(shader);
+	return false;
 }
 
 static void*
@@ -183,4 +195,14 @@ render_shader_load(render_backend_t* backend, const uuid_t uuid, hash_t type) {
 #endif
 
 	return shader;
+}
+
+bool
+render_shader_reload(render_shader_t* shader) {
+	switch (shader->shadertype) {
+		case SHADER_PIXEL:  return render_pixelshader_reload((render_pixelshader_t*)shader);
+		case SHADER_VERTEX: return render_vertexshader_reload((render_vertexshader_t*)shader);
+		default: break;
+	}
+	return false;
 }

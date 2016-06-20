@@ -364,12 +364,6 @@ static void* _test_render_box(render_api_t api) {
 	render_backend_dispatch(backend, &context, 1);
 	render_backend_flip(backend);
 
-	//color.pixel : bb0b4856-c422-4a9d-bc85-c4caded9700b
-	//pixelshader = render_pixelshader_load(backend, string_to_uuid(STRING_CONST("bb0b4856-c422-4a9d-bc85-c4caded9700b")));
-
-	//color.vertex : 23656e75-9edd-44b7-877e-e96e56f03301
-	//vertexshader = render_vertexshader_load(backend, string_to_uuid(STRING_CONST("23656e75-9edd-44b7-877e-e96e56f03301")));
-
 	//color.program : 1ab9bba8-3f2f-4649-86bb-8b8b07e99af2
 	program = render_program_load(backend,
 	                              string_to_uuid(STRING_CONST("1ab9bba8-3f2f-4649-86bb-8b8b07e99af2")));

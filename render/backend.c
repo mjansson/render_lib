@@ -294,3 +294,16 @@ render_backend_set_resource_platform(render_backend_t* backend, uint64_t platfor
 	backend->platform = resource_platform(decl);
 }
 
+render_shader_t*
+render_backend_shader_lookup(render_backend_t* backend, const uuid_t uuid) {
+	FOUNDATION_UNUSED(backend);
+	FOUNDATION_UNUSED(uuid);
+	return nullptr;
+}
+
+render_program_t*
+render_backend_program_lookup(render_backend_t* backend, const uuid_t uuid) {
+	FOUNDATION_UNUSED(backend);
+	FOUNDATION_UNUSED(uuid);
+	return nullptr;
+}

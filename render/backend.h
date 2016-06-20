@@ -73,3 +73,9 @@ render_backend_resource_platform(render_backend_t* backend);
 
 RENDER_API void
 render_backend_set_resource_platform(render_backend_t* backend, uint64_t platform);
+
+RENDER_API render_shader_t*
+render_backend_shader_lookup(render_backend_t* backend, const uuid_t uuid);
+
+RENDER_API render_program_t*
+render_backend_program_lookup(render_backend_t* backend, const uuid_t uuid);

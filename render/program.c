@@ -138,3 +138,9 @@ finalize:
 
 	return program;
 }
+
+bool
+render_program_reload(render_program_t* program) {
+	FOUNDATION_UNUSED(program);
+	return false;
+}

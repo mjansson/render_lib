@@ -16,9 +16,22 @@
  */
 
 #include <render/event.h>
+#include <render/backend.h>
+#include <render/shader.h>
+#include <render/program.h>
+
+#include <resource/event.h>
 
 void
 render_event_handle_resource(render_backend_t* backend, const event_t* event) {
-	FOUNDATION_UNUSED(backend);
-	FOUNDATION_UNUSED(event);
+	if (event->id != RESOURCEEVENT_MODIFY)
+		return;
+
+	render_shader_t* shader = render_backend_shader_lookup(backend, resource_event_uuid(event));
+	if (shader && render_shader_reload(shader))
+		return;
+
+	render_program_t* program = render_backend_program_lookup(backend, resource_event_uuid(event));
+	if (program && render_program_reload(program))
+		return;
 }

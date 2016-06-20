@@ -42,6 +42,9 @@ render_pixelshader_upload(render_backend_t* backend, render_pixelshader_t* shade
 RENDER_API render_pixelshader_t*
 render_pixelshader_load(render_backend_t* backend, const uuid_t uuid);
 
+RENDER_API bool
+render_pixelshader_reload(render_pixelshader_t* shader);
+
 
 RENDER_API render_vertexshader_t*
 render_vertexshader_allocate(void);
@@ -60,6 +63,13 @@ render_vertexshader_upload(render_backend_t* backend, render_vertexshader_t* sha
 
 RENDER_API render_vertexshader_t*
 render_vertexshader_load(render_backend_t* backend, const uuid_t uuid);
+
+RENDER_API bool
+render_vertexshader_reload(render_vertexshader_t* shader);
+
+
+RENDER_API bool
+render_shader_reload(render_shader_t* shader);
 
 
 #if RESOURCE_ENABLE_LOCAL_SOURCE
