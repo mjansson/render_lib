@@ -91,6 +91,10 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 
 	resource_type_hash = hash(type, type_length);
 
+	if ((resource_type_hash != HASH_VERTEXSHADER) && (resource_type_hash != HASH_PIXELSHADER) &&
+	        (resource_type_hash != HASH_SHADER))
+		return -1;
+
 	if (resource_type_hash == HASH_SHADER) {
 		//Defer compilation to target shader and copy successful result
 		int result = -1;
@@ -106,26 +110,43 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 		stream_t* source = resource_local_open_static(shaderuuid, platform);
 		stream_t* target = resource_local_create_static(uuid, platform);
 		if (source && target) {
-			size_t source_size = stream_size(source) - sizeof(resource_header_t);
+			size_t source_size = stream_size(source);
 
-			resource_header_t header;
-			stream_read(source, &header, sizeof(header));
+			resource_header_t header = resource_stream_read_header(source);
+			source_size -= stream_tell(source);
+
 			header.source_hash = source_hash;
+			resource_stream_write_header(target, header);
 
 			char* buffer = memory_allocate(HASH_RESOURCE, source_size, 0, MEMORY_PERSISTENT);
 			if (stream_read(source, buffer, source_size) == source_size) {
 				if (stream_write(target, buffer, source_size) == source_size)
 					result = 0;
 			}
+			memory_deallocate(buffer);
 		}
 		stream_deallocate(target);
 		stream_deallocate(source);
 
+		if (result == 0) {
+			result = -1;
+			source = resource_local_open_dynamic(shaderuuid, platform);
+			target = resource_local_create_dynamic(uuid, platform);
+			if (source && target) {
+				size_t source_size = stream_size(source);
+				char* buffer = memory_allocate(HASH_RESOURCE, source_size, 0, MEMORY_PERSISTENT);
+				if (stream_read(source, buffer, source_size) == source_size) {
+					if (stream_write(target, buffer, source_size) == source_size)
+						result = 0;
+				}
+				memory_deallocate(buffer);
+			}
+			stream_deallocate(target);
+			stream_deallocate(source);
+		}
+
 		return result;
 	}
-
-	if ((resource_type_hash != HASH_VERTEXSHADER) && (resource_type_hash != HASH_PIXELSHADER))
-		return -1;
 
 	array_push(subplatforms, platform);
 
