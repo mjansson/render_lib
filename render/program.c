@@ -140,7 +140,8 @@ finalize:
 }
 
 bool
-render_program_reload(render_program_t* program) {
+render_program_reload(render_program_t* program, const uuid_t uuid) {
 	FOUNDATION_UNUSED(program);
+	FOUNDATION_UNUSED(uuid);
 	return false;
 }

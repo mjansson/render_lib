@@ -70,8 +70,9 @@ render_pixelshader_load(render_backend_t* backend, const uuid_t uuid) {
 }
 
 bool
-render_pixelshader_reload(render_pixelshader_t* shader) {
+render_pixelshader_reload(render_pixelshader_t* shader, const uuid_t uuid) {
 	FOUNDATION_UNUSED(shader);
+	FOUNDATION_UNUSED(uuid);
 	return false;
 }
 
@@ -120,8 +121,9 @@ render_vertexshader_load(render_backend_t* backend, const uuid_t uuid) {
 }
 
 bool
-render_vertexshader_reload(render_vertexshader_t* shader) {
+render_vertexshader_reload(render_vertexshader_t* shader, const uuid_t uuid) {
 	FOUNDATION_UNUSED(shader);
+	FOUNDATION_UNUSED(uuid);
 	return false;
 }
 
@@ -198,10 +200,10 @@ render_shader_load(render_backend_t* backend, const uuid_t uuid, hash_t type) {
 }
 
 bool
-render_shader_reload(render_shader_t* shader) {
+render_shader_reload(render_shader_t* shader, const uuid_t uuid) {
 	switch (shader->shadertype) {
-		case SHADER_PIXEL:  return render_pixelshader_reload((render_pixelshader_t*)shader);
-		case SHADER_VERTEX: return render_vertexshader_reload((render_vertexshader_t*)shader);
+		case SHADER_PIXEL:  return render_pixelshader_reload((render_pixelshader_t*)shader, uuid);
+		case SHADER_VERTEX: return render_vertexshader_reload((render_vertexshader_t*)shader, uuid);
 		default: break;
 	}
 	return false;
