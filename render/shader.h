@@ -45,7 +45,6 @@ render_pixelshader_load(render_backend_t* backend, const uuid_t uuid);
 RENDER_API bool
 render_pixelshader_reload(render_pixelshader_t* shader, const uuid_t uuid);
 
-
 RENDER_API render_vertexshader_t*
 render_vertexshader_allocate(void);
 
@@ -67,10 +66,10 @@ render_vertexshader_load(render_backend_t* backend, const uuid_t uuid);
 RENDER_API bool
 render_vertexshader_reload(render_vertexshader_t* shader, const uuid_t uuid);
 
-
 RENDER_API bool
 render_shader_reload(render_shader_t* shader, const uuid_t uuid);
 
+#define RENDER_SHADER_RESOURCE_VERSION 2
 
 #if RESOURCE_ENABLE_LOCAL_SOURCE
 

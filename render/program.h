@@ -45,6 +45,8 @@ render_program_load(render_backend_t* backend, const uuid_t uuid);
 RENDER_API bool
 render_program_reload(render_program_t* program, const uuid_t uuid);
 
+#define RENDER_PROGRAM_RESOURCE_VERSION 2
+
 #if RESOURCE_ENABLE_LOCAL_SOURCE
 
 /* Compile program resource

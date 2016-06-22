@@ -21,11 +21,12 @@
 
 #include <resource/stream.h>
 #include <resource/platform.h>
+#include <resource/compile.h>
 
 //Size expectations for the program compiler and loader
 FOUNDATION_STATIC_ASSERT(sizeof(render_vertex_decl_t) == 72, "invalid vertex decl size");
 FOUNDATION_STATIC_ASSERT(sizeof(render_parameter_decl_t) == 8, "invalid parameter decl size");
-FOUNDATION_STATIC_ASSERT(sizeof(render_program_t) == 64 + sizeof(render_vertex_decl_t) +
+FOUNDATION_STATIC_ASSERT(sizeof(render_program_t) == 80 + sizeof(render_vertex_decl_t) +
                          (sizeof(hash_t) * VERTEXATTRIBUTE_NUMATTRIBUTES) +
                          sizeof(render_parameter_decl_t), "invalid program size");
 
@@ -66,10 +67,14 @@ render_program_upload(render_backend_t* backend, render_program_t* program) {
 
 render_program_t*
 render_program_load(render_backend_t* backend, const uuid_t uuid) {
-	render_program_t* program = nullptr;
+	render_program_t* program = render_backend_program_lookup(backend, uuid);
+	if (program) {
+		atomic_incr32(&program->ref);
+		return program;
+	}
 
 #if RESOURCE_ENABLE_LOCAL_CACHE
-	const uint32_t expected_version = 1;
+	const uint32_t expected_version = RENDER_PROGRAM_RESOURCE_VERSION;
 	uint64_t platform = render_backend_resource_platform(backend);
 	stream_t* stream;
 	bool success = false;
@@ -78,37 +83,48 @@ render_program_load(render_backend_t* backend, const uuid_t uuid) {
 	resource_header_t header;
 	render_vertexshader_t* vertexshader = 0;
 	render_pixelshader_t* pixelshader = 0;
+	bool recompiled = false;
+
+	error_context_declare_local(
+	    char uuidbuf[40];
+	    const string_t uuidstr = string_from_uuid(uuidbuf, sizeof(uuidbuf), uuid);
+	);
+	error_context_push(STRING_CONST("loading program"), STRING_ARGS(uuidstr));
+
+	render_backend_enable_thread(backend);
+
+retry:
 
 	stream = resource_stream_open_static(uuid, platform);
-	render_backend_enable_thread(backend);
 	if (!stream)
 		goto finalize;
 
 	header = resource_stream_read_header(stream);
 	if ((header.type != HASH_PROGRAM) || (header.version != expected_version)) {
-		log_warnf(HASH_RENDER, WARNING_INVALID_VALUE,
-		          STRING_CONST("Got unexpected type/version when loading program: %" PRIx64 " : %u"),
-		          (uint64_t)header.type, (uint32_t)header.version);
+		if (!recompiled) {
+			log_warnf(HASH_RENDER, WARNING_INVALID_VALUE,
+			          STRING_CONST("Got unexpected type/version: %" PRIx64 " : %u"),
+			          (uint64_t)header.type, (uint32_t)header.version);
+			stream_deallocate(stream);
+			recompiled = resource_compile(uuid, render_backend_resource_platform(backend));
+			if (recompiled)
+				goto retry;
+			log_error(HASH_RENDER, ERROR_INTERNAL_FAILURE, STRING_CONST("Failed recompiling program"));
+		}
 		goto finalize;
 	}
 
 	shaderuuid = stream_read_uint128(stream);
 	vertexshader = render_vertexshader_load(backend, shaderuuid);
 	if (!vertexshader) {
-		string_const_t uuidstr = string_from_uuid_static(shaderuuid);
-		log_warnf(HASH_RENDER, WARNING_INVALID_VALUE,
-		          STRING_CONST("Got invalid vertex shader when loading program: %.*s"),
-		          STRING_FORMAT(uuidstr));
+		log_warn(HASH_RENDER, WARNING_INVALID_VALUE, STRING_CONST("Got invalid vertex shader"));
 		goto finalize;
 	}
 
 	shaderuuid = stream_read_uint128(stream);
 	pixelshader = render_pixelshader_load(backend, shaderuuid);
 	if (!pixelshader) {
-		string_const_t uuidstr = string_from_uuid_static(shaderuuid);
-		log_warnf(HASH_RENDER, WARNING_INVALID_VALUE,
-		          STRING_CONST("Got invalid pixel shader when loading program: %.*s"),
-		          STRING_FORMAT(uuidstr));
+		log_warn(HASH_RENDER, WARNING_INVALID_VALUE, STRING_CONST("Got invalid pixel shader"));
 		goto finalize;
 	}
 
@@ -128,12 +144,19 @@ render_program_load(render_backend_t* backend, const uuid_t uuid) {
 finalize:
 	stream_deallocate(stream);
 
-	if (!success) {
+	if (success) {
+		atomic_store32(&program->ref, 1);
+		render_backend_program_store(backend, uuid, program);
+	}
+	else {
 		render_pixelshader_deallocate(pixelshader);
 		render_vertexshader_deallocate(vertexshader);
 		render_program_deallocate(program);
 		program = nullptr;
 	}
+
+	error_context_pop();
+
 #endif
 
 	return program;

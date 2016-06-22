@@ -332,7 +332,9 @@ struct render_backend_vtable_t {
 	colorspace_t             colorspace; \
 	object_t                 framebuffer; \
 	uint64_t                 framecount; \
-	uint64_t                 platform
+	uint64_t                 platform; \
+	hashmap_fixed_t          shadermap; \
+	hashmap_fixed_t          programmap
 
 struct render_backend_t {
 	RENDER_DECLARE_BACKEND;
@@ -369,12 +371,21 @@ struct render_drawable_t {
 	int      refresh;
 };
 
+#if FOUNDATION_SIZE_POINTER == 4
+#  define RENDER_32BIT_PADDING(name) uint32_t __pad_ ## name;
+#  define RENDER_32BIT_PADDING_ARR(name, cnt) uint32_t __pad_ # name [cnt];
+#else
+#  define RENDER_32BIT_PADDING(...)
+#  define RENDER_32BIT_PADDING_ARR(...)
+#endif
+
 #define RENDER_DECLARE_OBJECT \
-	RESOURCE_DECLARE_OBJECT; \
-	render_backend_t* backend
+	FOUNDATION_DECLARE_OBJECT; \
+	render_backend_t* backend; \
+	RENDER_32BIT_PADDING(backendptr)
 
 struct render_target_t {
-	RENDER_DECLARE_OBJECT;
+	RENDER_DECLARE_OBJECT
 	int            width;
 	int            height;
 	pixelformat_t  pixelformat;
@@ -478,7 +489,7 @@ struct render_parameter_decl_t {
 };
 
 #define RENDER_DECLARE_BUFFER \
-	RENDER_DECLARE_OBJECT; \
+	RENDER_DECLARE_OBJECT \
 	uint8_t    usage; \
 	uint8_t    buffertype; \
 	uint8_t    policy; \
@@ -493,10 +504,12 @@ struct render_parameter_decl_t {
 	uintptr_t  backend_data[4]
 
 #define RENDER_DECLARE_SHADER \
-	render_backend_t* backend; \
+	RENDER_DECLARE_OBJECT \
 	unsigned int shadertype:8; \
 	unsigned int unused:24; \
-	uintptr_t backend_data[4]
+	uint32_t __align_pad; \
+	uintptr_t backend_data[4]; \
+	RENDER_32BIT_PADDING_ARR(backend_data, 4)
 
 struct render_buffer_t {
 	RENDER_DECLARE_BUFFER;
@@ -521,30 +534,26 @@ struct render_statebuffer_t {
 	render_state_t state;
 };
 
-struct render_shader_t {
-	RENDER_DECLARE_SHADER;
+FOUNDATION_ALIGNED_STRUCT(render_shader_t, 8) {
+	RENDER_DECLARE_SHADER
 };
 
-struct render_vertexshader_t {
-	RENDER_DECLARE_SHADER;
+FOUNDATION_ALIGNED_STRUCT(render_vertexshader_t, 8) {
+	RENDER_DECLARE_SHADER
 };
 
-struct render_pixelshader_t {
-	RENDER_DECLARE_SHADER;
+FOUNDATION_ALIGNED_STRUCT(render_pixelshader_t, 8) {
+	RENDER_DECLARE_SHADER
 };
 
-struct render_program_t {
-	render_backend_t* backend;
+FOUNDATION_ALIGNED_STRUCT(render_program_t, 8) {
+	RENDER_DECLARE_OBJECT
 	render_vertexshader_t* vertexshader;
 	render_pixelshader_t* pixelshader;
 	void* __unused;
-#if FOUNDATION_SIZE_POINTER == 4
-	uint32_t __padding_ptr[4];
-#endif
+	RENDER_32BIT_PADDING_ARR(pointers, 3)
 	uintptr_t backend_data[4];
-#if FOUNDATION_SIZE_POINTER == 4
-	uint32_t __padding_data[4];
-#endif
+	RENDER_32BIT_PADDING_ARR(data, 4)
 	render_vertex_decl_t attributes;
 	hash_t attribute_name[VERTEXATTRIBUTE_NUMATTRIBUTES];
 	render_parameter_decl_t parameters;

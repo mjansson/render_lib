@@ -312,17 +312,3 @@ render_vertex_decl_deallocate(render_vertex_decl_t* decl) {
 	render_vertex_decl_finalize(decl);
 	memory_deallocate(decl);
 }
-
-uuid_t
-render_vertexbuffer_uuid(object_t id) {
-	render_vertexbuffer_t* buffer = GET_BUFFER(id);
-	return buffer ? buffer->uuid : uuid_null();
-}
-
-void
-render_vertexbuffer_set_uuid(object_t id, const uuid_t uuid) {
-	render_vertexbuffer_t* buffer = GET_BUFFER(id);
-	if (buffer)
-		buffer->uuid = uuid;
-}
-

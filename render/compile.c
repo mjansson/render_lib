@@ -98,14 +98,20 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 	if (resource_type_hash == HASH_SHADER) {
 		//Defer compilation to target shader and copy successful result
 		int result = -1;
+		bool recompile = false;
+		bool recompiled = false;
 		resource_change_t* shaderchange = resource_source_get(source, HASH_SHADER, platform);
 		uuid_t shaderuuid = shaderchange ? string_to_uuid(STRING_ARGS(shaderchange->value.value)) :
 		                    uuid_null();
 		if (uuid_is_null(shaderuuid))
 			return -1;
-		if (resource_compile_need_update(shaderuuid, platform) &&
-		        !resource_compile(shaderuuid, platform))
-			return -1;
+		if (resource_compile_need_update(shaderuuid, platform)) {
+			recompiled = resource_compile(shaderuuid, platform);
+			if (!recompiled)
+				return -1;
+		}
+
+recompiled_retry:
 
 		stream_t* source = resource_local_open_static(shaderuuid, platform);
 		stream_t* target = resource_local_create_static(uuid, platform);
@@ -113,17 +119,23 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 			size_t source_size = stream_size(source);
 
 			resource_header_t header = resource_stream_read_header(source);
-			source_size -= stream_tell(source);
-
-			header.source_hash = source_hash;
-			resource_stream_write_header(target, header);
-
-			char* buffer = memory_allocate(HASH_RESOURCE, source_size, 0, MEMORY_PERSISTENT);
-			if (stream_read(source, buffer, source_size) == source_size) {
-				if (stream_write(target, buffer, source_size) == source_size)
-					result = 0;
+			if (((header.type != HASH_VERTEXSHADER) && (header.type != HASH_PIXELSHADER)) ||
+			        (header.version != RENDER_SHADER_RESOURCE_VERSION)) {
+				recompile = true;
 			}
-			memory_deallocate(buffer);
+			else {
+				source_size -= stream_tell(source);
+
+				header.source_hash = source_hash;
+				resource_stream_write_header(target, header);
+
+				char* buffer = memory_allocate(HASH_RESOURCE, source_size, 0, MEMORY_PERSISTENT);
+				if (stream_read(source, buffer, source_size) == source_size) {
+					if (stream_write(target, buffer, source_size) == source_size)
+						result = 0;
+				}
+				memory_deallocate(buffer);
+			}
 		}
 		stream_deallocate(target);
 		stream_deallocate(source);
@@ -139,10 +151,22 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 					if (stream_write(target, buffer, source_size) == source_size)
 						result = 0;
 				}
+				else {
+					recompile = true;
+				}
 				memory_deallocate(buffer);
+			}
+			else {
+				recompile = true;
 			}
 			stream_deallocate(target);
 			stream_deallocate(source);
+		}
+
+		if (recompile && !recompiled) {
+			recompiled = resource_compile(shaderuuid, platform);
+			if (recompiled)
+				goto recompiled_retry;
 		}
 
 		return result;
@@ -263,7 +287,7 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 
 		stream = resource_local_create_static(uuid, subplatform);
 		if (stream) {
-			uint32_t version = 1;
+			uint32_t version = RENDER_SHADER_RESOURCE_VERSION;
 			resource_header_t header = {
 				.type = resource_type_hash,
 				.version = version,
@@ -335,6 +359,12 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 	if (resource_type_hash != HASH_PROGRAM)
 		return -1;
 
+	error_context_declare_local(
+	    char uuidbuf[40];
+	    const string_t uuidstr = string_from_uuid(uuidbuf, sizeof(uuidbuf), uuid);
+	);
+	error_context_push(STRING_CONST("compiling program"), STRING_ARGS(uuidstr));
+
 	array_push(subplatforms, platform);
 
 	hashmap_initialize(map, sizeof(fixedmap.bucket) / sizeof(fixedmap.bucket[0]), 8);
@@ -362,8 +392,7 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 
 		resource_change_t* shaderchange = resource_source_get(source, HASH_VERTEXSHADER, subplatform);
 		if (!shaderchange || !(shaderchange->flags & RESOURCE_SOURCEFLAG_VALUE)) {
-			log_error(HASH_RESOURCE, ERROR_INVALID_VALUE,
-			          STRING_CONST("Unable to compile program: Missing vertex shader"));
+			log_error(HASH_RESOURCE, ERROR_INVALID_VALUE, STRING_CONST("Missing vertex shader"));
 			result = -1;
 			continue;
 		}
@@ -371,8 +400,7 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 
 		shaderchange = resource_source_get(source, HASH_PIXELSHADER, subplatform);
 		if (!shaderchange || !(shaderchange->flags & RESOURCE_SOURCEFLAG_VALUE)) {
-			log_error(HASH_RESOURCE, ERROR_INVALID_VALUE,
-			          STRING_CONST("Unable to compile program: Missing pixel shader"));
+			log_error(HASH_RESOURCE, ERROR_INVALID_VALUE, STRING_CONST("Missing pixel shader"));
 			result = -1;
 			continue;
 		}
@@ -382,16 +410,16 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 		array_push(shaderplatforms, subplatform);
 
 		if (resource_autoimport_need_update(vertexshader, subplatform)) {
-			string_const_t uuidstr = string_from_uuid_static(vertexshader);
+			string_const_t vsuuidstr = string_from_uuid_static(vertexshader);
 			log_debugf(HASH_RESOURCE, STRING_CONST("Reimporting vertex shader resource %.*s"),
-			           STRING_FORMAT(uuidstr));
+			           STRING_FORMAT(vsuuidstr));
 			resource_autoimport(vertexshader);
 		}
 
 		if (resource_autoimport_need_update(pixelshader, subplatform)) {
-			string_const_t uuidstr = string_from_uuid_static(pixelshader);
+			string_const_t psuuidstr = string_from_uuid_static(pixelshader);
 			log_debugf(HASH_RESOURCE, STRING_CONST("Reimporting pixel shader resource %.*s"),
-			           STRING_FORMAT(uuidstr));
+			           STRING_FORMAT(psuuidstr));
 			resource_autoimport(pixelshader);
 		}
 
@@ -484,8 +512,7 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 
 		resource_change_t* shaderchange = resource_source_get(source, HASH_VERTEXSHADER, subplatform);
 		if (!shaderchange || !(shaderchange->flags & RESOURCE_SOURCEFLAG_VALUE)) {
-			log_error(HASH_RESOURCE, ERROR_INVALID_VALUE,
-			          STRING_CONST("Unable to compile program: Missing vertex shader"));
+			log_error(HASH_RESOURCE, ERROR_INVALID_VALUE, STRING_CONST("Missing vertex shader"));
 			result = -1;
 			continue;
 		}
@@ -493,8 +520,7 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 
 		shaderchange = resource_source_get(source, HASH_PIXELSHADER, subplatform);
 		if (!shaderchange || !(shaderchange->flags & RESOURCE_SOURCEFLAG_VALUE)) {
-			log_error(HASH_RESOURCE, ERROR_INVALID_VALUE,
-			          STRING_CONST("Unable to compile program: Missing pixel shader"));
+			log_error(HASH_RESOURCE, ERROR_INVALID_VALUE, STRING_CONST("Missing pixel shader"));
 			result = -1;
 			continue;
 		}
@@ -513,7 +539,15 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 
 			vshader = render_vertexshader_load(backend, vertexshader);
 			pshader = render_pixelshader_load(backend, pixelshader);
-			do {
+			if (!vshader) {
+				log_errorf(HASH_RESOURCE, ERROR_INVALID_VALUE, STRING_CONST("Unable to load vertex shader"));
+				result = -1;
+			}
+			if (!pshader) {
+				log_errorf(HASH_RESOURCE, ERROR_INVALID_VALUE, STRING_CONST("Unable to load pixel shader"));
+				result = -1;
+			}
+			while (pshader && vshader) {
 				char name[256];
 				GLint attributes = 0;
 				GLint uniforms = 0;
@@ -521,8 +555,7 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 
 				handle = glCreateProgram();
 				if (!handle) {
-					log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL,
-					           STRING_CONST("Unable to compile program: Unable to create program object"));
+					log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Unable to create program object"));
 					result = -1;
 					break;
 				}
@@ -680,7 +713,7 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 
 				offset = 0;
 				program->parameters.num_parameters = 0;
-				for (GLint iu = 0; iu < uniforms; ++iu) {
+				for (GLint iu = 0; (iu < uniforms) && (result == 0); ++iu) {
 					GLsizei num_chars = 0;
 					GLint size = 0;
 					GLenum type = GL_NONE;
@@ -719,14 +752,13 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 						result = -1;
 						break;
 					}
-					if (result < 0)
-						break;
 
 					++program->parameters.num_parameters;
 				}
+
 				program->parameters.size = offset;
+				break;
 			}
-			while (false);
 
 			if (handle)
 				glDeleteProgram(handle);
@@ -737,10 +769,10 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 			memory_deallocate(log_buffer);
 		}
 
-		if (program) {
+		if (program && (result == 0)) {
 			stream = resource_local_create_static(uuid, subplatform);
 			if (stream) {
-				uint32_t version = 1;
+				uint32_t version = RENDER_PROGRAM_RESOURCE_VERSION;
 				resource_header_t header = {
 					.type = resource_type_hash,
 					.version = version,
@@ -759,7 +791,7 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 			}
 			else {
 				log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL,
-				           STRING_CONST("Unable to compile program: Unable to create static resource stream"));
+				           STRING_CONST("Unable to create static resource stream"));
 				result = -1;
 			}
 		}
@@ -774,6 +806,8 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 	array_deallocate(moreplatforms);
 	array_deallocate(subplatforms);
 	hashmap_finalize(map);
+
+	error_context_pop();
 
 	return result;
 }

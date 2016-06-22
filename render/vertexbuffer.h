@@ -155,9 +155,3 @@ render_vertexbuffer_release(object_t buffer, bool sys, bool aux);
 
 RENDER_API void
 render_vertexbuffer_restore(object_t buffer);
-
-RENDER_API uuid_t
-render_vertexbuffer_uuid(object_t buffer);
-
-RENDER_API void
-render_vertexbuffer_set_uuid(object_t buffer, const uuid_t uuid);

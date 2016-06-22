@@ -21,6 +21,9 @@
 
 #include <resource/stream.h>
 #include <resource/platform.h>
+#include <resource/compile.h>
+
+FOUNDATION_STATIC_ASSERT(sizeof(render_shader_t) == 64, "invalid shader size");
 
 static void*
 render_shader_load(render_backend_t* backend, const uuid_t uuid, hash_t type);
@@ -129,18 +132,33 @@ render_vertexshader_reload(render_vertexshader_t* shader, const uuid_t uuid) {
 
 static void*
 render_shader_load(render_backend_t* backend, const uuid_t uuid, hash_t type) {
-	void* shader = nullptr;
+	void* shader = render_backend_shader_lookup(backend, uuid);
+	if (shader) {
+		atomic_incr32(&((render_shader_t*)shader)->ref);
+		return shader;
+	}
 
 #if RESOURCE_ENABLE_LOCAL_CACHE
-	const uint32_t expected_version = 1;
+	const uint32_t expected_version = RENDER_SHADER_RESOURCE_VERSION;
 	uint64_t platform = render_backend_resource_platform(backend);
 	stream_t* stream;
+	resource_header_t header;
 	bool success = false;
+	bool recompile = false;
+	bool recompiled = false;
+
+	error_context_declare_local(
+	char uuidbuf[40];
+	const string_t uuidstr = string_from_uuid(uuidbuf, sizeof(uuidbuf), uuid);
+	);
+	error_context_push(STRING_CONST("loading shader"), STRING_ARGS(uuidstr));
+
+retry:
 
 	stream = resource_stream_open_static(uuid, platform);
 	render_backend_enable_thread(backend);
 	if (stream) {
-		resource_header_t header = resource_stream_read_header(stream);
+		header = resource_stream_read_header(stream);
 		if ((header.type == type) && (header.version == expected_version)) {
 			if (type == HASH_PIXELSHADER) {
 				shader = render_pixelshader_allocate();
@@ -152,10 +170,11 @@ render_shader_load(render_backend_t* backend, const uuid_t uuid, hash_t type) {
 			}
 			((render_shader_t*)shader)->backend = nullptr;
 		}
-		else {
+		else if (!recompiled) {
 			log_warnf(HASH_RENDER, WARNING_INVALID_VALUE,
-			          STRING_CONST("Got unexpected type/version when loading shader: %" PRIx64 " : %u"),
+			          STRING_CONST("Got unexpected type/version %" PRIx64 " : %u"),
 			          (uint64_t)header.type, (uint32_t)header.version);
+			recompile = true;
 		}
 		stream_deallocate(stream);
 		stream = nullptr;
@@ -177,22 +196,35 @@ render_shader_load(render_backend_t* backend, const uuid_t uuid, hash_t type) {
 			}
 			memory_deallocate(buffer);
 		}
-		else {
+		else if (!recompiled) {
 			log_warnf(HASH_RENDER, WARNING_INVALID_VALUE,
-			          STRING_CONST("Got unexpected version/size when loading shader blob: %u (%" PRIu64 ")"),
+			          STRING_CONST("Got unexpected version/size when loading blob: %u (%" PRIu64 ")"),
 			          version, size);
+			recompile = true;
 		}
 		stream_deallocate(stream);
 		stream = nullptr;
 	}
 
-	if (!success) {
+	if (success) {
+		atomic_store32(&((render_shader_t*)shader)->ref, 1);
+		render_backend_shader_store(backend, uuid, shader);
+	}
+	else {
 		if (type == HASH_PIXELSHADER)
 			render_pixelshader_deallocate(shader);
 		else
 			render_vertexshader_deallocate(shader);
 		shader = nullptr;
+
+		if (recompile && !recompiled) {
+			recompiled = resource_compile(uuid, render_backend_resource_platform(backend));
+			if (recompiled)
+				goto retry;
+		}
 	}
+
+	error_context_pop();
 
 #endif
 

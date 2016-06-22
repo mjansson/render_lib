@@ -174,7 +174,12 @@ render_backend_allocate(render_api_t api, bool allow_fallback) {
 	backend->framebuffer = render_target_create_framebuffer(backend);
 	backend->framecount = 1;
 
-    render_backend_set_resource_platform(backend, 0);
+	hashmap_initialize((hashmap_t*)&backend->shadermap,
+	                   sizeof(backend->shadermap.bucket) / sizeof(backend->shadermap.bucket[0]), 5);
+	hashmap_initialize((hashmap_t*)&backend->programmap,
+	                   sizeof(backend->programmap.bucket) / sizeof(backend->programmap.bucket[0]), 5);
+
+	render_backend_set_resource_platform(backend, 0);
 
 	memory_context_pop();
 
@@ -190,6 +195,9 @@ render_backend_deallocate(render_backend_t* backend) {
 
 	if (backend->framebuffer)
 		render_target_destroy(backend->framebuffer);
+
+	hashmap_finalize((hashmap_t*)&backend->shadermap);
+	hashmap_finalize((hashmap_t*)&backend->programmap);
 
 	memory_deallocate(backend);
 }
@@ -213,7 +221,7 @@ void
 render_backend_set_format(render_backend_t* backend, const pixelformat_t format,
                           const colorspace_t space) {
 	if (!FOUNDATION_VALIDATE_MSG(!backend->drawable,
-	                         "Unable to change format when drawable is already set"))
+	                             "Unable to change format when drawable is already set"))
 		return;
 	backend->pixelformat = format;
 	backend->colorspace  = space;
@@ -296,14 +304,20 @@ render_backend_set_resource_platform(render_backend_t* backend, uint64_t platfor
 
 render_shader_t*
 render_backend_shader_lookup(render_backend_t* backend, const uuid_t uuid) {
-	FOUNDATION_UNUSED(backend);
-	FOUNDATION_UNUSED(uuid);
-	return nullptr;
+	return hashmap_lookup((hashmap_t*)&backend->shadermap, resource_uuid_hash(uuid));
 }
 
 render_program_t*
 render_backend_program_lookup(render_backend_t* backend, const uuid_t uuid) {
-	FOUNDATION_UNUSED(backend);
-	FOUNDATION_UNUSED(uuid);
-	return nullptr;
+	return hashmap_lookup((hashmap_t*)&backend->programmap, resource_uuid_hash(uuid));
+}
+
+void
+render_backend_shader_store(render_backend_t* backend, const uuid_t uuid, render_shader_t* shader) {
+	//
+}
+
+void
+render_backend_program_store(render_backend_t* backend, const uuid_t uuid, render_program_t* program) {
+	//
 }

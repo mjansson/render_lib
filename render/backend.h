@@ -79,3 +79,9 @@ render_backend_shader_lookup(render_backend_t* backend, const uuid_t uuid);
 
 RENDER_API render_program_t*
 render_backend_program_lookup(render_backend_t* backend, const uuid_t uuid);
+
+RENDER_API void
+render_backend_shader_store(render_backend_t* backend, const uuid_t uuid, render_shader_t* shader);
+
+RENDER_API void
+render_backend_program_store(render_backend_t* backend, const uuid_t uuid, render_program_t* program);

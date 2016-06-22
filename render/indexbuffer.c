@@ -167,16 +167,3 @@ render_indexbuffer_restore(object_t id) {
 		buffer->flags |= RENDERBUFFER_DIRTY;
 	}
 }
-
-uuid_t
-render_indexbuffer_uuid(object_t id) {
-	render_indexbuffer_t* buffer = GET_BUFFER(id);
-	return buffer ? buffer->uuid : uuid_null();
-}
-
-void
-render_indexbuffer_set_uuid(object_t id, const uuid_t uuid) {
-	render_indexbuffer_t* buffer = GET_BUFFER(id);
-	if (buffer)
-		buffer->uuid = uuid;
-}

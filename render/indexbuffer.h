@@ -75,9 +75,3 @@ render_indexbuffer_release(object_t buffer, bool sys, bool aux);
 
 RENDER_API void
 render_indexbuffer_restore(object_t buffer);
-
-RENDER_API uuid_t
-render_indexbuffer_uuid(object_t buffer);
-
-RENDER_API void
-render_indexbuffer_set_uuid(object_t buffer, const uuid_t uuid);
