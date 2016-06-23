@@ -75,6 +75,96 @@ resource_source_platform_superset(resource_change_t* change, resource_change_t* 
 	return 0;
 }
 
+static int
+render_shader_ref_compile(const uuid_t uuid, uint64_t platform, resource_source_t* source,
+                          const uint256_t source_hash, const char* type, size_t type_length) {
+	//Defer compilation to target shader and copy successful result
+	int result = -1;
+	bool recompile = false;
+	bool recompiled = false;
+
+	error_context_declare_local(
+	    char uuidbuf[40];
+	    const string_t uuidstr = string_from_uuid(uuidbuf, sizeof(uuidbuf), uuid);
+	);
+	error_context_push(STRING_CONST("compiling shader"), STRING_ARGS(uuidstr));
+
+	resource_change_t* shaderchange = resource_source_get(source, HASH_SHADER, platform);
+	uuid_t shaderuuid = shaderchange ? string_to_uuid(STRING_ARGS(shaderchange->value.value)) :
+	                    uuid_null();
+	if (uuid_is_null(shaderuuid))
+		return -1;
+	if (resource_compile_need_update(shaderuuid, platform)) {
+		recompiled = resource_compile(shaderuuid, platform);
+		if (!recompiled) {
+			error_context_pop();
+			return -1;
+		}
+	}
+
+retry:
+
+	stream_t* ressource = resource_local_open_static(shaderuuid, platform);
+	stream_t* restarget = resource_local_create_static(uuid, platform);
+	if (ressource && restarget) {
+		size_t source_size = stream_size(ressource);
+
+		resource_header_t header = resource_stream_read_header(ressource);
+		if (((header.type != HASH_VERTEXSHADER) && (header.type != HASH_PIXELSHADER)) ||
+		        (header.version != RENDER_SHADER_RESOURCE_VERSION)) {
+			recompile = true;
+		}
+		else {
+			source_size -= stream_tell(ressource);
+
+			header.source_hash = source_hash;
+			resource_stream_write_header(restarget, header);
+
+			char* buffer = memory_allocate(HASH_RESOURCE, source_size, 0, MEMORY_PERSISTENT);
+			if (stream_read(ressource, buffer, source_size) == source_size) {
+				if (stream_write(restarget, buffer, source_size) == source_size)
+					result = 0;
+			}
+			memory_deallocate(buffer);
+		}
+	}
+	stream_deallocate(restarget);
+	stream_deallocate(ressource);
+
+	if (result == 0) {
+		result = -1;
+		ressource = resource_local_open_dynamic(shaderuuid, platform);
+		restarget = resource_local_create_dynamic(uuid, platform);
+		if (ressource && restarget) {
+			size_t source_size = stream_size(ressource);
+			char* buffer = memory_allocate(HASH_RESOURCE, source_size, 0, MEMORY_PERSISTENT);
+			if (stream_read(ressource, buffer, source_size) == source_size) {
+				if (stream_write(restarget, buffer, source_size) == source_size)
+					result = 0;
+			}
+			else {
+				recompile = true;
+			}
+			memory_deallocate(buffer);
+		}
+		else {
+			recompile = true;
+		}
+		stream_deallocate(restarget);
+		stream_deallocate(ressource);
+	}
+
+	if (recompile && !recompiled) {
+		recompiled = resource_compile(shaderuuid, platform);
+		if (recompiled)
+			goto retry;
+	}
+
+	error_context_pop();
+
+	return result;
+}
+
 int
 render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* source,
                       const uint256_t source_hash, const char* type, size_t type_length) {
@@ -95,92 +185,14 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 	        (resource_type_hash != HASH_SHADER))
 		return -1;
 
+	if (resource_type_hash == HASH_SHADER)
+		return render_shader_ref_compile(uuid, platform, source, source_hash, type, type_length);
+
 	error_context_declare_local(
 	    char uuidbuf[40];
 	    const string_t uuidstr = string_from_uuid(uuidbuf, sizeof(uuidbuf), uuid);
 	);
 	error_context_push(STRING_CONST("compiling shader"), STRING_ARGS(uuidstr));
-
-	if (resource_type_hash == HASH_SHADER) {
-		//Defer compilation to target shader and copy successful result
-		int result = -1;
-		bool recompile = false;
-		bool recompiled = false;
-		resource_change_t* shaderchange = resource_source_get(source, HASH_SHADER, platform);
-		uuid_t shaderuuid = shaderchange ? string_to_uuid(STRING_ARGS(shaderchange->value.value)) :
-		                    uuid_null();
-		if (uuid_is_null(shaderuuid))
-			return -1;
-		if (resource_compile_need_update(shaderuuid, platform)) {
-			recompiled = resource_compile(shaderuuid, platform);
-			if (!recompiled) {
-				error_context_pop();
-				return -1;
-			}
-		}
-
-recompiled_retry:
-
-		stream_t* source = resource_local_open_static(shaderuuid, platform);
-		stream_t* target = resource_local_create_static(uuid, platform);
-		if (source && target) {
-			size_t source_size = stream_size(source);
-
-			resource_header_t header = resource_stream_read_header(source);
-			if (((header.type != HASH_VERTEXSHADER) && (header.type != HASH_PIXELSHADER)) ||
-			        (header.version != RENDER_SHADER_RESOURCE_VERSION)) {
-				recompile = true;
-			}
-			else {
-				source_size -= stream_tell(source);
-
-				header.source_hash = source_hash;
-				resource_stream_write_header(target, header);
-
-				char* buffer = memory_allocate(HASH_RESOURCE, source_size, 0, MEMORY_PERSISTENT);
-				if (stream_read(source, buffer, source_size) == source_size) {
-					if (stream_write(target, buffer, source_size) == source_size)
-						result = 0;
-				}
-				memory_deallocate(buffer);
-			}
-		}
-		stream_deallocate(target);
-		stream_deallocate(source);
-
-		if (result == 0) {
-			result = -1;
-			source = resource_local_open_dynamic(shaderuuid, platform);
-			target = resource_local_create_dynamic(uuid, platform);
-			if (source && target) {
-				size_t source_size = stream_size(source);
-				char* buffer = memory_allocate(HASH_RESOURCE, source_size, 0, MEMORY_PERSISTENT);
-				if (stream_read(source, buffer, source_size) == source_size) {
-					if (stream_write(target, buffer, source_size) == source_size)
-						result = 0;
-				}
-				else {
-					recompile = true;
-				}
-				memory_deallocate(buffer);
-			}
-			else {
-				recompile = true;
-			}
-			stream_deallocate(target);
-			stream_deallocate(source);
-		}
-
-		if (recompile && !recompiled) {
-			recompiled = resource_compile(shaderuuid, platform);
-			if (recompiled)
-				goto recompiled_retry;
-		}
-
-		error_context_pop();
-
-		return result;
-	}
 
 	array_push(subplatforms, platform);
 
