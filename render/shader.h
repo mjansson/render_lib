@@ -24,55 +24,36 @@
 
 #include <render/types.h>
 
-RENDER_API render_pixelshader_t*
+RENDER_API render_shader_t*
 render_pixelshader_allocate(void);
 
 RENDER_API void
-render_pixelshader_initialize(render_pixelshader_t* shader);
+render_pixelshader_initialize(render_shader_t* shader);
 
-RENDER_API void
-render_pixelshader_finalize(render_pixelshader_t* shader);
-
-RENDER_API void
-render_pixelshader_deallocate(render_pixelshader_t* shader);
-
-RENDER_API bool
-render_pixelshader_upload(render_backend_t* backend, render_pixelshader_t* shader, const void* buffer, size_t size);
-
-RENDER_API bool
-render_pixelshader_reload(render_pixelshader_t* shader, const uuid_t uuid);
-
-RENDER_API render_vertexshader_t*
+RENDER_API render_shader_t*
 render_vertexshader_allocate(void);
 
 RENDER_API void
-render_vertexshader_initialize(render_vertexshader_t* shader);
+render_vertexshader_initialize(render_shader_t* shader);
+
 
 RENDER_API void
-render_vertexshader_finalize(render_vertexshader_t* shader);
-
-RENDER_API void
-render_vertexshader_deallocate(render_vertexshader_t* shader);
-
-RENDER_API bool
-render_vertexshader_upload(render_backend_t* backend, render_vertexshader_t* shader, const void* buffer, size_t size);
-
-RENDER_API bool
-render_vertexshader_reload(render_vertexshader_t* shader, const uuid_t uuid);
-
+render_shader_finalize(render_shader_t* shader);
 
 RENDER_API void
 render_shader_deallocate(render_shader_t* shader);
 
 RENDER_API bool
+render_shader_upload(render_backend_t* backend, render_shader_t* shader, const void* buffer, size_t size);
+
+RENDER_API bool
 render_shader_reload(render_shader_t* shader, const uuid_t uuid);
 
+RENDER_API bool
+render_shader_reload(render_shader_t* shader, const uuid_t uuid);
 
 RENDER_API object_t
-render_pixelshader_load(render_backend_t* backend, const uuid_t uuid);
-
-RENDER_API object_t
-render_vertexshader_load(render_backend_t* backend, const uuid_t uuid);
+render_shader_load(render_backend_t* backend, const uuid_t uuid);
 
 
 #define RENDER_SHADER_RESOURCE_VERSION 2

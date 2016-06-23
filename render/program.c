@@ -127,7 +127,7 @@ retry:
 	stream_read(stream, block, remain);
 
 	shaderuuid = block;
-	vsobj = render_vertexshader_load(backend, *shaderuuid);
+	vsobj = render_shader_load(backend, *shaderuuid);
 	vshader = render_backend_shader_resolve(backend, vsobj);
 	if (!vshader || !(vshader->shadertype & SHADER_VERTEX)) {
 		log_warn(HASH_RENDER, WARNING_INVALID_VALUE, STRING_CONST("Got invalid vertex shader"));
@@ -135,7 +135,7 @@ retry:
 	}
 
 	++shaderuuid;
-	psobj = render_pixelshader_load(backend, *shaderuuid);
+	psobj = render_shader_load(backend, *shaderuuid);
 	pshader = render_backend_shader_resolve(backend, psobj);
 	if (!pshader || !(pshader->shadertype & SHADER_PIXEL)) {
 		log_warn(HASH_RENDER, WARNING_INVALID_VALUE, STRING_CONST("Got invalid pixel shader"));
@@ -144,8 +144,8 @@ retry:
 
 	program = block;
 	program->backend = 0;
-	program->vertexshader = (render_vertexshader_t*)vshader;
-	program->pixelshader = (render_pixelshader_t*)pshader;
+	program->vertexshader = vshader;
+	program->pixelshader = pshader;
 	memset(program->backend_data, 0, sizeof(program->backend_data));
 
 	success = render_program_upload(backend, program);

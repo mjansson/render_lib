@@ -315,17 +315,13 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 				.version = version,
 				.source_hash = source_hash
 			};
+			render_shader_t shader;
 			resource_stream_write_header(stream, header);
-			if (resource_type_hash == HASH_VERTEXSHADER) {
-				render_vertexshader_t shader;
+			if (resource_type_hash == HASH_VERTEXSHADER)
 				render_vertexshader_initialize(&shader);
-				stream_write(stream, &shader, sizeof(shader));
-			}
-			else {
-				render_pixelshader_t shader;
+			else
 				render_pixelshader_initialize(&shader);
-				stream_write(stream, &shader, sizeof(shader));
-			}
+			stream_write(stream, &shader, sizeof(shader));
 			stream_deallocate(stream);
 
 			if (compiled_size > 0) {
@@ -563,8 +559,8 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 			GLint log_length = 0;
 			GLint compiled = 0;
 
-			vsobj = render_vertexshader_load(backend, vertexshader);
-			psobj = render_pixelshader_load(backend, pixelshader);
+			vsobj = render_shader_load(backend, vertexshader);
+			psobj = render_shader_load(backend, pixelshader);
 			vshader = render_backend_shader_resolve(backend, vsobj);
 			pshader = render_backend_shader_resolve(backend, psobj);
 			if (!vshader || !(vshader->shadertype & SHADER_VERTEX)) {

@@ -546,18 +546,10 @@ FOUNDATION_ALIGNED_STRUCT(render_shader_t, 8) {
 	RENDER_DECLARE_SHADER
 };
 
-FOUNDATION_ALIGNED_STRUCT(render_vertexshader_t, 8) {
-	RENDER_DECLARE_SHADER
-};
-
-FOUNDATION_ALIGNED_STRUCT(render_pixelshader_t, 8) {
-	RENDER_DECLARE_SHADER
-};
-
 FOUNDATION_ALIGNED_STRUCT(render_program_t, 8) {
 	RENDER_DECLARE_OBJECT
-	render_vertexshader_t* vertexshader;
-	render_pixelshader_t* pixelshader;
+	render_shader_t* vertexshader;
+	render_shader_t* pixelshader;
 	void* _unused_shader_ptr;
 	RENDER_32BIT_PADDING_ARR(pointers, 3)
 	uintptr_t backend_data[4];

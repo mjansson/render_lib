@@ -327,6 +327,7 @@ render_backend_shader_store(render_backend_t* backend, const uuid_t uuid,
 	if (obj) {
 		atomic_store32(&shader->ref, 1);
 		shader->id = obj;
+		shader->flags = 0;
 		objectmap_set(backend->shadermap, obj, shader);
 		hashtable64_set(backend->shadertable, resource_uuid_hash(uuid), obj);
 	}
@@ -340,6 +341,7 @@ render_backend_program_store(render_backend_t* backend, const uuid_t uuid,
 	if (obj) {
 		atomic_store32(&program->ref, 1);
 		program->id = obj;
+		program->flags = 0;
 		objectmap_set(backend->programmap, obj, program);
 		hashtable64_set(backend->programtable, resource_uuid_hash(uuid), obj);
 	}
