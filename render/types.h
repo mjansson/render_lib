@@ -263,9 +263,11 @@ typedef struct render_buffer_t render_buffer_t;
 typedef struct render_vertexbuffer_t render_vertexbuffer_t;
 typedef struct render_indexbuffer_t render_indexbuffer_t;
 typedef struct render_shader_t render_shader_t;
+typedef struct render_shader_ref_t render_shader_ref_t;
 typedef struct render_vertexshader_t render_vertexshader_t;
 typedef struct render_pixelshader_t render_pixelshader_t;
 typedef struct render_program_t render_program_t;
+typedef struct render_program_ref_t render_program_ref_t;
 typedef struct render_state_t render_state_t;
 typedef struct render_resolution_t render_resolution_t;
 typedef struct render_vertex_decl_element_t render_vertex_decl_element_t;
@@ -301,6 +303,10 @@ struct render_config_t {
 	size_t target_max;
 	/*! Maximum number of concurrently allocated buffers */
 	size_t buffer_max;
+	/*! Maximum number of concurrently allocated shaders */
+	size_t shader_max;
+	/*! Maximum number of concurrently allocated programs */
+	size_t program_max;
 };
 
 struct render_backend_vtable_t {
@@ -333,8 +339,10 @@ struct render_backend_vtable_t {
 	object_t                 framebuffer; \
 	uint64_t                 framecount; \
 	uint64_t                 platform; \
-	hashmap_fixed_t          shadermap; \
-	hashmap_fixed_t          programmap
+	hashtable64_t*           shadertable; \
+	hashtable64_t*           programtable; \
+	objectmap_t*             shadermap; \
+	objectmap_t*             programmap
 
 struct render_backend_t {
 	RENDER_DECLARE_BACKEND;
@@ -550,7 +558,7 @@ FOUNDATION_ALIGNED_STRUCT(render_program_t, 8) {
 	RENDER_DECLARE_OBJECT
 	render_vertexshader_t* vertexshader;
 	render_pixelshader_t* pixelshader;
-	void* __unused;
+	void* _unused_shader_ptr;
 	RENDER_32BIT_PADDING_ARR(pointers, 3)
 	uintptr_t backend_data[4];
 	RENDER_32BIT_PADDING_ARR(data, 4)
@@ -572,4 +580,3 @@ struct render_vertex_decl_element_t {
 	render_vertex_format_t     format;
 	render_vertex_attribute_id attribute;
 };
-

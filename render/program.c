@@ -46,8 +46,13 @@ render_program_initialize(render_program_t* program, size_t num_parameters) {
 
 void
 render_program_finalize(render_program_t* program) {
-	if (program->backend)
+	if (program->backend) {
+		if (program->vertexshader && program->vertexshader->id)
+			render_backend_shader_release(program->backend, program->vertexshader->id);
+		if (program->pixelshader && program->pixelshader->id)
+			render_backend_shader_release(program->backend, program->pixelshader->id);
 		program->backend->vtable.deallocate_program(program->backend, program);
+	}
 }
 
 void
@@ -65,25 +70,27 @@ render_program_upload(render_backend_t* backend, render_program_t* program) {
 	return backend->vtable.upload_program(backend, program);
 }
 
-render_program_t*
+object_t
 render_program_load(render_backend_t* backend, const uuid_t uuid) {
-	render_program_t* program = render_backend_program_lookup(backend, uuid);
-	if (program) {
-		atomic_incr32(&program->ref);
-		return program;
-	}
+	object_t programobj = render_backend_program_acquire(backend, uuid);
+	if (programobj && render_backend_program_resolve(backend, programobj))
+		return programobj;
 
 #if RESOURCE_ENABLE_LOCAL_CACHE
 	const uint32_t expected_version = RENDER_PROGRAM_RESOURCE_VERSION;
 	uint64_t platform = render_backend_resource_platform(backend);
 	stream_t* stream;
+	void* block;
 	bool success = false;
-	uuid_t shaderuuid;
-	size_t remain, uuid_size;
+	uuid_t* shaderuuid;
+	size_t remain;
 	resource_header_t header;
-	render_vertexshader_t* vertexshader = 0;
-	render_pixelshader_t* pixelshader = 0;
+	object_t vsobj = 0;
+	object_t psobj = 0;
+	render_shader_t* vshader = nullptr;
+	render_shader_t* pshader = nullptr;
 	bool recompiled = false;
+	render_program_t* program = nullptr;
 
 	error_context_declare_local(
 	    char uuidbuf[40];
@@ -114,29 +121,31 @@ retry:
 		goto finalize;
 	}
 
-	shaderuuid = stream_read_uint128(stream);
-	vertexshader = render_vertexshader_load(backend, shaderuuid);
-	if (!vertexshader) {
+	remain = stream_size(stream) - stream_tell(stream);
+	block = memory_allocate(HASH_RENDER, remain, 8, MEMORY_PERSISTENT);
+
+	stream_read(stream, block, remain);
+
+	shaderuuid = block;
+	vsobj = render_vertexshader_load(backend, *shaderuuid);
+	vshader = render_backend_shader_resolve(backend, vsobj);
+	if (!vshader || !(vshader->shadertype & SHADER_VERTEX)) {
 		log_warn(HASH_RENDER, WARNING_INVALID_VALUE, STRING_CONST("Got invalid vertex shader"));
 		goto finalize;
 	}
 
-	shaderuuid = stream_read_uint128(stream);
-	pixelshader = render_pixelshader_load(backend, shaderuuid);
-	if (!pixelshader) {
+	++shaderuuid;
+	psobj = render_pixelshader_load(backend, *shaderuuid);
+	pshader = render_backend_shader_resolve(backend, psobj);
+	if (!pshader || !(pshader->shadertype & SHADER_PIXEL)) {
 		log_warn(HASH_RENDER, WARNING_INVALID_VALUE, STRING_CONST("Got invalid pixel shader"));
 		goto finalize;
 	}
 
-	uuid_size = sizeof(uuid_t) * 2;
-	remain = stream_size(stream) - stream_tell(stream);
-	program = memory_allocate(HASH_RENDER, uuid_size + remain, 8, MEMORY_PERSISTENT);
-
-	stream_read(stream, pointer_offset(program, uuid_size), remain);
-
+	program = block;
 	program->backend = 0;
-	program->vertexshader = vertexshader;
-	program->pixelshader = pixelshader;
+	program->vertexshader = (render_vertexshader_t*)vshader;
+	program->pixelshader = (render_pixelshader_t*)pshader;
 	memset(program->backend_data, 0, sizeof(program->backend_data));
 
 	success = render_program_upload(backend, program);
@@ -145,12 +154,11 @@ finalize:
 	stream_deallocate(stream);
 
 	if (success) {
-		atomic_store32(&program->ref, 1);
-		render_backend_program_store(backend, uuid, program);
+		programobj = render_backend_program_store(backend, uuid, program);
 	}
 	else {
-		render_pixelshader_deallocate(pixelshader);
-		render_vertexshader_deallocate(vertexshader);
+		render_backend_shader_release(backend, psobj);
+		render_backend_shader_release(backend, vsobj);
 		render_program_deallocate(program);
 		program = nullptr;
 	}
@@ -159,7 +167,7 @@ finalize:
 
 #endif
 
-	return program;
+	return programobj;
 }
 
 bool

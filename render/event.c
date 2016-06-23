@@ -29,11 +29,17 @@ render_event_handle_resource(render_backend_t* backend, const event_t* event) {
 
 	const uuid_t uuid = resource_event_uuid(event);
 
-	render_shader_t* shader = render_backend_shader_lookup(backend, uuid);
-	if (shader && render_shader_reload(shader, uuid))
+	object_t shader = render_backend_shader_acquire(backend, uuid);
+	if (shader) {
+		render_shader_reload(render_backend_shader_resolve(backend, shader), uuid);
+		render_backend_shader_release(backend, shader);
 		return;
+	}
 
-	render_program_t* program = render_backend_program_lookup(backend, uuid);
-	if (program && render_program_reload(program, uuid))
+	object_t program = render_backend_program_acquire(backend, uuid);
+	if (program) {
+		render_program_reload(render_backend_program_resolve(backend, program), uuid);
+		render_backend_program_release(backend, program);
 		return;
+	}
 }

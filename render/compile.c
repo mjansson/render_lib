@@ -95,6 +95,12 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 	        (resource_type_hash != HASH_SHADER))
 		return -1;
 
+	error_context_declare_local(
+	    char uuidbuf[40];
+	    const string_t uuidstr = string_from_uuid(uuidbuf, sizeof(uuidbuf), uuid);
+	);
+	error_context_push(STRING_CONST("compiling shader"), STRING_ARGS(uuidstr));
+
 	if (resource_type_hash == HASH_SHADER) {
 		//Defer compilation to target shader and copy successful result
 		int result = -1;
@@ -107,8 +113,10 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 			return -1;
 		if (resource_compile_need_update(shaderuuid, platform)) {
 			recompiled = resource_compile(shaderuuid, platform);
-			if (!recompiled)
+			if (!recompiled) {
+				error_context_pop();
 				return -1;
+			}
 		}
 
 recompiled_retry:
@@ -169,6 +177,8 @@ recompiled_retry:
 				goto recompiled_retry;
 		}
 
+		error_context_pop();
+
 		return result;
 	}
 
@@ -210,7 +220,7 @@ recompiled_retry:
 		backend = render_backend_allocate(platform_decl.render_api, true);
 		if (!backend) {
 			log_warn(HASH_RESOURCE, WARNING_UNSUPPORTED,
-			         STRING_CONST("Unable to create render backend for shader compilation"));
+			         STRING_CONST("Unable to create render backend"));
 			result = -1;
 			continue;
 		}
@@ -234,7 +244,7 @@ recompiled_retry:
 				if (!resource_source_read_blob(uuid, HASH_SOURCE, subplatform, sourcechange->value.blob.checksum,
 				                               sourcebuffer, sourcechange->value.blob.size)) {
 					log_error(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL,
-					          STRING_CONST("Unable to compile shader: Failed to read full source blob"));
+					          STRING_CONST("Failed to read full source blob"));
 					memory_deallocate(sourcebuffer);
 					sourcebuffer = 0;
 				}
@@ -254,7 +264,7 @@ recompiled_retry:
 				glGetShaderiv(handle, GL_COMPILE_STATUS, &compiled);
 				glGetShaderInfoLog(handle, log_capacity, &log_length, log_buffer);
 				if (!compiled) {
-					log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Unable to compile shader: %.*s"),
+					log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("GLSL compiler failed: %.*s"),
 					           (int)log_length, log_buffer);
 					result = -1;
 				}
@@ -263,8 +273,8 @@ recompiled_retry:
 						string_t nomsg = string_copy(log_buffer, log_capacity, STRING_CONST("<no message>"));
 						log_length = (GLint)nomsg.length;
 					}
-					log_debugf(HASH_RESOURCE, STRING_CONST("Successfully compiled shader: %.*s"), (int)log_length,
-					           log_buffer);
+					log_debugf(HASH_RESOURCE, STRING_CONST("Successfully compiled shader: %.*s"),
+					           (int)log_length, log_buffer);
 
 					compiled_size = sourcechange->value.blob.size;
 					compiled_blob = memory_allocate(HASH_RESOURCE, compiled_size, 0, MEMORY_PERSISTENT);
@@ -333,6 +343,8 @@ recompiled_retry:
 	}
 
 	array_deallocate(subplatforms);
+
+	error_context_pop();
 
 	return result;
 }
@@ -528,8 +540,10 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 
 		if ((platform_decl.render_api >= RENDERAPI_OPENGL) &&
 		        (platform_decl.render_api <= RENDERAPI_OPENGL4)) {
-			render_vertexshader_t* vshader;
-			render_pixelshader_t* pshader;
+			object_t vsobj;
+			object_t psobj;
+			render_shader_t* vshader;
+			render_shader_t* pshader;
 
 			GLuint handle = 0;
 			GLsizei log_capacity = 2048;
@@ -537,16 +551,19 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 			GLint log_length = 0;
 			GLint compiled = 0;
 
-			vshader = render_vertexshader_load(backend, vertexshader);
-			pshader = render_pixelshader_load(backend, pixelshader);
-			if (!vshader) {
+			vsobj = render_vertexshader_load(backend, vertexshader);
+			psobj = render_pixelshader_load(backend, pixelshader);
+			vshader = render_backend_shader_resolve(backend, vsobj);
+			pshader = render_backend_shader_resolve(backend, psobj);
+			if (!vshader || !(vshader->shadertype & SHADER_VERTEX)) {
 				log_errorf(HASH_RESOURCE, ERROR_INVALID_VALUE, STRING_CONST("Unable to load vertex shader"));
 				result = -1;
 			}
-			if (!pshader) {
+			if (!pshader || !(pshader->shadertype & SHADER_PIXEL)) {
 				log_errorf(HASH_RESOURCE, ERROR_INVALID_VALUE, STRING_CONST("Unable to load pixel shader"));
 				result = -1;
 			}
+
 			while (pshader && vshader) {
 				char name[256];
 				GLint attributes = 0;
@@ -763,8 +780,8 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 			if (handle)
 				glDeleteProgram(handle);
 
-			render_pixelshader_deallocate(pshader);
-			render_vertexshader_deallocate(vshader);
+			render_backend_shader_release(backend, psobj);
+			render_backend_shader_release(backend, vsobj);
 
 			memory_deallocate(log_buffer);
 		}

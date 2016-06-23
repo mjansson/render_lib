@@ -25,8 +25,17 @@
 
 FOUNDATION_STATIC_ASSERT(sizeof(render_shader_t) == 64, "invalid shader size");
 
-static void*
+static object_t
 render_shader_load(render_backend_t* backend, const uuid_t uuid, hash_t type);
+
+void
+render_shader_deallocate(render_shader_t* shader) {
+	if (shader && (shader->shadertype & SHADER_VERTEX))
+		render_vertexshader_finalize((render_vertexshader_t*)shader);
+	if (shader && (shader->shadertype & SHADER_PIXEL))
+		render_pixelshader_finalize((render_pixelshader_t*)shader);
+	memory_deallocate(shader);
+}
 
 render_pixelshader_t*
 render_pixelshader_allocate(void) {
@@ -67,12 +76,12 @@ render_pixelshader_upload(render_backend_t* backend, render_pixelshader_t* shade
 	return false;
 }
 
-render_pixelshader_t*
+object_t
 render_pixelshader_load(render_backend_t* backend, const uuid_t uuid) {
 	return render_shader_load(backend, uuid, HASH_PIXELSHADER);
 }
 
-bool
+static bool
 render_pixelshader_reload(render_pixelshader_t* shader, const uuid_t uuid) {
 	FOUNDATION_UNUSED(shader);
 	FOUNDATION_UNUSED(uuid);
@@ -118,29 +127,28 @@ render_vertexshader_upload(render_backend_t* backend, render_vertexshader_t* sha
 	return false;
 }
 
-render_vertexshader_t*
+object_t
 render_vertexshader_load(render_backend_t* backend, const uuid_t uuid) {
 	return render_shader_load(backend, uuid, HASH_VERTEXSHADER);
 }
 
-bool
+static bool
 render_vertexshader_reload(render_vertexshader_t* shader, const uuid_t uuid) {
 	FOUNDATION_UNUSED(shader);
 	FOUNDATION_UNUSED(uuid);
 	return false;
 }
 
-static void*
+static object_t
 render_shader_load(render_backend_t* backend, const uuid_t uuid, hash_t type) {
-	void* shader = render_backend_shader_lookup(backend, uuid);
-	if (shader) {
-		atomic_incr32(&((render_shader_t*)shader)->ref);
-		return shader;
-	}
+	object_t shaderobj = render_backend_shader_acquire(backend, uuid);
+	if (shaderobj && render_backend_shader_resolve(backend, shaderobj))
+		return shaderobj;
 
 #if RESOURCE_ENABLE_LOCAL_CACHE
 	const uint32_t expected_version = RENDER_SHADER_RESOURCE_VERSION;
 	uint64_t platform = render_backend_resource_platform(backend);
+	void* shader;
 	stream_t* stream;
 	resource_header_t header;
 	bool success = false;
@@ -207,8 +215,7 @@ retry:
 	}
 
 	if (success) {
-		atomic_store32(&((render_shader_t*)shader)->ref, 1);
-		render_backend_shader_store(backend, uuid, shader);
+		shaderobj = render_backend_shader_store(backend, uuid, shader);
 	}
 	else {
 		if (type == HASH_PIXELSHADER)
@@ -228,7 +235,7 @@ retry:
 
 #endif
 
-	return shader;
+	return shaderobj;
 }
 
 bool

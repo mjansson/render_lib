@@ -300,7 +300,8 @@ static void* _test_render_box(render_api_t api) {
 	object_t vertexbuffer = 0;
 	object_t indexbuffer = 0;
 	render_context_t* context = 0;
-	render_program_t* program = 0;
+	object_t programobj = 0;
+	render_program_t* program = nullptr;
 	render_parameter_decl_t* parameter_decl = 0;
 	render_vertex_decl_t* vertex_decl = 0;
 	matrix_t mvp;
@@ -365,8 +366,10 @@ static void* _test_render_box(render_api_t api) {
 	render_backend_flip(backend);
 
 	//color.program : 1ab9bba8-3f2f-4649-86bb-8b8b07e99af2
-	program = render_program_load(backend,
-	                              string_to_uuid(STRING_CONST("1ab9bba8-3f2f-4649-86bb-8b8b07e99af2")));
+	uuid_t program_uuid = string_to_uuid(STRING_CONST("1ab9bba8-3f2f-4649-86bb-8b8b07e99af2"));
+	programobj = render_program_load(backend, program_uuid);
+	program = render_backend_program_resolve(backend, programobj);
+	EXPECT_NE(programobj, 0);
 	EXPECT_NE(program, nullptr);
 
 	mvp = matrix_identity();
@@ -412,11 +415,8 @@ ignore_test:
 	render_vertex_decl_deallocate(vertex_decl);
 	render_parameterbuffer_destroy(parameterbuffer);
 	render_parameter_decl_deallocate(parameter_decl);
-	if (program) {
-		render_vertexshader_deallocate(program->vertexshader);
-		render_pixelshader_deallocate(program->pixelshader);
-	}
-	render_program_deallocate(program);
+	if (backend)
+		render_backend_program_release(backend, programobj);
 	render_context_deallocate(context);
 	render_backend_deallocate(backend);
 	render_drawable_deallocate(drawable);
