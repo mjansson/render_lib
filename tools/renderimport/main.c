@@ -34,16 +34,13 @@ typedef struct {
 static void
 renderimport_parse_config(const char* path, size_t path_size,
                           const char* buffer, size_t size,
-                          json_token_t* tokens, size_t numtokens);
+                          const json_token_t* tokens, size_t numtokens);
 
 static renderimport_input_t
 renderimport_parse_command_line(const string_const_t* cmdline);
 
 static void
 renderimport_print_usage(void);
-
-static void
-renderimport_load_config(const char* path, size_t length);
 
 int
 main_initialize(void) {
@@ -69,9 +66,9 @@ main_initialize(void) {
 	log_enable_prefix(false);
 	log_set_suppress(0, ERRORLEVEL_WARNING);
 
+	resource_config.enable_local_autoimport = true;
 	resource_config.enable_local_source = true;
 	resource_config.enable_local_cache = true;
-	resource_config.enable_remote_cache = true;
 
 	if ((ret = foundation_initialize(memory_system_malloc(), application, foundation_config)) < 0)
 		return ret;
@@ -141,7 +138,7 @@ main_finalize(void) {
 static void
 renderimport_parse_config(const char* path, size_t path_size,
                           const char* buffer, size_t size,
-                          json_token_t* tokens, size_t numtokens) {
+                          const json_token_t* tokens, size_t numtokens) {
 	resource_module_parse_config(path, path_size, buffer, size, tokens, numtokens);
 	render_module_parse_config(path, path_size, buffer, size, tokens, numtokens);
 }

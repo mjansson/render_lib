@@ -35,8 +35,8 @@ render_command_clear(render_command_t* command, unsigned int buffer_mask, uint32
                      unsigned int color_mask, float depth, uint32_t stencil);
 
 RENDER_API void
-render_command_viewport(render_command_t* command, unsigned int x, unsigned int y,
-                        unsigned int width, unsigned int height, real min_z, real max_z);
+render_command_viewport(render_command_t* command, int x, int y,
+                        int width, int height, real min_z, real max_z);
 
 RENDER_API void
 render_command_render(render_command_t* command, render_primitive_t type, uint16_t num,

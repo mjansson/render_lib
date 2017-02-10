@@ -21,6 +21,8 @@
 #include <resource/compile.h>
 
 #include <render/render.h>
+#include <render/compile.h>
+#include <render/import.h>
 #include <render/internal.h>
 
 static bool _render_initialized;

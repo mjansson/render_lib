@@ -28,7 +28,7 @@
 #endif
 
 render_drawable_t*
-render_drawable_allocate() {
+render_drawable_allocate(void) {
 	return memory_allocate(HASH_RENDER, sizeof(render_drawable_t), 0,
 	                       MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 }

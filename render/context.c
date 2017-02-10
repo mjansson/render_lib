@@ -84,7 +84,7 @@ render_context_queue(render_context_t* context, render_command_t* command, uint6
 
 size_t
 render_context_reserved(render_context_t* context) {
-	return atomic_load32(&context->reserved);
+	return (size_t)atomic_load32(&context->reserved);
 }
 
 uint8_t

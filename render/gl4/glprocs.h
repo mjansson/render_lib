@@ -122,19 +122,22 @@ RENDER_EXTERN bool
 _rb_gl_get_shader_procs(void);
 
 RENDER_EXTERN bool
-_rb_gl_get_standard_procs(int major, int minor);
+_rb_gl_get_standard_procs(unsigned int major, unsigned int minor);
 
 RENDER_EXTERN bool
 _rb_gl_check_error(const char* message);
 
 RENDER_EXTERN bool
-_rb_gl_check_context(int major, int minor);
+_rb_gl_check_context(unsigned int major, unsigned int minor);
 
 RENDER_EXTERN bool
 _rb_gl_check_extension(const char* name);
 
 RENDER_EXTERN void*
-_rb_gl_create_context(render_drawable_t* drawable, int major, int minor, void* share_context);
+_rb_gl_create_context(render_drawable_t* drawable, unsigned int major, unsigned int minor, void* share_context);
 
 RENDER_EXTERN void
 _rb_gl_destroy_context(render_drawable_t* drawable, void* context);
+
+RENDER_EXTERN const char*
+_rb_gl_error_message(GLenum err);

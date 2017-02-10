@@ -22,35 +22,10 @@
 
 #define GET_BUFFER(id) objectmap_lookup(_render_map_buffer, (id))
 
-render_parameter_decl_t*
-render_parameter_decl_allocate(size_t num) {
-	render_parameter_decl_t* decl;
-	size_t size = sizeof(render_parameter_decl_t) + sizeof(render_parameter_t) * num;
-	decl = memory_allocate(HASH_RENDER, size, 0, MEMORY_PERSISTENT);
-	render_parameter_decl_initialize(decl, num);
-	return decl;
-}
-
-void
-render_parameter_decl_initialize(render_parameter_decl_t* decl, size_t num) {
-	decl->num_parameters = (unsigned int)num;
-}
-
-void
-render_parameter_decl_finalize(render_parameter_decl_t* decl) {
-	FOUNDATION_UNUSED(decl);
-}
-
-void
-render_parameter_decl_deallocate(render_parameter_decl_t* decl) {
-	if (decl)
-		render_parameter_decl_finalize(decl);
-	memory_deallocate(decl);
-}
-
 object_t
 render_parameterbuffer_create(render_backend_t* backend, render_usage_t usage,
-                              const render_parameter_decl_t* decl, const void* data) {
+                              const render_parameter_t* parameters, size_t num_parameters,
+                              const void* data, size_t data_size) {
 	object_t id = objectmap_reserve(_render_map_buffer);
 	if (!id) {
 		log_error(HASH_RENDER, ERROR_OUT_OF_MEMORY,
@@ -60,7 +35,7 @@ render_parameterbuffer_create(render_backend_t* backend, render_usage_t usage,
 
 	memory_context_push(HASH_RENDER);
 
-	size_t paramsize = sizeof(render_parameter_t) * decl->num_parameters;
+	size_t paramsize = sizeof(render_parameter_t) * num_parameters;
 	render_parameterbuffer_t* buffer = memory_allocate(HASH_RENDER,
 	                                                   sizeof(render_parameterbuffer_t) + paramsize, 0,
 	                                                   MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
@@ -69,8 +44,9 @@ render_parameterbuffer_create(render_backend_t* backend, render_usage_t usage,
 	buffer->usage      = usage;
 	buffer->buffertype = RENDERBUFFER_PARAMETER;
 	buffer->policy     = RENDERBUFFER_UPLOAD_ONDISPATCH;
-	buffer->size       = decl->size;
-	memcpy(&buffer->decl, decl, sizeof(render_parameter_decl_t) + paramsize);
+	buffer->size       = data_size;
+	buffer->num_parameters = (unsigned int)num_parameters;
+	memcpy(&buffer->parameters, parameters, paramsize);
 	atomic_store32(&buffer->ref, 1);
 	objectmap_set(_render_map_buffer, id, buffer);
 
@@ -78,7 +54,7 @@ render_parameterbuffer_create(render_backend_t* backend, render_usage_t usage,
 	buffer->used = 1;
 	buffer->store = backend->vtable.allocate_buffer(backend, (render_buffer_t*)buffer);
 	if (data) {
-		memcpy(buffer->store, data, decl->size);
+		memcpy(buffer->store, data, data_size);
 		buffer->flags |= RENDERBUFFER_DIRTY;
 	}
 
@@ -104,10 +80,16 @@ render_parameterbuffer_link(object_t id, render_program_t* program) {
 		buffer->backend->vtable.link_buffer(buffer->backend, buffer, program);
 }
 
-const render_parameter_decl_t*
-render_parameterbuffer_decl(object_t id) {
+unsigned int
+render_parameterbuffer_num_parameters(object_t id) {
 	render_parameterbuffer_t* buffer = GET_BUFFER(id);
-	return buffer ? &buffer->decl : nullptr;
+	return buffer ? buffer->num_parameters : 0;
+}
+
+const render_parameter_t*
+render_parameterbuffer_parameters(object_t id) {
+	render_parameterbuffer_t* buffer = GET_BUFFER(id);
+	return buffer ? buffer->parameters : nullptr;
 }
 
 void

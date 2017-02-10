@@ -86,7 +86,7 @@ render_shader_load(render_backend_t* backend, const uuid_t uuid) {
 
 #if RESOURCE_ENABLE_LOCAL_CACHE
 	uint64_t platform = render_backend_resource_platform(backend);
-	render_shader_t* shader;
+	render_shader_t* shader = nullptr;
 	stream_t* stream;
 	resource_header_t header;
 	bool success = false;
@@ -105,7 +105,7 @@ retry:
 
 	stream = resource_stream_open_static(uuid, platform);
 	if (stream) {
-		header = resource_stream_read_header(stream);
+		header = resource_stream_read_header(stream);		
 		if (header.version == RENDER_SHADER_RESOURCE_VERSION) {
 			if (header.type == HASH_PIXELSHADER)
 				shader = render_pixelshader_allocate();
@@ -141,7 +141,7 @@ retry:
 		}
 		else if (!recompiled) {
 			log_warnf(HASH_RENDER, WARNING_INVALID_VALUE,
-			          STRING_CONST("Got unexpected version/size when loading blob: %u (%" PRIu64 ")"),
+			          STRING_CONST("Got unexpected version/size when loading blob: %u (%" PRIsize ")"),
 			          version, size);
 			recompile = true;
 		}
@@ -217,7 +217,7 @@ render_shader_reload(render_shader_t* shader, const uuid_t uuid) {
 		}
 		else {
 			log_warnf(HASH_RENDER, WARNING_INVALID_VALUE,
-			          STRING_CONST("Got unexpected version/size when loading blob: %u (%" PRIu64 ")"),
+			          STRING_CONST("Got unexpected version/size when loading blob: %u (%" PRIsize ")"),
 			          version, size);
 		}
 		stream_deallocate(stream);

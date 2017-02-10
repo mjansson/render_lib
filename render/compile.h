@@ -25,8 +25,6 @@
 
 #include <render/types.h>
 
-#if RESOURCE_ENABLE_LOCAL_SOURCE
-
 /* Compile render resource
 \param uuid Resource UUID
 \param platform Resource platform
@@ -37,9 +35,3 @@
 RENDER_API int
 render_compile(const uuid_t uuid, uint64_t platform, resource_source_t* source,
                const uint256_t source_hash, const char* type, size_t type_length);
-
-#else
-
-#define render_compile(uuid, platform, source, source_hash, type, type_length) (((void)sizeof(uuid)), ((void)sizeof(platform)), ((void)sizeof(source)), ((void)sizeof(source_hash)), ((void)sizeof(type)), ((void)sizeof(type_length)), -1)
-
-#endif

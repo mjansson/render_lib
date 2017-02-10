@@ -24,12 +24,14 @@
 
 static application_t
 test_render_application(void) {
-	application_t app = {0};
+	application_t app;
+	memset(&app, 0, sizeof(app));
 	app.name = string_const(STRING_CONST("Render tests"));
 	app.short_name = string_const(STRING_CONST("test_render"));
 	app.company = string_const(STRING_CONST("Rampant Pixels"));
 	app.version = render_module_version();
 	app.exception_handler = test_exception_handler;
+	app.flags = APPLICATION_UTILITY;
 	return app;
 }
 
@@ -106,9 +108,9 @@ DECLARE_TEST(render, initialize) {
 	render_module_initialize(config);
 
 #if FOUNDATION_PLATFORM_MACOSX
-	window = window_allocate_from_nswindow(delegate_nswindow());
+	window = window_allocate(delegate_nswindow());
 #elif FOUNDATION_PLATFORM_IOS
-	window = window_allocate_from_uiwindow(delegate_uiwindow());
+	window = window_allocate(delegate_uiwindow());
 #elif FOUNDATION_PLATFORM_WINDOWS
 	window = window_create(WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render test"), 800, 600, true);
 #else
@@ -135,17 +137,17 @@ DECLARE_TEST(render, initialize) {
 static void*
 _test_render_api(render_api_t api) {
 	render_backend_t* backend = 0;
-	render_resolution_t* resolutions;
-	render_drawable_t* drawable;
-	object_t framebuffer;
+	render_resolution_t* resolutions = 0;
+	render_drawable_t* drawable = 0;
+	object_t framebuffer = 0;
 
 	EXPECT_TRUE(render_module_is_initialized());
 
-	window_t* window;
+	window_t* window = 0;
 #if FOUNDATION_PLATFORM_MACOSX
-	window = window_allocate_from_nswindow(delegate_nswindow());
+	window = window_allocate(delegate_nswindow());
 #elif FOUNDATION_PLATFORM_IOS
-	window = window_allocate_from_uiwindow(delegate_uiwindow());
+	window = window_allocate(delegate_uiwindow());
 #elif FOUNDATION_PLATFORM_WINDOWS
 	window = window_create(WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render test"), 800, 600, true);
 #else
@@ -177,8 +179,8 @@ _test_render_api(render_api_t api) {
 	          render_drawable_height(drawable));
 
 	EXPECT_EQ(render_drawable_type(drawable), RENDERDRAWABLE_WINDOW);
-	EXPECT_EQ(render_drawable_width(drawable), (unsigned int)window_width(window));
-	EXPECT_EQ(render_drawable_height(drawable), (unsigned int)window_height(window));
+	EXPECT_EQ(render_drawable_width(drawable), window_width(window));
+	EXPECT_EQ(render_drawable_height(drawable), window_height(window));
 
 	render_backend_set_format(backend, PIXELFORMAT_R8G8B8X8, COLORSPACE_LINEAR);
 	render_backend_set_drawable(backend, drawable);
@@ -214,9 +216,9 @@ static void* _test_render_clear(render_api_t api) {
 	render_context_t* context = 0;
 
 #if FOUNDATION_PLATFORM_MACOSX
-	window = window_allocate_from_nswindow(delegate_nswindow());
+	window = window_allocate(delegate_nswindow());
 #elif FOUNDATION_PLATFORM_IOS
-	window = window_allocate_from_uiwindow(delegate_uiwindow());
+	window = window_allocate(delegate_uiwindow());
 #elif FOUNDATION_PLATFORM_WINDOWS
 	window = window_create(WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render test"), 800, 600, true);
 #else
@@ -302,7 +304,6 @@ static void* _test_render_box(render_api_t api) {
 	render_context_t* context = 0;
 	object_t programobj = 0;
 	render_program_t* program = nullptr;
-	render_parameter_decl_t* parameter_decl = 0;
 	render_vertex_decl_t* vertex_decl = 0;
 	matrix_t mvp;
 
@@ -328,9 +329,9 @@ static void* _test_render_box(render_api_t api) {
 	};
 
 #if FOUNDATION_PLATFORM_MACOSX
-	window = window_allocate_from_nswindow(delegate_nswindow());
+	window = window_allocate(delegate_nswindow());
 #elif FOUNDATION_PLATFORM_IOS
-	window = window_allocate_from_uiwindow(delegate_uiwindow());
+	window = window_allocate(delegate_uiwindow());
 #elif FOUNDATION_PLATFORM_WINDOWS
 	window = window_create(WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render test"), 800, 600, true);
 #else
@@ -375,7 +376,8 @@ static void* _test_render_box(render_api_t api) {
 	mvp = matrix_identity();
 
 	parameterbuffer = render_parameterbuffer_create(backend, RENDERUSAGE_DYNAMIC,
-	                                                &program->parameters, &mvp);
+	                                                program->parameters, program->num_parameters,
+	                                                &mvp, sizeof(mvp));
 	EXPECT_TYPENE(parameterbuffer, 0, object_t, PRIx64);
 
 	render_parameterbuffer_link(parameterbuffer, program);
@@ -414,7 +416,6 @@ ignore_test:
 	render_vertexbuffer_destroy(vertexbuffer);
 	render_vertex_decl_deallocate(vertex_decl);
 	render_parameterbuffer_destroy(parameterbuffer);
-	render_parameter_decl_deallocate(parameter_decl);
 	if (backend)
 		render_backend_program_release(backend, programobj);
 	render_context_deallocate(context);
@@ -492,11 +493,11 @@ test_render_declare(void) {
 	ADD_TEST(render, null_clear);
 	ADD_TEST(render, null_box);
 #if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_MACOSX || FOUNDATION_PLATFORM_LINUX
-	//ADD_TEST(render, gl4);
-	//ADD_TEST(render, gl4_clear);
-	//ADD_TEST(render, gl4_box);
+	ADD_TEST(render, gl4);
+	ADD_TEST(render, gl4_clear);
+	ADD_TEST(render, gl4_box);
 	ADD_TEST(render, gl2);
-	//ADD_TEST(render, gl2_clear);
+	ADD_TEST(render, gl2_clear);
 	ADD_TEST(render, gl2_box);
 #endif
 #if FOUNDATION_PLATFORM_IOS || FOUNDATION_PLATFORM_ANDROID || FOUNDATION_PLATFORM_LINUX_RASPBERRYPI
@@ -506,13 +507,14 @@ test_render_declare(void) {
 #endif
 }
 
-test_suite_t test_render_suite = {
+static test_suite_t test_render_suite = {
 	test_render_application,
 	test_render_memory_system,
 	test_render_config,
 	test_render_declare,
 	test_render_initialize,
-	test_render_finalize
+	test_render_finalize,
+	0
 };
 
 

@@ -1,4 +1,4 @@
-/* indexbuffer.c  -  Render library  -  Public Domain  -  2014 Mattias Jansson / Rampant Pixels
+/* buffer.c  -  Render library  -  Public Domain  -  2014 Mattias Jansson / Rampant Pixels
  *
  * This library provides a cross-platform rendering library in C11 providing
  * basic 2D/3D rendering functionality for projects based on our foundation library.
@@ -105,7 +105,7 @@ render_buffer_unlock(object_t id) {
 			        (buffer->flags & RENDERBUFFER_LOCK_FORCEUPLOAD))
 				render_buffer_upload(buffer);
 		}
-		buffer->flags &= ~RENDERBUFFER_LOCK_BITS;
+		buffer->flags &= ~(uint32_t)RENDERBUFFER_LOCK_BITS;
 	}
 	render_buffer_destroy(id);
 }

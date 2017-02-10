@@ -25,7 +25,7 @@
 #include <render/types.h>
 
 /*! Get vertex attribute size from format
-\param decl Vertex attribute format
+\param format Vertex attribute format
 \return Vertex attribute size */
 RENDER_API uint16_t
 render_vertex_attribute_size(render_vertex_format_t format);

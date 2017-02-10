@@ -127,7 +127,7 @@ render_vertexbuffer_set_upload_policy(object_t id, render_buffer_uploadpolicy_t 
 }
 
 void
-render_verexbuffer_upload(object_t id) {
+render_vertexbuffer_upload(object_t id) {
 	render_buffer_t* buffer = GET_BUFFER(id);
 	if (buffer)
 		render_buffer_upload(buffer);

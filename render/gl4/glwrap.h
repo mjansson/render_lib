@@ -24,13 +24,17 @@
 #if FOUNDATION_PLATFORM_WINDOWS
 
 #  include <foundation/windows.h>
+
 #  include <gl/GL.h>
+
 #  include "gl/glext.h"
 #  include "gl/wglext.h"
 
 #elif FOUNDATION_PLATFORM_MACOSX
 
 #  include <foundation/apple.h>
+#  include <render/types.h>
+
 #  include <OpenGL/OpenGL.h>
 #  include <OpenGL/gl.h>
 #  include <OpenGL/glext.h>
@@ -41,7 +45,7 @@
 //Objective-C interface
 RENDER_EXTERN void*
 _rb_gl_create_agl_context(void* view, unsigned int displaymask, unsigned int color,
-                          unsigned int depth, unsigned int stencil);
+                          unsigned int depth, unsigned int stencil, void* pixelformat);
 
 RENDER_EXTERN void
 _rb_gl_destroy_agl_context(void* context);

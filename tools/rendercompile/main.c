@@ -34,16 +34,13 @@ typedef struct {
 static void
 rendercompile_parse_config(const char* path, size_t path_size,
                            const char* buffer, size_t size,
-                           json_token_t* tokens, size_t numtokens);
+                           const json_token_t* tokens, size_t numtokens);
 
 static rendercompile_input_t
 rendercompile_parse_command_line(const string_const_t* cmdline);
 
 static void
 rendercompile_print_usage(void);
-
-static void
-rendercompile_load_config(const char* path, size_t length);
 
 int
 main_initialize(void) {
@@ -69,9 +66,10 @@ main_initialize(void) {
 	log_enable_prefix(false);
 	log_set_suppress(0, ERRORLEVEL_WARNING);
 
+	resource_config.enable_local_autoimport = true;
 	resource_config.enable_local_source = true;
 	resource_config.enable_local_cache = true;
-	resource_config.enable_remote_cache = true;
+	resource_config.enable_remote_sourced = true;
 
 	if ((ret = foundation_initialize(memory_system_malloc(), application, foundation_config)) < 0)
 		return ret;
@@ -130,7 +128,7 @@ main_run(void* main_arg) {
 			string_t pathstr = string_copy(buffer, sizeof(buffer), STRING_ARGS(input.input_files[ifile]));
 			pathstr = path_clean(STRING_ARGS(pathstr), sizeof(buffer));
 			pathstr = path_absolute(STRING_ARGS(pathstr), sizeof(buffer));
-			uuid = resource_import_map_lookup(STRING_ARGS(pathstr)).uuid;
+			uuid = resource_import_lookup(STRING_ARGS(pathstr)).uuid;
 		}
 		if (uuid_is_null(uuid)) {
 			log_warnf(HASH_RESOURCE, WARNING_INVALID_VALUE, STRING_CONST("Failed to lookup: %.*s"),
@@ -170,8 +168,8 @@ main_finalize(void) {
 
 static void
 rendercompile_parse_config(const char* path, size_t path_size,
-                           const char* buffer, size_t size,
-                           json_token_t* tokens, size_t numtokens) {
+                          const char* buffer, size_t size,
+                          const json_token_t* tokens, size_t numtokens) {
 	resource_module_parse_config(path, path_size, buffer, size, tokens, numtokens);
 	render_module_parse_config(path, path_size, buffer, size, tokens, numtokens);
 }

@@ -24,22 +24,10 @@
 
 #include <render/types.h>
 
-RENDER_API render_parameter_decl_t*
-render_parameter_decl_allocate(size_t num);
-
-RENDER_API void
-render_parameter_decl_initialize(render_parameter_decl_t* decl, size_t num);
-
-RENDER_API void
-render_parameter_decl_finalize(render_parameter_decl_t* decl);
-
-RENDER_API void
-render_parameter_decl_deallocate(render_parameter_decl_t* decl);
-
-
 RENDER_API object_t
 render_parameterbuffer_create(render_backend_t* backend, render_usage_t usage,
-                              const render_parameter_decl_t* decl, const void* data);
+                              const render_parameter_t* parameters, size_t num_parameters,
+                              const void* data, size_t data_size);
 
 RENDER_API object_t
 render_parameterbuffer_ref(object_t buffer);
@@ -50,8 +38,11 @@ render_parameterbuffer_destroy(object_t buffer);
 RENDER_API void
 render_parameterbuffer_link(object_t buffer, render_program_t* program);
 
-RENDER_API const render_parameter_decl_t*
-render_parameterbuffer_decl(object_t buffer);
+RENDER_API unsigned int
+render_parameterbuffer_num_parameters(object_t buffer);
+
+RENDER_API const render_parameter_t*
+render_parameterbuffer_parameters(object_t buffer);
 
 RENDER_API void
 render_parameterbuffer_lock(object_t buffer, unsigned int lock);

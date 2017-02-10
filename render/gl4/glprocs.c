@@ -27,7 +27,7 @@
 #include <render/gl4/glwrap.h>
 #include <render/gl4/glprocs.h>
 
-#if FOUNDATION_ENABLE_NVGLEXPERT
+#if RENDER_ENABLE_NVGLEXPERT
 #  include <nvapi.h>
 #endif
 
@@ -275,7 +275,7 @@ _rb_gl_get_shader_procs(void) {
 }
 
 bool
-_rb_gl_get_standard_procs(int major, int minor) {
+_rb_gl_get_standard_procs(unsigned int major, unsigned int minor) {
 	if ((major > 1) || ((major == 1) && (minor >= 4))) {
 		if (!_rb_gl_get_texture_procs())
 			return false;
@@ -284,7 +284,7 @@ _rb_gl_get_standard_procs(int major, int minor) {
 		if (!_rb_gl_get_buffer_procs())
 			return false;
 	}
-	if ((major > 2) || ((major == 2) && (minor >= 0))) {
+	if (major >= 2) {
 		if (!_rb_gl_get_shader_procs())
 			return false;
 	}

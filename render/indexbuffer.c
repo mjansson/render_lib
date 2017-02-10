@@ -47,7 +47,7 @@ render_indexbuffer_create(render_backend_t* backend, render_usage_t usage, size_
 	objectmap_set(_render_map_buffer, id, buffer);
 
 	if (indices) {
-		buffer->allocated = (int32_t)indices;
+		buffer->allocated = indices;
 		buffer->used = indices;
 		buffer->store = backend->vtable.allocate_buffer(backend, (render_buffer_t*)buffer);
 		if (data) {

@@ -20,6 +20,8 @@
 #include <render/render.h>
 #include <render/internal.h>
 
+#include <render/null/backend.h>
+
 static bool
 _rb_null_construct(render_backend_t* backend) {
 	FOUNDATION_UNUSED(backend);
@@ -37,7 +39,7 @@ static unsigned int*
 _rb_null_enumerate_adapters(render_backend_t* backend) {
 	unsigned int* adapters = 0;
 	FOUNDATION_UNUSED(backend);
-	array_push(adapters, WINDOW_ADAPTER_DEFAULT);
+	array_push(adapters, (unsigned int)WINDOW_ADAPTER_DEFAULT);
 	return adapters;
 }
 
@@ -148,7 +150,7 @@ static render_backend_vtable_t _render_backend_vtable_null = {
 };
 
 render_backend_t*
-render_backend_null_allocate() {
+render_backend_null_allocate(void) {
 	render_backend_t* backend = memory_allocate(HASH_RENDER, sizeof(render_backend_t), 0,
 	                                            MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 	backend->api = RENDERAPI_NULL;

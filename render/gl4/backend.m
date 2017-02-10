@@ -15,12 +15,13 @@
  *
  */
 
-#include <foundation/platform.h>
+#include <foundation/foundation.h>
 
 #if FOUNDATION_PLATFORM_MACOSX
 
 #include <foundation/apple.h>
 #include <render/hashstrings.h>
+#include <render/gl4/glwrap.h>
 
 #import <Foundation/NSIndexPath.h>
 #import <Foundation/NSLock.h>
@@ -30,18 +31,20 @@
 
 void*
 _rb_gl_create_agl_context(void* view, unsigned int displaymask, unsigned int color,
-                          unsigned int depth, unsigned int stencil, void** pixelformat) {
+                          unsigned int depth, unsigned int stencil, void* pixelformat) {
+	FOUNDATION_UNUSED(pixelformat);
+
 	NSView* nsview = (__bridge NSView*)view;
 
 	NSOpenGLPixelFormatAttribute attribs[] = {
-		NSOpenGLPFAScreenMask,      displaymask,
+		NSOpenGLPFAScreenMask, displaymask,
 		NSOpenGLPFADoubleBuffer,
 		NSOpenGLPFAMinimumPolicy,
 		NSOpenGLPFAWindow,
 		NSOpenGLPFANoRecovery,
 		NSOpenGLPFAColorSize, (color > 16) ? color : 16,
 		NSOpenGLPFADepthSize, (depth > 15) ? depth : 15,
-		NSOpenGLPFAStencilSize,     stencil,
+		NSOpenGLPFAStencilSize, stencil,
 		0
 	};
 
@@ -61,7 +64,7 @@ _rb_gl_create_agl_context(void* view, unsigned int displaymask, unsigned int col
 	//*pixelformat = [format CGLPixelFormatObj];
 
 	log_infof(HASH_RENDER, STRING_CONST("Created gl context %" PRIfixPTR " for view %" PRIfixPTR),
-	          context, view);
+	          (uintptr_t)context, (uintptr_t)view);
 
 	return (__bridge_retained void*)context;
 }

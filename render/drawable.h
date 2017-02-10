@@ -25,7 +25,7 @@
 #include <render/types.h>
 
 RENDER_API render_drawable_t*
-render_drawable_allocate();
+render_drawable_allocate(void);
 
 RENDER_API void
 render_drawable_deallocate(render_drawable_t* drawable);

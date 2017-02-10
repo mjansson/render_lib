@@ -22,6 +22,7 @@
 
 #include "gl4/glwrap.h"
 #include "gl4/glprocs.h"
+#include "gl4/gl/glext.h"
 
 #if RESOURCE_ENABLE_LOCAL_SOURCE
 
@@ -78,10 +79,15 @@ resource_source_platform_superset(resource_change_t* change, resource_change_t* 
 static int
 render_shader_ref_compile(const uuid_t uuid, uint64_t platform, resource_source_t* source,
                           const uint256_t source_hash, const char* type, size_t type_length) {
+	FOUNDATION_UNUSED(type);
+	FOUNDATION_UNUSED(type_length);
+
 	//Defer compilation to target shader and copy successful result
 	int result = -1;
 	bool recompile = false;
 	bool recompiled = false;
+	stream_t* ressource;
+	stream_t* restarget;
 
 	error_context_declare_local(
 	    char uuidbuf[40];
@@ -90,7 +96,8 @@ render_shader_ref_compile(const uuid_t uuid, uint64_t platform, resource_source_
 	error_context_push(STRING_CONST("compiling shader"), STRING_ARGS(uuidstr));
 
 	resource_change_t* shaderchange = resource_source_get(source, HASH_SHADER, platform);
-	uuid_t shaderuuid = shaderchange ? string_to_uuid(STRING_ARGS(shaderchange->value.value)) :
+	uuid_t shaderuuid = shaderchange ?
+	                    string_to_uuid(STRING_ARGS(shaderchange->value.value)) :
 	                    uuid_null();
 	if (uuid_is_null(shaderuuid))
 		return -1;
@@ -104,8 +111,8 @@ render_shader_ref_compile(const uuid_t uuid, uint64_t platform, resource_source_
 
 retry:
 
-	stream_t* ressource = resource_local_open_static(shaderuuid, platform);
-	stream_t* restarget = resource_local_create_static(uuid, platform);
+	ressource = resource_local_open_static(shaderuuid, platform);
+	restarget = resource_local_create_static(uuid, platform);
 	if (ressource && restarget) {
 		size_t source_size = stream_size(ressource);
 
@@ -229,7 +236,7 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 				continue; //Nonspecific render api
 		}
 
-		backend = render_backend_allocate(platform_decl.render_api, true);
+		backend = render_backend_allocate((render_api_t)platform_decl.render_api, true);
 		if (!backend) {
 			log_warn(HASH_RESOURCE, WARNING_UNSUPPORTED,
 			         STRING_CONST("Unable to create render backend"));
@@ -270,7 +277,7 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 				glCompileShader(handle);
 
 				GLsizei log_capacity = 2048;
-				GLchar* log_buffer = memory_allocate(HASH_RESOURCE, log_capacity, 0, MEMORY_TEMPORARY);
+				GLchar* log_buffer = memory_allocate(HASH_RESOURCE, (size_t)log_capacity, 0, MEMORY_TEMPORARY);
 				GLint log_length = 0;
 				GLint compiled = 0;
 				glGetShaderiv(handle, GL_COMPILE_STATUS, &compiled);
@@ -282,7 +289,7 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 				}
 				else {
 					if (log_length < 2) {
-						string_t nomsg = string_copy(log_buffer, log_capacity, STRING_CONST("<no message>"));
+						string_t nomsg = string_copy(log_buffer, (size_t)log_capacity, STRING_CONST("<no message>"));
 						log_length = (GLint)nomsg.length;
 					}
 					log_debugf(HASH_RESOURCE, STRING_CONST("Successfully compiled shader: %.*s"),
@@ -512,7 +519,7 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 				continue; //Nonspecific render api
 		}
 
-		backend = render_backend_allocate(platform_decl.render_api, true);
+		backend = render_backend_allocate((render_api_t)platform_decl.render_api, true);
 		if (!backend) {
 			log_warn(HASH_RESOURCE, WARNING_UNSUPPORTED,
 			         STRING_CONST("Unable to create render backend for shader compilation"));
@@ -555,7 +562,7 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 
 			GLuint handle = 0;
 			GLsizei log_capacity = 2048;
-			GLchar* log_buffer = memory_allocate(HASH_RESOURCE, log_capacity, 0, MEMORY_TEMPORARY);
+			GLchar* log_buffer = memory_allocate(HASH_RESOURCE, (size_t)log_capacity, 0, MEMORY_TEMPORARY);
 			GLint log_length = 0;
 			GLint compiled = 0;
 
@@ -599,7 +606,7 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 				}
 				else {
 					if (log_length < 2) {
-						string_t nomsg = string_copy(log_buffer, log_capacity, STRING_CONST("<no message>"));
+						string_t nomsg = string_copy(log_buffer, (size_t)log_capacity, STRING_CONST("<no message>"));
 						log_length = (GLint)nomsg.length;
 					}
 					log_debugf(HASH_RESOURCE, STRING_CONST("Successfully linked program: %.*s"), (int)log_length,
@@ -610,17 +617,17 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 				for (GLint ia = 0; ia < attributes; ++ia) {
 					GLsizei num_chars = 0;
 					GLint size = 0;
-					GLenum type = GL_NONE;
-					glGetActiveAttrib(handle, ia, sizeof(name), &num_chars, &size, &type, name);
+					GLenum gltype = GL_NONE;
+					glGetActiveAttrib(handle, (GLuint)ia, sizeof(name), &num_chars, &size, &gltype, name);
 
 					if (num_chars) {
 						GLuint binding = 0;
 						//TODO: Implement something proper, and generalized, together with dx10 input layout
-						if (string_equal(name, num_chars, STRING_CONST("position")))
+						if (string_equal(name, (size_t)num_chars, STRING_CONST("position")))
 							binding = VERTEXATTRIBUTE_POSITION;
-						else if (string_equal(name, num_chars, STRING_CONST("color")))
+						else if (string_equal(name, (size_t)num_chars, STRING_CONST("color")))
 							binding = VERTEXATTRIBUTE_PRIMARYCOLOR;
-						else if (string_equal(name, num_chars, STRING_CONST("texcoord")))
+						else if (string_equal(name, (size_t)num_chars, STRING_CONST("texcoord")))
 							binding = VERTEXATTRIBUTE_TEXCOORD0;
 						glBindAttribLocation(handle, binding, name);
 					}
@@ -638,7 +645,7 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 				}
 				else {
 					if (log_length < 2) {
-						string_t nomsg = string_copy(log_buffer, log_capacity, STRING_CONST("<no message>"));
+						string_t nomsg = string_copy(log_buffer, (size_t)log_capacity, STRING_CONST("<no message>"));
 						log_length = (GLint)nomsg.length;
 					}
 					log_debugf(HASH_RESOURCE, STRING_CONST("Successfully relinked program: %.*s"), (int)log_length,
@@ -647,22 +654,22 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 
 				glGetProgramiv(handle, GL_ACTIVE_UNIFORMS, &uniforms);
 
-				program = render_program_allocate(uniforms);
+				program = render_program_allocate((size_t)uniforms);
 
 				for (GLint ia = 0; ia < attributes; ++ia) {
 					GLsizei num_chars = 0;
 					GLint size = 0;
-					GLenum type = GL_NONE;
+					GLenum gltype = GL_NONE;
 					render_vertex_attribute_t* attribute = program->attributes.attribute + ia;
 
-					glGetActiveAttrib(handle, ia, sizeof(name), &num_chars, &size, &type, name);
+					glGetActiveAttrib(handle, (GLuint)ia, sizeof(name), &num_chars, &size, &gltype, name);
 
 					//TODO: Implement something proper, and generalized, together with dx10 input layout
-					if (string_equal(name, num_chars, STRING_CONST("position")))
+					if (string_equal(name, (size_t)num_chars, STRING_CONST("position")))
 						attribute->binding = VERTEXATTRIBUTE_POSITION;
-					else if (string_equal(name, num_chars, STRING_CONST("color")))
+					else if (string_equal(name, (size_t)num_chars, STRING_CONST("color")))
 						attribute->binding = VERTEXATTRIBUTE_PRIMARYCOLOR;
-					else if (string_equal(name, num_chars, STRING_CONST("texcoord")))
+					else if (string_equal(name, (size_t)num_chars, STRING_CONST("texcoord")))
 						attribute->binding = VERTEXATTRIBUTE_TEXCOORD0;
 					else {
 						log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL,
@@ -672,9 +679,9 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 						break;
 					}
 
-					program->attribute_name[ia] = hash(name, num_chars);
+					program->attribute_name[ia] = hash(name, (size_t)num_chars);
 
-					switch (type) {
+					switch (gltype) {
 					case GL_FLOAT:
 						attribute->format = VERTEXFORMAT_FLOAT;
 						break;
@@ -692,11 +699,11 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 						attribute->format = VERTEXFORMAT_INT;
 						break;
 					case GL_INT_VEC2:
-					case GL_UNSIGNED_INT_VEC2:
+					case 0x8DC6: //GL_UNSIGNED_INT_VEC2:
 						attribute->format = VERTEXFORMAT_INT2;
 						break;
 					case GL_INT_VEC4:
-					case GL_UNSIGNED_INT_VEC4:
+					case 0x8DC8: //GL_UNSIGNED_INT_VEC4:
 						attribute->format = VERTEXFORMAT_INT4;
 						break;
 					default:
@@ -737,28 +744,28 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 				program->attributes.size = offset;
 
 				offset = 0;
-				program->parameters.num_parameters = 0;
+				program->num_parameters = 0;
 				for (GLint iu = 0; (iu < uniforms) && (result == 0); ++iu) {
 					GLsizei num_chars = 0;
 					GLint size = 0;
-					GLenum type = GL_NONE;
-					render_parameter_t* parameter = program->parameters.parameters + iu;
+					GLenum gltype = GL_NONE;
+					render_parameter_t* parameter = program->parameters + iu;
 
-					glGetActiveUniform(handle, iu, sizeof(name), &num_chars, &size, &type, name);
+					glGetActiveUniform(handle, (GLuint)iu, sizeof(name), &num_chars, &size, &gltype, name);
 
-					parameter->name = hash(name, num_chars);
-					parameter->location = glGetUniformLocation(handle, name);
-					parameter->dim = size;
+					parameter->name = hash(name, (size_t)num_chars);
+					parameter->location = (unsigned int)glGetUniformLocation(handle, name);
+					parameter->dim = (uint16_t)size;
 					parameter->offset = offset;
 					parameter->stages = SHADER_VERTEX | SHADER_PIXEL;
 
-					switch (type) {
+					switch (gltype) {
 					case GL_FLOAT_VEC4:
 						parameter->type = RENDERPARAMETER_FLOAT4;
 						offset += 16;
 						break;
 					case GL_INT_VEC4:
-					case GL_UNSIGNED_INT_VEC4:
+					case 0x8DC8: //GL_UNSIGNED_INT_VEC4:
 						parameter->type = RENDERPARAMETER_INT4;
 						offset += 16;
 						break;
@@ -778,10 +785,10 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 						break;
 					}
 
-					++program->parameters.num_parameters;
+					++program->num_parameters;
 				}
 
-				program->parameters.size = offset;
+				program->size_parameterdata = offset;
 				break;
 			}
 
@@ -805,7 +812,7 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 				};
 				size_t uuid_size = sizeof(uuid_t) * 2;
 				size_t program_size = sizeof(render_program_t) +
-				                      sizeof(render_parameter_t) * program->parameters.num_parameters;
+				                      sizeof(render_parameter_t) * program->num_parameters;
 				resource_stream_write_header(stream, header);
 				stream_write_uint128(stream, vertexshader);
 				stream_write_uint128(stream, pixelshader);
@@ -835,6 +842,20 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 	error_context_pop();
 
 	return result;
+}
+
+#else
+
+int
+render_compile(const uuid_t uuid, uint64_t platform, resource_source_t* source,
+               const uint256_t source_hash, const char* type, size_t type_length) {
+	FOUNDATION_UNUSED(uuid);
+	FOUNDATION_UNUSED(platform);
+	FOUNDATION_UNUSED(source);
+	FOUNDATION_UNUSED(source_hash);
+	FOUNDATION_UNUSED(type);
+	FOUNDATION_UNUSED(type_length);
+	return -1;
 }
 
 #endif

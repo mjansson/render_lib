@@ -272,7 +272,6 @@ typedef struct render_state_t render_state_t;
 typedef struct render_resolution_t render_resolution_t;
 typedef struct render_vertex_decl_element_t render_vertex_decl_element_t;
 typedef struct render_parameter_t render_parameter_t;
-typedef struct render_parameter_decl_t render_parameter_decl_t;
 typedef struct render_parameterbuffer_t render_parameterbuffer_t;
 typedef struct render_statebuffer_t render_statebuffer_t;
 typedef struct render_config_t render_config_t;
@@ -416,8 +415,7 @@ struct render_context_t {
 	const radixsort_index_t* order;
 };
 
-struct render_state_t
-{
+struct render_state_t {
 	render_blend_factor_t blend_source_color; 
 	render_blend_factor_t blend_dest_color;
 	render_blend_op_t     blend_op_color;
@@ -441,12 +439,12 @@ struct render_command_clear_t {
 };
 
 struct render_command_viewport_t {
-	uint16_t x;
-	uint16_t y;
-	uint16_t width;
-	uint16_t height;
-	real     min_z;
-	real     max_z;
+	int  x;
+	int  y;
+	int  width;
+	int  height;
+	real min_z;
+	real max_z;
 };
 
 struct render_command_render_t {
@@ -490,12 +488,6 @@ struct render_parameter_t {
 	unsigned int            location;
 };
 
-struct render_parameter_decl_t {
-	unsigned int num_parameters;
-	unsigned int size;
-	render_parameter_t parameters[];
-};
-
 #define RENDER_DECLARE_BUFFER \
 	RENDER_DECLARE_OBJECT \
 	uint8_t    usage; \
@@ -534,7 +526,8 @@ struct render_indexbuffer_t {
 
 struct render_parameterbuffer_t {
 	RENDER_DECLARE_BUFFER;
-	render_parameter_decl_t decl;
+	unsigned int num_parameters;
+	render_parameter_t parameters[FOUNDATION_FLEXIBLE_ARRAY];
 };
 
 struct render_statebuffer_t {
@@ -556,7 +549,9 @@ FOUNDATION_ALIGNED_STRUCT(render_program_t, 8) {
 	RENDER_32BIT_PADDING_ARR(data, 4)
 	render_vertex_decl_t attributes;
 	hash_t attribute_name[VERTEXATTRIBUTE_NUMATTRIBUTES];
-	render_parameter_decl_t parameters;
+	unsigned int num_parameters;
+	unsigned int size_parameterdata;
+	render_parameter_t parameters[FOUNDATION_FLEXIBLE_ARRAY];
 };
 
 struct render_resolution_t {

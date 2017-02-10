@@ -24,7 +24,7 @@ class ClangToolchain(toolchain.Toolchain):
     #Default variables
     self.sysroot = ''
     if self.target.is_ios():
-      self.deploymenttarget = '6.0'
+      self.deploymenttarget = '8.0'
     if self.target.is_macosx():
       self.deploymenttarget = '10.7'
 
@@ -33,7 +33,7 @@ class ClangToolchain(toolchain.Toolchain):
     self.ccdeps = 'gcc'
     self.ccdepfile = '$out.d'
     self.arcmd = self.rmcmd('$out') + ' && $toolchain$ar crsD $ararchflags $arflags $out $in'
-    self.linkcmd = '$toolchain$cc $libpaths $configlibpaths $linkflags $linkarchflags $linkconfigflags -o $out $in $libs $archlibs $oslibs'
+    self.linkcmd = '$toolchain$cc $libpaths $configlibpaths $linkflags $linkarchflags $linkconfigflags -o $out $in $libs $archlibs $oslibs $frameworks'
 
     #Base flags
     self.cflags = [ '-std=c11', '-D' + project.upper() + '_COMPILE=1',
@@ -46,6 +46,7 @@ class ClangToolchain(toolchain.Toolchain):
     self.arflags = []
     self.linkflags = []
     self.oslibs = []
+    self.frameworks = []
 
     if self.target.is_linux() or self.target.is_bsd() or self.target.is_raspberrypi():
       self.linkflags += ['-pthread']
@@ -152,6 +153,7 @@ class ClangToolchain(toolchain.Toolchain):
     writer.variable('configlibpaths', '')
     writer.variable('archlibs', '')
     writer.variable('oslibs', self.make_libs(self.oslibs))
+    writer.variable('frameworks', '')
     writer.newline()
 
   def write_rules(self, writer):
@@ -215,6 +217,7 @@ class ClangToolchain(toolchain.Toolchain):
       self.cflags += ['-fasm-blocks', '-miphoneos-version-min=' + self.deploymenttarget, '-isysroot', '$sysroot']
       self.arflags += ['-static', '-no_warning_for_no_symbols']
       self.linkflags += ['-isysroot', '$sysroot']
+    self.cflags += ['-fembed-bitcode-marker']
 
     platformpath = subprocess.check_output(['xcrun', '--sdk', sdk, '--show-sdk-platform-path']).strip()
     localpath = platformpath + "/Developer/usr/bin:/Applications/Xcode.app/Contents/Developer/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin"
@@ -237,9 +240,9 @@ class ClangToolchain(toolchain.Toolchain):
     self.lipocmd = '$lipo $in -create -output $out'
 
     if self.target.is_macosx():
-      self.linkflags += [ '-framework', 'Cocoa', '-framework', 'CoreFoundation' ]
+      self.frameworks = ['Cocoa', 'CoreFoundation']
     if self.target.is_ios():
-      self.linkflags += [ '-framework', 'CoreGraphics', '-framework', 'UIKit', '-framework', 'Foundation' ]
+      self.frameworks = ['CoreGraphics', 'UIKit', 'Foundation']
 
   def build_pnacl_toolchain(self):
     if self.sdkpath == '':
@@ -341,7 +344,7 @@ class ClangToolchain(toolchain.Toolchain):
     flags = []
     return flags
 
-  def make_linkarchflags(self, arch, targettype):
+  def make_linkarchflags(self, arch, targettype, variables):
     flags = []
     flags += self.make_targetarchflags(arch, targettype)
     if self.target.is_android():
@@ -352,9 +355,11 @@ class ClangToolchain(toolchain.Toolchain):
         flags += ['-Xlinker', '/MACHINE:X86']
       elif arch == 'x86-64':
         flags += ['-Xlinker', '/MACHINE:X64']
+    if self.target.is_macosx() and 'support_lua' in variables and variables['support_lua']:
+      flags += ['-pagezero_size', '10000', '-image_base', '100000000']
     return flags
 
-  def make_linkconfigflags(self, config, targettype):
+  def make_linkconfigflags(self, config, targettype, variables):
     flags = []
     if self.target.is_windows():
       if targettype == 'sharedlib':
@@ -376,6 +381,11 @@ class ClangToolchain(toolchain.Toolchain):
   def make_libs(self, libs):
     if libs != None:
       return ['-l' + lib for lib in libs]
+    return []
+
+  def make_frameworks(self, frameworks):
+    if frameworks != None:
+      return ['-framework ' + framework for framework in frameworks]
     return []
 
   def make_configlibpaths(self, config, arch, extralibpaths):
@@ -421,16 +431,23 @@ class ClangToolchain(toolchain.Toolchain):
 
   def link_variables(self, config, arch, targettype, variables):
     localvariables = []
-    linkarchflags = self.make_linkarchflags(arch, targettype)
+    linkarchflags = self.make_linkarchflags(arch, targettype, variables)
     if linkarchflags != []:
       localvariables += [('linkarchflags', linkarchflags)]
-    linkconfigflags = self.make_linkconfigflags(config, targettype)
+    linkconfigflags = self.make_linkconfigflags(config, targettype, variables)
     if linkconfigflags != []:
       localvariables += [('linkconfigflags', linkconfigflags)]
     if 'libs' in variables:
       libvar = self.make_libs(variables['libs'])
       if libvar != []:
         localvariables += [('libs', libvar)]
+
+    localframeworks = self.frameworks or []
+    if 'frameworks' in variables and variables['frameworks'] != None:
+      localframeworks += list(variables['frameworks'])
+    if len(localframeworks) > 0:
+      localvariables += [('frameworks', self.make_frameworks(list(localframeworks)))]
+      
     libpaths = []
     if 'libpaths' in variables:
       libpaths = variables['libpaths']

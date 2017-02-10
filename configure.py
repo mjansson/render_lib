@@ -9,7 +9,7 @@ sys.path.insert(0, os.path.join('build', 'ninja'))
 
 import generator
 
-dependlibs = ['resource', 'vector', 'window', 'foundation']
+dependlibs = ['resource', 'vector', 'window', 'network', 'foundation']
 
 generator = generator.Generator(project = 'render', dependlibs = dependlibs, variables = [('bundleidentifier', 'com.rampantpixels.render.$(binname)')])
 target = generator.target
@@ -34,13 +34,17 @@ elif target.is_ios():
 if target.is_windows():
   gllibs = ['opengl32', 'gdi32']
 
+linklibs = ['render'] + dependlibs + gllibs
+
 if not target.is_ios() and not target.is_android() and not target.is_tizen():
   configs = [config for config in toolchain.configs if config not in ['profile', 'deploy']]
   if not configs == []:
-    generator.bin('renderimport', ['main.c'], 'renderimport', basepath = 'tools', implicit_deps = [render_lib], libs = ['render', 'window', 'resource', 'foundation'] + gllibs, frameworks = glframeworks, configs = configs)
-    generator.bin('rendercompile', ['main.c'], 'rendercompile', basepath = 'tools', implicit_deps = [render_lib], libs = ['render', 'window', 'resource', 'foundation' ] + gllibs, frameworks = glframeworks, configs = configs)
+    generator.bin('renderimport', ['main.c'], 'renderimport', basepath = 'tools', implicit_deps = [render_lib], libs = linklibs, frameworks = glframeworks, configs = configs)
+    generator.bin('rendercompile', ['main.c'], 'rendercompile', basepath = 'tools', implicit_deps = [render_lib], libs = linklibs, frameworks = glframeworks, configs = configs)
 
 includepaths = generator.test_includepaths()
+
+linklibs = ['test'] + linklibs
 
 test_cases = [
   'render'
@@ -67,15 +71,15 @@ if toolchain.is_monolithic() or target.is_ios() or target.is_android() or target
       'tizen-manifest.xml', os.path.join('res', 'tizenapp.png')
     ]]
   if target.is_macosx() or target.is_ios() or target.is_android() or target.is_tizen():
-    generator.app(module = '', sources = [os.path.join(module, 'main.c') for module in test_cases] + test_extrasources, binname = 'test-all', basepath = 'test', implicit_deps = [render_lib], libs = ['test', 'render'] + dependlibs + gllibs, frameworks = glframeworks, resources = test_resources, includepaths = includepaths)
+    generator.app(module = '', sources = [os.path.join(module, 'main.c') for module in test_cases] + test_extrasources, binname = 'test-all', basepath = 'test', implicit_deps = [render_lib], libs = linklibs, frameworks = glframeworks, resources = test_resources, includepaths = includepaths)
   else:
-    generator.bin(module = '', sources = [os.path.join(module, 'main.c') for module in test_cases] + test_extrasources, binname = 'test-all', basepath = 'test', implicit_deps = [render_lib], libs = ['test', 'render'] + dependlibs + gllibs, frameworks = glframeworks, resources = test_resources, includepaths = includepaths)
+    generator.bin(module = '', sources = [os.path.join(module, 'main.c') for module in test_cases] + test_extrasources, binname = 'test-all', basepath = 'test', implicit_deps = [render_lib], libs = linklibs, frameworks = glframeworks, resources = test_resources, includepaths = includepaths)
 else:
   #Build one binary per test case
   generator.bin(module = 'all', sources = ['main.c'], binname = 'test-all', basepath = 'test', implicit_deps = [render_lib], libs = ['render'] + dependlibs, includepaths = includepaths)
   for test in test_cases:
     if target.is_macosx():
       test_resources = [os.path.join('osx', item) for item in ['test-' + test + '.plist', 'Images.xcassets', 'test-' + test + '.xib']]
-      generator.app(module = test, sources = ['main.c' ], binname = 'test-' + test, basepath = 'test', implicit_deps = [render_lib], libs = ['test', 'render'] + dependlibs + gllibs, frameworks = glframeworks, resources = test_resources, includepaths = includepaths)
+      generator.app(module = test, sources = ['main.c' ], binname = 'test-' + test, basepath = 'test', implicit_deps = [render_lib], libs = linklibs, frameworks = glframeworks, resources = test_resources, includepaths = includepaths)
     else:
-      generator.bin(module = test, sources = ['main.c' ], binname = 'test-' + test, basepath = 'test', implicit_deps = [render_lib], libs = ['test', 'render'] + dependlibs + gllibs, frameworks = glframeworks, includepaths = includepaths)
+      generator.bin(module = test, sources = ['main.c' ], binname = 'test-' + test, basepath = 'test', implicit_deps = [render_lib], libs = linklibs, frameworks = glframeworks, includepaths = includepaths)

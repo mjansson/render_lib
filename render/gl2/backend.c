@@ -21,6 +21,8 @@
 #include <render/render.h>
 #include <render/internal.h>
 
+#include <render/gl2/backend.h>
+
 #if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_MACOSX || ( FOUNDATION_PLATFORM_LINUX && !FOUNDATION_PLATFORM_LINUX_RASPBERRYPI )
 
 #include <render/gl4/glwrap.h>
@@ -60,6 +62,8 @@ _rb_gl2_set_default_state(void);
 
 static bool
 _rb_gl2_construct(render_backend_t* backend) {
+	FOUNDATION_UNUSED(backend);
+
 	//TODO: Caps check
 	//if( !... )
 	//  return false;
@@ -164,7 +168,7 @@ _rb_gl2_set_drawable(render_backend_t* backend, render_drawable_t* drawable) {
 	return true;
 }
 
-FOUNDATION_DECLARE_THREAD_LOCAL(void*, gl2_context, 0);
+FOUNDATION_DECLARE_THREAD_LOCAL(void*, gl2_context, 0)
 
 static void
 _rb_gl2_enable_thread(render_backend_t* backend) {
@@ -202,15 +206,17 @@ _rb_gl2_disable_thread(render_backend_t* backend) {
 	set_thread_gl2_context(0);
 }
 
-unsigned int*
+static unsigned int*
 _rb_gl2_enumerate_adapters(render_backend_t* backend) {
+	FOUNDATION_UNUSED(backend);
 	unsigned int* adapters = 0;
-	array_push(adapters, WINDOW_ADAPTER_DEFAULT);
+	array_push(adapters, (unsigned int)WINDOW_ADAPTER_DEFAULT);
 	return adapters;
 }
 
-render_resolution_t*
+static render_resolution_t*
 _rb_gl2_enumerate_modes(render_backend_t* backend, unsigned int adapter) {
+	FOUNDATION_UNUSED(backend);
 	render_resolution_t* modes = 0;
 
 #if FOUNDATION_PLATFORM_LINUX
@@ -314,16 +320,16 @@ exit:
 	XCloseDisplay(display);
 
 #else
-
+	FOUNDATION_UNUSED(adapter);
 	render_resolution_t mode = {
 		0,
 		800,
 		600,
 		PIXELFORMAT_R8G8B8X8,
+			COLORSPACE_LINEAR,
 		60
 	};
 	array_push(modes, mode);
-
 #endif
 
 	return modes;
@@ -331,11 +337,13 @@ exit:
 
 static void*
 _rb_gl2_allocate_buffer(render_backend_t* backend, render_buffer_t* buffer) {
+	FOUNDATION_UNUSED(backend);
 	return memory_allocate(HASH_RENDER, buffer->size * buffer->allocated, 16, MEMORY_PERSISTENT);
 }
 
 static void
 _rb_gl2_deallocate_buffer(render_backend_t* backend, render_buffer_t* buffer, bool sys, bool aux) {
+	FOUNDATION_UNUSED(backend);
 	if (sys)
 		memory_deallocate(buffer->store);
 
@@ -348,6 +356,7 @@ _rb_gl2_deallocate_buffer(render_backend_t* backend, render_buffer_t* buffer, bo
 
 static bool
 _rb_gl2_upload_buffer(render_backend_t* backend, render_buffer_t* buffer) {
+	FOUNDATION_UNUSED(backend);
 	if ((buffer->buffertype == RENDERBUFFER_PARAMETER) || (buffer->buffertype == RENDERBUFFER_STATE))
 		return true;
 
@@ -360,12 +369,12 @@ _rb_gl2_upload_buffer(render_backend_t* backend, render_buffer_t* buffer) {
 	}
 
 	glBindBuffer(GL_ARRAY_BUFFER, buffer_object);
-	glBufferData(GL_ARRAY_BUFFER, buffer->size * buffer->allocated, buffer->store,
+	glBufferData(GL_ARRAY_BUFFER, (long)(buffer->size * buffer->allocated), buffer->store,
 	             (buffer->usage == RENDERUSAGE_DYNAMIC) ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
 	if (_rb_gl_check_error("Unable to upload buffer object data"))
 		return false;
 
-	buffer->flags &= ~RENDERBUFFER_DIRTY;
+	buffer->flags &= ~(uint32_t)RENDERBUFFER_DIRTY;
 	return true;
 }
 
@@ -393,7 +402,7 @@ _rb_gl2_upload_shader(render_backend_t* backend, render_shader_t* shader, const 
 	case SHADER_VERTEX: {
 			bool is_pixel_shader = (shader->shadertype == SHADER_PIXEL);
 			GLuint handle = glCreateShader(is_pixel_shader ? GL_FRAGMENT_SHADER_ARB : GL_VERTEX_SHADER_ARB);
-			const GLchar* source = (GLchar*)buffer;
+			const GLchar* source = (const GLchar*)buffer;
 			GLint source_size = (GLint)size;
 			glShaderSource(handle, 1, &source, &source_size);
 			glCompileShader(handle);
@@ -404,9 +413,8 @@ _rb_gl2_upload_shader(render_backend_t* backend, render_shader_t* shader, const 
 			if (!compiled) {
 #if BUILD_DEBUG
 				GLsizei log_capacity = 2048;
-				GLchar* log_buffer = memory_allocate(HASH_RESOURCE, log_capacity, 0, MEMORY_TEMPORARY);
+				GLchar* log_buffer = memory_allocate(HASH_RESOURCE, (size_t)log_capacity, 0, MEMORY_TEMPORARY);
 				GLint log_length = 0;
-				GLint compiled = 0;
 				glGetShaderiv(handle, GL_COMPILE_STATUS, &compiled);
 				glGetShaderInfoLog(handle, log_capacity, &log_length, log_buffer);
 				log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Unable to compile shader: %.*s (handle %u)"),
@@ -439,7 +447,7 @@ _rb_gl2_deallocate_shader(render_backend_t* backend, render_shader_t* shader) {
 
 static bool
 _rb_gl2_check_program_link(GLuint handle) {
-	GLuint result = 0;
+	GLint result = 0;
 	glGetProgramiv(handle, GL_LINK_STATUS, &result);
 	if (!result) {
 		GLsizei buffer_size = 4096;
@@ -447,10 +455,10 @@ _rb_gl2_check_program_link(GLuint handle) {
 		GLchar* log = 0;
 
 		glGetProgramiv(handle, GL_INFO_LOG_LENGTH, &buffer_size);
-		log = memory_allocate(HASH_RENDER, buffer_size + 1, 0, MEMORY_TEMPORARY);
+		log = memory_allocate(HASH_RENDER, (size_t)buffer_size + 1, 0, MEMORY_TEMPORARY);
 		glGetProgramInfoLog(handle, buffer_size, &log_length, log);
 
-		log_errorf(ERRORLEVEL_ERROR, ERROR_SYSTEM_CALL_FAIL, "Unable to compile program: %.*s",
+		log_errorf(ERRORLEVEL_ERROR, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Unable to compile program: %.*s"),
 		           (int)log_length, log);
 		memory_deallocate(log);
 
@@ -463,10 +471,10 @@ _rb_gl2_check_program_link(GLuint handle) {
 
 static bool
 _rb_gl2_upload_program(render_backend_t* backend, render_program_t* program) {
+	FOUNDATION_UNUSED(backend);
 	if (program->backend_data[0])
 		glDeleteProgram((GLuint)program->backend_data[0]);
 
-	GLint result = 0;
 	GLint attributes = 0;
 	GLint uniforms = 0;
 	GLint ia, iu;
@@ -490,9 +498,9 @@ _rb_gl2_upload_program(render_backend_t* backend, render_program_t* program) {
 		num_chars = 0;
 		size = 0;
 		type = GL_NONE;
-		glGetActiveAttrib(handle, ia, sizeof(name), &num_chars, &size, &type, name);
+		glGetActiveAttrib(handle, (GLuint)ia, sizeof(name), &num_chars, &size, &type, name);
 
-		name_hash = hash(name, num_chars);
+		name_hash = hash(name, (size_t)num_chars);
 		for (size_t iattrib = 0; iattrib < program->attributes.num_attributes; ++iattrib) {
 			if (program->attribute_name[iattrib] == name_hash) {
 				render_vertex_attribute_t* attribute = program->attributes.attribute + iattrib;
@@ -510,13 +518,13 @@ _rb_gl2_upload_program(render_backend_t* backend, render_program_t* program) {
 		num_chars = 0;
 		size = 0;
 		type = GL_NONE;
-		glGetActiveUniform(handle, iu, sizeof(name), &num_chars, &size, &type, name);
+		glGetActiveUniform(handle, (GLuint)iu, sizeof(name), &num_chars, &size, &type, name);
 
-		name_hash = hash(name, num_chars);
-		for (size_t iparam = 0; iparam < program->parameters.num_parameters; ++iparam) {
-			render_parameter_t* parameter = program->parameters.parameters + iparam;
+		name_hash = hash(name, (size_t)num_chars);
+		for (size_t iparam = 0; iparam < program->num_parameters; ++iparam) {
+			render_parameter_t* parameter = program->parameters + iparam;
 			if (parameter->name == name_hash)
-				parameter->location = glGetUniformLocation(handle, name);
+				parameter->location = (unsigned int)glGetUniformLocation(handle, name);
 		}
 	}
 
@@ -527,6 +535,7 @@ _rb_gl2_upload_program(render_backend_t* backend, render_program_t* program) {
 
 static void
 _rb_gl2_deallocate_program(render_backend_t* backend, render_program_t* program) {
+	FOUNDATION_UNUSED(backend);
 	if (program->backend_data[0])
 		glDeleteProgram((GLuint)program->backend_data[0]);
 	program->backend_data[0] = 0;
@@ -583,6 +592,7 @@ static void _rb_gl2_deallocate_texture(render_backend_t* backend, render_texture
 
 static void
 _rb_gl2_clear(render_backend_gl2_t* backend, render_context_t* context, render_command_t* command) {
+	FOUNDATION_UNUSED(context);
 	unsigned int buffer_mask = command->data.clear.buffer_mask;
 	unsigned int bits = 0;
 
@@ -601,11 +611,11 @@ _rb_gl2_clear(render_backend_gl2_t* backend, render_context_t* context, render_c
 	if (buffer_mask & RENDERBUFFER_DEPTH) {
 		glDepthMask(GL_TRUE);
 		bits |= GL_DEPTH_BUFFER_BIT;
-		glClearDepth(command->data.clear.depth);
+		glClearDepth((GLclampd)command->data.clear.depth);
 	}
 
 	if (buffer_mask & RENDERBUFFER_STENCIL) {
-		glClearStencil(command->data.clear.stencil);
+		glClearStencil((GLint)command->data.clear.stencil);
 		bits |= GL_STENCIL_BUFFER_BIT;
 	}
 
@@ -645,7 +655,7 @@ static const unsigned int _rb_gl2_primitive_mult[RENDERPRIMITIVE_NUMTYPES] = { 3
 static const unsigned int _rb_gl2_primitive_add[RENDERPRIMITIVE_NUMTYPES]  = { 0 };
 
 //                                                 BLEND_ZERO, BLEND_ONE, BLEND_SRCCOLOR, BLEND_INVSRCCOLOR,      BLEND_DESTCOLOR, BLEND_INVDESTCOLOR,     BLEND_SRCALPHA, BLEND_INVSRCALPHA,      BLEND_DESTALPHA, BLEND_INVDESTALPHA,     BLEND_FACTOR,      BLEND_INVFACTOR,             BLEND_SRCALPHASAT
-static const GLenum       _rb_gl2_blend_func[] = { GL_ZERO,    GL_ONE,    GL_SRC_COLOR,   GL_ONE_MINUS_SRC_COLOR, GL_DST_COLOR,    GL_ONE_MINUS_DST_COLOR, GL_SRC_ALPHA,   GL_ONE_MINUS_SRC_ALPHA, GL_DST_ALPHA,    GL_ONE_MINUS_DST_ALPHA, GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA, GL_SRC_ALPHA_SATURATE };
+//static const GLenum       _rb_gl2_blend_func[] = { GL_ZERO,    GL_ONE,    GL_SRC_COLOR,   GL_ONE_MINUS_SRC_COLOR, GL_DST_COLOR,    GL_ONE_MINUS_DST_COLOR, GL_SRC_ALPHA,   GL_ONE_MINUS_SRC_ALPHA, GL_DST_ALPHA,    GL_ONE_MINUS_DST_ALPHA, GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA, GL_SRC_ALPHA_SATURATE };
 
 static void
 _rb_gl2_set_default_state(void) {
@@ -705,9 +715,8 @@ _rb_gl2_render(render_backend_gl2_t* backend, render_context_t* context,
 	glUseProgram((GLuint)program->backend_data[0]);
 
 	// Bind the parameter blocks
-	render_parameter_decl_t* paramdecl = &parameterbuffer->decl;
-	render_parameter_t* param = paramdecl->parameters;
-	for (unsigned int ip = 0; ip < paramdecl->num_parameters; ++ip, ++param) {
+	render_parameter_t* param = parameterbuffer->parameters;
+	for (unsigned int ip = 0; ip < parameterbuffer->num_parameters; ++ip, ++param) {
 		/*if (param->type == RENDERPARAMETER_TEXTURE) {
 			//TODO: Dynamic use of texture units, reusing unit that already have correct texture bound, and least-recently-used evicting old bindings to free a new unit
 			glActiveTexture(GL_TEXTURE0 + param_info->unit);
@@ -730,11 +739,11 @@ _rb_gl2_render(render_backend_gl2_t* backend, render_context_t* context,
 		else*/ {
 			void* data = pointer_offset(parameterbuffer->store, param->offset);
 			if (param->type == RENDERPARAMETER_FLOAT4)
-				glUniform4fv(param->location, param->dim, data);
+				glUniform4fv((GLint)param->location, param->dim, data);
 			else if (param->type == RENDERPARAMETER_INT4)
-				glUniform4iv(param->location, param->dim, data);
+				glUniform4iv((GLint)param->location, param->dim, data);
 			else if (param->type == RENDERPARAMETER_MATRIX)
-				glUniformMatrix4fv(param->location, param->dim, GL_TRUE, data);
+				glUniformMatrix4fv((GLint)param->location, param->dim, GL_TRUE, data);
 		}
 	}
 
@@ -759,7 +768,7 @@ _rb_gl2_render(render_backend_gl2_t* backend, render_context_t* context,
 	unsigned int num = command->count;
 	unsigned int pnum = _rb_gl2_primitive_mult[primitive] * num + _rb_gl2_primitive_add[primitive];
 
-	glDrawElements(_rb_gl2_primitive_type[primitive], pnum,
+	glDrawElements(_rb_gl2_primitive_type[primitive], (GLsizei)pnum,
 	               (indexbuffer->size == 2) ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT, 0);
 }
 
@@ -854,11 +863,11 @@ static render_backend_vtable_t _render_backend_vtable_gl2 = {
 };
 
 render_backend_t*
-render_backend_gl2_allocate() {
+render_backend_gl2_allocate(void) {
 	if (!_rb_gl_check_context(2, 0))
 		return 0;
 
-#if NEO_ENABLE_NVGLEXPERT
+#if RENDER_ENABLE_NVGLEXPERT
 	static bool nvInitialized = false;
 	if (!nvInitialized) {
 		nvInitialized = true;
@@ -877,7 +886,7 @@ render_backend_gl2_allocate() {
 #else
 
 render_backend_t*
-render_gl2_allocate() {
+render_gl2_allocate(void) {
 	return 0;
 }
 

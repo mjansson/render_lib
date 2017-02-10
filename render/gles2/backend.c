@@ -20,6 +20,8 @@
 #include <render/render.h>
 #include <render/internal.h>
 
+#include <render/gles2/backend.h>
+
 #if FOUNDATION_PLATFORM_IOS
 
 #  include <OpenGLES/ES2/gl.h>
@@ -1042,7 +1044,7 @@ static render_backend_vtable_t _render_backend_vtable_gles2 = {
 };
 
 render_backend_t*
-render_backend_gles2_allocate() {
+render_backend_gles2_allocate(void) {
 	render_backend_t* backend = memory_allocate(HASH_RENDER, sizeof(render_backend_gles2_t), 0,
 	                                            MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 	backend->api = RENDERAPI_GLES2;
@@ -1053,10 +1055,9 @@ render_backend_gles2_allocate() {
 
 #else
 
-
-render_backend_t* render_backend_gles2_allocate() {
+render_backend_t*
+render_backend_gles2_allocate(void) {
 	return 0;
 }
-
 
 #endif
