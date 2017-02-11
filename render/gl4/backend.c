@@ -81,6 +81,8 @@ _rb_gl_error_message(GLenum err) {
 	return "<UNKNOWN>";
 }
 
+FOUNDATION_DECLARE_THREAD_LOCAL(void*, gl4_context, 0)
+
 bool
 _rb_gl_check_error(const char* message) {
 	GLenum err = glGetError();
@@ -130,7 +132,6 @@ _rb_gl_destroy_context(render_drawable_t* drawable, void* context) {
 
 void*
 _rb_gl_create_context(render_drawable_t* drawable, unsigned int major, unsigned int minor, void* share_context) {
-	FOUNDATION_UNUSED(share_context);
 	if (drawable && (drawable->type == RENDERDRAWABLE_OFFSCREEN)) {
 		log_error(HASH_RENDER, ERROR_NOT_IMPLEMENTED, STRING_CONST("Offscreen drawable not implemented"));
 		return 0;
@@ -248,6 +249,11 @@ _rb_gl_create_context(render_drawable_t* drawable, unsigned int major, unsigned 
 	int numconfig = 0;
 	bool verify_only = false;
 
+	if (share_context) {
+		log_error(HASH_RENDER, ERROR_NOT_IMPLEMENTED, STRING_CONST("Context sharing not implemented"));
+		goto failed;
+	}
+
 	if (!drawable) {
 		display = XOpenDisplay(0);
 		screen = DefaultScreen(display);
@@ -321,6 +327,11 @@ failed:
 	                                          8/*_res._stencil*/, nullptr);
 	if (!context) {
 		log_warn(HASH_RENDER, WARNING_UNSUPPORTED, STRING_CONST("Unable to create OpenGL context"));
+		goto failed;
+	}
+
+	if (share_context) {
+		log_error(HASH_RENDER, ERROR_NOT_IMPLEMENTED, STRING_CONST("Context sharing not implemented"));
 		goto failed;
 	}
 
@@ -428,6 +439,8 @@ _rb_gl4_set_drawable(render_backend_t* backend, render_drawable_t* drawable) {
 		return false;
 	}
 
+	set_thread_gl4_context(backend_gl4->context);
+
 #if FOUNDATION_PLATFORM_WINDOWS
 
 	backend_gl4->hdc = (HDC)drawable->hdc;
@@ -491,8 +504,6 @@ _rb_gl4_set_drawable(render_backend_t* backend, render_drawable_t* drawable) {
 
 	return true;
 }
-
-FOUNDATION_DECLARE_THREAD_LOCAL(void*, gl4_context, 0)
 
 static void
 _rb_gl4_enable_thread(render_backend_t* backend) {

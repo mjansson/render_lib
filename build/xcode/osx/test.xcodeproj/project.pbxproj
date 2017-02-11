@@ -13,7 +13,6 @@
 		45138683193A746000BA2092 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 45138682193A746000BA2092 /* Cocoa.framework */; };
 		451386B6193A749500BA2092 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 451386B5193A749500BA2092 /* main.c */; };
 		451386BA193A753D00BA2092 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 451386B7193A753D00BA2092 /* Images.xcassets */; };
-		451386BB193A753D00BA2092 /* test-render.plist in Resources */ = {isa = PBXBuildFile; fileRef = 451386B8193A753D00BA2092 /* test-render.plist */; };
 		451386BC193A753D00BA2092 /* test-render.xib in Resources */ = {isa = PBXBuildFile; fileRef = 451386B9193A753D00BA2092 /* test-render.xib */; };
 		451386BD193A75DA00BA2092 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 45138670193A5C2E00BA2092 /* Carbon.framework */; };
 		451386BE193A75DB00BA2092 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 45138672193A5C2E00BA2092 /* CoreFoundation.framework */; };
@@ -189,7 +188,7 @@
 		4513865B193A580400BA2092 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0610;
+				LastUpgradeCheck = 0810;
 			};
 			buildConfigurationList = 4513865E193A580400BA2092 /* Build configuration list for PBXProject "test" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -215,7 +214,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				451386BB193A753D00BA2092 /* test-render.plist in Resources */,
 				451386BC193A753D00BA2092 /* test-render.xib in Resources */,
 				451386BA193A753D00BA2092 /* Images.xcassets in Resources */,
 			);
@@ -261,17 +259,22 @@
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CONFIGURATION_BUILD_DIR = ../../../bin/macosx/debug;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = c11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_CPP_EXCEPTIONS = NO;
 				GCC_ENABLE_CPP_RTTI = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = NO;
 				GCC_FAST_MATH = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"BUILD_DEBUG=1",
@@ -289,6 +292,9 @@
 					../../..,
 					../../../../foundation_lib,
 					../../../../window_lib,
+					../../../../network_lib,
+					../../../../vector_lib,
+					../../../../resource_lib,
 					../../../../foundation_lib/test,
 					"$(inherited)",
 				);
@@ -296,9 +302,12 @@
 					../../../lib/macosx/debug,
 					../../../../foundation_lib/lib/macosx/debug,
 					../../../../window_lib/lib/macosx/debug,
+					../../../../resource_lib/lib/macosx/debug,
+					../../../../network_lib/lib/macosx/debug,
+					../../../../vector_lib/lib/macosx/debug,
 					"$(inherited)",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				PRECOMPS_INCLUDE_HEADERS_FROM_BUILT_PRODUCTS_DIR = NO;
 				SDKROOT = macosx;
 			};
@@ -314,17 +323,22 @@
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CONFIGURATION_BUILD_DIR = ../../../bin/macosx/release;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = c11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_CPP_EXCEPTIONS = NO;
 				GCC_ENABLE_CPP_RTTI = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = NO;
 				GCC_FAST_MATH = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = fast;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"BUILD_RELEASE=1",
@@ -343,6 +357,9 @@
 					../../..,
 					../../../../foundation_lib,
 					../../../../window_lib,
+					../../../../network_lib,
+					../../../../vector_lib,
+					../../../../resource_lib,
 					../../../../foundation_lib/test,
 					"$(inherited)",
 				);
@@ -350,10 +367,13 @@
 					../../../lib/macosx/release,
 					../../../../foundation_lib/lib/macosx/release,
 					../../../../window_lib/lib/macosx/release,
+					../../../../resource_lib/lib/macosx/release,
+					../../../../network_lib/lib/macosx/release,
+					../../../../vector_lib/lib/macosx/release,
 					"$(inherited)",
 				);
 				LLVM_LTO = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				PRECOMPS_INCLUDE_HEADERS_FROM_BUILT_PRODUCTS_DIR = NO;
 				SDKROOT = macosx;
 			};
@@ -400,15 +420,15 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				INFOPLIST_FILE = "../../../test/render/osx/test-render.plist";
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					/Users/mjansson/projects/render_lib/lib/macosx/debug,
-				);
 				OTHER_LDFLAGS = (
+					"-lvector",
+					"-lresource",
+					"-lnetwork",
 					"-lwindow",
 					"-ltest",
 					"-lfoundation",
 				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.rampantpixels.render.test.render;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WRAPPER_EXTENSION = app;
 			};
@@ -421,15 +441,15 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
 				INFOPLIST_FILE = "../../../test/render/osx/test-render.plist";
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					/Users/mjansson/projects/render_lib/lib/macosx/debug,
-				);
 				OTHER_LDFLAGS = (
+					"-lvector",
+					"-lresource",
+					"-lnetwork",
 					"-lwindow",
 					"-ltest",
 					"-lfoundation",
 				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.rampantpixels.render.test.render;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WRAPPER_EXTENSION = app;
 			};
@@ -445,17 +465,22 @@
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CONFIGURATION_BUILD_DIR = ../../../bin/macosx/profile;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = c11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_CPP_EXCEPTIONS = NO;
 				GCC_ENABLE_CPP_RTTI = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = NO;
 				GCC_FAST_MATH = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = fast;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"BUILD_PROFILE=1",
@@ -474,6 +499,9 @@
 					../../..,
 					../../../../foundation_lib,
 					../../../../window_lib,
+					../../../../network_lib,
+					../../../../vector_lib,
+					../../../../resource_lib,
 					../../../../foundation_lib/test,
 					"$(inherited)",
 				);
@@ -481,10 +509,13 @@
 					../../../lib/macosx/profile,
 					../../../../foundation_lib/lib/macosx/profile,
 					../../../../window_lib/lib/macosx/profile,
+					../../../../resource_lib/lib/macosx/profile,
+					../../../../network_lib/lib/macosx/profile,
+					../../../../vector_lib/lib/macosx/profile,
 					"$(inherited)",
 				);
 				LLVM_LTO = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				PRECOMPS_INCLUDE_HEADERS_FROM_BUILT_PRODUCTS_DIR = NO;
 				SDKROOT = macosx;
 			};
@@ -514,15 +545,15 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
 				INFOPLIST_FILE = "../../../test/render/osx/test-render.plist";
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					/Users/mjansson/projects/render_lib/lib/macosx/debug,
-				);
 				OTHER_LDFLAGS = (
+					"-lvector",
+					"-lresource",
+					"-lnetwork",
 					"-lwindow",
 					"-ltest",
 					"-lfoundation",
 				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.rampantpixels.render.test.render;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WRAPPER_EXTENSION = app;
 			};
@@ -538,17 +569,22 @@
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CONFIGURATION_BUILD_DIR = ../../../bin/macosx/deploy;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = c11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_CPP_EXCEPTIONS = NO;
 				GCC_ENABLE_CPP_RTTI = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = NO;
 				GCC_FAST_MATH = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = fast;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"BUILD_DEPLOY=1",
@@ -567,6 +603,9 @@
 					../../..,
 					../../../../foundation_lib,
 					../../../../window_lib,
+					../../../../network_lib,
+					../../../../vector_lib,
+					../../../../resource_lib,
 					../../../../foundation_lib/test,
 					"$(inherited)",
 				);
@@ -574,10 +613,13 @@
 					../../../lib/macosx/deploy,
 					../../../../foundation_lib/lib/macosx/deploy,
 					../../../../window_lib/lib/macosx/deploy,
+					../../../../resource_lib/lib/macosx/deploy,
+					../../../../network_lib/lib/macosx/deploy,
+					../../../../vector_lib/lib/macosx/deploy,
 					"$(inherited)",
 				);
 				LLVM_LTO = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				PRECOMPS_INCLUDE_HEADERS_FROM_BUILT_PRODUCTS_DIR = NO;
 				SDKROOT = macosx;
 			};
@@ -607,15 +649,15 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
 				INFOPLIST_FILE = "../../../test/render/osx/test-render.plist";
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					/Users/mjansson/projects/render_lib/lib/macosx/debug,
-				);
 				OTHER_LDFLAGS = (
+					"-lvector",
+					"-lresource",
+					"-lnetwork",
 					"-lwindow",
 					"-ltest",
 					"-lfoundation",
 				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.rampantpixels.render.test.render;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WRAPPER_EXTENSION = app;
 			};

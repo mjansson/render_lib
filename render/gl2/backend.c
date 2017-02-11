@@ -57,6 +57,8 @@ typedef struct render_backend_gl2_t {
 	bool use_clear_scissor;
 } render_backend_gl2_t;
 
+FOUNDATION_DECLARE_THREAD_LOCAL(void*, gl2_context, 0)
+
 static void
 _rb_gl2_set_default_state(void);
 
@@ -97,6 +99,8 @@ _rb_gl2_set_drawable(render_backend_t* backend, render_drawable_t* drawable) {
 		log_error(HASH_RENDER, ERROR_UNSUPPORTED, STRING_CONST("Unable to create OpenGL 2 context"));
 		return false;
 	}
+
+	set_thread_gl2_context(backend_gl2->context);
 
 #if FOUNDATION_PLATFORM_WINDOWS
 
@@ -168,8 +172,6 @@ _rb_gl2_set_drawable(render_backend_t* backend, render_drawable_t* drawable) {
 	return true;
 }
 
-FOUNDATION_DECLARE_THREAD_LOCAL(void*, gl2_context, 0)
-
 static void
 _rb_gl2_enable_thread(render_backend_t* backend) {
 	render_backend_gl2_t* backend_gl2 = (render_backend_gl2_t*)backend;
@@ -188,8 +190,10 @@ _rb_gl2_enable_thread(render_backend_t* backend) {
 #elif FOUNDATION_PLATFORM_LINUX
 	glXMakeCurrent(backend->drawable->display, backend->drawable->drawable, thread_context);
 	_rb_gl_check_error("Unable to enable thread for rendering");
+#elif FOUNDATION_PLATFORM_MACOSX
+	_rb_gl_make_agl_context_current(backend_gl2->context);
 #else
-	FOUNDATION_ASSERT_FAIL("Platform not implemented");
+	FOUNDATION_ASSERT_FAIL("Unable to enable thread for rendering, platform not implemented");
 	error_report(ERRORLEVEL_ERROR, ERROR_NOT_IMPLEMENTED);
 #endif
 }

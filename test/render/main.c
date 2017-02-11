@@ -31,7 +31,6 @@ test_render_application(void) {
 	app.company = string_const(STRING_CONST("Rampant Pixels"));
 	app.version = render_module_version();
 	app.exception_handler = test_exception_handler;
-	app.flags = APPLICATION_UTILITY;
 	return app;
 }
 
@@ -66,6 +65,10 @@ test_render_initialize(void) {
 	memset(&resource_config, 0, sizeof(resource_config));
 	resource_config.enable_local_cache = true;
 	resource_config.enable_local_source = true;
+	resource_config.enable_local_autoimport = true;
+	resource_config.enable_local_autoimport = true;
+	resource_config.enable_remote_sourced = true;
+	resource_config.enable_remote_compiled = true;
 	if (resource_module_initialize(resource_config))
 		return -1;
 
