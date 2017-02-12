@@ -1,7 +1,7 @@
 {
 	"resource" : {
-		"local_path":    "../resource/bin",
-		"source_path":   "../resource/source",
-		"autoimport":    "../resource"
+		"local_path":      "../resource/bin",
+		"source_path":     "../resource/source",
+		"autoimport_path": "../resource"
 	}
 }
