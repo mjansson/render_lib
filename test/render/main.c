@@ -337,8 +337,6 @@ static void* _test_render_box(render_api_t api) {
 		4, 3, 1,  4, 1, 0,
 		4, 0, 3,  4, 3, 7
 	};
-	
-	log_set_suppress(HASH_RESOURCE, ERRORLEVEL_NONE);
 
 #if FOUNDATION_PLATFORM_MACOSX
 	window = window_allocate(delegate_nswindow());
