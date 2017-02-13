@@ -19,7 +19,8 @@
 #include <window/window.h>
 #include <resource/resource.h>
 #include <render/render.h>
-#include <vector/matrix.h>
+#include <vector/vector.h>
+#include <network/network.h>
 #include <test/test.h>
 
 static application_t
@@ -60,6 +61,11 @@ test_render_initialize(void) {
 	memset(&window_config, 0, sizeof(window_config));
 	if (window_module_initialize(window_config))
 		return -1;
+	
+	network_config_t network_config;
+	memset(&network_config, 0, sizeof(network_config));
+	if (network_module_initialize(network_config))
+		return -1;
 
 	resource_config_t resource_config;
 	memset(&resource_config, 0, sizeof(resource_config));
@@ -93,6 +99,7 @@ test_render_finalize(void) {
 	render_module_finalize();
 	vector_module_finalize();
 	resource_module_finalize();
+	network_module_finalize();
 	window_module_finalize();
 }
 
@@ -330,6 +337,8 @@ static void* _test_render_box(render_api_t api) {
 		4, 3, 1,  4, 1, 0,
 		4, 0, 3,  4, 3, 7
 	};
+	
+	log_set_suppress(HASH_RESOURCE, ERRORLEVEL_NONE);
 
 #if FOUNDATION_PLATFORM_MACOSX
 	window = window_allocate(delegate_nswindow());

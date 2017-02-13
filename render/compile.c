@@ -216,6 +216,8 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 	}
 	hashmap_finalize(map);
 
+	render_backend_t* prev_backend = render_backend_thread();
+
 	for (iplat = 1, psize = array_size(subplatforms); (iplat != psize) && (result == 0); ++iplat) {
 		void* compiled_blob = 0;
 		size_t compiled_size = 0;
@@ -356,6 +358,9 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 
 		memory_deallocate(compiled_blob);
 	}
+
+	if (prev_backend)
+		render_backend_enable_thread(prev_backend);
 
 	array_deallocate(subplatforms);
 
@@ -499,6 +504,8 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 			array_push(subplatforms, moreplatforms[imore]);
 	}
 
+	render_backend_t* prev_backend = render_backend_thread();
+
 	for (iplat = 1, psize = array_size(subplatforms); (iplat != psize) && (result == 0); ++iplat) {
 		stream_t* stream;
 		uuid_t vertexshader, pixelshader;
@@ -565,7 +572,7 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 			GLchar* log_buffer = memory_allocate(HASH_RESOURCE, (size_t)log_capacity, 0, MEMORY_TEMPORARY);
 			GLint log_length = 0;
 			GLint compiled = 0;
-
+			
 			vsobj = render_shader_load(backend, vertexshader);
 			psobj = render_shader_load(backend, pixelshader);
 			vshader = render_backend_shader_resolve(backend, vsobj);
@@ -834,6 +841,9 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 		render_drawable_deallocate(drawable);
 		window_deallocate(window);
 	}
+
+	if (prev_backend)
+		render_backend_enable_thread(prev_backend);
 
 	array_deallocate(moreplatforms);
 	array_deallocate(subplatforms);

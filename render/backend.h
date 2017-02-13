@@ -68,6 +68,9 @@ render_backend_enable_thread(render_backend_t* backend);
 RENDER_API void
 render_backend_disable_thread(render_backend_t* backend);
 
+RENDER_API render_backend_t*
+render_backend_thread(void);
+
 RENDER_API uint64_t
 render_backend_resource_platform(render_backend_t* backend);
 

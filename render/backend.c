@@ -29,6 +29,8 @@
 
 RENDER_EXTERN render_config_t _render_config;
 
+FOUNDATION_DECLARE_THREAD_LOCAL(render_backend_t*, backend, nullptr)
+
 static render_api_t
 render_api_fallback(render_api_t api) {
 	switch (api) {
@@ -263,6 +265,8 @@ render_backend_set_drawable(render_backend_t* backend, render_drawable_t* drawab
 		framebuffer_target->pixelformat = backend->pixelformat;
 		framebuffer_target->colorspace = backend->colorspace;
 	}
+
+	set_thread_backend(backend);
 }
 
 render_drawable_t*
@@ -297,11 +301,18 @@ render_backend_frame_count(render_backend_t* backend) {
 void
 render_backend_enable_thread(render_backend_t* backend) {
 	backend->vtable.enable_thread(backend);
+	set_thread_backend(backend);
 }
 
 void
 render_backend_disable_thread(render_backend_t* backend) {
 	backend->vtable.disable_thread(backend);
+	set_thread_backend(nullptr);
+}
+
+render_backend_t*
+render_backend_thread(void) {
+	return get_thread_backend();
 }
 
 uint64_t

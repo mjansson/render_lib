@@ -57,7 +57,7 @@ typedef struct render_backend_gl2_t {
 	bool use_clear_scissor;
 } render_backend_gl2_t;
 
-FOUNDATION_DECLARE_THREAD_LOCAL(void*, gl2_context, 0)
+FOUNDATION_DECLARE_THREAD_LOCAL(void*, gl2_context, nullptr)
 
 static void
 _rb_gl2_set_default_state(void);
@@ -392,7 +392,7 @@ _rb_gl2_link_buffer(render_backend_t* backend, render_buffer_t* buffer, render_p
 static bool
 _rb_gl2_upload_shader(render_backend_t* backend, render_shader_t* shader, const void* buffer,
                       size_t size) {
-	bool ret = false;
+	bool is_pixel_shader = (shader->shadertype == SHADER_PIXEL);
 	//render_backend_gl2_t* backend_gl2 = (render_backend_gl4_t*)backend;
 	FOUNDATION_UNUSED(backend);
 
@@ -401,44 +401,48 @@ _rb_gl2_upload_shader(render_backend_t* backend, render_shader_t* shader, const 
 	if (shader->backend_data[0])
 		glDeleteShader((GLuint)shader->backend_data[0]);
 
+	GLuint handle;
+	const GLchar* source = (const GLchar*)buffer;
+	GLint source_size = (GLint)size;
+	GLint compiled = 0;
+	
 	switch (shader->shadertype) {
 	case SHADER_PIXEL:
-	case SHADER_VERTEX: {
-			bool is_pixel_shader = (shader->shadertype == SHADER_PIXEL);
-			GLuint handle = glCreateShader(is_pixel_shader ? GL_FRAGMENT_SHADER_ARB : GL_VERTEX_SHADER_ARB);
-			const GLchar* source = (const GLchar*)buffer;
-			GLint source_size = (GLint)size;
-			glShaderSource(handle, 1, &source, &source_size);
-			glCompileShader(handle);
+	case SHADER_VERTEX:
+		handle = glCreateShader(is_pixel_shader ? GL_FRAGMENT_SHADER_ARB : GL_VERTEX_SHADER_ARB);
+		if (!handle) {
+			if (!_rb_gl_check_error("Unable to compile shader: Error creating shader"))
+				log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Unable to compile shader: Error creating shader (no error)"));
+			break;
+		}
 
-			GLint compiled = 0;
-			glGetShaderiv(handle, GL_COMPILE_STATUS, &compiled);
+		glShaderSource(handle, 1, &source, &source_size);
+		glCompileShader(handle);
+		glGetShaderiv(handle, GL_COMPILE_STATUS, &compiled);
 
-			if (!compiled) {
+		if (!compiled) {
 #if BUILD_DEBUG
-				GLsizei log_capacity = 2048;
-				GLchar* log_buffer = memory_allocate(HASH_RESOURCE, (size_t)log_capacity, 0, MEMORY_TEMPORARY);
-				GLint log_length = 0;
-				glGetShaderiv(handle, GL_COMPILE_STATUS, &compiled);
-				glGetShaderInfoLog(handle, log_capacity, &log_length, log_buffer);
-				log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Unable to compile shader: %.*s (handle %u)"),
-				           (int)log_length, log_buffer, (unsigned int)handle);
-				memory_deallocate(log_buffer);
+			GLsizei log_capacity = 2048;
+			GLchar* log_buffer = memory_allocate(HASH_RESOURCE, (size_t)log_capacity, 0, MEMORY_TEMPORARY);
+			GLint log_length = 0;
+			glGetShaderiv(handle, GL_COMPILE_STATUS, &compiled);
+			glGetShaderInfoLog(handle, log_capacity, &log_length, log_buffer);
+			log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Unable to compile shader: %.*s (handle %u)"),
+			           (int)log_length, log_buffer, (unsigned int)handle);
+			memory_deallocate(log_buffer);
 #endif
-				glDeleteShader(handle);
-				shader->backend_data[0] = 0;
-			}
-			else {
-				shader->backend_data[0] = handle;
-				ret = true;
-			}
+			glDeleteShader(handle);
+			shader->backend_data[0] = 0;
+		}
+		else {
+			shader->backend_data[0] = handle;
 		}
 		break;
 
 	default:
 		break;
 	}
-	return ret;
+	return (compiled != 0);
 }
 
 static void
