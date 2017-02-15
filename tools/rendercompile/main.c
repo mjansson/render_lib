@@ -101,8 +101,8 @@ main_run(void* main_arg) {
 	for (size_t localpath = 0, psize = array_size(input.local_paths); localpath < psize; ++localpath)
 		resource_local_add_path(STRING_ARGS(input.local_paths[localpath]));
 
-	if (!resource_source_path().length) {
-		log_errorf(HASH_RESOURCE, ERROR_INVALID_VALUE, STRING_CONST("No source path given"));
+	if (!resource_source_path().length && !resource_remote_sourced().length) {
+		log_errorf(HASH_RESOURCE, ERROR_INVALID_VALUE, STRING_CONST("No source path or sourced host given"));
 		input.display_help = true;
 	}
 
