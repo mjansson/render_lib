@@ -1,0 +1,112 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\..\render\render.c" />
+    <ClCompile Include="..\..\render\backend.c" />
+    <ClCompile Include="..\..\render\command.c" />
+    <ClCompile Include="..\..\render\context.c" />
+    <ClCompile Include="..\..\render\drawable.c" />
+    <ClCompile Include="..\..\render\indexbuffer.c" />
+    <ClCompile Include="..\..\render\shader.c" />
+    <ClCompile Include="..\..\render\sort.c" />
+    <ClCompile Include="..\..\render\target.c" />
+    <ClCompile Include="..\..\render\vertexbuffer.c" />
+    <ClCompile Include="..\..\render\null\backend.c">
+      <Filter>null</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\render\buffer.c" />
+    <ClCompile Include="..\..\render\compile.c" />
+    <ClCompile Include="..\..\render\event.c" />
+    <ClCompile Include="..\..\render\import.c" />
+    <ClCompile Include="..\..\render\parameter.c" />
+    <ClCompile Include="..\..\render\program.c" />
+    <ClCompile Include="..\..\render\state.c" />
+    <ClCompile Include="..\..\render\version.c" />
+    <ClCompile Include="..\..\render\gl2\backend.c">
+      <Filter>gl2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\render\gl4\backend.c">
+      <Filter>gl4</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\render\gl4\glprocs.c">
+      <Filter>gl4</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\render\gles2\backend.c">
+      <Filter>gles2</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\render\build.h" />
+    <ClInclude Include="..\..\render\hashstrings.h" />
+    <ClInclude Include="..\..\render\internal.h" />
+    <ClInclude Include="..\..\render\types.h" />
+    <ClInclude Include="..\..\render\render.h" />
+    <ClInclude Include="..\..\render\backend.h" />
+    <ClInclude Include="..\..\render\command.h" />
+    <ClInclude Include="..\..\render\context.h" />
+    <ClInclude Include="..\..\render\drawable.h" />
+    <ClInclude Include="..\..\render\indexbuffer.h" />
+    <ClInclude Include="..\..\render\shader.h" />
+    <ClInclude Include="..\..\render\sort.h" />
+    <ClInclude Include="..\..\render\target.h" />
+    <ClInclude Include="..\..\render\vertexbuffer.h" />
+    <ClInclude Include="..\..\render\null\backend.h">
+      <Filter>null</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\render\compile.h" />
+    <ClInclude Include="..\..\render\event.h" />
+    <ClInclude Include="..\..\render\import.h" />
+    <ClInclude Include="..\..\render\parameter.h" />
+    <ClInclude Include="..\..\render\program.h" />
+    <ClInclude Include="..\..\render\state.h" />
+    <ClInclude Include="..\..\render\gl2\backend.h">
+      <Filter>gl2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\render\gl4\backend.h">
+      <Filter>gl4</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\render\gl4\glprocs.h">
+      <Filter>gl4</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\render\gl4\glwrap.h">
+      <Filter>gl4</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\render\gl4\gl\glext.h">
+      <Filter>gl4\gl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\render\gl4\gl\wglext.h">
+      <Filter>gl4\gl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\render\gles2\backend.h">
+      <Filter>gles2</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\..\render\hashstrings.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="null">
+      <UniqueIdentifier>{de72227a-74e7-42bf-b2fa-ce2ec812cf9f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="gl2">
+      <UniqueIdentifier>{70aed7df-30f3-42a4-a816-61376e222ecd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="gl4">
+      <UniqueIdentifier>{b618294e-3d56-4256-b423-d7d29b89d46f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="gl4\gl">
+      <UniqueIdentifier>{62fe64d9-6e3f-428e-8f7d-03ee76b434d9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="gles2">
+      <UniqueIdentifier>{f535749d-cd41-419a-b095-b1d98338ee5d}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\render\gl4\backend.m">
+      <Filter>gl4</Filter>
+    </None>
+    <None Include="..\..\render\gles2\backend.m">
+      <Filter>gles2</Filter>
+    </None>
+  </ItemGroup>
+</Project>
