@@ -78,7 +78,7 @@ render_program_load(render_backend_t* backend, const uuid_t uuid) {
 #if RESOURCE_ENABLE_LOCAL_CACHE
 	const uint32_t expected_version = RENDER_PROGRAM_RESOURCE_VERSION;
 	uint64_t platform = render_backend_resource_platform(backend);
-	stream_t* stream;
+	stream_t* stream = nullptr;
 	void* block;
 	bool success = false;
 	uuid_t* shaderuuid;
@@ -112,6 +112,7 @@ retry:
 			          STRING_CONST("Got unexpected type/version: %" PRIx64 " : %u"),
 			          (uint64_t)header.type, (uint32_t)header.version);
 			stream_deallocate(stream);
+			stream = nullptr;
 			recompiled = resource_compile(uuid, render_backend_resource_platform(backend));
 			if (recompiled)
 				goto retry;
@@ -124,6 +125,8 @@ retry:
 	block = memory_allocate(HASH_RENDER, remain, 8, MEMORY_PERSISTENT);
 
 	stream_read(stream, block, remain);
+	stream_deallocate(stream);
+	stream = nullptr;
 
 	shaderuuid = block;
 	vsobj = render_shader_load(backend, *shaderuuid);
@@ -150,7 +153,8 @@ retry:
 	success = render_program_upload(backend, program);
 
 finalize:
-	stream_deallocate(stream);
+	if (stream)
+		stream_deallocate(stream);
 
 	if (success) {
 		programobj = render_backend_program_store(backend, uuid, program);
