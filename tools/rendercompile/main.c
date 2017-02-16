@@ -18,6 +18,7 @@
 #include <foundation/foundation.h>
 #include <resource/resource.h>
 #include <window/window.h>
+#include <network/network.h>
 #include <render/render.h>
 
 #include "errorcodes.h"
@@ -49,11 +50,13 @@ main_initialize(void) {
 	foundation_config_t foundation_config;
 	resource_config_t resource_config;
 	window_config_t window_config;
+	network_config_t network_config;
 	render_config_t render_config;
 
 	memset(&foundation_config, 0, sizeof(foundation_config));
 	memset(&resource_config, 0, sizeof(resource_config));
 	memset(&window_config, 0, sizeof(window_config));
+	memset(&network_config, 0, sizeof(network_config));
 	memset(&render_config, 0, sizeof(render_config));
 
 	memset(&application, 0, sizeof(application));
@@ -72,6 +75,8 @@ main_initialize(void) {
 	resource_config.enable_remote_sourced = true;
 
 	if ((ret = foundation_initialize(memory_system_malloc(), application, foundation_config)) < 0)
+		return ret;
+	if ((ret = network_module_initialize(network_config)) < 0)
 		return ret;
 	if ((ret = resource_module_initialize(resource_config)) < 0)
 		return ret;

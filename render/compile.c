@@ -716,7 +716,7 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 					default:
 						log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL,
 						           STRING_CONST("Invalid/unknown attribute type: %u"),
-						           (unsigned int)type);
+						           (unsigned int)gltype);
 						result = -1;
 						break;
 					}
@@ -787,7 +787,7 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 					default:
 						log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL,
 						           STRING_CONST("Invalid/unknown uniform type: %u"),
-						           (unsigned int)type);
+						           (unsigned int)gltype);
 						result = -1;
 						break;
 					}

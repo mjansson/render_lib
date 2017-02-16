@@ -50,6 +50,7 @@ typedef struct render_backend_gl2_t {
 	void* context;
 #if FOUNDATION_PLATFORM_WINDOWS
 	HDC hdc;
+	DWORD thread_hglrc;
 #endif
 
 	render_resolution_t resolution;
@@ -57,18 +58,22 @@ typedef struct render_backend_gl2_t {
 	bool use_clear_scissor;
 } render_backend_gl2_t;
 
-FOUNDATION_DECLARE_THREAD_LOCAL(void*, gl2_context, nullptr)
-
 static void
 _rb_gl2_set_default_state(void);
 
 static bool
 _rb_gl2_construct(render_backend_t* backend) {
-	FOUNDATION_UNUSED(backend);
 
 	//TODO: Caps check
 	//if( !... )
 	//  return false;
+
+#if FOUNDATION_PLATFORM_WINDOWS
+	render_backend_gl2_t* backend_gl2 = (render_backend_gl2_t*)backend;
+	backend_gl2->thread_hglrc = TlsAlloc();
+#else
+	FOUNDATION_UNUSED(backend);
+#endif
 
 	log_debug(HASH_RENDER, STRING_CONST("Constructed GL2 render backend"));
 	return true;
@@ -77,6 +82,17 @@ _rb_gl2_construct(render_backend_t* backend) {
 static void
 _rb_gl2_destruct(render_backend_t* backend) {
 	render_backend_gl2_t* backend_gl2 = (render_backend_gl2_t*)backend;
+
+#if FOUNDATION_PLATFORM_WINDOWS
+	if (backend_gl2->thread_hglrc) {
+		void* hglrc = TlsGetValue(backend_gl2->thread_hglrc);
+		if (hglrc && (hglrc != backend_gl2->context))
+			_rb_gl_destroy_context(backend_gl2->drawable, hglrc);
+		TlsFree(backend_gl2->thread_hglrc);
+		backend_gl2->thread_hglrc = 0;
+	}
+#endif
+
 	if (backend_gl2->context)
 		_rb_gl_destroy_context(backend_gl2->drawable, backend_gl2->context);
 	backend_gl2->context = 0;
@@ -100,23 +116,17 @@ _rb_gl2_set_drawable(render_backend_t* backend, render_drawable_t* drawable) {
 		return false;
 	}
 
-	set_thread_gl2_context(backend_gl2->context);
-
 #if FOUNDATION_PLATFORM_WINDOWS
-
 	backend_gl2->hdc = (HDC)drawable->hdc;
-
+	TlsSetValue(backend_gl2->thread_hglrc, backend_gl2->context);
 #endif
 
 #if FOUNDATION_PLATFORM_LINUX
-
 	glXMakeCurrent(drawable->display, drawable->drawable, backend_gl2->context);
-
 	if (True == glXIsDirect(drawable->display, backend_gl2->context))
 		log_debug(HASH_RENDER, STRING_CONST("Direct rendering enabled"));
 	else
 		log_warn(HASH_RENDER, WARNING_PERFORMANCE, STRING_CONST("Indirect rendering"));
-
 #endif
 
 #if RENDER_ENABLE_NVGLEXPERT
@@ -176,19 +186,19 @@ static void
 _rb_gl2_enable_thread(render_backend_t* backend) {
 	render_backend_gl2_t* backend_gl2 = (render_backend_gl2_t*)backend;
 
-	void* thread_context = get_thread_gl2_context();
+#if FOUNDATION_PLATFORM_WINDOWS
+	void* thread_context = TlsGetValue(backend_gl2->thread_hglrc);
 	if (!thread_context) {
 		thread_context = _rb_gl_create_context(backend->drawable, 2, 0, backend_gl2->context);
-		set_thread_gl2_context(thread_context);
+		TlsSetValue(backend_gl2->thread_hglrc, thread_context);
 	}
-
-#if FOUNDATION_PLATFORM_WINDOWS
-	if (!wglMakeCurrent((HDC)backend->drawable->hdc, (HGLRC)thread_context))
-		_rb_gl_check_error("Unable to enable thread for rendering");
-	else
-		log_debug(HASH_RENDER, STRING_CONST("Enabled thread for GL2 rendering"));
+	if (!wglMakeCurrent((HDC)backend->drawable->hdc, (HGLRC)thread_context)) {
+		string_const_t errmsg = system_error_message(0);
+		log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Unable to enable thread for GL2 rendering: %.*s"),
+		           STRING_FORMAT(errmsg));
+	}
 #elif FOUNDATION_PLATFORM_LINUX
-	glXMakeCurrent(backend->drawable->display, backend->drawable->drawable, thread_context);
+	glXMakeCurrent(backend->drawable->display, backend->drawable->drawable, backend->context);
 	_rb_gl_check_error("Unable to enable thread for rendering");
 #elif FOUNDATION_PLATFORM_MACOSX
 	_rb_gl_make_agl_context_current(backend_gl2->context);
@@ -200,14 +210,16 @@ _rb_gl2_enable_thread(render_backend_t* backend) {
 
 static void
 _rb_gl2_disable_thread(render_backend_t* backend) {
+#if FOUNDATION_PLATFORM_WINDOWS
 	render_backend_gl2_t* backend_gl2 = (render_backend_gl2_t*)backend;
-
-	void* thread_context = get_thread_gl2_context();
-	if (thread_context) {
+	void* thread_context = TlsGetValue(backend_gl2->thread_hglrc);
+	if (thread_context && (thread_context != backend_gl2->context)) {
 		_rb_gl_destroy_context(backend_gl2->drawable, thread_context);
-		log_debug(HASH_RENDER, STRING_CONST("Disabled thread for GL2 rendering"));
+		TlsSetValue(backend_gl2->thread_hglrc, 0);
 	}
-	set_thread_gl2_context(0);
+#else
+	FOUNDATION_UNUSED(backend);
+#endif
 }
 
 static unsigned int*

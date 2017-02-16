@@ -87,10 +87,11 @@ bool
 _rb_gl_check_error(const char* message) {
 	GLenum err = glGetError();
 	if (err != GL_NONE) {
-		log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("%s: %s"), message,
-		           _rb_gl_error_message(err));
+		const char* glmessage = _rb_gl_error_message(err);
+		log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("%s: %s"),
+		           message, glmessage);
 		FOUNDATION_ASSERT_FAILFORMAT("OpenGL error: %s: %s",
-		                             message, _rb_gl_error_message(err));
+		                             message, glmessage);
 		return true;
 	}
 	return false;
@@ -199,7 +200,7 @@ _rb_gl_create_context(render_drawable_t* drawable, unsigned int major, unsigned 
 			wglMakeCurrent(hdc, hglrc);
 
 			const char* version = (const char*)glGetString(GL_VERSION);
-			int have_major = 0, have_minor = 0, have_revision = 0;
+			unsigned int have_major = 0, have_minor = 0, have_revision = 0;
 			string_const_t version_arr[3];
 			size_t arrsize = string_explode(version, string_length(version), STRING_CONST("."),
 			                                version_arr, 3, false);

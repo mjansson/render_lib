@@ -31,16 +31,16 @@ typedef struct {
 static void
 shaderview_parse_config(const char* path, size_t path_size,
                         const char* buffer, size_t size,
-                        json_token_t* tokens, size_t numtokens);
+                        const json_token_t* tokens, size_t numtokens);
 
-static shaderimport_input_t
+static shaderview_input_t
 shaderview_parse_command_line(const string_const_t* cmdline);
 
 static void
-shaderimport_print_usage(void);
+shaderview_print_usage(void);
 
 static void
-shaderimport_load_config(const char* path, size_t length);
+shaderview_load_config(const char* path, size_t length);
 
 int
 main_initialize(void) {
@@ -68,7 +68,9 @@ main_initialize(void) {
 
 	resource_config.enable_local_source = true;
 	resource_config.enable_local_cache = true;
-	resource_config.enable_remote_cache = true;
+	resource_config.enable_local_autoimport = true;
+	resource_config.enable_remote_sourced = true;
+	resource_config.enable_remote_compiled = true;
 
 	if ((ret = foundation_initialize(memory_system_malloc(), application, foundation_config)) < 0)
 		return ret;
@@ -132,16 +134,16 @@ main_finalize(void) {
 }
 
 static void
-renderimport_parse_config(const char* path, size_t path_size,
-                          const char* buffer, size_t size,
-                          json_token_t* tokens, size_t numtokens) {
+shaderview_parse_config(const char* path, size_t path_size,
+                        const char* buffer, size_t size,
+                        const json_token_t* tokens, size_t numtokens) {
 	resource_module_parse_config(path, path_size, buffer, size, tokens, numtokens);
 	render_module_parse_config(path, path_size, buffer, size, tokens, numtokens);
 }
 
-static renderimport_input_t
-renderimport_parse_command_line(const string_const_t* cmdline) {
-	renderimport_input_t input;
+static shaderview_input_t
+shaderview_parse_command_line(const string_const_t* cmdline) {
+	shaderview_input_t input;
 	size_t arg, asize;
 
 	memset(&input, 0, sizeof(input));
@@ -200,13 +202,13 @@ renderimport_parse_command_line(const string_const_t* cmdline) {
 }
 
 static void
-renderimport_print_usage(void) {
+shaderview_print_usage(void) {
 	const error_level_t saved_level = log_suppress(0);
 	log_set_suppress(0, ERRORLEVEL_DEBUG);
 	log_info(0, STRING_CONST(
-	             "renderimport usage:\n"
-	             "  renderimport [--source <path>] [--config <path> ...] [--ascii] [--binary]\n"
-	             "               [--debug] [--help] <file> <file> ... [--]\n"
+	             "shaderview usage:\n"
+	             "  shaderview [--source <path>] [--config <path> ...] [--ascii] [--binary]\n"
+	             "             [--debug] [--help] <file> <file> ... [--]\n"
 	             "    Arguments:\n"
 	             "      <file> <file> ...            Any number of input files\n"
 	             "    Optional arguments:\n"
