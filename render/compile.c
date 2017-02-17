@@ -441,14 +441,16 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 		//Get additional more specialized platform targets from shaders
 		array_push(shaderplatforms, subplatform);
 
-		if (resource_autoimport_need_update(vertexshader, subplatform)) {
+		if (resource_autoimport_need_update(vertexshader, subplatform) ||
+		        resource_autoimport_need_update(vertexshader, platform)) {
 			string_const_t vsuuidstr = string_from_uuid_static(vertexshader);
 			log_debugf(HASH_RESOURCE, STRING_CONST("Reimporting vertex shader resource %.*s"),
 			           STRING_FORMAT(vsuuidstr));
 			resource_autoimport(vertexshader);
 		}
 
-		if (resource_autoimport_need_update(pixelshader, subplatform)) {
+		if (resource_autoimport_need_update(pixelshader, subplatform) ||
+		        resource_autoimport_need_update(pixelshader, platform)) {
 			string_const_t psuuidstr = string_from_uuid_static(pixelshader);
 			log_debugf(HASH_RESOURCE, STRING_CONST("Reimporting pixel shader resource %.*s"),
 			           STRING_FORMAT(psuuidstr));
@@ -572,7 +574,7 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 			GLchar* log_buffer = memory_allocate(HASH_RESOURCE, (size_t)log_capacity, 0, MEMORY_TEMPORARY);
 			GLint log_length = 0;
 			GLint compiled = 0;
-			
+
 			vsobj = render_shader_load(backend, vertexshader);
 			psobj = render_shader_load(backend, pixelshader);
 			vshader = render_backend_shader_resolve(backend, vsobj);

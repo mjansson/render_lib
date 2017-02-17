@@ -204,8 +204,16 @@ render_import_glsl_shader(stream_t* stream, const uuid_t uuid, const char* type,
 	                    0, type, type_length);
 
 	if (!resource_source_write(&source, uuid, false)) {
+		string_const_t uuidstr = string_from_uuid_static(uuid);
+		log_warnf(HASH_RESOURCE, WARNING_SUSPICIOUS, STRING_CONST("Failed writing imported GLSL shader: %.*s"),
+		          STRING_FORMAT(uuidstr));
 		ret = -1;
 		goto finalize;
+	}
+	else {
+		string_const_t uuidstr = string_from_uuid_static(uuid);
+		log_infof(HASH_RESOURCE, STRING_CONST("Wrote imported GLSL shader: %.*s"),
+		          STRING_FORMAT(uuidstr));
 	}
 
 finalize:
@@ -290,6 +298,10 @@ render_import_shader(stream_t* stream, const uuid_t uuid) {
 			resource_platform_t targetplatformdecl =
 			    render_import_parse_target(STRING_ARGS(target), platformdecl);
 			uint64_t targetplatform = resource_platform(targetplatformdecl);
+
+			if (resource_autoimport_need_update(shaderuuid, targetplatform))
+				resource_autoimport(shaderuuid);
+
 			const string_const_t uuidstr = string_from_uuid_static(shaderuuid);
 			resource_source_set(&source, timestamp, HASH_SHADER,
 			                    targetplatform, STRING_ARGS(uuidstr));
@@ -301,8 +313,16 @@ render_import_shader(stream_t* stream, const uuid_t uuid) {
 	                    0, STRING_CONST("shader"));
 
 	if (!resource_source_write(&source, uuid, false)) {
+		string_const_t uuidstr = string_from_uuid_static(uuid);
+		log_warnf(HASH_RESOURCE, WARNING_SUSPICIOUS, STRING_CONST("Failed writing imported shader: %.*s"),
+		          STRING_FORMAT(uuidstr));
 		ret = -1;
 		goto finalize;
+	}
+	else {
+		string_const_t uuidstr = string_from_uuid_static(uuid);
+		log_infof(HASH_RESOURCE, STRING_CONST("Wrote imported shader: %.*s"),
+		          STRING_FORMAT(uuidstr));
 	}
 
 finalize:
@@ -395,8 +415,16 @@ render_import_program(stream_t* stream, const uuid_t uuid) {
 	                    0, STRING_CONST("program"));
 
 	if (!resource_source_write(&source, uuid, false)) {
+		string_const_t uuidstr = string_from_uuid_static(uuid);
+		log_warnf(HASH_RESOURCE, WARNING_SUSPICIOUS, STRING_CONST("Failed writing imported program: %.*s"),
+		          STRING_FORMAT(uuidstr));
 		ret = -1;
 		goto finalize;
+	}
+	else {
+		string_const_t uuidstr = string_from_uuid_static(uuid);
+		log_infof(HASH_RESOURCE, STRING_CONST("Wrote imported program: %.*s"),
+		          STRING_FORMAT(uuidstr));
 	}
 
 finalize:
