@@ -246,7 +246,7 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 			continue;
 		}
 
-#if FOUNDATION_PLATFORM_WINDOWS
+#if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_LINUX
 		window = window_create(WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render compile"), 100, 100, false);
 #endif
 
@@ -536,7 +536,7 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 			continue;
 		}
 
-#if FOUNDATION_PLATFORM_WINDOWS
+#if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_LINUX
 		window = window_create(WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render compile"), 100, 100, false);
 #endif
 

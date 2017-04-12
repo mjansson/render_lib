@@ -263,6 +263,10 @@ _rb_gl_create_context(render_drawable_t* drawable, unsigned int major, unsigned 
 	else {
 		display = drawable->display;
 		screen = drawable->screen;
+		if (!display) {
+			log_warn(HASH_RENDER, WARNING_INVALID_VALUE, STRING_CONST("Invalid drawable"));
+			goto failed;
+		}
 	}
 
 	if (glXQueryExtension(display, 0, 0) != True) {
@@ -273,18 +277,18 @@ _rb_gl_create_context(render_drawable_t* drawable, unsigned int major, unsigned 
 	int major_glx = 0, minor_glx = 0;
 	glXQueryVersion(display, &major_glx, &minor_glx);
 	if (!verify_only)
-		log_debugf(HASH_RENDER, "GLX version %d.%d", major_glx, minor_glx);
+		log_debugf(HASH_RENDER, STRING_CONST("GLX version %d.%d"), major_glx, minor_glx);
 
 	fbconfig = glXGetFBConfigs(display, screen, &numconfig);
 	if (!verify_only)
-		log_debugf(HASH_RENDER, "Got %d configs", numconfig);
+		log_debugf(HASH_RENDER, STRING_CONST("Got %d configs"), numconfig);
 	if (fbconfig && (numconfig > 0)) {
 		PFNGLXCREATECONTEXTATTRIBSARBPROC glXCreateContextAttribs =
 		    (PFNGLXCREATECONTEXTATTRIBSARBPROC)_rb_gl_get_proc_address("glXCreateContextAttribsARB");
 		if (glXCreateContextAttribs) {
 			int* attributes = 0;
-			array_push(attributes, GLX_CONTEXT_MAJOR_VERSION_ARB); array_push(attributes, major);
-			array_push(attributes, GLX_CONTEXT_MINOR_VERSION_ARB); array_push(attributes, minor);
+			array_push(attributes, GLX_CONTEXT_MAJOR_VERSION_ARB); array_push(attributes, (int)major);
+			array_push(attributes, GLX_CONTEXT_MINOR_VERSION_ARB); array_push(attributes, (int)minor);
 			array_push(attributes, GLX_CONTEXT_FLAGS_ARB); array_push(attributes, 0);
 			array_push(attributes, GLX_CONTEXT_PROFILE_MASK_ARB);
 			array_push(attributes, GLX_CONTEXT_CORE_PROFILE_BIT_ARB);
@@ -450,7 +454,7 @@ _rb_gl4_set_drawable(render_backend_t* backend, render_drawable_t* drawable) {
 
 #if FOUNDATION_PLATFORM_LINUX
 
-	glXMakeCurrent(drawable->display, drawable->drawable, backend_gl4->context);
+	glXMakeCurrent(drawable->display, (GLXDrawable)drawable->drawable, backend_gl4->context);
 
 	if (True == glXIsDirect(drawable->display, backend_gl4->context))
 		log_debug(HASH_RENDER, STRING_CONST("Direct rendering enabled"));
@@ -522,7 +526,7 @@ _rb_gl4_enable_thread(render_backend_t* backend) {
 	else
 		log_debug(HASH_RENDER, STRING_CONST("Enabled thread for GL4 rendering"));
 #elif FOUNDATION_PLATFORM_LINUX
-	glXMakeCurrent(backend->drawable->display, backend->drawable->drawable, thread_context);
+	glXMakeCurrent(backend->drawable->display, (GLXDrawable)backend->drawable->drawable, thread_context);
 	_rb_gl_check_error("Unable to enable thread for rendering");
 #else
 	FOUNDATION_ASSERT_FAIL("Platform not implemented");
@@ -607,18 +611,18 @@ _rb_gl4_enumerate_modes(render_backend_t* backend, unsigned int adapter) {
 				if (color == 24)
 					format = PIXELFORMAT_R8G8B8;
 
-				resolution_t mode = {
+				render_resolution_t mode = {
 					0,
 					xmodes[m]->hdisplay,
 					xmodes[m]->vdisplay,
 					format,
 					COLORSPACE_LINEAR,
-					refresh
+					(unsigned int)refresh
 				};
 
 				bool found = false;
-				for (int c = 0, size = array_size(modes); c < size; ++c) {
-					if (!memcmp(modes + c, &mode, sizeof(resolution_t))) {
+				for (size_t c = 0, size = array_size(modes); c < size; ++c) {
+					if (!memcmp(modes + c, &mode, sizeof(render_resolution_t))) {
 						found = true;
 						break;
 					}
@@ -634,9 +638,8 @@ _rb_gl4_enumerate_modes(render_backend_t* backend, unsigned int adapter) {
 	}
 
 	//Sort and index modes
-	for (int c = 0, size = array_size(modes); c < size; ++c) {
-		modes[c].id = c;
-	}
+	for (size_t c = 0, size = array_size(modes); c < size; ++c)
+		modes[c].id = (unsigned int)c;
 
 	if (!array_size(modes)) {
 		log_warnf(HASH_RENDER, WARNING_SUSPICIOUS,
@@ -1140,7 +1143,7 @@ _rb_gl4_flip(render_backend_t* backend) {
 #elif FOUNDATION_PLATFORM_LINUX
 
 	if (backend_gl4->drawable->display)
-		glXSwapBuffers(backend_gl4->drawable->display, backend_gl4->drawable->drawable);
+		glXSwapBuffers(backend_gl4->drawable->display, (GLXDrawable)backend_gl4->drawable->drawable);
 
 #else
 #  error Not implemented

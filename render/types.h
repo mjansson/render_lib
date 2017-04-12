@@ -360,7 +360,7 @@ struct render_drawable_t {
 #elif FOUNDATION_PLATFORM_LINUX
 	void* display;
 	int   screen;
-	int   drawable;
+	unsigned long drawable;
 #elif FOUNDATION_PLATFORM_MACOSX
 	void* view;
 #elif FOUNDATION_PLATFORM_IOS

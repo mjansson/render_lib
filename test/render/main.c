@@ -123,6 +123,8 @@ DECLARE_TEST(render, initialize) {
 	window = window_allocate(delegate_uiwindow());
 #elif FOUNDATION_PLATFORM_WINDOWS
 	window = window_create(WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render test"), 800, 600, true);
+#elif FOUNDATION_PLATFORM_LINUX
+	window = window_create(WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render test"), 800, 600, true);
 #else
 #  error Not implemented
 #endif
@@ -159,6 +161,8 @@ _test_render_api(render_api_t api) {
 #elif FOUNDATION_PLATFORM_IOS
 	window = window_allocate(delegate_uiwindow());
 #elif FOUNDATION_PLATFORM_WINDOWS
+	window = window_create(WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render test"), 800, 600, true);
+#elif FOUNDATION_PLATFORM_LINUX
 	window = window_create(WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render test"), 800, 600, true);
 #else
 #  error Not implemented
@@ -230,6 +234,8 @@ static void* _test_render_clear(render_api_t api) {
 #elif FOUNDATION_PLATFORM_IOS
 	window = window_allocate(delegate_uiwindow());
 #elif FOUNDATION_PLATFORM_WINDOWS
+	window = window_create(WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render test"), 800, 600, true);
+#elif FOUNDATION_PLATFORM_LINUX
 	window = window_create(WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render test"), 800, 600, true);
 #else
 #  error Not implemented
@@ -343,6 +349,8 @@ static void* _test_render_box(render_api_t api) {
 #elif FOUNDATION_PLATFORM_IOS
 	window = window_allocate(delegate_uiwindow());
 #elif FOUNDATION_PLATFORM_WINDOWS
+	window = window_create(WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render test"), 800, 600, true);
+#elif FOUNDATION_PLATFORM_LINUX
 	window = window_create(WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render test"), 800, 600, true);
 #else
 #  error Not implemented
