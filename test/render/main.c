@@ -117,13 +117,9 @@ DECLARE_TEST(render, initialize) {
 	memset(&config, 0, sizeof(render_config_t));
 	render_module_initialize(config);
 
-#if FOUNDATION_PLATFORM_MACOSX
-	window = window_allocate(delegate_nswindow());
-#elif FOUNDATION_PLATFORM_IOS
-	window = window_allocate(delegate_uiwindow());
-#elif FOUNDATION_PLATFORM_WINDOWS
-	window = window_create(WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render test"), 800, 600, true);
-#elif FOUNDATION_PLATFORM_LINUX
+#if FOUNDATION_PLATFORM_MACOSX || FOUNDATION_PLATFORM_IOS
+	window = window_allocate(delegate_window());
+#elif FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_LINUX
 	window = window_create(WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render test"), 800, 600, true);
 #else
 #  error Not implemented
@@ -156,13 +152,9 @@ _test_render_api(render_api_t api) {
 	EXPECT_TRUE(render_module_is_initialized());
 
 	window_t* window = 0;
-#if FOUNDATION_PLATFORM_MACOSX
-	window = window_allocate(delegate_nswindow());
-#elif FOUNDATION_PLATFORM_IOS
-	window = window_allocate(delegate_uiwindow());
-#elif FOUNDATION_PLATFORM_WINDOWS
-	window = window_create(WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render test"), 800, 600, true);
-#elif FOUNDATION_PLATFORM_LINUX
+#if FOUNDATION_PLATFORM_MACOSX || FOUNDATION_PLATFORM_IOS
+	window = window_allocate(delegate_window());
+#elif FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_LINUX
 	window = window_create(WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render test"), 800, 600, true);
 #else
 #  error Not implemented
@@ -229,13 +221,9 @@ static void* _test_render_clear(render_api_t api) {
 	object_t framebuffer = 0;
 	render_context_t* context = 0;
 
-#if FOUNDATION_PLATFORM_MACOSX
-	window = window_allocate(delegate_nswindow());
-#elif FOUNDATION_PLATFORM_IOS
-	window = window_allocate(delegate_uiwindow());
-#elif FOUNDATION_PLATFORM_WINDOWS
-	window = window_create(WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render test"), 800, 600, true);
-#elif FOUNDATION_PLATFORM_LINUX
+#if FOUNDATION_PLATFORM_MACOSX || FOUNDATION_PLATFORM_IOS
+	window = window_allocate(delegate_window());
+#elif FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_LINUX
 	window = window_create(WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render test"), 800, 600, true);
 #else
 #  error Not implemented
@@ -344,13 +332,9 @@ static void* _test_render_box(render_api_t api) {
 		4, 0, 3,  4, 3, 7
 	};
 
-#if FOUNDATION_PLATFORM_MACOSX
-	window = window_allocate(delegate_nswindow());
-#elif FOUNDATION_PLATFORM_IOS
-	window = window_allocate(delegate_uiwindow());
-#elif FOUNDATION_PLATFORM_WINDOWS
-	window = window_create(WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render test"), 800, 600, true);
-#elif FOUNDATION_PLATFORM_LINUX
+#if FOUNDATION_PLATFORM_MACOSX || FOUNDATION_PLATFORM_IOS
+	window = window_allocate(delegate_window());
+#elif FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_LINUX
 	window = window_create(WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render test"), 800, 600, true);
 #else
 #  error Not implemented
