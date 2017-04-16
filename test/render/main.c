@@ -117,7 +117,7 @@ DECLARE_TEST(render, initialize) {
 	memset(&config, 0, sizeof(render_config_t));
 	render_module_initialize(config);
 
-#if FOUNDATION_PLATFORM_MACOSX || FOUNDATION_PLATFORM_IOS
+#if FOUNDATION_PLATFORM_MACOS || FOUNDATION_PLATFORM_IOS
 	window = window_allocate(delegate_window());
 #elif FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_LINUX
 	window = window_create(WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render test"), 800, 600, true);
@@ -152,7 +152,7 @@ _test_render_api(render_api_t api) {
 	EXPECT_TRUE(render_module_is_initialized());
 
 	window_t* window = 0;
-#if FOUNDATION_PLATFORM_MACOSX || FOUNDATION_PLATFORM_IOS
+#if FOUNDATION_PLATFORM_MACOS || FOUNDATION_PLATFORM_IOS
 	window = window_allocate(delegate_window());
 #elif FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_LINUX
 	window = window_create(WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render test"), 800, 600, true);
@@ -221,7 +221,7 @@ static void* _test_render_clear(render_api_t api) {
 	object_t framebuffer = 0;
 	render_context_t* context = 0;
 
-#if FOUNDATION_PLATFORM_MACOSX || FOUNDATION_PLATFORM_IOS
+#if FOUNDATION_PLATFORM_MACOS || FOUNDATION_PLATFORM_IOS
 	window = window_allocate(delegate_window());
 #elif FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_LINUX
 	window = window_create(WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render test"), 800, 600, true);
@@ -332,7 +332,7 @@ static void* _test_render_box(render_api_t api) {
 		4, 0, 3,  4, 3, 7
 	};
 
-#if FOUNDATION_PLATFORM_MACOSX || FOUNDATION_PLATFORM_IOS
+#if FOUNDATION_PLATFORM_MACOS || FOUNDATION_PLATFORM_IOS
 	window = window_allocate(delegate_window());
 #elif FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_LINUX
 	window = window_create(WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render test"), 800, 600, true);
@@ -444,7 +444,7 @@ DECLARE_TEST(render, null_box) {
 	return _test_render_box(RENDERAPI_NULL);
 }
 
-#if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_MACOSX || ( FOUNDATION_PLATFORM_LINUX && !FOUNDATION_PLATFORM_LINUX_RASPBERRYPI )
+#if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_MACOS || ( FOUNDATION_PLATFORM_LINUX && !FOUNDATION_PLATFORM_LINUX_RASPBERRYPI )
 
 DECLARE_TEST(render, gl4) {
 	return _test_render_api(RENDERAPI_OPENGL4);
@@ -494,7 +494,7 @@ test_render_declare(void) {
 	ADD_TEST(render, null);
 	ADD_TEST(render, null_clear);
 	ADD_TEST(render, null_box);
-#if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_MACOSX || FOUNDATION_PLATFORM_LINUX
+#if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_MACOS || FOUNDATION_PLATFORM_LINUX
 	ADD_TEST(render, gl4);
 	ADD_TEST(render, gl4_clear);
 	ADD_TEST(render, gl4_box);

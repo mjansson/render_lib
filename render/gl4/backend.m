@@ -17,7 +17,7 @@
 
 #include <foundation/foundation.h>
 
-#if FOUNDATION_PLATFORM_MACOSX
+#if FOUNDATION_PLATFORM_MACOS
 
 #include <foundation/apple.h>
 #include <render/hashstrings.h>

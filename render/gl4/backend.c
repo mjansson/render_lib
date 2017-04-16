@@ -23,7 +23,7 @@
 
 #include <render/gl4/backend.h>
 
-#if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_MACOSX || ( FOUNDATION_PLATFORM_LINUX && !FOUNDATION_PLATFORM_LINUX_RASPBERRYPI )
+#if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_MACOS || ( FOUNDATION_PLATFORM_LINUX && !FOUNDATION_PLATFORM_LINUX_RASPBERRYPI )
 
 #include <render/gl4/glwrap.h>
 
@@ -125,7 +125,7 @@ _rb_gl_destroy_context(render_drawable_t* drawable, void* context) {
 	}
 #elif FOUNDATION_PLATFORM_LINUX
 	glXDestroyContext(drawable->display, context);
-#elif FOUNDATION_PLATFORM_MACOSX
+#elif FOUNDATION_PLATFORM_MACOS
 	FOUNDATION_UNUSED(drawable);
 	_rb_gl_destroy_agl_context(context);
 #endif
@@ -317,7 +317,7 @@ failed:
 
 	return context;
 
-#elif FOUNDATION_PLATFORM_MACOSX
+#elif FOUNDATION_PLATFORM_MACOS
 
 	bool supported = false;
 
@@ -389,7 +389,7 @@ _rb_gl_check_context(unsigned int major, unsigned int minor) {
 	if (context)
 		wglDeleteContext((HGLRC)context);
 
-#elif FOUNDATION_PLATFORM_LINUX || FOUNDATION_PLATFORM_MACOSX
+#elif FOUNDATION_PLATFORM_LINUX || FOUNDATION_PLATFORM_MACOS
 
 	context = _rb_gl_create_context(0, major, minor, 0);
 
@@ -1133,7 +1133,7 @@ _rb_gl4_flip(render_backend_t* backend) {
 		}
 	}
 
-#elif FOUNDATION_PLATFORM_MACOSX
+#elif FOUNDATION_PLATFORM_MACOS
 
 	/*if( _fullscreen && _context )
 		CGLFlushDrawable( _context );

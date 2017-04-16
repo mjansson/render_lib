@@ -70,7 +70,7 @@ render_drawable_set_window(render_drawable_t* drawable, window_t* window)
 	drawable->display = window_display(window);
 	drawable->screen = window_screen(window);
 	drawable->drawable = window_drawable(window);
-#elif FOUNDATION_PLATFORM_MACOSX
+#elif FOUNDATION_PLATFORM_MACOS
 	drawable->view = window_content_view(window);
 #elif FOUNDATION_PLATFORM_IOS
 	drawable->view = window_view(window, tag);

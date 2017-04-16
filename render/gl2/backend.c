@@ -23,7 +23,7 @@
 
 #include <render/gl2/backend.h>
 
-#if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_MACOSX || ( FOUNDATION_PLATFORM_LINUX && !FOUNDATION_PLATFORM_LINUX_RASPBERRYPI )
+#if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_MACOS || ( FOUNDATION_PLATFORM_LINUX && !FOUNDATION_PLATFORM_LINUX_RASPBERRYPI )
 
 #include <render/gl4/glwrap.h>
 
@@ -200,7 +200,7 @@ _rb_gl2_enable_thread(render_backend_t* backend) {
 #elif FOUNDATION_PLATFORM_LINUX
 	glXMakeCurrent(backend->drawable->display, (GLXDrawable)backend->drawable->drawable, backend_gl2->context);
 	_rb_gl_check_error("Unable to enable thread for rendering");
-#elif FOUNDATION_PLATFORM_MACOSX
+#elif FOUNDATION_PLATFORM_MACOS
 	_rb_gl_make_agl_context_current(backend_gl2->context);
 #else
 	FOUNDATION_ASSERT_FAIL("Unable to enable thread for rendering, platform not implemented");
@@ -835,7 +835,7 @@ _rb_gl2_flip(render_backend_t* backend) {
 		}
 	}
 
-#elif FOUNDATION_PLATFORM_MACOSX
+#elif FOUNDATION_PLATFORM_MACOS
 
 	if (backend_gl2->context) {
 		/*if( backend_gl2->fullscreen )

@@ -30,7 +30,7 @@
 #  include "gl/glext.h"
 #  include "gl/wglext.h"
 
-#elif FOUNDATION_PLATFORM_MACOSX
+#elif FOUNDATION_PLATFORM_MACOS
 
 #  include <foundation/apple.h>
 #  include <render/types.h>

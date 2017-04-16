@@ -361,7 +361,7 @@ struct render_drawable_t {
 	void* display;
 	int   screen;
 	unsigned long drawable;
-#elif FOUNDATION_PLATFORM_MACOSX
+#elif FOUNDATION_PLATFORM_MACOS
 	void* view;
 #elif FOUNDATION_PLATFORM_IOS
 	void* view;
