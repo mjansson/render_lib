@@ -72,7 +72,6 @@ test_render_initialize(void) {
 	resource_config.enable_local_cache = true;
 	resource_config.enable_local_source = true;
 	resource_config.enable_local_autoimport = true;
-	resource_config.enable_local_autoimport = true;
 	resource_config.enable_remote_sourced = true;
 	resource_config.enable_remote_compiled = true;
 	if (resource_module_initialize(resource_config))
@@ -82,6 +81,9 @@ test_render_initialize(void) {
 	memset(&vector_config, 0, sizeof(vector_config));
 	if (vector_module_initialize(vector_config))
 		return -1;
+
+	log_set_suppress(HASH_RENDER, ERRORLEVEL_NONE);
+	log_set_suppress(HASH_RESOURCE, ERRORLEVEL_NONE);
 
 	render_config_t render_config;
 	memset(&render_config, 0, sizeof(render_config));
