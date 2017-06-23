@@ -22,6 +22,12 @@
 
 #define GET_BUFFER(id) objectmap_lookup(_render_map_buffer, (id))
 
+static void
+_render_buffer_deallocate(object_t id, void* ptr) {
+	render_buffer_t* buffer = ptr;
+	buffer->backend->vtable.deallocate_buffer(buffer->backend, buffer, true, true);
+}
+
 int
 render_buffer_initialize(void) {
 	memory_context_push(HASH_RENDER);
@@ -38,36 +44,12 @@ render_buffer_finalize(void) {
 
 object_t
 render_buffer_ref(object_t id) {
-	int32_t ref;
-	render_buffer_t* buffer = objectmap_lookup(_render_map_buffer, id);
-	if (buffer)
-		do {
-			ref = atomic_load32(&buffer->ref);
-			if ((ref > 0) && atomic_cas32(&buffer->ref, ref + 1, ref))
-				return id;
-		}
-		while (ref > 0);
-	return 0;
+	return objectmap_lookup_ref(_render_map_buffer, id) ? id : 0;
 }
 
 void
 render_buffer_destroy(object_t id) {
-	int32_t ref;
-	render_buffer_t* buffer = GET_BUFFER(id);
-	if (buffer) {
-		do {
-			ref = atomic_load32(&buffer->ref);
-			if ((ref > 0) && atomic_cas32(&buffer->ref, ref - 1, ref)) {
-				if (ref == 1) {
-					objectmap_free(_render_map_buffer, id);
-					buffer->backend->vtable.deallocate_buffer(buffer->backend, buffer, true, true);
-					memory_deallocate(buffer);
-				}
-				return;
-			}
-		}
-		while (ref > 0);
-	}
+	objectmap_lookup_unref(_render_map_buffer, id, _render_buffer_deallocate);
 }
 
 void
@@ -79,14 +61,14 @@ render_buffer_upload(render_buffer_t* buffer) {
 void
 render_buffer_lock(object_t id, unsigned int lock) {
 	render_buffer_t* buffer = GET_BUFFER(id);
-	if (render_buffer_ref(id) != id)
+	if (!render_buffer_ref(id))
 		return;
 	if (lock & RENDERBUFFER_LOCK_WRITE) {
-		atomic_incr32(&buffer->locks);
+		atomic_incr32(&buffer->locks, memory_order_release);
 		buffer->access = buffer->store;
 	}
 	else if (lock & RENDERBUFFER_LOCK_READ) {
-		atomic_incr32(&buffer->locks);
+		atomic_incr32(&buffer->locks, memory_order_release);
 		buffer->access = buffer->store;
 	}
 	buffer->flags |= (lock & RENDERBUFFER_LOCK_BITS);
@@ -97,7 +79,8 @@ render_buffer_unlock(object_t id) {
 	render_buffer_t* buffer = GET_BUFFER(id);
 	if (!atomic_load32(&buffer->locks))
 		return;
-	if (atomic_decr32(&buffer->locks) == 0) {
+	if (atomic_decr32(&buffer->locks, memory_order_acquire) == 0) {
+		not safe if another thread does lock here, spliced in!
 		buffer->access = nullptr;
 		if ((buffer->flags & RENDERBUFFER_LOCK_WRITE) && !(buffer->flags & RENDERBUFFER_LOCK_NOUPLOAD)) {
 			buffer->flags |= RENDERBUFFER_DIRTY;
