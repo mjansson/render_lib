@@ -25,17 +25,17 @@ void
 render_sort_merge(render_context_t** contexts, size_t num_contexts) {
 	for (size_t i = 0, size = num_contexts; i < size; ++i)
 		contexts[i]->order = radixsort_sort(contexts[i]->sort, contexts[i]->keys,
-		                                    (radixsort_index_t)atomic_load32(&contexts[i]->reserved));
+		                                    (radixsort_index_t)atomic_load32(&contexts[i]->reserved, memory_order_acquire));
 }
 
 void
 render_sort_reset(render_context_t* context) {
-	atomic_store64(&context->key, 0);
+	atomic_store64(&context->key, 0, memory_order_release);
 }
 
 uint64_t
 render_sort_sequential_key(render_context_t* context) {
-	return (uint64_t)atomic_incr64(&context->key);
+	return (uint64_t)atomic_incr64(&context->key, memory_order_release);
 }
 
 uint64_t

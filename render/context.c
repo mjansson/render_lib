@@ -46,7 +46,7 @@ render_context_allocate(size_t commands) {
 void
 render_context_deallocate(render_context_t* context) {
 	if (context) {
-		render_target_destroy(context->target);
+		render_target_unref(context->target);
 		radixsort_deallocate(context->sort);
 		memory_deallocate(context->commands);
 		memory_deallocate(context->keys);
@@ -61,14 +61,14 @@ render_context_target(render_context_t* context) {
 
 void
 render_context_set_target(render_context_t* context, object_t target) {
-	render_target_ref(target);
-	render_target_destroy(context->target);
-	context->target = target;
+	object_t old_target = context->target;
+	context->target = render_target_ref(target);
+	render_target_unref(old_target);
 }
 
 render_command_t*
 render_context_reserve(render_context_t* context, uint64_t sort) {
-	int32_t idx = atomic_exchange_and_add32(&context->reserved, 1);
+	int32_t idx = atomic_exchange_and_add32(&context->reserved, 1, memory_order_relaxed);
 	FOUNDATION_ASSERT_MSG(idx < context->allocated, "Render command overallocation");
 	context->keys[ idx ] = sort;
 	return context->commands + idx;
@@ -76,7 +76,7 @@ render_context_reserve(render_context_t* context, uint64_t sort) {
 
 void
 render_context_queue(render_context_t* context, render_command_t* command, uint64_t sort) {
-	int32_t idx = atomic_exchange_and_add32(&context->reserved, 1);
+	int32_t idx = atomic_exchange_and_add32(&context->reserved, 1, memory_order_relaxed);
 	FOUNDATION_ASSERT_MSG(idx < context->allocated, "Render command overallocation");
 	context->keys[ idx ] = sort;
 	memcpy(context->commands + idx, command, sizeof(render_command_t));
@@ -84,7 +84,7 @@ render_context_queue(render_context_t* context, render_command_t* command, uint6
 
 size_t
 render_context_reserved(render_context_t* context) {
-	return (size_t)atomic_load32(&context->reserved);
+	return (size_t)atomic_load32(&context->reserved, memory_order_acquire);
 }
 
 uint8_t

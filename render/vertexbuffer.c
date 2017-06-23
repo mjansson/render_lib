@@ -42,8 +42,9 @@ render_vertexbuffer_create(render_backend_t* backend, render_usage_t usage, size
 	buffer->buffertype = RENDERBUFFER_VERTEX;
 	buffer->policy     = RENDERBUFFER_UPLOAD_ONDISPATCH;
 	buffer->size       = decl->size;
+	buffer->lock       = mutex_allocate(STRING_CONST("vertexbuffer"));
 	memcpy(&buffer->decl, decl, sizeof(render_vertex_decl_t));
-	atomic_store32(&buffer->ref, 1);
+	atomic_store32(&buffer->ref, 1, memory_order_release);
 	objectmap_set(_render_map_buffer, id, buffer);
 
 	if (vertices) {
@@ -67,8 +68,8 @@ render_vertexbuffer_ref(object_t id) {
 }
 
 void
-render_vertexbuffer_destroy(object_t id) {
-	render_buffer_destroy(id);
+render_vertexbuffer_unref(object_t id) {
+	render_buffer_unref(id);
 }
 
 render_usage_t

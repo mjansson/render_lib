@@ -47,7 +47,7 @@ render_parameterbuffer_create(render_backend_t* backend, render_usage_t usage,
 	buffer->size       = data_size;
 	buffer->num_parameters = (unsigned int)num_parameters;
 	memcpy(&buffer->parameters, parameters, paramsize);
-	atomic_store32(&buffer->ref, 1);
+	atomic_store32(&buffer->ref, 1, memory_order_release);
 	objectmap_set(_render_map_buffer, id, buffer);
 
 	buffer->allocated = 1;
@@ -69,8 +69,8 @@ render_parameterbuffer_ref(object_t id) {
 }
 
 void
-render_parameterbuffer_destroy(object_t id) {
-	render_buffer_destroy(id);
+render_parameterbuffer_unref(object_t id) {
+	render_buffer_unref(id);
 }
 
 void

@@ -112,7 +112,7 @@ RENDER_API object_t
 render_vertexbuffer_ref(object_t buffer);
 
 RENDER_API void
-render_vertexbuffer_destroy(object_t buffer);
+render_vertexbuffer_unref(object_t buffer);
 
 RENDER_API render_usage_t
 render_vertexbuffer_usage(object_t buffer);

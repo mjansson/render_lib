@@ -216,7 +216,7 @@ render_backend_deallocate(render_backend_t* backend) {
 	objectmap_deallocate(backend->programmap);
 
 	if (backend->framebuffer)
-		render_target_destroy(backend->framebuffer);
+		render_target_unref(backend->framebuffer);
 
 	memory_deallocate(backend);
 }
@@ -287,7 +287,7 @@ render_backend_dispatch(render_backend_t* backend, render_context_t** contexts,
 	backend->vtable.dispatch(backend, contexts, num_contexts);
 
 	for (size_t i = 0; i < num_contexts; ++i)
-		atomic_store32(&contexts[i]->reserved, 0);
+		atomic_store32(&contexts[i]->reserved, 0, memory_order_release);
 }
 
 void
@@ -332,13 +332,13 @@ render_backend_set_resource_platform(render_backend_t* backend, uint64_t platfor
 
 object_t
 render_backend_shader_acquire(render_backend_t* backend, const uuid_t uuid) {
-	object_t obj = hashtable64_get(backend->shadertable, resource_uuid_hash(uuid));
+	object_t obj = (object_t)hashtable64_get(backend->shadertable, resource_uuid_hash(uuid));
 	return objectmap_lookup_ref(backend->shadermap, obj) ? obj : 0;
 }
 
 object_t
 render_backend_program_acquire(render_backend_t* backend, const uuid_t uuid) {
-	object_t obj = hashtable64_get(backend->programtable, resource_uuid_hash(uuid));
+	object_t obj = (object_t)hashtable64_get(backend->programtable, resource_uuid_hash(uuid));
 	return objectmap_lookup_ref(backend->programmap, obj) ? obj : 0;
 }
 
@@ -347,7 +347,7 @@ render_backend_shader_store(render_backend_t* backend, const uuid_t uuid,
                             render_shader_t* shader) {
 	object_t obj = objectmap_reserve(backend->shadermap);
 	if (obj) {
-		atomic_store32(&shader->ref, 1);
+		atomic_incr32(&shader->ref, memory_order_release);
 		shader->id = obj;
 		shader->flags = 0;
 		objectmap_set(backend->shadermap, obj, shader);
@@ -361,7 +361,7 @@ render_backend_program_store(render_backend_t* backend, const uuid_t uuid,
                              render_program_t* program) {
 	object_t obj = objectmap_reserve(backend->programmap);
 	if (obj) {
-		atomic_store32(&program->ref, 1);
+		atomic_incr32(&program->ref, memory_order_release);
 		program->id = obj;
 		program->flags = 0;
 		objectmap_set(backend->programmap, obj, program);
@@ -382,8 +382,9 @@ render_backend_program_resolve(render_backend_t* backend, object_t program) {
 
 static void
 render_backend_shader_deallocate(object_t id, void* shader) {
+	render_backend_t* backend = ((render_shader_t*)shader)->backend;
 	render_shader_deallocate(shader);
-	objectmap_free(((render_shader_t*)shader)->backend->shadermap, id);
+	objectmap_free(backend->shadermap, id);
 }
 
 void
@@ -393,8 +394,9 @@ render_backend_shader_release(render_backend_t* backend, object_t shader) {
 
 static void
 render_backend_program_deallocate(object_t id, void* program) {
+	render_backend_t* backend = ((render_program_t*)program)->backend;
 	render_program_deallocate(program);
-	objectmap_free(((render_program_t*)program)->backend->programmap, id);
+	objectmap_free(backend->programmap, id);
 }
 
 void

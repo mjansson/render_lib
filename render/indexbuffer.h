@@ -35,7 +35,7 @@ RENDER_API object_t
 render_indexbuffer_ref(object_t buffer);
 
 RENDER_API void
-render_indexbuffer_destroy(object_t buffer);
+render_indexbuffer_unref(object_t buffer);
 
 RENDER_API render_usage_t
 render_indexbuffer_usage(object_t buffer);

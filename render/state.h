@@ -32,7 +32,7 @@ RENDER_API object_t
 render_statebuffer_ref(object_t buffer);
 
 RENDER_API void
-render_statebuffer_destroy(object_t buffer);
+render_statebuffer_unref(object_t buffer);
 
 RENDER_API void
 render_statebuffer_lock(object_t buffer, unsigned int lock);

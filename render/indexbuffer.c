@@ -43,7 +43,7 @@ render_indexbuffer_create(render_backend_t* backend, render_usage_t usage, size_
 	buffer->buffertype = RENDERBUFFER_INDEX;
 	buffer->policy     = RENDERBUFFER_UPLOAD_ONDISPATCH;
 	buffer->size       = 2;
-	atomic_store32(&buffer->ref, 1);
+	atomic_store32(&buffer->ref, 1, memory_order_release);
 	objectmap_set(_render_map_buffer, id, buffer);
 
 	if (indices) {
@@ -73,8 +73,8 @@ render_indexbuffer_ref(object_t id) {
 }
 
 void
-render_indexbuffer_destroy(object_t id) {
-	render_buffer_destroy(id);
+render_indexbuffer_unref(object_t id) {
+	render_buffer_unref(id);
 }
 
 render_usage_t

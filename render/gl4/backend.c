@@ -1099,8 +1099,8 @@ _rb_gl4_dispatch(render_backend_t* backend, render_context_t** contexts, size_t 
 		render_command_t* command = context->commands;
 		const radixsort_index_t* order = context->order;
 
-		for (int cmd_index = 0, cmd_size = atomic_load32(&context->reserved); cmd_index < cmd_size;
-		        ++cmd_index, ++order) {
+		int cmd_size = atomic_load32(&context->reserved, memory_order_acquire);
+		for (int cmd_index = 0; cmd_index < cmd_size; ++cmd_index, ++order) {
 			command = context->commands + *order;
 			switch (command->type) {
 			case RENDERCOMMAND_CLEAR:

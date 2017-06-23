@@ -33,7 +33,7 @@ RENDER_API object_t
 render_parameterbuffer_ref(object_t buffer);
 
 RENDER_API void
-render_parameterbuffer_destroy(object_t buffer);
+render_parameterbuffer_unref(object_t buffer);
 
 RENDER_API void
 render_parameterbuffer_link(object_t buffer, render_program_t* program);

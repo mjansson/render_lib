@@ -82,9 +82,6 @@ test_render_initialize(void) {
 	if (vector_module_initialize(vector_config))
 		return -1;
 
-	log_set_suppress(HASH_RENDER, ERRORLEVEL_NONE);
-	log_set_suppress(HASH_RESOURCE, ERRORLEVEL_NONE);
-
 	render_config_t render_config;
 	memset(&render_config, 0, sizeof(render_config));
 	if (render_module_initialize(render_config))
@@ -382,7 +379,7 @@ static void* _test_render_box(render_api_t api) {
 	parameterbuffer = render_parameterbuffer_create(backend, RENDERUSAGE_DYNAMIC,
 	                                                program->parameters, program->num_parameters,
 	                                                &mvp, sizeof(mvp));
-	EXPECT_TYPENE(parameterbuffer, 0, object_t, PRIx64);
+	EXPECT_TYPENE(parameterbuffer, 0, object_t, PRIx32);
 
 	render_parameterbuffer_link(parameterbuffer, program);
 
@@ -391,10 +388,10 @@ static void* _test_render_box(render_api_t api) {
 	                                               VERTEXFORMAT_UNKNOWN);
 
 	vertexbuffer = render_vertexbuffer_create(backend, RENDERUSAGE_STATIC, 8, vertex_decl, vertexdata);
-	EXPECT_TYPENE(vertexbuffer, 0, object_t, PRIx64);
+	EXPECT_TYPENE(vertexbuffer, 0, object_t, PRIx32);
 
 	indexbuffer = render_indexbuffer_create(backend, RENDERUSAGE_STATIC, 36, indexdata);
-	EXPECT_TYPENE(indexbuffer, 0, object_t, PRIx64);
+	EXPECT_TYPENE(indexbuffer, 0, object_t, PRIx32);
 
 	render_sort_reset(context);
 
@@ -416,10 +413,10 @@ static void* _test_render_box(render_api_t api) {
 
 ignore_test:
 
-	render_indexbuffer_destroy(indexbuffer);
-	render_vertexbuffer_destroy(vertexbuffer);
+	render_indexbuffer_unref(indexbuffer);
+	render_vertexbuffer_unref(vertexbuffer);
 	render_vertex_decl_deallocate(vertex_decl);
-	render_parameterbuffer_destroy(parameterbuffer);
+	render_parameterbuffer_unref(parameterbuffer);
 	if (backend)
 		render_backend_program_release(backend, programobj);
 	render_context_deallocate(context);

@@ -494,7 +494,8 @@ struct render_parameter_t {
 	uint8_t    buffertype; \
 	uint8_t    policy; \
 	uint8_t    __unused_buffer_0; \
-	atomic32_t locks; \
+	uint32_t   locks; \
+	mutex_t*   lock; \
 	size_t     allocated; \
 	size_t     used; \
 	size_t     size; \

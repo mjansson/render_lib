@@ -58,7 +58,7 @@ RENDER_EXTERN object_t
 render_buffer_ref(object_t buffer);
 
 RENDER_EXTERN void
-render_buffer_destroy(object_t id);
+render_buffer_unref(object_t id);
 
 RENDER_EXTERN void
 render_buffer_upload(render_buffer_t* buffer);

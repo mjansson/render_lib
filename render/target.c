@@ -20,6 +20,12 @@
 #include <render/render.h>
 #include <render/internal.h>
 
+static void
+_render_target_deallocate(object_t id, void* ptr) {
+	memory_deallocate(ptr);
+	objectmap_free(_render_map_target, id);
+}
+
 int
 render_target_initialize(void) {
 	memory_context_push(HASH_RENDER);
@@ -52,7 +58,7 @@ render_target_create(render_backend_t* backend) {
 	                         MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 	target->id = id;
 	target->backend = backend;
-	atomic_store32(&target->ref, 1);
+	atomic_store32(&target->ref, 1, memory_order_release);
 
 	objectmap_set(_render_map_target, id, target);
 
@@ -66,32 +72,12 @@ render_target_create_framebuffer(render_backend_t* backend) {
 
 object_t
 render_target_ref(object_t id) {
-	int32_t ref;
-	render_target_t* target = objectmap_lookup(_render_map_target, id);
-	if (target) do {
-			ref = atomic_load32(&target->ref);
-			if ((ref > 0) && atomic_cas32(&target->ref, ref + 1, ref))
-				return id;
-		}
-		while (ref > 0);
-	return 0;
+	return objectmap_lookup_ref(_render_map_target, id) ? id : 0;
 }
 
 void
-render_target_destroy(object_t id) {
-	int32_t ref;
-	render_target_t* target = objectmap_lookup(_render_map_target, id);
-	if (target) do {
-			ref = atomic_load32(&target->ref);
-			if ((ref > 0) && atomic_cas32(&target->ref, ref - 1, ref)) {
-				if (ref == 1) {
-					objectmap_free(_render_map_target, id);
-					memory_deallocate(target);
-				}
-				return;
-			}
-		}
-		while (ref > 0);
+render_target_unref(object_t id) {
+	objectmap_lookup_unref(_render_map_target, id, _render_target_deallocate);
 }
 
 render_target_t*

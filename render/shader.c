@@ -150,6 +150,7 @@ retry:
 	}
 
 	if (success) {
+		atomic_store32(&shader->ref, 0, memory_order_release);
 		shaderobj = render_backend_shader_store(backend, uuid, shader);
 	}
 	else {

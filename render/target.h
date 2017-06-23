@@ -31,7 +31,7 @@ RENDER_API object_t
 render_target_ref(object_t target);
 
 RENDER_API void
-render_target_destroy(object_t target);
+render_target_unref(object_t target);
 
 RENDER_API int
 render_target_width(object_t target);

@@ -148,6 +148,7 @@ retry:
 	program->backend = 0;
 	program->vertexshader = vshader;
 	program->pixelshader = pshader;
+	atomic_store32(&program->ref, 0, memory_order_release);
 	memset(program->backend_data, 0, sizeof(program->backend_data));
 
 	success = render_program_upload(backend, program);
