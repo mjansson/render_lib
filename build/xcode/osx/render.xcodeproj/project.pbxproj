@@ -385,7 +385,7 @@
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CONFIGURATION_BUILD_DIR = ../../../bin/macosx/debug;
+				CONFIGURATION_BUILD_DIR = ../../../bin/macos/debug;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_C_LANGUAGE_STANDARD = c11;
@@ -444,7 +444,7 @@
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CONFIGURATION_BUILD_DIR = ../../../bin/macosx/release;
+				CONFIGURATION_BUILD_DIR = ../../../bin/macos/release;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
@@ -490,7 +490,7 @@
 		4555153F19345D4100CF089B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CONFIGURATION_BUILD_DIR = ../../../lib/macosx/debug;
+				CONFIGURATION_BUILD_DIR = ../../../lib/macos/debug;
 				EXECUTABLE_PREFIX = lib;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"RENDER_COMPILE=1",
@@ -504,7 +504,7 @@
 		4555154019345D4100CF089B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CONFIGURATION_BUILD_DIR = ../../../lib/macosx/release;
+				CONFIGURATION_BUILD_DIR = ../../../lib/macos/release;
 				EXECUTABLE_PREFIX = lib;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"RENDER_COMPILE=1",
@@ -532,7 +532,7 @@
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CONFIGURATION_BUILD_DIR = ../../../bin/macosx/profile;
+				CONFIGURATION_BUILD_DIR = ../../../bin/macos/profile;
 				COPY_PHASE_STRIP = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
@@ -578,7 +578,7 @@
 		4555154F193469F900CF089B /* Profile */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CONFIGURATION_BUILD_DIR = ../../../lib/macosx/profile;
+				CONFIGURATION_BUILD_DIR = ../../../lib/macos/profile;
 				EXECUTABLE_PREFIX = lib;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"RENDER_COMPILE=1",
@@ -606,7 +606,7 @@
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CONFIGURATION_BUILD_DIR = ../../../bin/macosx/deploy;
+				CONFIGURATION_BUILD_DIR = ../../../bin/macos/deploy;
 				COPY_PHASE_STRIP = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
@@ -652,7 +652,7 @@
 		4555155119346A0100CF089B /* Deploy */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CONFIGURATION_BUILD_DIR = ../../../lib/macosx/deploy;
+				CONFIGURATION_BUILD_DIR = ../../../lib/macos/deploy;
 				EXECUTABLE_PREFIX = lib;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"RENDER_COMPILE=1",

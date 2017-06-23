@@ -23,7 +23,7 @@
 
 #include <render/gl2/backend.h>
 
-#if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_MACOSX || ( FOUNDATION_PLATFORM_LINUX && !FOUNDATION_PLATFORM_LINUX_RASPBERRYPI )
+#if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_MACOS || ( FOUNDATION_PLATFORM_LINUX && !FOUNDATION_PLATFORM_LINUX_RASPBERRYPI )
 
 #include <render/gl4/glwrap.h>
 
@@ -122,7 +122,7 @@ _rb_gl2_set_drawable(render_backend_t* backend, render_drawable_t* drawable) {
 #endif
 
 #if FOUNDATION_PLATFORM_LINUX
-	glXMakeCurrent(drawable->display, drawable->drawable, backend_gl2->context);
+	glXMakeCurrent(drawable->display, (GLXDrawable)drawable->drawable, backend_gl2->context);
 	if (True == glXIsDirect(drawable->display, backend_gl2->context))
 		log_debug(HASH_RENDER, STRING_CONST("Direct rendering enabled"));
 	else
@@ -198,9 +198,9 @@ _rb_gl2_enable_thread(render_backend_t* backend) {
 		           STRING_FORMAT(errmsg));
 	}
 #elif FOUNDATION_PLATFORM_LINUX
-	glXMakeCurrent(backend->drawable->display, backend->drawable->drawable, backend->context);
+	glXMakeCurrent(backend->drawable->display, (GLXDrawable)backend->drawable->drawable, backend_gl2->context);
 	_rb_gl_check_error("Unable to enable thread for rendering");
-#elif FOUNDATION_PLATFORM_MACOSX
+#elif FOUNDATION_PLATFORM_MACOS
 	_rb_gl_make_agl_context_current(backend_gl2->context);
 #else
 	FOUNDATION_ASSERT_FAIL("Unable to enable thread for rendering, platform not implemented");
@@ -286,18 +286,18 @@ _rb_gl2_enumerate_modes(render_backend_t* backend, unsigned int adapter) {
 				if (color == 24)
 					format = PIXELFORMAT_R8G8B8;
 
-				resolution_t mode = {
+				render_resolution_t mode = {
 					0,
 					xmodes[m]->hdisplay,
 					xmodes[m]->vdisplay,
 					format,
 					COLORSPACE_LINEAR,
-					refresh
+					(unsigned int)refresh
 				};
 
 				bool found = false;
-				for (int c = 0, size = array_size(modes); c < size; ++c) {
-					if (!memcmp(modes + c, &mode, sizeof(resolution_t))) {
+				for (size_t c = 0, size = array_size(modes); c < size; ++c) {
+					if (!memcmp(modes + c, &mode, sizeof(render_resolution_t))) {
 						found = true;
 						break;
 					}
@@ -313,9 +313,8 @@ _rb_gl2_enumerate_modes(render_backend_t* backend, unsigned int adapter) {
 	}
 
 	//Sort and index modes
-	for (int c = 0, size = array_size(modes); c < size; ++c) {
-		modes[c].id = c;
-	}
+	for (size_t c = 0, size = array_size(modes); c < size; ++c)
+		modes[c].id = (unsigned int)c;
 
 	if (!array_size(modes)) {
 		log_warnf(HASH_RENDER, WARNING_SUSPICIOUS,
@@ -836,7 +835,7 @@ _rb_gl2_flip(render_backend_t* backend) {
 		}
 	}
 
-#elif FOUNDATION_PLATFORM_MACOSX
+#elif FOUNDATION_PLATFORM_MACOS
 
 	if (backend_gl2->context) {
 		/*if( backend_gl2->fullscreen )
@@ -848,7 +847,7 @@ _rb_gl2_flip(render_backend_t* backend) {
 #elif FOUNDATION_PLATFORM_LINUX
 
 	if (backend_gl2->drawable->display)
-		glXSwapBuffers(backend_gl2->drawable->display, backend_gl2->drawable->drawable);
+		glXSwapBuffers(backend_gl2->drawable->display, (GLXDrawable)backend_gl2->drawable->drawable);
 
 #else
 #  error Not implemented

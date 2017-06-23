@@ -72,7 +72,6 @@ test_render_initialize(void) {
 	resource_config.enable_local_cache = true;
 	resource_config.enable_local_source = true;
 	resource_config.enable_local_autoimport = true;
-	resource_config.enable_local_autoimport = true;
 	resource_config.enable_remote_sourced = true;
 	resource_config.enable_remote_compiled = true;
 	if (resource_module_initialize(resource_config))
@@ -82,6 +81,9 @@ test_render_initialize(void) {
 	memset(&vector_config, 0, sizeof(vector_config));
 	if (vector_module_initialize(vector_config))
 		return -1;
+
+	log_set_suppress(HASH_RENDER, ERRORLEVEL_NONE);
+	log_set_suppress(HASH_RESOURCE, ERRORLEVEL_NONE);
 
 	render_config_t render_config;
 	memset(&render_config, 0, sizeof(render_config));
@@ -117,11 +119,9 @@ DECLARE_TEST(render, initialize) {
 	memset(&config, 0, sizeof(render_config_t));
 	render_module_initialize(config);
 
-#if FOUNDATION_PLATFORM_MACOSX
-	window = window_allocate(delegate_nswindow());
-#elif FOUNDATION_PLATFORM_IOS
-	window = window_allocate(delegate_uiwindow());
-#elif FOUNDATION_PLATFORM_WINDOWS
+#if FOUNDATION_PLATFORM_MACOS || FOUNDATION_PLATFORM_IOS
+	window = window_allocate(delegate_window());
+#elif FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_LINUX
 	window = window_create(WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render test"), 800, 600, true);
 #else
 #  error Not implemented
@@ -154,11 +154,9 @@ _test_render_api(render_api_t api) {
 	EXPECT_TRUE(render_module_is_initialized());
 
 	window_t* window = 0;
-#if FOUNDATION_PLATFORM_MACOSX
-	window = window_allocate(delegate_nswindow());
-#elif FOUNDATION_PLATFORM_IOS
-	window = window_allocate(delegate_uiwindow());
-#elif FOUNDATION_PLATFORM_WINDOWS
+#if FOUNDATION_PLATFORM_MACOS || FOUNDATION_PLATFORM_IOS
+	window = window_allocate(delegate_window());
+#elif FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_LINUX
 	window = window_create(WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render test"), 800, 600, true);
 #else
 #  error Not implemented
@@ -225,11 +223,9 @@ static void* _test_render_clear(render_api_t api) {
 	object_t framebuffer = 0;
 	render_context_t* context = 0;
 
-#if FOUNDATION_PLATFORM_MACOSX
-	window = window_allocate(delegate_nswindow());
-#elif FOUNDATION_PLATFORM_IOS
-	window = window_allocate(delegate_uiwindow());
-#elif FOUNDATION_PLATFORM_WINDOWS
+#if FOUNDATION_PLATFORM_MACOS || FOUNDATION_PLATFORM_IOS
+	window = window_allocate(delegate_window());
+#elif FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_LINUX
 	window = window_create(WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render test"), 800, 600, true);
 #else
 #  error Not implemented
@@ -338,11 +334,9 @@ static void* _test_render_box(render_api_t api) {
 		4, 0, 3,  4, 3, 7
 	};
 
-#if FOUNDATION_PLATFORM_MACOSX
-	window = window_allocate(delegate_nswindow());
-#elif FOUNDATION_PLATFORM_IOS
-	window = window_allocate(delegate_uiwindow());
-#elif FOUNDATION_PLATFORM_WINDOWS
+#if FOUNDATION_PLATFORM_MACOS || FOUNDATION_PLATFORM_IOS
+	window = window_allocate(delegate_window());
+#elif FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_LINUX
 	window = window_create(WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render test"), 800, 600, true);
 #else
 #  error Not implemented
@@ -452,7 +446,7 @@ DECLARE_TEST(render, null_box) {
 	return _test_render_box(RENDERAPI_NULL);
 }
 
-#if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_MACOSX || ( FOUNDATION_PLATFORM_LINUX && !FOUNDATION_PLATFORM_LINUX_RASPBERRYPI )
+#if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_MACOS || ( FOUNDATION_PLATFORM_LINUX && !FOUNDATION_PLATFORM_LINUX_RASPBERRYPI )
 
 DECLARE_TEST(render, gl4) {
 	return _test_render_api(RENDERAPI_OPENGL4);
@@ -502,7 +496,7 @@ test_render_declare(void) {
 	ADD_TEST(render, null);
 	ADD_TEST(render, null_clear);
 	ADD_TEST(render, null_box);
-#if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_MACOSX || FOUNDATION_PLATFORM_LINUX
+#if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_MACOS || FOUNDATION_PLATFORM_LINUX
 	ADD_TEST(render, gl4);
 	ADD_TEST(render, gl4_clear);
 	ADD_TEST(render, gl4_box);

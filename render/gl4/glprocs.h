@@ -17,7 +17,7 @@
 
 #pragma once
 
-#if !FOUNDATION_PLATFORM_LINUX && !FOUNDATION_PLATFORM_MACOSX
+#if !FOUNDATION_PLATFORM_LINUX && !FOUNDATION_PLATFORM_MACOS
 
 extern PFNGLACTIVETEXTUREPROC                glActiveTexture;
 extern PFNGLSAMPLECOVERAGEPROC               glSampleCoverage;
@@ -31,7 +31,7 @@ extern PFNGLGETCOMPRESSEDTEXIMAGEPROC        glGetCompressedTexImage;
 
 #endif
 
-#if !FOUNDATION_PLATFORM_MACOSX
+#if !FOUNDATION_PLATFORM_MACOS
 
 extern PFNGLGENQUERIESPROC                   glGenQueries;
 extern PFNGLDELETEQUERIESPROC                glDeleteQueries;

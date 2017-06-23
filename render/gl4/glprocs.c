@@ -22,7 +22,7 @@
 
 #include <window/window.h>
 
-#if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_MACOSX || ( FOUNDATION_PLATFORM_LINUX && !FOUNDATION_PLATFORM_LINUX_RASPBERRYPI )
+#if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_MACOS || ( FOUNDATION_PLATFORM_LINUX && !FOUNDATION_PLATFORM_LINUX_RASPBERRYPI )
 
 #include <render/gl4/glwrap.h>
 #include <render/gl4/glprocs.h>
@@ -37,14 +37,14 @@ _rb_gl_get_proc_address(const char* name) {
 	return (glfn)wglGetProcAddress(name);
 #elif FOUNDATION_PLATFORM_LINUX
 	return (glfn)glXGetProcAddressARB((const GLubyte*)name);
-#elif FOUNDATION_PLATFORM_MACOSX
+#elif FOUNDATION_PLATFORM_MACOS
 	return (glfn)dlsym(RTLD_DEFAULT, name);
 #else
 #  error Not implemented
 #endif
 }
 
-#if !FOUNDATION_PLATFORM_LINUX && !FOUNDATION_PLATFORM_MACOSX
+#if !FOUNDATION_PLATFORM_LINUX && !FOUNDATION_PLATFORM_MACOS
 
 PFNGLACTIVETEXTUREPROC                glActiveTexture = 0;
 PFNGLSAMPLECOVERAGEPROC               glSampleCoverage = 0;
@@ -58,7 +58,7 @@ PFNGLGETCOMPRESSEDTEXIMAGEPROC        glGetCompressedTexImage = 0;
 
 #endif
 
-#if !FOUNDATION_PLATFORM_MACOSX
+#if !FOUNDATION_PLATFORM_MACOS
 
 PFNGLGENQUERIESPROC                   glGenQueries = 0;
 PFNGLDELETEQUERIESPROC                glDeleteQueries = 0;
@@ -133,7 +133,7 @@ PFNGLVERTEXATTRIBPOINTERPROC          glVertexAttribPointer = 0;
 
 bool
 _rb_gl_get_texture_procs(void) {
-#if !FOUNDATION_PLATFORM_LINUX && !FOUNDATION_PLATFORM_MACOSX
+#if !FOUNDATION_PLATFORM_LINUX && !FOUNDATION_PLATFORM_MACOS
 	glActiveTexture = (PFNGLACTIVETEXTUREPROC)_rb_gl_get_proc_address("glActiveTexture");
 	glSampleCoverage = (PFNGLSAMPLECOVERAGEPROC)_rb_gl_get_proc_address("glSampleCoverage");
 	glCompressedTexImage3D = (PFNGLCOMPRESSEDTEXIMAGE3DPROC)_rb_gl_get_proc_address("glCompressedTexImage3D");
@@ -159,7 +159,7 @@ _rb_gl_get_texture_procs(void) {
 
 bool
 _rb_gl_get_query_procs(void) {
-#if !FOUNDATION_PLATFORM_MACOSX
+#if !FOUNDATION_PLATFORM_MACOS
 	glGenQueries = (PFNGLGENQUERIESPROC)_rb_gl_get_proc_address("glGenQueries");
 	glDeleteQueries = (PFNGLDELETEQUERIESPROC)_rb_gl_get_proc_address("glDeleteQueries");
 	glIsQuery = (PFNGLISQUERYPROC)_rb_gl_get_proc_address("glIsQuery");
@@ -179,7 +179,7 @@ _rb_gl_get_query_procs(void) {
 
 bool
 _rb_gl_get_buffer_procs(void) {
-#if !FOUNDATION_PLATFORM_MACOSX
+#if !FOUNDATION_PLATFORM_MACOS
 	glBindBuffer = (PFNGLBINDBUFFERPROC)_rb_gl_get_proc_address("glBindBuffer");
 	glDeleteBuffers = (PFNGLDELETEBUFFERSPROC)_rb_gl_get_proc_address("glDeleteBuffers");
 	glGenBuffers = (PFNGLGENBUFFERSPROC)_rb_gl_get_proc_address("glGenBuffers");
@@ -203,7 +203,7 @@ _rb_gl_get_buffer_procs(void) {
 
 bool
 _rb_gl_get_shader_procs(void) {
-#if !FOUNDATION_PLATFORM_MACOSX
+#if !FOUNDATION_PLATFORM_MACOS
 	glBlendEquationSeparate = (PFNGLBLENDEQUATIONSEPARATEPROC)
 	                          _rb_gl_get_proc_address("glBlendEquationSeparate");
 	glStencilOpSeparate = (PFNGLSTENCILOPSEPARATEPROC)_rb_gl_get_proc_address("glStencilOpSeparate");
