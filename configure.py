@@ -44,6 +44,10 @@ if not target.is_ios() and not target.is_android() and not target.is_tizen():
     generator.bin('renderimport', ['main.c'], 'renderimport', basepath = 'tools', implicit_deps = [render_lib], libs = linklibs, frameworks = glframeworks, configs = configs)
     generator.bin('rendercompile', ['main.c'], 'rendercompile', basepath = 'tools', implicit_deps = [render_lib], libs = linklibs, frameworks = glframeworks, configs = configs)
 
+#No test cases if we're a submodule
+if generator.is_subninja():
+  sys.exit()
+
 includepaths = generator.test_includepaths()
 
 linklibs = ['test'] + linklibs
