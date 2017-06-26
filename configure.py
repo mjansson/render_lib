@@ -36,13 +36,13 @@ if target.is_windows():
 if target.is_linux():
   gllibs = ['GL', 'Xxf86vm', 'Xext', 'X11']
 
-linklibs = ['render'] + dependlibs + gllibs
+linklibs = ['render'] + gllibs
 
 if not target.is_ios() and not target.is_android() and not target.is_tizen():
   configs = [config for config in toolchain.configs if config not in ['profile', 'deploy']]
   if not configs == []:
-    generator.bin('renderimport', ['main.c'], 'renderimport', basepath = 'tools', implicit_deps = [render_lib], libs = linklibs, frameworks = glframeworks, configs = configs)
-    generator.bin('rendercompile', ['main.c'], 'rendercompile', basepath = 'tools', implicit_deps = [render_lib], libs = linklibs, frameworks = glframeworks, configs = configs)
+    generator.bin('renderimport', ['main.c'], 'renderimport', basepath = 'tools', implicit_deps = [render_lib], dependlibs = dependlibs, libs = linklibs, frameworks = glframeworks, configs = configs)
+    generator.bin('rendercompile', ['main.c'], 'rendercompile', basepath = 'tools', implicit_deps = [render_lib], dependlibs = dependlibs, libs = linklibs, frameworks = glframeworks, configs = configs)
 
 #No test cases if we're a submodule
 if generator.is_subninja():
