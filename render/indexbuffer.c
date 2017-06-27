@@ -43,6 +43,7 @@ render_indexbuffer_create(render_backend_t* backend, render_usage_t usage, size_
 	buffer->buffertype = RENDERBUFFER_INDEX;
 	buffer->policy     = RENDERBUFFER_UPLOAD_ONDISPATCH;
 	buffer->size       = 2;
+	semaphore_initialize(&buffer->lock, 1);
 	atomic_store32(&buffer->ref, 1, memory_order_release);
 	objectmap_set(_render_map_buffer, id, buffer);
 

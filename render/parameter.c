@@ -46,6 +46,7 @@ render_parameterbuffer_create(render_backend_t* backend, render_usage_t usage,
 	buffer->policy     = RENDERBUFFER_UPLOAD_ONDISPATCH;
 	buffer->size       = data_size;
 	buffer->num_parameters = (unsigned int)num_parameters;
+	semaphore_initialize(&buffer->lock, 1);
 	memcpy(&buffer->parameters, parameters, paramsize);
 	atomic_store32(&buffer->ref, 1, memory_order_release);
 	objectmap_set(_render_map_buffer, id, buffer);

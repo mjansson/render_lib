@@ -27,7 +27,7 @@ _render_buffer_deallocate(object_t id, void* ptr) {
 	FOUNDATION_UNUSED(id);
 	render_buffer_t* buffer = ptr;
 	buffer->backend->vtable.deallocate_buffer(buffer->backend, buffer, true, true);
-	mutex_deallocate(buffer->lock);
+	semaphore_finalize(&buffer->lock);
 	memory_deallocate(buffer);
 	objectmap_free(_render_map_buffer, id);
 }
@@ -67,19 +67,19 @@ render_buffer_lock(object_t id, unsigned int lock) {
 	if (!render_buffer_ref(id))
 		return;
 	render_buffer_t* buffer = GET_BUFFER(id);
-	mutex_lock(buffer->lock);
+	semaphore_wait(&buffer->lock);
 	{
 		buffer->locks++;
 		buffer->access = buffer->store;
 		buffer->flags |= (lock & RENDERBUFFER_LOCK_BITS);
 	}
-	mutex_unlock(buffer->lock);
+	semaphore_post(&buffer->lock);
 }
 
 void
 render_buffer_unlock(object_t id) {
 	render_buffer_t* buffer = GET_BUFFER(id);
-	mutex_lock(buffer->lock);
+	semaphore_wait(&buffer->lock);
 	{
 		if (buffer->locks) {
 			--buffer->locks;
@@ -95,6 +95,6 @@ render_buffer_unlock(object_t id) {
 			}
 		}
 	}
-	mutex_unlock(buffer->lock);
+	semaphore_post(&buffer->lock);
 	render_buffer_unref(id);
 }

@@ -490,19 +490,19 @@ struct render_parameter_t {
 
 #define RENDER_DECLARE_BUFFER \
 	RENDER_DECLARE_OBJECT \
-	uint8_t    usage; \
-	uint8_t    buffertype; \
-	uint8_t    policy; \
-	uint8_t    __unused_buffer_0; \
-	uint32_t   locks; \
-	mutex_t*   lock; \
-	size_t     allocated; \
-	size_t     used; \
-	size_t     size; \
-	void*      store; \
-	void*      access; \
-	object_t   vram; \
-	uintptr_t  backend_data[4]
+	uint8_t     usage; \
+	uint8_t     buffertype; \
+	uint8_t     policy; \
+	uint8_t     __unused_buffer_0; \
+	uint32_t    locks; \
+	size_t      allocated; \
+	size_t      used; \
+	size_t      size; \
+	void*       store; \
+	void*       access; \
+	object_t    vram; \
+	uintptr_t   backend_data[4]; \
+	semaphore_t lock
 
 #define RENDER_DECLARE_SHADER \
 	RENDER_DECLARE_OBJECT \

@@ -42,7 +42,7 @@ render_vertexbuffer_create(render_backend_t* backend, render_usage_t usage, size
 	buffer->buffertype = RENDERBUFFER_VERTEX;
 	buffer->policy     = RENDERBUFFER_UPLOAD_ONDISPATCH;
 	buffer->size       = decl->size;
-	buffer->lock       = mutex_allocate(STRING_CONST("vertexbuffer"));
+	semaphore_initialize(&buffer->lock, 1);
 	memcpy(&buffer->decl, decl, sizeof(render_vertex_decl_t));
 	atomic_store32(&buffer->ref, 1, memory_order_release);
 	objectmap_set(_render_map_buffer, id, buffer);
