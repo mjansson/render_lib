@@ -332,20 +332,20 @@ render_backend_set_resource_platform(render_backend_t* backend, uint64_t platfor
 }
 
 object_t
-render_backend_shader_acquire(render_backend_t* backend, const uuid_t uuid) {
+render_backend_shader_ref(render_backend_t* backend, const uuid_t uuid) {
 	object_t obj = (object_t)hashtable64_get(backend->shadertable, resource_uuid_hash(uuid));
 	return objectmap_lookup_ref(backend->shadermap, obj) ? obj : 0;
 }
 
 object_t
-render_backend_program_acquire(render_backend_t* backend, const uuid_t uuid) {
+render_backend_program_ref(render_backend_t* backend, const uuid_t uuid) {
 	object_t obj = (object_t)hashtable64_get(backend->programtable, resource_uuid_hash(uuid));
 	return objectmap_lookup_ref(backend->programmap, obj) ? obj : 0;
 }
 
 object_t
-render_backend_shader_store(render_backend_t* backend, const uuid_t uuid,
-                            render_shader_t* shader) {
+render_backend_shader_bind(render_backend_t* backend, const uuid_t uuid,
+                           render_shader_t* shader) {
 	object_t obj = objectmap_reserve(backend->shadermap);
 	if (obj) {
 		atomic_incr32(&shader->ref, memory_order_release);
@@ -358,8 +358,8 @@ render_backend_shader_store(render_backend_t* backend, const uuid_t uuid,
 }
 
 object_t
-render_backend_program_store(render_backend_t* backend, const uuid_t uuid,
-                             render_program_t* program) {
+render_backend_program_bind(render_backend_t* backend, const uuid_t uuid,
+                            render_program_t* program) {
 	object_t obj = objectmap_reserve(backend->programmap);
 	if (obj) {
 		atomic_incr32(&program->ref, memory_order_release);
@@ -372,12 +372,12 @@ render_backend_program_store(render_backend_t* backend, const uuid_t uuid,
 }
 
 render_shader_t*
-render_backend_shader_resolve(render_backend_t* backend, object_t shader) {
+render_backend_shader_ptr(render_backend_t* backend, object_t shader) {
 	return objectmap_lookup(backend->shadermap, shader);
 }
 
 render_program_t*
-render_backend_program_resolve(render_backend_t* backend, object_t program) {
+render_backend_program_ptr(render_backend_t* backend, object_t program) {
 	return objectmap_lookup(backend->programmap, program);
 }
 
@@ -389,7 +389,7 @@ render_backend_shader_deallocate(object_t id, void* shader) {
 }
 
 void
-render_backend_shader_release(render_backend_t* backend, object_t shader) {
+render_backend_shader_unref(render_backend_t* backend, object_t shader) {
 	objectmap_lookup_unref(backend->shadermap, shader, render_backend_shader_deallocate);
 }
 
@@ -401,6 +401,26 @@ render_backend_program_deallocate(object_t id, void* program) {
 }
 
 void
-render_backend_program_release(render_backend_t* backend, object_t program) {
+render_backend_program_unref(render_backend_t* backend, object_t program) {
 	objectmap_lookup_unref(backend->programmap, program, render_backend_program_deallocate);
+}
+
+bool
+render_backend_shader_upload(render_backend_t* backend, render_shader_t* shader,
+                             const void* buffer, size_t size) {
+	if (shader->backend && (shader->backend != backend))
+		shader->backend->vtable.deallocate_shader(shader->backend, shader);
+	if (backend->vtable.upload_shader(backend, shader, buffer, size)) {
+		shader->backend = backend;
+		return true;
+	}
+	return false;
+}
+
+bool
+render_backend_program_upload(render_backend_t* backend, render_program_t* program) {
+	if (program->backend && (program->backend != backend))
+		program->backend->vtable.deallocate_program(program->backend, program);
+	program->backend = backend;
+	return backend->vtable.upload_program(backend, program);
 }

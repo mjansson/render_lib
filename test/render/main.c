@@ -367,7 +367,7 @@ static void* _test_render_box(render_api_t api) {
 	//color.program : 1ab9bba8-3f2f-4649-86bb-8b8b07e99af2
 	uuid_t program_uuid = string_to_uuid(STRING_CONST("1ab9bba8-3f2f-4649-86bb-8b8b07e99af2"));
 	programobj = render_program_load(backend, program_uuid);
-	program = render_backend_program_resolve(backend, programobj);
+	program = render_backend_program_ptr(backend, programobj);
 	EXPECT_NE(programobj, 0);
 	EXPECT_NE(program, nullptr);
 
@@ -415,7 +415,7 @@ ignore_test:
 	render_vertex_decl_deallocate(vertex_decl);
 	render_parameterbuffer_unref(parameterbuffer);
 	if (backend)
-		render_backend_program_release(backend, programobj);
+		render_backend_program_unref(backend, programobj);
 	render_context_deallocate(context);
 	render_backend_deallocate(backend);
 	render_drawable_deallocate(drawable);

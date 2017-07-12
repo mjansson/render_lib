@@ -47,9 +47,9 @@ void
 render_program_finalize(render_program_t* program) {
 	if (program->backend) {
 		if (program->vertexshader && program->vertexshader->id)
-			render_backend_shader_release(program->backend, program->vertexshader->id);
+			render_backend_shader_unref(program->backend, program->vertexshader->id);
 		if (program->pixelshader && program->pixelshader->id)
-			render_backend_shader_release(program->backend, program->pixelshader->id);
+			render_backend_shader_unref(program->backend, program->pixelshader->id);
 		program->backend->vtable.deallocate_program(program->backend, program);
 	}
 }
@@ -61,18 +61,10 @@ render_program_deallocate(render_program_t* program) {
 	memory_deallocate(program);
 }
 
-bool
-render_program_upload(render_backend_t* backend, render_program_t* program) {
-	if (program->backend && (program->backend != backend))
-		program->backend->vtable.deallocate_program(program->backend, program);
-	program->backend = backend;
-	return backend->vtable.upload_program(backend, program);
-}
-
 object_t
 render_program_load(render_backend_t* backend, const uuid_t uuid) {
-	object_t programobj = render_backend_program_acquire(backend, uuid);
-	if (programobj && render_backend_program_resolve(backend, programobj))
+	object_t programobj = render_backend_program_ref(backend, uuid);
+	if (programobj && render_backend_program_ptr(backend, programobj))
 		return programobj;
 
 #if RESOURCE_ENABLE_LOCAL_CACHE
@@ -130,7 +122,7 @@ retry:
 
 	shaderuuid = block;
 	vsobj = render_shader_load(backend, *shaderuuid);
-	vshader = render_backend_shader_resolve(backend, vsobj);
+	vshader = render_backend_shader_ptr(backend, vsobj);
 	if (!vshader || !(vshader->shadertype & SHADER_VERTEX)) {
 		log_warn(HASH_RENDER, WARNING_INVALID_VALUE, STRING_CONST("Got invalid vertex shader"));
 		goto finalize;
@@ -138,7 +130,7 @@ retry:
 
 	++shaderuuid;
 	psobj = render_shader_load(backend, *shaderuuid);
-	pshader = render_backend_shader_resolve(backend, psobj);
+	pshader = render_backend_shader_ptr(backend, psobj);
 	if (!pshader || !(pshader->shadertype & SHADER_PIXEL)) {
 		log_warn(HASH_RENDER, WARNING_INVALID_VALUE, STRING_CONST("Got invalid pixel shader"));
 		goto finalize;
@@ -151,18 +143,18 @@ retry:
 	atomic_store32(&program->ref, 0, memory_order_release);
 	memset(program->backend_data, 0, sizeof(program->backend_data));
 
-	success = render_program_upload(backend, program);
+	success = render_backend_program_upload(backend, program);
 
 finalize:
 	if (stream)
 		stream_deallocate(stream);
 
 	if (success) {
-		programobj = render_backend_program_store(backend, uuid, program);
+		programobj = render_backend_program_bind(backend, uuid, program);
 	}
 	else {
-		render_backend_shader_release(backend, psobj);
-		render_backend_shader_release(backend, vsobj);
+		render_backend_shader_unref(backend, psobj);
+		render_backend_shader_unref(backend, vsobj);
 		render_program_deallocate(program);
 		program = nullptr;
 	}

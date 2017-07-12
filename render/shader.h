@@ -44,9 +44,6 @@ RENDER_API void
 render_shader_deallocate(render_shader_t* shader);
 
 RENDER_API bool
-render_shader_upload(render_backend_t* backend, render_shader_t* shader, const void* buffer, size_t size);
-
-RENDER_API bool
 render_shader_reload(render_shader_t* shader, const uuid_t uuid);
 
 RENDER_API bool

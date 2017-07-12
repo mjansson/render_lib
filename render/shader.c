@@ -66,22 +66,10 @@ render_shader_deallocate(render_shader_t* shader) {
 	memory_deallocate(shader);
 }
 
-bool
-render_shader_upload(render_backend_t* backend, render_shader_t* shader,
-                     const void* buffer, size_t size) {
-	if (shader->backend && (shader->backend != backend))
-		shader->backend->vtable.deallocate_shader(shader->backend, shader);
-	if (backend->vtable.upload_shader(backend, shader, buffer, size)) {
-		shader->backend = backend;
-		return true;
-	}
-	return false;
-}
-
 object_t
 render_shader_load(render_backend_t* backend, const uuid_t uuid) {
-	object_t shaderobj = render_backend_shader_acquire(backend, uuid);
-	if (shaderobj && render_backend_shader_resolve(backend, shaderobj))
+	object_t shaderobj = render_backend_shader_ref(backend, uuid);
+	if (shaderobj && render_backend_shader_ptr(backend, shaderobj))
 		return shaderobj;
 
 #if RESOURCE_ENABLE_LOCAL_CACHE
@@ -135,7 +123,7 @@ retry:
 			buffer = memory_allocate(HASH_RENDER, size + 1, 0, MEMORY_TEMPORARY);
 			if (stream_read(stream, buffer, size) == size) {
 				buffer[size] = 0;
-				success = render_shader_upload(backend, shader, buffer, size);
+				success = render_backend_shader_upload(backend, shader, buffer, size);
 			}
 			memory_deallocate(buffer);
 		}
@@ -151,7 +139,7 @@ retry:
 
 	if (success) {
 		atomic_store32(&shader->ref, 0, memory_order_release);
-		shaderobj = render_backend_shader_store(backend, uuid, shader);
+		shaderobj = render_backend_shader_bind(backend, uuid, shader);
 	}
 	else {
 		render_shader_deallocate(shader);
@@ -212,7 +200,7 @@ render_shader_reload(render_shader_t* shader, const uuid_t uuid) {
 			buffer = memory_allocate(HASH_RENDER, size + 1, 0, MEMORY_TEMPORARY);
 			if (stream_read(stream, buffer, size) == size) {
 				buffer[size] = 0;
-				success = render_shader_upload(backend, &tmpshader, buffer, size);
+				success = render_backend_shader_upload(backend, &tmpshader, buffer, size);
 			}
 			memory_deallocate(buffer);
 		}

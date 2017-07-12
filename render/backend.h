@@ -80,27 +80,34 @@ render_backend_set_resource_platform(render_backend_t* backend, uint64_t platfor
 
 
 RENDER_API object_t
-render_backend_shader_acquire(render_backend_t* backend, const uuid_t uuid);
+render_backend_shader_ref(render_backend_t* backend, const uuid_t uuid);
+
+RENDER_API void
+render_backend_shader_unref(render_backend_t* backend, object_t shader);
 
 RENDER_API render_shader_t*
-render_backend_shader_resolve(render_backend_t* backend, object_t shader);
+render_backend_shader_ptr(render_backend_t* backend, object_t shader);
 
 RENDER_API object_t
-render_backend_shader_store(render_backend_t* backend, const uuid_t uuid, render_shader_t* shader);
+render_backend_shader_bind(render_backend_t* backend, const uuid_t uuid,
+                           render_shader_t* shader);
+
+RENDER_API bool
+render_backend_shader_upload(render_backend_t* backend, render_shader_t* shader,
+                             const void* buffer, size_t size);
+
+RENDER_API object_t
+render_backend_program_ref(render_backend_t* backend, const uuid_t uuid);
 
 RENDER_API void
-render_backend_shader_release(render_backend_t* backend, object_t shader);
-
-
-RENDER_API object_t
-render_backend_program_acquire(render_backend_t* backend, const uuid_t uuid);
+render_backend_program_unref(render_backend_t* backend, object_t program);
 
 RENDER_API render_program_t*
-render_backend_program_resolve(render_backend_t* backend, object_t program);
+render_backend_program_ptr(render_backend_t* backend, object_t program);
+
+RENDER_API bool
+render_backend_program_upload(render_backend_t* backend, render_program_t* program);
 
 RENDER_API object_t
-render_backend_program_store(render_backend_t* backend, const uuid_t uuid,
-                             render_program_t* program);
-
-RENDER_API void
-render_backend_program_release(render_backend_t* backend, object_t program);
+render_backend_program_bind(render_backend_t* backend, const uuid_t uuid,
+                            render_program_t* program);

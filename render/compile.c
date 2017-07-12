@@ -391,8 +391,8 @@ render_program_compile_opengl(render_backend_t* backend, uuid_t vertexshader, uu
 
 	vsobj = render_shader_load(backend, vertexshader);
 	psobj = render_shader_load(backend, pixelshader);
-	vshader = render_backend_shader_resolve(backend, vsobj);
-	pshader = render_backend_shader_resolve(backend, psobj);
+	vshader = render_backend_shader_ptr(backend, vsobj);
+	pshader = render_backend_shader_ptr(backend, psobj);
 	if (!vshader || !(vshader->shadertype & SHADER_VERTEX)) {
 		log_errorf(HASH_RESOURCE, ERROR_INVALID_VALUE, STRING_CONST("Unable to load vertex shader"));
 		goto exit;
@@ -618,8 +618,8 @@ exit:
 	if (handle)
 		glDeleteProgram(handle);
 
-	render_backend_shader_release(backend, psobj);
-	render_backend_shader_release(backend, vsobj);
+	render_backend_shader_unref(backend, psobj);
+	render_backend_shader_unref(backend, vsobj);
 
 	memory_deallocate(log_buffer);
 

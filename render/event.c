@@ -29,17 +29,17 @@ render_event_handle_resource(render_backend_t* backend, const event_t* event) {
 
 	const uuid_t uuid = resource_event_uuid(event);
 
-	object_t shader = render_backend_shader_acquire(backend, uuid);
+	object_t shader = render_backend_shader_ref(backend, uuid);
 	if (shader) {
-		render_shader_reload(render_backend_shader_resolve(backend, shader), uuid);
-		render_backend_shader_release(backend, shader);
+		render_shader_reload(render_backend_shader_ptr(backend, shader), uuid);
+		render_backend_shader_unref(backend, shader);
 		return;
 	}
 
-	object_t program = render_backend_program_acquire(backend, uuid);
+	object_t program = render_backend_program_ref(backend, uuid);
 	if (program) {
-		render_program_reload(render_backend_program_resolve(backend, program), uuid);
-		render_backend_program_release(backend, program);
+		render_program_reload(render_backend_program_ptr(backend, program), uuid);
+		render_backend_program_unref(backend, program);
 		return;
 	}
 }
