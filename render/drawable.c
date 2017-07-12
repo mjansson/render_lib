@@ -47,14 +47,9 @@ render_drawable_deallocate(render_drawable_t* drawable) {
 	}
 }
 
-#if FOUNDATION_PLATFORM_IOS
 void
-render_drawable_set_window(render_drawable_t* drawable, window_t* window, int tag)
-#else
-void
-render_drawable_set_window(render_drawable_t* drawable, window_t* window)
-#endif
-{
+render_drawable_set_window(render_drawable_t* drawable, window_t* window, unsigned int tag) {
+	FOUNDATION_UNUSED(tag);
 	drawable->type = RENDERDRAWABLE_WINDOW;
 	drawable->adapter = window_adapter(window);
 	drawable->window = window;
@@ -71,7 +66,7 @@ render_drawable_set_window(render_drawable_t* drawable, window_t* window)
 	drawable->screen = window_screen(window);
 	drawable->drawable = window_drawable(window);
 #elif FOUNDATION_PLATFORM_MACOS
-	drawable->view = window_content_view(window);
+	drawable->view = window_view(window, tag);
 #elif FOUNDATION_PLATFORM_IOS
 	drawable->view = window_view(window, tag);
 	drawable->drawable = window_layer(window, drawable->view);

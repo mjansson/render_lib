@@ -132,7 +132,8 @@ _rb_gl_destroy_context(render_drawable_t* drawable, void* context) {
 }
 
 void*
-_rb_gl_create_context(render_drawable_t* drawable, unsigned int major, unsigned int minor, void* share_context) {
+_rb_gl_create_context(render_drawable_t* drawable, unsigned int major, unsigned int minor,
+                      void* share_context) {
 	if (drawable && (drawable->type == RENDERDRAWABLE_OFFSCREEN)) {
 		log_error(HASH_RENDER, ERROR_NOT_IMPLEMENTED, STRING_CONST("Offscreen drawable not implemented"));
 		return 0;
@@ -526,7 +527,8 @@ _rb_gl4_enable_thread(render_backend_t* backend) {
 	else
 		log_debug(HASH_RENDER, STRING_CONST("Enabled thread for GL4 rendering"));
 #elif FOUNDATION_PLATFORM_LINUX
-	glXMakeCurrent(backend->drawable->display, (GLXDrawable)backend->drawable->drawable, thread_context);
+	glXMakeCurrent(backend->drawable->display, (GLXDrawable)backend->drawable->drawable,
+	               thread_context);
 	_rb_gl_check_error("Unable to enable thread for rendering");
 #else
 	FOUNDATION_ASSERT_FAIL("Platform not implemented");
@@ -546,22 +548,20 @@ _rb_gl4_disable_thread(render_backend_t* backend) {
 	set_thread_gl4_context(0);
 }
 
-static unsigned int*
-_rb_gl4_enumerate_adapters(render_backend_t* backend) {
+size_t
+_rb_gl_enumerate_adapters(render_backend_t* backend, unsigned int* store, size_t capacity) {
 	FOUNDATION_UNUSED(backend);
-	unsigned int* adapters = 0;
-	array_push(adapters, (unsigned int)WINDOW_ADAPTER_DEFAULT);
-	return adapters;
+	if (capacity)
+		store[0] = (unsigned int)WINDOW_ADAPTER_DEFAULT;
+	return 1;
 }
 
-static render_resolution_t*
-_rb_gl4_enumerate_modes(render_backend_t* backend, unsigned int adapter) {
-	render_resolution_t* modes = 0;
-	FOUNDATION_UNUSED(backend);
-	FOUNDATION_UNUSED(adapter);
+size_t
+_rb_gl_enumerate_modes(render_backend_t* backend, unsigned int adapter,
+                       render_resolution_t* store, size_t capacity) {
+	size_t count = 0;
 
 #if FOUNDATION_PLATFORM_LINUX
-
 	FOUNDATION_ASSERT_MSG(adapter == WINDOW_ADAPTER_DEFAULT,
 	                      "render_enumerate_modes not implemented when adapter is specified");
 
@@ -600,11 +600,11 @@ _rb_gl4_enumerate_modes(render_backend_t* backend, unsigned int adapter) {
 				if ((xmodes[m]->hdisplay < 600) || (xmodes[m]->vdisplay < 400))
 					continue;
 
-				int refresh = ((int)(0.5f + (1000.0f * xmodes[m]->dotclock) / (float)(
-				                         xmodes[m]->htotal * xmodes[m]->vtotal)));
+				int refresh = ((int)(0.5f + (1000.0f * xmodes[m]->dotclock) /
+				                     (float)(xmodes[m]->htotal * xmodes[m]->vtotal)));
 
-				if (XF86VidModeValidateModeLine(display, visual[v].screen,
-				                                xmodes[m]) == 255)    // 255 = MODE_BAD according to XFree sources...
+				// 255 = MODE_BAD according to XFree sources...
+				if (XF86VidModeValidateModeLine(display, visual[v].screen, xmodes[m]) == 255)
 					continue;
 
 				pixelformat_t format = PIXELFORMAT_R8G8B8A8;
@@ -622,13 +622,14 @@ _rb_gl4_enumerate_modes(render_backend_t* backend, unsigned int adapter) {
 
 				bool found = false;
 				for (size_t c = 0, size = array_size(modes); c < size; ++c) {
-					if (!memcmp(modes + c, &mode, sizeof(render_resolution_t))) {
+					if (!memcmp(store + c, &mode, sizeof(render_resolution_t))) {
 						found = true;
 						break;
 					}
 				}
-				if (!found)
-					array_push(modes, mode);
+				if (!found && (count < capacity))
+					store[count] = mode;
+				++count;
 			}
 
 			XFree(xmodes);
@@ -638,10 +639,10 @@ _rb_gl4_enumerate_modes(render_backend_t* backend, unsigned int adapter) {
 	}
 
 	//Sort and index modes
-	for (size_t c = 0, size = array_size(modes); c < size; ++c)
-		modes[c].id = (unsigned int)c;
+	for (size_t c = 0, size = (count < capacity ? count : capacity); c < size; ++c)
+		store[c].id = (unsigned int)c;
 
-	if (!array_size(modes)) {
+	if (!count) {
 		log_warnf(HASH_RENDER, WARNING_SUSPICIOUS,
 		          STRING_CONST("Unable to enumerate resolutions for adapter %d, adding default fallback"), adapter);
 		render_resolution_t mode = {
@@ -652,7 +653,8 @@ _rb_gl4_enumerate_modes(render_backend_t* backend, unsigned int adapter) {
 			COLORSPACE_LINEAR,
 			60
 		};
-		array_push(modes, mode);
+		if (capacity)
+			store[count++] = mode;
 	}
 
 exit:
@@ -661,18 +663,20 @@ exit:
 
 #else
 	FOUNDATION_UNUSED(backend);
+	FOUNDATION_UNUSED(adapter);
 	render_resolution_t mode = {
 		0,
 		800,
 		600,
 		PIXELFORMAT_R8G8B8X8,
-			COLORSPACE_LINEAR,
+		COLORSPACE_LINEAR,
 		60
 	};
-	array_push(modes, mode);
+	if (capacity)
+		store[count++] = mode;
 #endif
 
-	return modes;
+	return count;
 }
 
 static void*
@@ -1155,8 +1159,8 @@ _rb_gl4_flip(render_backend_t* backend) {
 static render_backend_vtable_t _render_backend_vtable_gl4 = {
 	.construct = _rb_gl4_construct,
 	.destruct  = _rb_gl4_destruct,
-	.enumerate_adapters = _rb_gl4_enumerate_adapters,
-	.enumerate_modes = _rb_gl4_enumerate_modes,
+	.enumerate_adapters = _rb_gl_enumerate_adapters,
+	.enumerate_modes = _rb_gl_enumerate_modes,
 	.set_drawable = _rb_gl4_set_drawable,
 	.enable_thread = _rb_gl4_enable_thread,
 	.disable_thread = _rb_gl4_disable_thread,

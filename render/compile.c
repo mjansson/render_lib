@@ -251,7 +251,7 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 #endif
 
 		drawable = render_drawable_allocate();
-		render_drawable_set_window(drawable, window);
+		render_drawable_set_window(drawable, window, 0);
 
 		render_backend_set_format(backend, PIXELFORMAT_R8G8B8X8, COLORSPACE_LINEAR);
 		render_backend_set_drawable(backend, drawable);
@@ -802,7 +802,7 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 #endif
 
 		drawable = render_drawable_allocate();
-		render_drawable_set_window(drawable, window);
+		render_drawable_set_window(drawable, window, 0);
 
 		render_backend_set_format(backend, PIXELFORMAT_R8G8B8X8, COLORSPACE_LINEAR);
 		render_backend_set_drawable(backend, drawable);

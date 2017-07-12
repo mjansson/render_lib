@@ -61,7 +61,7 @@ test_render_initialize(void) {
 	memset(&window_config, 0, sizeof(window_config));
 	if (window_module_initialize(window_config))
 		return -1;
-	
+
 	network_config_t network_config;
 	memset(&network_config, 0, sizeof(network_config));
 	if (network_module_initialize(network_config))
@@ -144,7 +144,7 @@ DECLARE_TEST(render, initialize) {
 static void*
 _test_render_api(render_api_t api) {
 	render_backend_t* backend = 0;
-	render_resolution_t* resolutions = 0;
+	render_resolution_t resolutions[32];
 	render_drawable_t* drawable = 0;
 	object_t framebuffer = 0;
 
@@ -169,7 +169,8 @@ _test_render_api(render_api_t api) {
 
 	EXPECT_EQ(render_backend_api(backend), api);
 
-	resolutions = render_backend_enumerate_modes(backend, WINDOW_ADAPTER_DEFAULT);
+	render_backend_enumerate_modes(backend, WINDOW_ADAPTER_DEFAULT, resolutions,
+	                               sizeof(resolutions) / sizeof(resolutions[0]));
 	drawable = render_drawable_allocate();
 
 	EXPECT_NE(backend, 0);
@@ -178,7 +179,7 @@ _test_render_api(render_api_t api) {
 	log_infof(HASH_TEST, STRING_CONST("Resolution: %ux%u@%uHz"), resolutions[0].width,
 	          resolutions[0].height, resolutions[0].refresh);
 
-	render_drawable_set_window(drawable, window);
+	render_drawable_set_window(drawable, window, 0);
 
 	log_infof(HASH_TEST, STRING_CONST("Drawable  : %ux%u"), render_drawable_width(drawable),
 	          render_drawable_height(drawable));
@@ -201,8 +202,6 @@ ignore_test:
 
 	render_backend_deallocate(backend);
 	render_drawable_deallocate(drawable);
-
-	array_deallocate(resolutions);
 
 	window_deallocate(window);
 	window = 0;
@@ -233,10 +232,9 @@ static void* _test_render_clear(render_api_t api) {
 	if (!backend)
 		goto ignore_test;
 
-	//render_resolution_t* resolutions = render_backend_enumerate_modes( backend, WINDOW_ADAPTER_DEFAULT );
 	drawable = render_drawable_allocate();
 
-	render_drawable_set_window(drawable, window);
+	render_drawable_set_window(drawable, window, 0);
 
 	render_backend_set_format(backend, PIXELFORMAT_R8G8B8X8, COLORSPACE_LINEAR);
 	render_backend_set_drawable(backend, drawable);
@@ -344,10 +342,9 @@ static void* _test_render_box(render_api_t api) {
 	if (!backend)
 		goto ignore_test;
 
-	//render_resolution_t* resolutions = render_backend_enumerate_modes( backend, WINDOW_ADAPTER_DEFAULT );
 	drawable = render_drawable_allocate();
 
-	render_drawable_set_window(drawable, window);
+	render_drawable_set_window(drawable, window, 0);
 
 	render_backend_set_format(backend, PIXELFORMAT_R8G8B8X8, COLORSPACE_LINEAR);
 	render_backend_set_drawable(backend, drawable);

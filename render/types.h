@@ -28,10 +28,6 @@
 
 #include <render/build.h>
 
-#if FOUNDATION_COMPILER_GCC
-#  pragma GCC diagnostic ignored "-Wpedantic"
-#endif
-
 typedef enum render_api_t {
 	RENDERAPI_UNKNOWN = 0,
 	RENDERAPI_DEFAULT,
@@ -167,7 +163,7 @@ typedef enum render_parameter_type_t {
 } render_parameter_type_t;
 
 typedef enum render_texture_type_t {
-	RENDERTEXTURE_1D,
+	RENDERTEXTURE_1D = 0,
 	RENDERTEXTURE_2D,
 	RENDERTEXTURE_3D,
 	RENDERTEXTURE_CUBE
@@ -278,8 +274,8 @@ typedef struct render_config_t render_config_t;
 
 typedef bool (* render_backend_construct_fn)(render_backend_t*);
 typedef void (* render_backend_destruct_fn)(render_backend_t*);
-typedef unsigned int* (* render_backend_enumerate_adapters_fn)(render_backend_t*);
-typedef render_resolution_t* (* render_backend_enumerate_modes_fn)(render_backend_t*, unsigned int);
+typedef size_t (* render_backend_enumerate_adapters_fn)(render_backend_t*, unsigned int*, size_t);
+typedef size_t (* render_backend_enumerate_modes_fn)(render_backend_t*, unsigned int, render_resolution_t*, size_t);
 typedef void (* render_backend_enable_thread_fn)(render_backend_t*);
 typedef void (* render_backend_disable_thread_fn)(render_backend_t*);
 typedef bool (* render_backend_set_drawable_fn)(render_backend_t*, render_drawable_t*);

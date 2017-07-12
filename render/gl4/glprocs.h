@@ -141,3 +141,10 @@ _rb_gl_destroy_context(render_drawable_t* drawable, void* context);
 
 RENDER_EXTERN const char*
 _rb_gl_error_message(GLenum err);
+
+RENDER_EXTERN size_t
+_rb_gl_enumerate_adapters(render_backend_t* backend, unsigned int* store, size_t capacity);
+
+RENDER_EXTERN size_t
+_rb_gl_enumerate_modes(render_backend_t* backend, unsigned int adapter,
+                       render_resolution_t* store, size_t capacity);

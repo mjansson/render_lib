@@ -236,16 +236,23 @@ _rb_gles2_destruct(render_backend_t* backend) {
 	log_debug(HASH_RENDER, STRING_CONST("Destructed GLES2 render backend"));
 }
 
-static unsigned int*
-_rb_gles2_enumerate_adapters(render_backend_t* backend) {
-	unsigned int* adapters = 0;
-	array_push(adapters, WINDOW_ADAPTER_DEFAULT);
-	return adapters;
+
+static size_t
+_rb_gles2_enumerate_adapters(render_backend_t* backend, unsigned int* store, size_t capacity) {
+	FOUNDATION_UNUSED(backend);
+	if (capacity)
+		store[0] = (unsigned int)WINDOW_ADAPTER_DEFAULT;
+	return 1;
 }
 
-static render_resolution_t*
-_rb_gles2_enumerate_modes(render_backend_t* backend, unsigned int adapter) {
-	render_resolution_t* modes = 0;
+static size_t
+_rb_gles2_enumerate_modes(render_backend_t* backend, unsigned int adapter,
+                         render_resolution_t* store, size_t capacity) {
+	FOUNDATION_UNUSED(backend);
+	FOUNDATION_UNUSED(adapter);
+	if (!capacity)
+		return 1;
+
 #if FOUNDATION_PLATFORM_IOS
 	render_resolution_t mode = {
 		0,
@@ -258,8 +265,8 @@ _rb_gles2_enumerate_modes(render_backend_t* backend, unsigned int adapter) {
 #else
 	render_resolution_t mode = { 0, 800, 600, PIXELFORMAT_R8G8B8X8, COLORSPACE_LINEAR, 60 };
 #endif
-	array_push(modes, mode);
-	return modes;
+	store[0] = mode;
+	return 1;
 }
 
 static void

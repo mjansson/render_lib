@@ -163,7 +163,7 @@ render_backend_allocate(render_api_t api, bool allow_fallback) {
 			log_warnf(HASH_RENDER, WARNING_SUSPICIOUS,
 			          STRING_CONST("Render API not yet implemented (%u)"), api);
 			break;
-		
+
 		case RENDERAPI_NUM:
 		case RENDERAPI_DEFAULT:
 		case RENDERAPI_OPENGL:
@@ -226,14 +226,15 @@ render_backend_api(render_backend_t* backend) {
 	return backend ? backend->api : RENDERAPI_UNKNOWN;
 }
 
-unsigned int*
-render_backend_enumerate_adapters(render_backend_t* backend) {
-	return backend->vtable.enumerate_adapters(backend);
+size_t
+render_backend_enumerate_adapters(render_backend_t* backend, unsigned int* store, size_t capacity) {
+	return backend->vtable.enumerate_adapters(backend, store, capacity);
 }
 
-render_resolution_t*
-render_backend_enumerate_modes(render_backend_t* backend, unsigned int adapter) {
-	return backend->vtable.enumerate_modes(backend, adapter);
+size_t
+render_backend_enumerate_modes(render_backend_t* backend, unsigned int adapter,
+                               render_resolution_t* store, size_t capacity) {
+	return backend->vtable.enumerate_modes(backend, adapter, store, capacity);
 }
 
 void

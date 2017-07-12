@@ -30,13 +30,8 @@ render_drawable_allocate(void);
 RENDER_API void
 render_drawable_deallocate(render_drawable_t* drawable);
 
-#if FOUNDATION_PLATFORM_IOS
 RENDER_API void
-render_drawable_set_window(render_drawable_t* drawable, window_t* window, int tag);
-#else
-RENDER_API void
-render_drawable_set_window(render_drawable_t* drawable, window_t* window);
-#endif
+render_drawable_set_window(render_drawable_t* drawable, window_t* window, unsigned int tag);
 
 RENDER_API void
 render_drawable_set_offscreen(render_drawable_t* drawable, object_t buffer);

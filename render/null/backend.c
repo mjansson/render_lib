@@ -35,22 +35,24 @@ _rb_null_destruct(render_backend_t* backend) {
 	log_debug(HASH_RENDER, STRING_CONST("Destructed NULL render backend"));
 }
 
-static unsigned int*
-_rb_null_enumerate_adapters(render_backend_t* backend) {
-	unsigned int* adapters = 0;
+static size_t
+_rb_null_enumerate_adapters(render_backend_t* backend, unsigned int* store, size_t capacity) {
 	FOUNDATION_UNUSED(backend);
-	array_push(adapters, (unsigned int)WINDOW_ADAPTER_DEFAULT);
-	return adapters;
+	if (capacity)
+		store[0] = (unsigned int)WINDOW_ADAPTER_DEFAULT;
+	return 1;
 }
 
-static render_resolution_t*
-_rb_null_enumerate_modes(render_backend_t* backend, unsigned int adapter) {
-	render_resolution_t* modes = 0;
-	render_resolution_t mode = { 0, 800, 600, PIXELFORMAT_R8G8B8X8, COLORSPACE_LINEAR, 60 };
+static size_t
+_rb_null_enumerate_modes(render_backend_t* backend, unsigned int adapter,
+                         render_resolution_t* store, size_t capacity) {
 	FOUNDATION_UNUSED(backend);
 	FOUNDATION_UNUSED(adapter);
-	array_push(modes, mode);
-	return modes;
+	if (capacity) {
+		render_resolution_t mode = { 0, 800, 600, PIXELFORMAT_R8G8B8X8, COLORSPACE_LINEAR, 60 };
+		store[0] = mode;
+	}
+	return 1;
 }
 
 static bool

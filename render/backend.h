@@ -33,11 +33,12 @@ render_backend_deallocate(render_backend_t* backend);
 RENDER_API render_api_t
 render_backend_api(render_backend_t* backend);
 
-RENDER_API unsigned int*
-render_backend_enumerate_adapters(render_backend_t* backend);
+RENDER_API size_t
+render_backend_enumerate_adapters(render_backend_t* backend, unsigned int* store, size_t capacity);
 
-RENDER_API render_resolution_t*
-render_backend_enumerate_modes(render_backend_t* backend, unsigned int adapter);
+RENDER_API size_t
+render_backend_enumerate_modes(render_backend_t* backend, unsigned int adapter,
+                               render_resolution_t* store, size_t capacity);
 
 RENDER_API void
 render_backend_set_format(render_backend_t* backend, const pixelformat_t format,
@@ -98,7 +99,8 @@ RENDER_API render_program_t*
 render_backend_program_resolve(render_backend_t* backend, object_t program);
 
 RENDER_API object_t
-render_backend_program_store(render_backend_t* backend, const uuid_t uuid, render_program_t* program);
+render_backend_program_store(render_backend_t* backend, const uuid_t uuid,
+                             render_program_t* program);
 
 RENDER_API void
 render_backend_program_release(render_backend_t* backend, object_t program);

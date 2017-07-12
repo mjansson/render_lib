@@ -194,11 +194,13 @@ _rb_gl2_enable_thread(render_backend_t* backend) {
 	}
 	if (!wglMakeCurrent((HDC)backend->drawable->hdc, (HGLRC)thread_context)) {
 		string_const_t errmsg = system_error_message(0);
-		log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Unable to enable thread for GL2 rendering: %.*s"),
+		log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
+		           STRING_CONST("Unable to enable thread for GL2 rendering: %.*s"),
 		           STRING_FORMAT(errmsg));
 	}
 #elif FOUNDATION_PLATFORM_LINUX
-	glXMakeCurrent(backend->drawable->display, (GLXDrawable)backend->drawable->drawable, backend_gl2->context);
+	glXMakeCurrent(backend->drawable->display, (GLXDrawable)backend->drawable->drawable,
+	               backend_gl2->context);
 	_rb_gl_check_error("Unable to enable thread for rendering");
 #elif FOUNDATION_PLATFORM_MACOS
 	_rb_gl_make_agl_context_current(backend_gl2->context);
@@ -220,134 +222,6 @@ _rb_gl2_disable_thread(render_backend_t* backend) {
 #else
 	FOUNDATION_UNUSED(backend);
 #endif
-}
-
-static unsigned int*
-_rb_gl2_enumerate_adapters(render_backend_t* backend) {
-	FOUNDATION_UNUSED(backend);
-	unsigned int* adapters = 0;
-	array_push(adapters, (unsigned int)WINDOW_ADAPTER_DEFAULT);
-	return adapters;
-}
-
-static render_resolution_t*
-_rb_gl2_enumerate_modes(render_backend_t* backend, unsigned int adapter) {
-	FOUNDATION_UNUSED(backend);
-	render_resolution_t* modes = 0;
-
-#if FOUNDATION_PLATFORM_LINUX
-
-	FOUNDATION_ASSERT_MSG(adapter == WINDOW_ADAPTER_DEFAULT,
-	                      "render_enumerate_modes not implemented when adapter is specified");
-
-	Display* display = XOpenDisplay(0);
-	if (!display) {
-		log_error(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
-		          STRING_CONST("Unable to enumerate modes, unable to open display"));
-		goto exit;
-	}
-
-	int depths[] = { 15, 16, 24, 32 };
-	for (int i = 0; i < 4; ++i) {
-		int num = 0;
-		XVisualInfo info;
-		memset(&info, 0, sizeof(XVisualInfo));
-		info.depth = depths[i];
-
-		XVisualInfo* visual = XGetVisualInfo(display, VisualDepthMask, &info, &num);
-		for (int v = 0; v < num; ++v) {
-			XF86VidModeModeInfo** xmodes = 0;
-			int nummodes = 0;
-
-			int depth = 0, stencil = 0, color = 0;
-			glXGetConfig(display, &visual[v], GLX_BUFFER_SIZE,  &color);
-			glXGetConfig(display, &visual[v], GLX_DEPTH_SIZE,   &depth);
-			glXGetConfig(display, &visual[v], GLX_STENCIL_SIZE, &stencil);
-
-			if ((color < 24) || (depth < 15))
-				continue;
-
-			XF86VidModeGetAllModeLines(display, visual[v].screen, &nummodes, &xmodes);
-			/*if( nummodes )
-			qsort( xmodes, nummodes, sizeof( XF86VidModeModeInfo* ), Adapter::compareModes );*/
-
-			for (int m = 0; m < nummodes; ++m) {
-				if ((xmodes[m]->hdisplay < 600) || (xmodes[m]->vdisplay < 400))
-					continue;
-
-				int refresh = ((int)(0.5f + (1000.0f * xmodes[m]->dotclock) / (float)(
-				                         xmodes[m]->htotal * xmodes[m]->vtotal)));
-
-				if (XF86VidModeValidateModeLine(display, visual[v].screen,
-				                                xmodes[m]) == 255)    // 255 = MODE_BAD according to XFree sources...
-					continue;
-
-				pixelformat_t format = PIXELFORMAT_R8G8B8A8;
-				if (color == 24)
-					format = PIXELFORMAT_R8G8B8;
-
-				render_resolution_t mode = {
-					0,
-					xmodes[m]->hdisplay,
-					xmodes[m]->vdisplay,
-					format,
-					COLORSPACE_LINEAR,
-					(unsigned int)refresh
-				};
-
-				bool found = false;
-				for (size_t c = 0, size = array_size(modes); c < size; ++c) {
-					if (!memcmp(modes + c, &mode, sizeof(render_resolution_t))) {
-						found = true;
-						break;
-					}
-				}
-				if (!found)
-					array_push(modes, mode);
-			}
-
-			XFree(xmodes);
-		}
-
-		XFree(visual);
-	}
-
-	//Sort and index modes
-	for (size_t c = 0, size = array_size(modes); c < size; ++c)
-		modes[c].id = (unsigned int)c;
-
-	if (!array_size(modes)) {
-		log_warnf(HASH_RENDER, WARNING_SUSPICIOUS,
-		          STRING_CONST("Unable to enumerate resolutions for adapter %d, adding default fallback"), adapter);
-		render_resolution_t mode = {
-			0,
-			800,
-			600,
-			PIXELFORMAT_R8G8B8X8,
-			COLORSPACE_LINEAR,
-			60
-		};
-		array_push(modes, mode);
-	}
-
-exit:
-
-	XCloseDisplay(display);
-
-#else
-	FOUNDATION_UNUSED(adapter);
-	render_resolution_t mode = {
-		0,
-		800,
-		600,
-		PIXELFORMAT_R8G8B8X8,
-			COLORSPACE_LINEAR,
-		60
-	};
-	array_push(modes, mode);
-#endif
-
-	return modes;
 }
 
 static void*
@@ -416,14 +290,15 @@ _rb_gl2_upload_shader(render_backend_t* backend, render_shader_t* shader, const 
 	const GLchar* source = (const GLchar*)buffer;
 	GLint source_size = (GLint)size;
 	GLint compiled = 0;
-	
+
 	switch (shader->shadertype) {
 	case SHADER_PIXEL:
 	case SHADER_VERTEX:
 		handle = glCreateShader(is_pixel_shader ? GL_FRAGMENT_SHADER_ARB : GL_VERTEX_SHADER_ARB);
 		if (!handle) {
 			if (!_rb_gl_check_error("Unable to compile shader: Error creating shader"))
-				log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Unable to compile shader: Error creating shader (no error)"));
+				log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL,
+				           STRING_CONST("Unable to compile shader: Error creating shader (no error)"));
 			break;
 		}
 
@@ -438,7 +313,8 @@ _rb_gl2_upload_shader(render_backend_t* backend, render_shader_t* shader, const 
 			GLint log_length = 0;
 			glGetShaderiv(handle, GL_COMPILE_STATUS, &compiled);
 			glGetShaderInfoLog(handle, log_capacity, &log_length, log_buffer);
-			log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Unable to compile shader: %.*s (handle %u)"),
+			log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL,
+			           STRING_CONST("Unable to compile shader: %.*s (handle %u)"),
 			           (int)log_length, log_buffer, (unsigned int)handle);
 			memory_deallocate(log_buffer);
 #endif
@@ -477,7 +353,8 @@ _rb_gl2_check_program_link(GLuint handle) {
 		log = memory_allocate(HASH_RENDER, (size_t)buffer_size + 1, 0, MEMORY_TEMPORARY);
 		glGetProgramInfoLog(handle, buffer_size, &log_length, log);
 
-		log_errorf(ERRORLEVEL_ERROR, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Unable to compile program: %.*s"),
+		log_errorf(ERRORLEVEL_ERROR, ERROR_SYSTEM_CALL_FAIL,
+		           STRING_CONST("Unable to compile program: %.*s"),
 		           (int)log_length, log);
 		memory_deallocate(log);
 
@@ -858,9 +735,9 @@ _rb_gl2_flip(render_backend_t* backend) {
 
 static render_backend_vtable_t _render_backend_vtable_gl2 = {
 	.construct = _rb_gl2_construct,
-	.destruct  = _rb_gl2_destruct,
-	.enumerate_adapters = _rb_gl2_enumerate_adapters,
-	.enumerate_modes = _rb_gl2_enumerate_modes,
+	.destruct = _rb_gl2_destruct,
+	.enumerate_adapters = _rb_gl_enumerate_adapters,
+	.enumerate_modes = _rb_gl_enumerate_modes,
 	.set_drawable = _rb_gl2_set_drawable,
 	.enable_thread = _rb_gl2_enable_thread,
 	.disable_thread = _rb_gl2_disable_thread,
