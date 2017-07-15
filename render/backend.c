@@ -189,8 +189,10 @@ render_backend_allocate(render_api_t api, bool allow_fallback) {
 	backend->framebuffer = render_target_create_framebuffer(backend);
 	backend->framecount = 1;
 
-	backend->shadertable = hashtable64_allocate(_render_config.shader_max);
-	backend->programtable = hashtable64_allocate(_render_config.program_max);
+	uuidmap_initialize((uuidmap_t*)&backend->shadertable,
+	                   sizeof(backend->shadertable.bucket) / sizeof(backend->shadertable.bucket[0]), 0);
+	uuidmap_initialize((uuidmap_t*)&backend->programtable,
+	                   sizeof(backend->programtable.bucket) / sizeof(backend->programtable.bucket[0]), 0);
 
 	backend->shadermap = objectmap_allocate(_render_config.shader_max);
 	backend->programmap = objectmap_allocate(_render_config.program_max);
@@ -209,8 +211,8 @@ render_backend_deallocate(render_backend_t* backend) {
 
 	backend->vtable.destruct(backend);
 
-	hashtable64_deallocate(backend->shadertable);
-	hashtable64_deallocate(backend->programtable);
+	uuidmap_finalize((uuidmap_t*)&backend->shadertable);
+	uuidmap_finalize((uuidmap_t*)&backend->programtable);
 
 	objectmap_deallocate(backend->shadermap);
 	objectmap_deallocate(backend->programmap);
@@ -333,13 +335,15 @@ render_backend_set_resource_platform(render_backend_t* backend, uint64_t platfor
 
 object_t
 render_backend_shader_ref(render_backend_t* backend, const uuid_t uuid) {
-	object_t obj = (object_t)hashtable64_get(backend->shadertable, resource_uuid_hash(uuid));
+	void* rawval = uuidmap_lookup((uuidmap_t*)&backend->shadertable, uuid);
+	object_t obj = (object_t)rawval;
 	return objectmap_lookup_ref(backend->shadermap, obj) ? obj : 0;
 }
 
 object_t
 render_backend_program_ref(render_backend_t* backend, const uuid_t uuid) {
-	object_t obj = (object_t)hashtable64_get(backend->programtable, resource_uuid_hash(uuid));
+	void* rawval = uuidmap_lookup((uuidmap_t*)&backend->programtable, uuid);
+	object_t obj = (object_t)rawval;
 	return objectmap_lookup_ref(backend->programmap, obj) ? obj : 0;
 }
 
@@ -352,7 +356,7 @@ render_backend_shader_bind(render_backend_t* backend, const uuid_t uuid,
 		shader->id = obj;
 		shader->flags = 0;
 		objectmap_set(backend->shadermap, obj, shader);
-		hashtable64_set(backend->shadertable, resource_uuid_hash(uuid), obj);
+		uuidmap_insert((uuidmap_t*)&backend->shadertable, uuid, (void*)(uintptr_t)obj);
 	}
 	return obj;
 }
@@ -366,7 +370,7 @@ render_backend_program_bind(render_backend_t* backend, const uuid_t uuid,
 		program->id = obj;
 		program->flags = 0;
 		objectmap_set(backend->programmap, obj, program);
-		hashtable64_set(backend->programtable, resource_uuid_hash(uuid), obj);
+		uuidmap_insert((uuidmap_t*)&backend->programtable, uuid, (void*)(uintptr_t)obj);
 	}
 	return obj;
 }

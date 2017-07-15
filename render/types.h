@@ -334,8 +334,8 @@ struct render_backend_vtable_t {
 	object_t                 framebuffer; \
 	uint64_t                 framecount; \
 	uint64_t                 platform; \
-	hashtable64_t*           shadertable; \
-	hashtable64_t*           programtable; \
+	uuidmap_fixed_t          shadertable; \
+	uuidmap_fixed_t          programtable; \
 	objectmap_t*             shadermap; \
 	objectmap_t*             programmap
 
