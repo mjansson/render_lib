@@ -92,14 +92,14 @@ typedef enum render_buffer_uploadpolicy_t {
 } render_buffer_uploadpolicy_t;
 
 typedef enum render_buffer_flag_t {
-	RENDERBUFFER_DIRTY            = 0x00000001,
-	RENDERBUFFER_LOST             = 0x00000002,
+	RENDERBUFFER_DIRTY            = 0x01,
+	RENDERBUFFER_LOST             = 0x02,
 
-	RENDERBUFFER_LOCK_READ        = 0x00010000,
-	RENDERBUFFER_LOCK_WRITE       = 0x00020000,
-	RENDERBUFFER_LOCK_NOUPLOAD    = 0x00040000,
-	RENDERBUFFER_LOCK_FORCEUPLOAD = 0x00080000,
-	RENDERBUFFER_LOCK_BITS        = 0x000F0000
+	RENDERBUFFER_LOCK_READ        = 0x10,
+	RENDERBUFFER_LOCK_WRITE       = 0x20,
+	RENDERBUFFER_LOCK_NOUPLOAD    = 0x40,
+	RENDERBUFFER_LOCK_FORCEUPLOAD = 0x80,
+	RENDERBUFFER_LOCK_BITS        = 0xF0
 } render_buffer_flag_t;
 
 typedef enum render_vertex_format_t {
@@ -382,13 +382,9 @@ struct render_drawable_t {
 #  define RENDER_32BIT_PADDING_ARR(...)
 #endif
 
-#define RENDER_DECLARE_OBJECT \
-	FOUNDATION_DECLARE_OBJECT; \
-	render_backend_t* backend; \
-	RENDER_32BIT_PADDING(backendptr)
-
 struct render_target_t {
-	RENDER_DECLARE_OBJECT
+	render_backend_t* backend;
+	RENDER_32BIT_PADDING(backendptr)
 	int            width;
 	int            height;
 	pixelformat_t  pixelformat;
@@ -485,11 +481,12 @@ struct render_parameter_t {
 };
 
 #define RENDER_DECLARE_BUFFER \
-	RENDER_DECLARE_OBJECT \
+	render_backend_t* backend; \
+	RENDER_32BIT_PADDING(backendptr) \
 	uint8_t     usage; \
 	uint8_t     buffertype; \
 	uint8_t     policy; \
-	uint8_t     __unused_buffer_0; \
+	uint8_t     flags; \
 	uint32_t    locks; \
 	size_t      allocated; \
 	size_t      used; \
@@ -501,7 +498,8 @@ struct render_parameter_t {
 	semaphore_t lock
 
 #define RENDER_DECLARE_SHADER \
-	RENDER_DECLARE_OBJECT \
+	render_backend_t* backend; \
+	RENDER_32BIT_PADDING(backendptr) \
 	unsigned int shadertype:8; \
 	unsigned int unused:24; \
 	uint32_t __align_pad; \
@@ -537,11 +535,10 @@ FOUNDATION_ALIGNED_STRUCT(render_shader_t, 8) {
 };
 
 FOUNDATION_ALIGNED_STRUCT(render_program_t, 8) {
-	RENDER_DECLARE_OBJECT
-	render_shader_t* vertexshader;
-	render_shader_t* pixelshader;
-	void* _unused_shader_ptr;
-	RENDER_32BIT_PADDING_ARR(pointers, 3)
+	render_backend_t* backend; \
+	RENDER_32BIT_PADDING(backendptr) \
+	object_t vertexshader;
+	object_t pixelshader;
 	uintptr_t backend_data[4];
 	RENDER_32BIT_PADDING_ARR(data, 4)
 	render_vertex_decl_t attributes;

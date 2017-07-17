@@ -28,11 +28,11 @@ RENDER_API object_t
 render_statebuffer_create(render_backend_t* backend, render_usage_t usage,
                           const render_state_t state);
 
-RENDER_API object_t
-render_statebuffer_ref(object_t buffer);
+RENDER_API render_statebuffer_t*
+render_statebuffer_acquire(object_t buffer);
 
 RENDER_API void
-render_statebuffer_unref(object_t buffer);
+render_statebuffer_release(object_t buffer);
 
 RENDER_API void
 render_statebuffer_lock(object_t buffer, unsigned int lock);
@@ -53,7 +53,7 @@ RENDER_API void
 render_statebuffer_upload(object_t buffer);
 
 RENDER_API void
-render_statebuffer_release(object_t buffer, bool sys, bool aux);
+render_statebuffer_free(object_t buffer, bool sys, bool aux);
 
 RENDER_API void
 render_statebuffer_restore(object_t buffer);

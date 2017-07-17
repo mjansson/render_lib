@@ -108,11 +108,11 @@ RENDER_API object_t
 render_vertexbuffer_create(render_backend_t* backend, render_usage_t usage, size_t vertices,
                            const render_vertex_decl_t* decl, const void* data);
 
-RENDER_API object_t
-render_vertexbuffer_ref(object_t buffer);
+RENDER_API render_vertexbuffer_t*
+render_vertexbuffer_acquire(object_t buffer);
 
 RENDER_API void
-render_vertexbuffer_unref(object_t buffer);
+render_vertexbuffer_release(object_t buffer);
 
 RENDER_API render_usage_t
 render_vertexbuffer_usage(object_t buffer);
@@ -151,7 +151,7 @@ RENDER_API size_t
 render_vertexbuffer_element_size(object_t buffer);
 
 RENDER_API void
-render_vertexbuffer_release(object_t buffer, bool sys, bool aux);
+render_vertexbuffer_free(object_t buffer, bool sys, bool aux);
 
 RENDER_API void
 render_vertexbuffer_restore(object_t buffer);

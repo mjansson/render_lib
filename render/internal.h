@@ -54,11 +54,11 @@ render_buffer_initialize(void);
 RENDER_EXTERN void
 render_buffer_finalize(void);
 
-RENDER_EXTERN object_t
-render_buffer_ref(object_t buffer);
+RENDER_EXTERN render_buffer_t*
+render_buffer_acquire(object_t buffer);
 
 RENDER_EXTERN void
-render_buffer_unref(object_t id);
+render_buffer_release(object_t id);
 
 RENDER_EXTERN void
 render_buffer_upload(render_buffer_t* buffer);
@@ -68,3 +68,9 @@ render_buffer_lock(object_t id, unsigned int lock);
 
 RENDER_EXTERN void
 render_buffer_unlock(object_t id);
+
+render_shader_t*
+render_shader_load_raw(render_backend_t* backend, const uuid_t uuid);
+
+render_program_t*
+render_program_load_raw(render_backend_t* backend, const uuid_t uuid);

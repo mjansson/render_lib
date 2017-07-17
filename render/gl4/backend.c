@@ -830,8 +830,13 @@ _rb_gl4_upload_program(render_backend_t* backend, render_program_t* program) {
 	char name[256];
 	GLuint handle = glCreateProgram();
 
-	glAttachShader(handle, (GLuint)program->vertexshader->backend_data[0]);
-	glAttachShader(handle, (GLuint)program->pixelshader->backend_data[0]);
+	render_shader_t* vshader = render_backend_shader_raw(backend, program->vertexshader);
+	render_shader_t* pshader = render_backend_shader_raw(backend, program->pixelshader);
+	if (!vshader || !pshader)
+		return false;
+
+	glAttachShader(handle, (GLuint)vshader->backend_data[0]);
+	glAttachShader(handle, (GLuint)pshader->backend_data[0]);
 	glLinkProgram(handle);
 	if (!_rb_gl4_check_program_link(handle))
 		return false;

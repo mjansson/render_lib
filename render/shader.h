@@ -27,15 +27,14 @@
 RENDER_API render_shader_t*
 render_pixelshader_allocate(void);
 
-RENDER_API void
-render_pixelshader_initialize(render_shader_t* shader);
-
 RENDER_API render_shader_t*
 render_vertexshader_allocate(void);
 
 RENDER_API void
-render_vertexshader_initialize(render_shader_t* shader);
+render_pixelshader_initialize(render_shader_t* shader);
 
+RENDER_API void
+render_vertexshader_initialize(render_shader_t* shader);
 
 RENDER_API void
 render_shader_finalize(render_shader_t* shader);
@@ -49,11 +48,8 @@ render_shader_reload(render_shader_t* shader, const uuid_t uuid);
 RENDER_API bool
 render_shader_reload(render_shader_t* shader, const uuid_t uuid);
 
-RENDER_API object_t
-render_shader_load(render_backend_t* backend, const uuid_t uuid);
 
-
-#define RENDER_SHADER_RESOURCE_VERSION 2
+#define RENDER_SHADER_RESOURCE_VERSION 3
 
 #if RESOURCE_ENABLE_LOCAL_SOURCE
 

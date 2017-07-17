@@ -21,9 +21,8 @@
 #include <render/internal.h>
 
 static void
-_render_target_deallocate(object_t id, void* ptr) {
+_render_target_deallocate(void* ptr) {
 	memory_deallocate(ptr);
-	objectmap_free(_render_map_target, id);
 }
 
 int
@@ -56,9 +55,7 @@ render_target_create(render_backend_t* backend) {
 
 	target = memory_allocate(HASH_RENDER, sizeof(render_target_t), 0,
 	                         MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
-	target->id = id;
 	target->backend = backend;
-	atomic_store32(&target->ref, 1, memory_order_release);
 
 	objectmap_set(_render_map_target, id, target);
 
@@ -70,14 +67,14 @@ render_target_create_framebuffer(render_backend_t* backend) {
 	return render_target_create(backend);
 }
 
-object_t
-render_target_ref(object_t id) {
-	return objectmap_lookup_ref(_render_map_target, id) ? id : 0;
+render_target_t*
+render_target_acquire(object_t id) {
+	return objectmap_acquire(_render_map_target, id);
 }
 
 void
-render_target_unref(object_t id) {
-	objectmap_lookup_unref(_render_map_target, id, _render_target_deallocate);
+render_target_release(object_t id) {
+	objectmap_release(_render_map_target, id, _render_target_deallocate);
 }
 
 render_target_t*

@@ -36,7 +36,6 @@ render_vertexbuffer_create(render_backend_t* backend, render_usage_t usage, size
 
 	render_vertexbuffer_t* buffer = memory_allocate(HASH_RENDER, sizeof(render_vertexbuffer_t), 0,
 	                                                MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
-	buffer->id         = id;
 	buffer->backend    = backend;
 	buffer->usage      = usage;
 	buffer->buffertype = RENDERBUFFER_VERTEX;
@@ -44,7 +43,6 @@ render_vertexbuffer_create(render_backend_t* backend, render_usage_t usage, size
 	buffer->size       = decl->size;
 	semaphore_initialize(&buffer->lock, 1);
 	memcpy(&buffer->decl, decl, sizeof(render_vertex_decl_t));
-	atomic_store32(&buffer->ref, 1, memory_order_release);
 	objectmap_set(_render_map_buffer, id, buffer);
 
 	if (vertices) {
@@ -62,14 +60,14 @@ render_vertexbuffer_create(render_backend_t* backend, render_usage_t usage, size
 	return id;
 }
 
-object_t
-render_vertexbuffer_ref(object_t id) {
-	return render_buffer_ref(id);
+render_vertexbuffer_t*
+render_vertexbuffer_acquire(object_t id) {
+	return (render_vertexbuffer_t*)render_buffer_acquire(id);
 }
 
 void
-render_vertexbuffer_unref(object_t id) {
-	render_buffer_unref(id);
+render_vertexbuffer_release(object_t id) {
+	render_buffer_release(id);
 }
 
 render_usage_t
@@ -147,7 +145,7 @@ render_vertexbuffer_element_size(object_t id) {
 }
 
 void
-render_vertexbuffer_release(object_t id, bool sys, bool aux) {
+render_vertexbuffer_free(object_t id, bool sys, bool aux) {
 	render_vertexbuffer_t* buffer = GET_BUFFER(id);
 	if (buffer)
 		buffer->backend->vtable.deallocate_buffer(buffer->backend, (render_buffer_t*)buffer, sys, aux);

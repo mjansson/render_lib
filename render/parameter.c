@@ -39,7 +39,6 @@ render_parameterbuffer_create(render_backend_t* backend, render_usage_t usage,
 	render_parameterbuffer_t* buffer = memory_allocate(HASH_RENDER,
 	                                                   sizeof(render_parameterbuffer_t) + paramsize, 0,
 	                                                   MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
-	buffer->id         = id;
 	buffer->backend    = backend;
 	buffer->usage      = usage;
 	buffer->buffertype = RENDERBUFFER_PARAMETER;
@@ -48,7 +47,6 @@ render_parameterbuffer_create(render_backend_t* backend, render_usage_t usage,
 	buffer->num_parameters = (unsigned int)num_parameters;
 	semaphore_initialize(&buffer->lock, 1);
 	memcpy(&buffer->parameters, parameters, paramsize);
-	atomic_store32(&buffer->ref, 1, memory_order_release);
 	objectmap_set(_render_map_buffer, id, buffer);
 
 	buffer->allocated = 1;
@@ -64,14 +62,14 @@ render_parameterbuffer_create(render_backend_t* backend, render_usage_t usage,
 	return id;
 }
 
-object_t
-render_parameterbuffer_ref(object_t id) {
-	return render_buffer_ref(id);
+render_parameterbuffer_t*
+render_parameterbuffer_acquire(object_t id) {
+	return (render_parameterbuffer_t*)render_buffer_acquire(id);
 }
 
 void
-render_parameterbuffer_unref(object_t id) {
-	render_buffer_unref(id);
+render_parameterbuffer_release(object_t id) {
+	render_buffer_release(id);
 }
 
 void
@@ -130,7 +128,7 @@ render_parameterbuffer_upload(object_t id) {
 }
 
 void
-render_parameterbuffer_release(object_t id, bool sys, bool aux) {
+render_parameterbuffer_free(object_t id, bool sys, bool aux) {
 	render_parameterbuffer_t* buffer = GET_BUFFER(id);
 	if (buffer)
 		buffer->backend->vtable.deallocate_buffer(buffer->backend, (render_buffer_t*)buffer, sys, aux);

@@ -29,11 +29,11 @@ render_parameterbuffer_create(render_backend_t* backend, render_usage_t usage,
                               const render_parameter_t* parameters, size_t num_parameters,
                               const void* data, size_t data_size);
 
-RENDER_API object_t
-render_parameterbuffer_ref(object_t buffer);
+RENDER_API render_parameterbuffer_t*
+render_parameterbuffer_acquire(object_t buffer);
 
 RENDER_API void
-render_parameterbuffer_unref(object_t buffer);
+render_parameterbuffer_release(object_t buffer);
 
 RENDER_API void
 render_parameterbuffer_link(object_t buffer, render_program_t* program);
@@ -63,7 +63,7 @@ RENDER_API void
 render_parameterbuffer_upload(object_t buffer);
 
 RENDER_API void
-render_parameterbuffer_release(object_t buffer, bool sys, bool aux);
+render_parameterbuffer_free(object_t buffer, bool sys, bool aux);
 
 RENDER_API void
 render_parameterbuffer_restore(object_t buffer);

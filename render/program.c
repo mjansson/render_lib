@@ -18,6 +18,7 @@
 #include <foundation/foundation.h>
 
 #include <render/render.h>
+#include <render/internal.h>
 
 #include <resource/stream.h>
 #include <resource/platform.h>
@@ -25,7 +26,7 @@
 
 //Size expectations for the program compiler and loader
 FOUNDATION_STATIC_ASSERT(sizeof(render_vertex_decl_t) == 72, "invalid vertex decl size");
-FOUNDATION_STATIC_ASSERT(sizeof(render_program_t) == 80 + sizeof(render_vertex_decl_t) +
+FOUNDATION_STATIC_ASSERT(sizeof(render_program_t) == 48 + sizeof(render_vertex_decl_t) +
                          (sizeof(hash_t) * VERTEXATTRIBUTE_NUMATTRIBUTES) + 8,
                          "invalid program size");
 
@@ -46,10 +47,8 @@ render_program_initialize(render_program_t* program, size_t num_parameters) {
 void
 render_program_finalize(render_program_t* program) {
 	if (program->backend) {
-		if (program->vertexshader && program->vertexshader->id)
-			render_backend_shader_unref(program->backend, program->vertexshader->id);
-		if (program->pixelshader && program->pixelshader->id)
-			render_backend_shader_unref(program->backend, program->pixelshader->id);
+		render_backend_shader_release(program->backend, program->vertexshader);
+		render_backend_shader_release(program->backend, program->pixelshader);
 		program->backend->vtable.deallocate_program(program->backend, program);
 	}
 }
@@ -61,13 +60,8 @@ render_program_deallocate(render_program_t* program) {
 	memory_deallocate(program);
 }
 
-object_t
-render_program_load(render_backend_t* backend, const uuid_t uuid) {
-	object_t programobj = render_backend_program_ref(backend, uuid);
-	if (programobj && render_backend_program_ptr(backend, programobj))
-		return programobj;
-
-#if RESOURCE_ENABLE_LOCAL_CACHE
+render_program_t*
+render_program_load_raw(render_backend_t* backend, const uuid_t uuid) {
 	const uint32_t expected_version = RENDER_PROGRAM_RESOURCE_VERSION;
 	uint64_t platform = render_backend_resource_platform(backend);
 	stream_t* stream = nullptr;
@@ -121,16 +115,16 @@ retry:
 	stream = nullptr;
 
 	shaderuuid = block;
-	vsobj = render_shader_load(backend, *shaderuuid);
-	vshader = render_backend_shader_ptr(backend, vsobj);
+	vsobj = render_backend_shader_load(backend, *shaderuuid);
+	vshader = render_backend_shader_raw(backend, vsobj);
 	if (!vshader || !(vshader->shadertype & SHADER_VERTEX)) {
 		log_warn(HASH_RENDER, WARNING_INVALID_VALUE, STRING_CONST("Got invalid vertex shader"));
 		goto finalize;
 	}
 
 	++shaderuuid;
-	psobj = render_shader_load(backend, *shaderuuid);
-	pshader = render_backend_shader_ptr(backend, psobj);
+	psobj = render_backend_shader_load(backend, *shaderuuid);
+	pshader = render_backend_shader_raw(backend, psobj);
 	if (!pshader || !(pshader->shadertype & SHADER_PIXEL)) {
 		log_warn(HASH_RENDER, WARNING_INVALID_VALUE, STRING_CONST("Got invalid pixel shader"));
 		goto finalize;
@@ -138,9 +132,8 @@ retry:
 
 	program = block;
 	program->backend = 0;
-	program->vertexshader = vshader;
-	program->pixelshader = pshader;
-	atomic_store32(&program->ref, 0, memory_order_release);
+	program->vertexshader = vsobj;
+	program->pixelshader = psobj;
 	memset(program->backend_data, 0, sizeof(program->backend_data));
 
 	success = render_backend_program_upload(backend, program);
@@ -149,21 +142,18 @@ finalize:
 	if (stream)
 		stream_deallocate(stream);
 
-	if (success) {
-		programobj = render_backend_program_bind(backend, uuid, program);
-	}
-	else {
-		render_backend_shader_unref(backend, psobj);
-		render_backend_shader_unref(backend, vsobj);
+	if (!success) {
+		render_backend_shader_release(backend, psobj);
+		render_backend_shader_release(backend, vsobj);
+		program->vertexshader = 0;
+		program->pixelshader = 0;
 		render_program_deallocate(program);
 		program = nullptr;
 	}
 
 	error_context_pop();
 
-#endif
-
-	return programobj;
+	return program;
 }
 
 bool

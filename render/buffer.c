@@ -23,13 +23,11 @@
 #define GET_BUFFER(id) objectmap_lookup(_render_map_buffer, (id))
 
 static void
-_render_buffer_deallocate(object_t id, void* ptr) {
-	FOUNDATION_UNUSED(id);
+_render_buffer_deallocate(void* ptr) {
 	render_buffer_t* buffer = ptr;
 	buffer->backend->vtable.deallocate_buffer(buffer->backend, buffer, true, true);
 	semaphore_finalize(&buffer->lock);
 	memory_deallocate(buffer);
-	objectmap_free(_render_map_buffer, id);
 }
 
 int
@@ -46,14 +44,14 @@ render_buffer_finalize(void) {
 	_render_map_buffer = 0;
 }
 
-object_t
-render_buffer_ref(object_t id) {
-	return objectmap_lookup_ref(_render_map_buffer, id) ? id : 0;
+render_buffer_t*
+render_buffer_acquire(object_t id) {
+	return objectmap_acquire(_render_map_buffer, id);
 }
 
 void
-render_buffer_unref(object_t id) {
-	objectmap_lookup_unref(_render_map_buffer, id, _render_buffer_deallocate);
+render_buffer_release(object_t id) {
+	objectmap_release(_render_map_buffer, id, _render_buffer_deallocate);
 }
 
 void
@@ -64,9 +62,9 @@ render_buffer_upload(render_buffer_t* buffer) {
 
 void
 render_buffer_lock(object_t id, unsigned int lock) {
-	if (!render_buffer_ref(id))
+	render_buffer_t* buffer = render_buffer_acquire(id);
+	if (!buffer)
 		return;
-	render_buffer_t* buffer = GET_BUFFER(id);
 	semaphore_wait(&buffer->lock);
 	{
 		buffer->locks++;
@@ -96,5 +94,5 @@ render_buffer_unlock(object_t id) {
 		}
 	}
 	semaphore_post(&buffer->lock);
-	render_buffer_unref(id);
+	render_buffer_release(id);
 }

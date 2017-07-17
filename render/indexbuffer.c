@@ -37,14 +37,12 @@ render_indexbuffer_create(render_backend_t* backend, render_usage_t usage, size_
 
 	render_indexbuffer_t* buffer = memory_allocate(HASH_RENDER, sizeof(render_indexbuffer_t), 0,
 	                                               MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
-	buffer->id         = id;
 	buffer->backend    = backend;
 	buffer->usage      = usage;
 	buffer->buffertype = RENDERBUFFER_INDEX;
 	buffer->policy     = RENDERBUFFER_UPLOAD_ONDISPATCH;
 	buffer->size       = 2;
 	semaphore_initialize(&buffer->lock, 1);
-	atomic_store32(&buffer->ref, 1, memory_order_release);
 	objectmap_set(_render_map_buffer, id, buffer);
 
 	if (indices) {
@@ -59,7 +57,7 @@ render_indexbuffer_create(render_backend_t* backend, render_usage_t usage, size_
 
 	memory_context_pop();
 
-	return buffer->id;
+	return id;
 }
 
 object_t
@@ -68,14 +66,14 @@ render_indexbuffer_load(const uuid_t uuid) {
 	return 0;
 }
 
-object_t
-render_indexbuffer_ref(object_t id) {
-	return render_buffer_ref(id);
+render_indexbuffer_t*
+render_indexbuffer_acquire(object_t id) {
+	return (render_indexbuffer_t*)render_buffer_acquire(id);
 }
 
 void
-render_indexbuffer_unref(object_t id) {
-	render_buffer_unref(id);
+render_indexbuffer_release(object_t id) {
+	render_buffer_release(id);
 }
 
 render_usage_t
@@ -148,7 +146,7 @@ render_indexbuffer_element_size(object_t id) {
 }
 
 void
-render_indexbuffer_release(object_t id, bool sys, bool aux) {
+render_indexbuffer_free(object_t id, bool sys, bool aux) {
 	render_indexbuffer_t* buffer = GET_BUFFER(id);
 	if (buffer)
 		buffer->backend->vtable.deallocate_buffer(buffer->backend, (render_buffer_t*)buffer, sys, aux);

@@ -27,11 +27,11 @@
 RENDER_API object_t
 render_target_create(render_backend_t* backend);
 
-RENDER_API object_t
-render_target_ref(object_t target);
+RENDER_API render_target_t*
+render_target_acquire(object_t target);
 
 RENDER_API void
-render_target_unref(object_t target);
+render_target_release(object_t target);
 
 RENDER_API int
 render_target_width(object_t target);

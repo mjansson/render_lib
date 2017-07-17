@@ -78,16 +78,59 @@ render_backend_resource_platform(render_backend_t* backend);
 RENDER_API void
 render_backend_set_resource_platform(render_backend_t* backend, uint64_t platform);
 
-
+/*! Load the shader identified by the given UUID and return an
+object handle to the shader. The shader reference count will have
+increased by one (if the shader was previously not loaded the reference
+count will be equal to one).
+\param backend Backend
+\param uuid Shader UUID
+\return Shader object handle */
 RENDER_API object_t
-render_backend_shader_ref(render_backend_t* backend, const uuid_t uuid);
+render_backend_shader_load(render_backend_t* backend, const uuid_t uuid);
 
-RENDER_API void
-render_backend_shader_unref(render_backend_t* backend, object_t shader);
+/*! Lookup the shader identified by the given UUID and return an
+object handle to the shader. The shader reference count will have
+increased by one.
+\param backend Backend
+\param uuid Shader UUID
+\return Shader object handle */
+RENDER_API object_t
+render_backend_shader_lookup(render_backend_t* backend, const uuid_t uuid);
 
+/*! Get the raw shader pointer for the given shader object handle. Does not
+increase the reference count, the caller must hold a valid reference to
+guarantee the shader lifetime during the use of the returned pointer
+\param backend Backend
+\param shader Shader object handle
+\return Shader pointer */
 RENDER_API render_shader_t*
-render_backend_shader_ptr(render_backend_t* backend, object_t shader);
+render_backend_shader_raw(render_backend_t* backend, object_t shader);
 
+/*! Increase the shader reference count by one and retrieve the raw shader
+pointer for the given shader object handle. Returns null if the shader object
+handle was invalid.
+\param backend Backend
+\param shader Shader object handle
+\return Shader pointer */
+RENDER_API render_shader_t*
+render_backend_shader_acquire(render_backend_t* backend, object_t shader);
+
+/*! Release the shader object handle, decreasing the shader reference
+count by one and deallocating the shader if it reaches zero.
+\param backend Backend
+\param shader Shader object handle */
+RENDER_API void
+render_backend_shader_release(render_backend_t* backend, object_t shader);
+
+/*! Bind the give shader pointer to the given UUID and return a shader
+object handle for the shader. The shader reference count will have
+increased by one (if the shader was previously not loaded the reference
+count will be equal to one). If the shader was already bound to the given
+UUID the reference count will simply be increased.
+\param backend Backend
+\param uuid Shader UUID
+\param shader Shader pointer
+\return Shader object handle */
 RENDER_API object_t
 render_backend_shader_bind(render_backend_t* backend, const uuid_t uuid,
                            render_shader_t* shader);
@@ -97,17 +140,23 @@ render_backend_shader_upload(render_backend_t* backend, render_shader_t* shader,
                              const void* buffer, size_t size);
 
 RENDER_API object_t
-render_backend_program_ref(render_backend_t* backend, const uuid_t uuid);
+render_backend_program_load(render_backend_t* backend, const uuid_t uuid);
 
-RENDER_API void
-render_backend_program_unref(render_backend_t* backend, object_t program);
+RENDER_API object_t
+render_backend_program_lookup(render_backend_t* backend, const uuid_t uuid);
 
 RENDER_API render_program_t*
-render_backend_program_ptr(render_backend_t* backend, object_t program);
+render_backend_program_raw(render_backend_t* backend, object_t program);
 
-RENDER_API bool
-render_backend_program_upload(render_backend_t* backend, render_program_t* program);
+RENDER_API render_program_t*
+render_backend_program_acquire(render_backend_t* backend, object_t program);
+
+RENDER_API void
+render_backend_program_release(render_backend_t* backend, object_t program);
 
 RENDER_API object_t
 render_backend_program_bind(render_backend_t* backend, const uuid_t uuid,
                             render_program_t* program);
+
+RENDER_API bool
+render_backend_program_upload(render_backend_t* backend, render_program_t* program);

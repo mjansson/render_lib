@@ -18,12 +18,13 @@
 #include <foundation/foundation.h>
 
 #include <render/render.h>
+#include <render/internal.h>
 
 #include <resource/stream.h>
 #include <resource/platform.h>
 #include <resource/compile.h>
 
-FOUNDATION_STATIC_ASSERT(sizeof(render_shader_t) == 64, "invalid shader size");
+FOUNDATION_STATIC_ASSERT(sizeof(render_shader_t) == 48, "invalid shader size");
 
 render_shader_t*
 render_pixelshader_allocate(void) {
@@ -66,13 +67,8 @@ render_shader_deallocate(render_shader_t* shader) {
 	memory_deallocate(shader);
 }
 
-object_t
-render_shader_load(render_backend_t* backend, const uuid_t uuid) {
-	object_t shaderobj = render_backend_shader_ref(backend, uuid);
-	if (shaderobj && render_backend_shader_ptr(backend, shaderobj))
-		return shaderobj;
-
-#if RESOURCE_ENABLE_LOCAL_CACHE
+render_shader_t*
+render_shader_load_raw(render_backend_t* backend, const uuid_t uuid) {
 	uint64_t platform = render_backend_resource_platform(backend);
 	render_shader_t* shader = nullptr;
 	stream_t* stream;
@@ -137,11 +133,7 @@ retry:
 		stream = nullptr;
 	}
 
-	if (success) {
-		atomic_store32(&shader->ref, 0, memory_order_release);
-		shaderobj = render_backend_shader_bind(backend, uuid, shader);
-	}
-	else {
+	if (!success) {
 		render_shader_deallocate(shader);
 		shader = nullptr;
 
@@ -154,9 +146,7 @@ retry:
 
 	error_context_pop();
 
-#endif
-
-	return shaderobj;
+	return shader;
 }
 
 bool

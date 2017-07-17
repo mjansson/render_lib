@@ -31,11 +31,11 @@ render_indexbuffer_create(render_backend_t* backend, render_usage_t type, size_t
 RENDER_API object_t
 render_indexbuffer_load(const uuid_t uuid);
 
-RENDER_API object_t
-render_indexbuffer_ref(object_t buffer);
+RENDER_API render_indexbuffer_t*
+render_indexbuffer_acquire(object_t buffer);
 
 RENDER_API void
-render_indexbuffer_unref(object_t buffer);
+render_indexbuffer_release(object_t buffer);
 
 RENDER_API render_usage_t
 render_indexbuffer_usage(object_t buffer);
@@ -71,7 +71,7 @@ RENDER_API size_t
 render_indexbuffer_element_size(object_t buffer);
 
 RENDER_API void
-render_indexbuffer_release(object_t buffer, bool sys, bool aux);
+render_indexbuffer_free(object_t buffer, bool sys, bool aux);
 
 RENDER_API void
 render_indexbuffer_restore(object_t buffer);
