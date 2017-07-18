@@ -142,11 +142,11 @@ bool
 _rb_gles2_check_error(const char* message, size_t length) {
 	GLenum err = glGetError();
 	if (err != GL_NONE) {
-		log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("%.*s: %s", STRING_FORMAT(message),
+		log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("%.*s: %s"), STRING_FORMAT(message),
 		           _rb_gles2_error_message(err));
-		           FOUNDATION_ASSERT_FAILFORMAT("OpenGLES2 error: %.*s: %s", STRING_FORMAT(message),
-		                                        _rb_gles2_error_message(err));
-		           return true;
+		FOUNDATION_ASSERT_FAILFORMAT("OpenGLES2 error: %.*s: %s", STRING_FORMAT(message),
+		                             _rb_gles2_error_message(err));
+		return true;
 	}
 	return false;
 }
@@ -180,12 +180,12 @@ _rb_gles2_construct(render_backend_t* backend) {
 	int major = 2;
 	int minor = 0;
 	if (!eglInitialize(display, &major, &minor)) {
-		log_warn(HASH_RENDER, WARNING_SYSTEM_CALL_FAIL, STRING_CONST("Unable to initialize EGL");
-		         return false;
+		log_warn(HASH_RENDER, WARNING_SYSTEM_CALL_FAIL, STRING_CONST("Unable to initialize EGL"));
+		return false;
 	}
 	if (!eglBindAPI(EGL_OPENGL_ES_API)) {
-		log_warn(HASH_RENDER, WARNING_SYSTEM_CALL_FAIL, STRING_CONST("Unable to bind OpenGL ES API");
-		         return false;
+		log_warn(HASH_RENDER, WARNING_SYSTEM_CALL_FAIL, STRING_CONST("Unable to bind OpenGL ES API"));
+		return false;
 	}
 	log_infof(HASH_RENDER, STRING_CONST("Initialized EGL v%d.%d"), major, minor);
 
@@ -198,8 +198,8 @@ _rb_gles2_construct(render_backend_t* backend) {
 
 	backend_gles2->render_thread = thread_id();
 
-	log_debug(HASH_RENDER, STRING_CONST("Constructed GLES2 render backend");
-	          return true;
+	log_debug(HASH_RENDER, STRING_CONST("Constructed GLES2 render backend"));
+	return true;
 }
 
 static void
@@ -247,7 +247,7 @@ _rb_gles2_enumerate_adapters(render_backend_t* backend, unsigned int* store, siz
 
 static size_t
 _rb_gles2_enumerate_modes(render_backend_t* backend, unsigned int adapter,
-                         render_resolution_t* store, size_t capacity) {
+                          render_resolution_t* store, size_t capacity) {
 	FOUNDATION_UNUSED(backend);
 	FOUNDATION_UNUSED(adapter);
 	if (!capacity)
@@ -380,9 +380,9 @@ _rb_gles2_set_drawable(render_backend_t* backend, render_drawable_t* drawable) {
 	if (!eglChooseConfig(drawable->display, config_attrs, matching_configs, MAX_MATCHING_CONFIGS,
 	                     &num_matching_configs)) {
 		log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
-		           STRING_CONST("Unable to find suitable EGL config: %s (display %" PRIfixPTR ")",
-		                        eglGetErrorMessage(eglGetError()), drawable->display);
-		           return false;
+		           STRING_CONST("Unable to find suitable EGL config: %s (display %" PRIfixPTR ")"),
+		           eglGetErrorMessage(eglGetError()), drawable->display);
+		return false;
 	}
 
 	if (!num_matching_configs) {
