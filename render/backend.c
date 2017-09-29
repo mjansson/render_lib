@@ -346,7 +346,7 @@ render_backend_program_deallocate(void* program) {
 object_t
 render_backend_shader_load(render_backend_t* backend, const uuid_t uuid) {
 	void* rawval = uuidmap_lookup((uuidmap_t*)&backend->shadertable, uuid);
-	object_t obj = (object_t)rawval;
+	object_t obj = (object_t)((uintptr_t)rawval);
 	if (objectmap_acquire(backend->shadermap, obj))
 		return obj;
 	obj = 0;
@@ -360,7 +360,7 @@ render_backend_shader_load(render_backend_t* backend, const uuid_t uuid) {
 object_t
 render_backend_program_load(render_backend_t* backend, const uuid_t uuid) {
 	void* rawval = uuidmap_lookup((uuidmap_t*)&backend->programtable, uuid);
-	object_t obj = (object_t)rawval;
+	object_t obj = (object_t)((uintptr_t)rawval);
 	if (objectmap_acquire(backend->programmap, obj))
 		return obj;
 	obj = 0;
@@ -374,13 +374,13 @@ render_backend_program_load(render_backend_t* backend, const uuid_t uuid) {
 object_t
 render_backend_shader_lookup(render_backend_t* backend, const uuid_t uuid) {
 	void* rawval = uuidmap_lookup((uuidmap_t*)&backend->shadertable, uuid);
-	return (object_t)rawval;
+	return (object_t)((uintptr_t)rawval);
 }
 
 object_t
 render_backend_program_lookup(render_backend_t* backend, const uuid_t uuid) {
 	void* rawval = uuidmap_lookup((uuidmap_t*)&backend->programtable, uuid);
-	return (object_t)rawval;
+	return (object_t)((uintptr_t)rawval);
 }
 
 render_shader_t*
@@ -417,7 +417,7 @@ object_t
 render_backend_shader_bind(render_backend_t* backend, const uuid_t uuid,
                            render_shader_t* shader) {
 	void* rawval = uuidmap_lookup((uuidmap_t*)&backend->shadertable, uuid);
-	object_t obj = (object_t)rawval;
+	object_t obj = (object_t)((uintptr_t)rawval);
 	if (obj) {
 		if (objectmap_acquire(backend->shadermap, obj) == shader)
 			return obj;
@@ -436,7 +436,7 @@ object_t
 render_backend_program_bind(render_backend_t* backend, const uuid_t uuid,
                             render_program_t* program) {
 	void* rawval = uuidmap_lookup((uuidmap_t*)&backend->programtable, uuid);
-	object_t obj = (object_t)rawval;
+	object_t obj = (object_t)((uintptr_t)rawval);
 	if (obj) {
 		if (objectmap_acquire(backend->programmap, obj) == program)
 			return obj;

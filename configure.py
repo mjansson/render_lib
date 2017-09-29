@@ -32,7 +32,7 @@ if target.is_macos():
 elif target.is_ios():
   glframeworks = ['QuartzCore', 'OpenGLES']
 if target.is_windows():
-  gllibs = ['opengl32', 'gdi32']
+  gllibs = ['opengl32', 'gdi32', 'iphlpapi', 'ws2_32']
 if target.is_linux():
   gllibs = ['GL', 'Xxf86vm', 'Xext', 'X11']
 
