@@ -379,12 +379,13 @@ _rb_gl_check_context(unsigned int major, unsigned int minor) {
 
 #if FOUNDATION_PLATFORM_WINDOWS
 
-	window_t* window_check = window_create(WINDOW_ADAPTER_DEFAULT, STRING_CONST("__render_gl_check"),
-	                                       10, 10, false);
+	window_t window_check;
+	window_create(&window_check, WINDOW_ADAPTER_DEFAULT, STRING_CONST("__render_gl_check"),
+	              10, 10, false);
 	render_drawable_t* drawable = render_drawable_allocate();
-	render_drawable_set_window(drawable, window_check, 0);
+	render_drawable_set_window(drawable, &window_check, 0);
 	context = _rb_gl_create_context(drawable, major, minor, 0);
-	window_deallocate(window_check);
+	window_finalize(&window_check);
 	render_drawable_deallocate(drawable);
 	wglMakeCurrent(0, 0);
 	if (context)

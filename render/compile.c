@@ -180,7 +180,7 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 	hashmap_t* map = (hashmap_t*)&fixedmap;
 	resource_platform_t platform_decl;
 	render_backend_t* backend = 0;
-	window_t* window = 0;
+	window_t window;
 	render_drawable_t* drawable = 0;
 	hash_t resource_type_hash;
 
@@ -247,11 +247,11 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 		}
 
 #if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_LINUX
-		window = window_create(WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render compile"), 100, 100, false);
+		window_create(&window, WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render compile"), 100, 100, false);
 #endif
 
 		drawable = render_drawable_allocate();
-		render_drawable_set_window(drawable, window, 0);
+		render_drawable_set_window(drawable, &window, 0);
 
 		render_backend_set_format(backend, PIXELFORMAT_R8G8B8X8, COLORSPACE_LINEAR);
 		render_backend_set_drawable(backend, drawable);
@@ -309,7 +309,7 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 
 		render_backend_deallocate(backend);
 		render_drawable_deallocate(drawable);
-		window_deallocate(window);
+		window_finalize(&window);
 
 		if (compiled_size <= 0) {
 			result = -1;
@@ -640,7 +640,7 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 	hashmap_t* map = (hashmap_t*)&fixedmap;
 	resource_platform_t platform_decl;
 	render_backend_t* backend = 0;
-	window_t* window = 0;
+	window_t window;
 	render_drawable_t* drawable = 0;
 
 	resource_type_hash = hash(type, type_length);
@@ -798,11 +798,11 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 		}
 
 #if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_LINUX
-		window = window_create(WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render compile"), 100, 100, false);
+		window_create(&window, WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render compile"), 100, 100, false);
 #endif
 
 		drawable = render_drawable_allocate();
-		render_drawable_set_window(drawable, window, 0);
+		render_drawable_set_window(drawable, &window, 0);
 
 		render_backend_set_format(backend, PIXELFORMAT_R8G8B8X8, COLORSPACE_LINEAR);
 		render_backend_set_drawable(backend, drawable);
@@ -850,7 +850,7 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 
 		render_backend_deallocate(backend);
 		render_drawable_deallocate(drawable);
-		window_deallocate(window);
+		window_finalize(&window);
 	}
 
 	if (prev_backend)
