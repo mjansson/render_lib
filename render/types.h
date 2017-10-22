@@ -233,6 +233,7 @@ typedef enum render_colorspace_t {
 
 typedef enum render_primitive_t {
 	RENDERPRIMITIVE_TRIANGLELIST = 0,
+	RENDERPRIMITIVE_LINELIST,
 
 	RENDERPRIMITIVE_NUMTYPES
 } render_primitive_t;

@@ -32,6 +32,7 @@ render_config_t _render_config;
 bool _render_api_disabled[RENDERAPI_NUM];
 objectmap_t* _render_map_target;
 objectmap_t* _render_map_buffer;
+render_backend_t** _render_backends;
 
 int
 render_module_initialize(render_config_t config) {
@@ -77,6 +78,8 @@ render_module_finalize(void) {
 
 	render_buffer_finalize();
 	render_target_finalize();
+
+	array_deallocate(_render_backends);
 
 	_render_initialized = false;
 }

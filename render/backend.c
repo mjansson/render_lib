@@ -28,6 +28,7 @@
 #include <resource/platform.h>
 
 RENDER_EXTERN render_config_t _render_config;
+RENDER_EXTERN render_backend_t** _render_backends;
 
 FOUNDATION_DECLARE_THREAD_LOCAL(render_backend_t*, backend, nullptr)
 
@@ -72,6 +73,11 @@ render_api_fallback(render_api_t api) {
 	default:                  break;
 	}
 	return RENDERAPI_UNKNOWN;
+}
+
+render_backend_t**
+render_backends(void) {
+	return _render_backends;
 }
 
 render_backend_t*
@@ -199,6 +205,8 @@ render_backend_allocate(render_api_t api, bool allow_fallback) {
 
 	render_backend_set_resource_platform(backend, 0);
 
+	array_push(_render_backends, backend);
+
 	memory_context_pop();
 
 	return backend;
@@ -219,6 +227,13 @@ render_backend_deallocate(render_backend_t* backend) {
 
 	if (backend->framebuffer)
 		render_target_release(backend->framebuffer);
+
+	for (size_t ib = 0, bsize = array_size(_render_backends); ib < bsize; ++ib) {
+		if (_render_backends[ib] == backend) {
+			array_erase(_render_backends, ib);
+			break;
+		}
+	}
 
 	memory_deallocate(backend);
 }

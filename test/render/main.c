@@ -365,7 +365,7 @@ static void* _test_render_box(render_api_t api) {
 	render_backend_flip(backend);
 
 	//color.program : 1ab9bba8-3f2f-4649-86bb-8b8b07e99af2
-	uuid_t program_uuid = string_to_uuid(STRING_CONST("1ab9bba8-3f2f-4649-86bb-8b8b07e99af2"));
+	uuid_t program_uuid = uuid_make(0x46493f2f1ab9bba8, 0xf29ae9078b8bbb86);
 	programobj = render_backend_program_load(backend, program_uuid);
 	program = render_backend_program_raw(backend, programobj);
 	EXPECT_NE(programobj, 0);

@@ -26,7 +26,6 @@
 
 /*! Handle resource events. No other event types should be
 passed to this function.
-\param backend Render backend
 \param event Resource event */
 RENDER_API void
-render_event_handle_resource(render_backend_t* backend, const event_t* event);
+render_event_handle_resource(const event_t* event);

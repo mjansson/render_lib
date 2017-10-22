@@ -160,3 +160,6 @@ render_backend_program_bind(render_backend_t* backend, const uuid_t uuid,
 
 RENDER_API bool
 render_backend_program_upload(render_backend_t* backend, render_program_t* program);
+
+RENDER_API render_backend_t**
+render_backends(void);
