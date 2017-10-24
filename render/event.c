@@ -26,7 +26,7 @@
 
 void
 render_event_handle_resource(const event_t* event) {
-	if (event->id != RESOURCEEVENT_MODIFY)
+	if ((event->id != RESOURCEEVENT_MODIFY) && (event->id != RESOURCEEVENT_DEPENDS))
 		return;
 
 	const uuid_t uuid = resource_event_uuid(event);

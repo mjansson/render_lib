@@ -408,6 +408,7 @@ render_import_program(stream_t* stream, const uuid_t uuid) {
 			uuidstr = string_from_uuid_static(shaderuuid);
 			resource_source_set(&source, timestamp, typehash,
 			                    platform, STRING_ARGS(uuidstr));
+			resource_source_set_dependencies(uuid, 0, &shaderuuid, 1);
 		}
 	}
 
