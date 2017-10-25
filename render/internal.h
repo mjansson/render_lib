@@ -34,6 +34,7 @@ RENDER_EXTERN bool         _render_api_disabled[];
 RENDER_EXTERN objectmap_t* _render_map_target;
 RENDER_EXTERN objectmap_t* _render_map_buffer;
 RENDER_EXTERN render_config_t _render_config;
+RENDER_EXTERN render_backend_t** _render_backends;
 
 // INTERNAL FUNCTIONS
 RENDER_EXTERN int

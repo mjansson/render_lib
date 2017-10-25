@@ -27,9 +27,6 @@
 
 #include <resource/platform.h>
 
-RENDER_EXTERN render_config_t _render_config;
-RENDER_EXTERN render_backend_t** _render_backends;
-
 FOUNDATION_DECLARE_THREAD_LOCAL(render_backend_t*, backend, nullptr)
 
 static render_api_t
