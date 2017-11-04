@@ -299,13 +299,14 @@ render_import_shader(stream_t* stream, const uuid_t uuid) {
 			    render_import_parse_target(STRING_ARGS(target), platformdecl);
 			uint64_t targetplatform = resource_platform(targetplatformdecl);
 
-			if (resource_autoimport_need_update(shaderuuid, targetplatform))
-				resource_autoimport(shaderuuid);
-
-			const string_const_t uuidstr = string_from_uuid_static(shaderuuid);
+			string_const_t uuidstr = string_from_uuid_static(shaderuuid);
 			resource_source_set(&source, timestamp, HASH_SHADER,
 			                    targetplatform, STRING_ARGS(uuidstr));
-			resource_source_set_dependencies(uuid, targetplatform, &shaderuuid, 1);
+
+			resource_dependency_t dep;
+			dep.uuid = shaderuuid;
+			dep.platform = targetplatform;
+			resource_source_set_dependencies(uuid, targetplatform, &dep, 1);
 		}
 	}
 
@@ -408,7 +409,10 @@ render_import_program(stream_t* stream, const uuid_t uuid) {
 			uuidstr = string_from_uuid_static(shaderuuid);
 			resource_source_set(&source, timestamp, typehash,
 			                    platform, STRING_ARGS(uuidstr));
-			resource_source_set_dependencies(uuid, 0, &shaderuuid, 1);
+			resource_dependency_t dep;
+			dep.uuid = shaderuuid;
+			dep.platform = platform;
+			resource_source_set_dependencies(uuid, platform, &dep, 1);
 		}
 	}
 

@@ -42,12 +42,30 @@ render_shader_finalize(render_shader_t* shader);
 RENDER_API void
 render_shader_deallocate(render_shader_t* shader);
 
-RENDER_API bool
-render_shader_reload(render_shader_t* shader, const uuid_t uuid);
+/*! Load the shader identified by the given UUID. Returns a pointer
+to the existing shader if it is already loaded. When loading a shader,
+the reference count will be used and you must call render_shader_unload
+to release it, NOT the render_shader_deallocate function.
+\param backend Backend
+\param uuid Shader UUID
+\return Shader */
+RENDER_API render_shader_t*
+render_shader_load(render_backend_t* backend, const uuid_t uuid);
+
+/*! Lookup the shader identified by the given UUID. When looking up
+a shader, the reference count will be used and you must remember to
+call render_shader_unload to release it.
+\param backend Backend
+\param uuid Shader UUID
+\return Shader */
+RENDER_API render_shader_t*
+render_shader_lookup(render_backend_t* backend, const uuid_t uuid);
 
 RENDER_API bool
 render_shader_reload(render_shader_t* shader, const uuid_t uuid);
 
+RENDER_API void
+render_shader_unload(render_shader_t* shader);
 
 #define RENDER_SHADER_RESOURCE_VERSION 3
 

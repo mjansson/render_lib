@@ -831,8 +831,8 @@ _rb_gl4_upload_program(render_backend_t* backend, render_program_t* program) {
 	char name[256];
 	GLuint handle = glCreateProgram();
 
-	render_shader_t* vshader = render_backend_shader_raw(backend, program->vertexshader);
-	render_shader_t* pshader = render_backend_shader_raw(backend, program->pixelshader);
+	render_shader_t* vshader = program->vertexshader;
+	render_shader_t* pshader = program->pixelshader;
 	if (!vshader || !pshader)
 		return false;
 

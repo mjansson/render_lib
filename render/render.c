@@ -45,9 +45,6 @@ render_module_initialize(render_config_t config) {
 	_render_config.buffer_max = config.buffer_max    ?
 	                            config.buffer_max    : 1024;
 
-	_render_config.shader_max = config.shader_max    ?
-	                            config.shader_max    : 256;
-
 	_render_config.program_max = config.program_max    ?
 	                             config.program_max    : 128;
 

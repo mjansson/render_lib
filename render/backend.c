@@ -197,9 +197,6 @@ render_backend_allocate(render_api_t api, bool allow_fallback) {
 	uuidmap_initialize((uuidmap_t*)&backend->programtable,
 	                   sizeof(backend->programtable.bucket) / sizeof(backend->programtable.bucket[0]), 0);
 
-	backend->shadermap = objectmap_allocate(_render_config.shader_max);
-	backend->programmap = objectmap_allocate(_render_config.program_max);
-
 	render_backend_set_resource_platform(backend, 0);
 
 	array_push(_render_backends, backend);
@@ -218,9 +215,6 @@ render_backend_deallocate(render_backend_t* backend) {
 
 	uuidmap_finalize((uuidmap_t*)&backend->shadertable);
 	uuidmap_finalize((uuidmap_t*)&backend->programtable);
-
-	objectmap_deallocate(backend->shadermap);
-	objectmap_deallocate(backend->programmap);
 
 	if (backend->framebuffer)
 		render_target_release(backend->framebuffer);
@@ -345,122 +339,14 @@ render_backend_set_resource_platform(render_backend_t* backend, uint64_t platfor
 	backend->platform = resource_platform(decl);
 }
 
-static void
-render_backend_shader_deallocate(void* shader) {
-	render_shader_deallocate(shader);
+uuidmap_t*
+render_backend_shader_table(render_backend_t* backend) {
+	return (uuidmap_t*)&backend->shadertable;
 }
 
-static void
-render_backend_program_deallocate(void* program) {
-	render_program_deallocate(program);
-}
-
-object_t
-render_backend_shader_load(render_backend_t* backend, const uuid_t uuid) {
-	void* rawval = uuidmap_lookup((uuidmap_t*)&backend->shadertable, uuid);
-	object_t obj = (object_t)((uintptr_t)rawval);
-	if (objectmap_acquire(backend->shadermap, obj))
-		return obj;
-	obj = 0;
-
-	render_shader_t* shader = render_shader_load_raw(backend, uuid);
-	if (shader)
-		obj = render_backend_shader_bind(backend, uuid, shader);
-	return obj;
-}
-
-object_t
-render_backend_program_load(render_backend_t* backend, const uuid_t uuid) {
-	void* rawval = uuidmap_lookup((uuidmap_t*)&backend->programtable, uuid);
-	object_t obj = (object_t)((uintptr_t)rawval);
-	if (objectmap_acquire(backend->programmap, obj))
-		return obj;
-	obj = 0;
-
-	render_program_t* program = render_program_load_raw(backend, uuid);
-	if (program)
-		obj = render_backend_program_bind(backend, uuid, program);
-	return obj;
-}
-
-object_t
-render_backend_shader_lookup(render_backend_t* backend, const uuid_t uuid) {
-	void* rawval = uuidmap_lookup((uuidmap_t*)&backend->shadertable, uuid);
-	return (object_t)((uintptr_t)rawval);
-}
-
-object_t
-render_backend_program_lookup(render_backend_t* backend, const uuid_t uuid) {
-	void* rawval = uuidmap_lookup((uuidmap_t*)&backend->programtable, uuid);
-	return (object_t)((uintptr_t)rawval);
-}
-
-render_shader_t*
-render_backend_shader_raw(render_backend_t* backend, object_t shader) {
-	return objectmap_lookup(backend->shadermap, shader);
-}
-
-render_program_t*
-render_backend_program_raw(render_backend_t* backend, object_t program) {
-	return objectmap_lookup(backend->programmap, program);
-}
-
-render_shader_t*
-render_backend_shader_acquire(render_backend_t* backend, object_t shader) {
-	return objectmap_acquire(backend->shadermap, shader);
-}
-
-render_program_t*
-render_backend_program_acquire(render_backend_t* backend, object_t program) {
-	return objectmap_acquire(backend->programmap, program);
-}
-
-void
-render_backend_shader_release(render_backend_t* backend, object_t shader) {
-	objectmap_release(backend->shadermap, shader, render_backend_shader_deallocate);
-}
-
-void
-render_backend_program_release(render_backend_t* backend, object_t program) {
-	objectmap_release(backend->programmap, program, render_backend_program_deallocate);
-}
-
-object_t
-render_backend_shader_bind(render_backend_t* backend, const uuid_t uuid,
-                           render_shader_t* shader) {
-	void* rawval = uuidmap_lookup((uuidmap_t*)&backend->shadertable, uuid);
-	object_t obj = (object_t)((uintptr_t)rawval);
-	if (obj) {
-		if (objectmap_acquire(backend->shadermap, obj) == shader)
-			return obj;
-		objectmap_release(backend->shadermap, obj, render_backend_shader_deallocate);
-	}
-
-	obj = objectmap_reserve(backend->shadermap);
-	if (obj) {
-		objectmap_set(backend->shadermap, obj, shader);
-		uuidmap_insert((uuidmap_t*)&backend->shadertable, uuid, (void*)(uintptr_t)obj);
-	}
-	return obj;
-}
-
-object_t
-render_backend_program_bind(render_backend_t* backend, const uuid_t uuid,
-                            render_program_t* program) {
-	void* rawval = uuidmap_lookup((uuidmap_t*)&backend->programtable, uuid);
-	object_t obj = (object_t)((uintptr_t)rawval);
-	if (obj) {
-		if (objectmap_acquire(backend->programmap, obj) == program)
-			return obj;
-		objectmap_release(backend->programmap, obj, render_backend_program_deallocate);
-	}
-
-	obj = objectmap_reserve(backend->programmap);
-	if (obj) {
-		objectmap_set(backend->programmap, obj, program);
-		uuidmap_insert((uuidmap_t*)&backend->programtable, uuid, (void*)(uintptr_t)obj);
-	}
-	return obj;
+uuidmap_t*
+render_backend_program_table(render_backend_t* backend) {
+	return (uuidmap_t*)&backend->programtable;
 }
 
 bool
@@ -468,6 +354,7 @@ render_backend_shader_upload(render_backend_t* backend, render_shader_t* shader,
                              const void* buffer, size_t size) {
 	if (shader->backend && (shader->backend != backend))
 		shader->backend->vtable.deallocate_shader(shader->backend, shader);
+	shader->backend = nullptr;
 	if (backend->vtable.upload_shader(backend, shader, buffer, size)) {
 		shader->backend = backend;
 		return true;
@@ -479,6 +366,10 @@ bool
 render_backend_program_upload(render_backend_t* backend, render_program_t* program) {
 	if (program->backend && (program->backend != backend))
 		program->backend->vtable.deallocate_program(program->backend, program);
-	program->backend = backend;
-	return backend->vtable.upload_program(backend, program);
+	program->backend = nullptr;
+	if (backend->vtable.upload_program(backend, program)) {
+		program->backend = backend;
+		return true;
+	}
+	return false;
 }

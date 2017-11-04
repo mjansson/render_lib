@@ -264,7 +264,6 @@ typedef struct render_shader_ref_t render_shader_ref_t;
 typedef struct render_vertexshader_t render_vertexshader_t;
 typedef struct render_pixelshader_t render_pixelshader_t;
 typedef struct render_program_t render_program_t;
-typedef struct render_program_ref_t render_program_ref_t;
 typedef struct render_state_t render_state_t;
 typedef struct render_resolution_t render_resolution_t;
 typedef struct render_vertex_decl_element_t render_vertex_decl_element_t;
@@ -299,8 +298,6 @@ struct render_config_t {
 	size_t target_max;
 	/*! Maximum number of concurrently allocated buffers */
 	size_t buffer_max;
-	/*! Maximum number of concurrently allocated shaders */
-	size_t shader_max;
 	/*! Maximum number of concurrently allocated programs */
 	size_t program_max;
 };
@@ -336,9 +333,7 @@ struct render_backend_vtable_t {
 	uint64_t                 framecount; \
 	uint64_t                 platform; \
 	uuidmap_fixed_t          shadertable; \
-	uuidmap_fixed_t          programtable; \
-	objectmap_t*             shadermap; \
-	objectmap_t*             programmap
+	uuidmap_fixed_t          programtable
 
 struct render_backend_t {
 	RENDER_DECLARE_BACKEND;
@@ -503,9 +498,10 @@ struct render_parameter_t {
 	RENDER_32BIT_PADDING(backendptr) \
 	unsigned int shadertype:8; \
 	unsigned int unused:24; \
-	uint32_t __align_pad; \
+	uint32_t ref; \
 	uintptr_t backend_data[4]; \
-	RENDER_32BIT_PADDING_ARR(backend_data, 4)
+	RENDER_32BIT_PADDING_ARR(backend_data, 4) \
+	uuid_t uuid
 
 struct render_buffer_t {
 	RENDER_DECLARE_BUFFER;
@@ -532,21 +528,27 @@ struct render_statebuffer_t {
 };
 
 FOUNDATION_ALIGNED_STRUCT(render_shader_t, 8) {
-	RENDER_DECLARE_SHADER
+	RENDER_DECLARE_SHADER;
 };
 
 FOUNDATION_ALIGNED_STRUCT(render_program_t, 8) {
 	render_backend_t* backend; \
 	RENDER_32BIT_PADDING(backendptr) \
-	object_t vertexshader;
-	object_t pixelshader;
+	render_shader_t* vertexshader;
+	render_shader_t* pixelshader;
+	RENDER_32BIT_PADDING_ARR(shaderptr, 2)
 	uintptr_t backend_data[4];
 	RENDER_32BIT_PADDING_ARR(data, 4)
+	uint32_t ref;
+	uint32_t size_parameterdata;
+	uint32_t num_parameters;
+	uint32_t unused;
+	uuid_t uuid;
 	render_vertex_decl_t attributes;
 	hash_t attribute_name[VERTEXATTRIBUTE_NUMATTRIBUTES];
-	unsigned int num_parameters;
-	unsigned int size_parameterdata;
-	render_parameter_t parameters[FOUNDATION_FLEXIBLE_ARRAY];
+	render_parameter_t* parameters;
+	RENDER_32BIT_PADDING_ARR(paramsptr, 4)
+	render_parameter_t inline_parameters[FOUNDATION_FLEXIBLE_ARRAY];
 };
 
 struct render_resolution_t {

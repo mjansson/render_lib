@@ -26,8 +26,8 @@
 
 //Size expectations for the program compiler and loader
 FOUNDATION_STATIC_ASSERT(sizeof(render_vertex_decl_t) == 72, "invalid vertex decl size");
-FOUNDATION_STATIC_ASSERT(sizeof(render_program_t) == 48 + sizeof(render_vertex_decl_t) +
-                         (sizeof(hash_t) * VERTEXATTRIBUTE_NUMATTRIBUTES) + 8,
+FOUNDATION_STATIC_ASSERT(sizeof(render_program_t) == 96 + sizeof(render_vertex_decl_t) +
+                         (sizeof(hash_t) * VERTEXATTRIBUTE_NUMATTRIBUTES),
                          "invalid program size");
 
 render_program_t*
@@ -42,15 +42,19 @@ void
 render_program_initialize(render_program_t* program, size_t num_parameters) {
 	memset(program, 0, sizeof(render_program_t));
 	program->num_parameters = (unsigned int)num_parameters;
+	program->parameters = program->inline_parameters;
 }
 
 void
 render_program_finalize(render_program_t* program) {
+	render_shader_unload(program->vertexshader);
+	render_shader_unload(program->pixelshader);
 	if (program->backend) {
-		render_backend_shader_release(program->backend, program->vertexshader);
-		render_backend_shader_release(program->backend, program->pixelshader);
+		uuidmap_erase(render_backend_program_table(program->backend), program->uuid);
 		program->backend->vtable.deallocate_program(program->backend, program);
 	}
+	if (program->parameters != program->inline_parameters)
+		memory_deallocate(program->parameters);
 }
 
 void
@@ -61,21 +65,27 @@ render_program_deallocate(render_program_t* program) {
 }
 
 render_program_t*
-render_program_load_raw(render_backend_t* backend, const uuid_t uuid) {
+render_program_lookup(render_backend_t* backend, const uuid_t uuid) {
+	render_program_t* program = uuidmap_lookup(render_backend_program_table(backend), uuid);
+	if (program)
+		++program->ref;
+	return program;
+}
+
+static render_program_t*
+render_program_load_impl(render_backend_t* backend, const uuid_t uuid) {
 	const uint32_t expected_version = RENDER_PROGRAM_RESOURCE_VERSION;
 	uint64_t platform = render_backend_resource_platform(backend);
+	render_program_t* program = nullptr;
 	stream_t* stream = nullptr;
 	void* block;
 	bool success = false;
 	uuid_t* shaderuuid;
 	size_t remain;
 	resource_header_t header;
-	object_t vsobj = 0;
-	object_t psobj = 0;
 	render_shader_t* vshader = nullptr;
 	render_shader_t* pshader = nullptr;
 	bool recompiled = false;
-	render_program_t* program = nullptr;
 
 	error_context_declare_local(
 	    char uuidbuf[40];
@@ -115,16 +125,14 @@ retry:
 	stream = nullptr;
 
 	shaderuuid = block;
-	vsobj = render_backend_shader_load(backend, *shaderuuid);
-	vshader = render_backend_shader_raw(backend, vsobj);
+	vshader = render_shader_load(backend, *shaderuuid);
 	if (!vshader || !(vshader->shadertype & SHADER_VERTEX)) {
 		log_warn(HASH_RENDER, WARNING_INVALID_VALUE, STRING_CONST("Got invalid vertex shader"));
 		goto finalize;
 	}
 
 	++shaderuuid;
-	psobj = render_backend_shader_load(backend, *shaderuuid);
-	pshader = render_backend_shader_raw(backend, psobj);
+	pshader = render_shader_load(backend, *shaderuuid);
 	if (!pshader || !(pshader->shadertype & SHADER_PIXEL)) {
 		log_warn(HASH_RENDER, WARNING_INVALID_VALUE, STRING_CONST("Got invalid pixel shader"));
 		goto finalize;
@@ -132,8 +140,9 @@ retry:
 
 	program = block;
 	program->backend = 0;
-	program->vertexshader = vsobj;
-	program->pixelshader = psobj;
+	program->vertexshader = vshader;
+	program->pixelshader = pshader;
+	program->parameters = program->inline_parameters;
 	memset(program->backend_data, 0, sizeof(program->backend_data));
 
 	success = render_backend_program_upload(backend, program);
@@ -143,10 +152,6 @@ finalize:
 		stream_deallocate(stream);
 
 	if (!success) {
-		render_backend_shader_release(backend, psobj);
-		render_backend_shader_release(backend, vsobj);
-		program->vertexshader = 0;
-		program->pixelshader = 0;
 		render_program_deallocate(program);
 		program = nullptr;
 	}
@@ -156,9 +161,75 @@ finalize:
 	return program;
 }
 
+render_program_t*
+render_program_load(render_backend_t* backend, const uuid_t uuid) {
+	render_program_t* program = render_program_lookup(backend, uuid);
+	if (program)
+		return program;
+
+	program = render_program_load_impl(backend, uuid);
+
+	if (program) {
+		program->ref = 1;
+		program->uuid = uuid;
+		uuidmap_insert(render_backend_program_table(backend), uuid, program);
+	}
+
+	return program;
+}
+
 bool
 render_program_reload(render_program_t* program, const uuid_t uuid) {
-	FOUNDATION_UNUSED(program);
-	FOUNDATION_UNUSED(uuid);
-	return false;
+	error_context_declare_local(
+	    char uuidbuf[40];
+	    const string_t uuidstr = string_from_uuid(uuidbuf, sizeof(uuidbuf), uuid);
+	);
+	error_context_push(STRING_CONST("reloading program"), STRING_ARGS(uuidstr));
+
+	bool success = false;
+	render_program_t* tmpprogram = render_program_load_impl(program->backend, uuid);
+	if (tmpprogram) {
+		render_shader_unload(program->vertexshader);
+		render_shader_unload(program->pixelshader);
+
+		program->vertexshader = tmpprogram->vertexshader;
+		program->pixelshader = tmpprogram->pixelshader;
+		tmpprogram->vertexshader = nullptr;
+		tmpprogram->pixelshader = nullptr;
+
+		uintptr_t swapdata[4];
+		memcpy(swapdata, program->backend_data, sizeof(swapdata));
+		memcpy(program->backend_data, tmpprogram->backend_data, sizeof(program->backend_data));
+		memcpy(tmpprogram->backend_data, swapdata, sizeof(swapdata));
+
+		program->size_parameterdata = tmpprogram->size_parameterdata;
+
+		if (program->num_parameters < tmpprogram->num_parameters) {
+			if (program->parameters != program->inline_parameters)
+				memory_deallocate(program->parameters);
+			program->parameters = memory_allocate(HASH_RENDER,
+			                                      sizeof(render_parameter_t) * tmpprogram->num_parameters,
+			                                      0, MEMORY_PERSISTENT);
+		}
+		memcpy(program->parameters, tmpprogram->parameters,
+		       sizeof(render_parameter_t) * tmpprogram->num_parameters);
+		program->num_parameters = tmpprogram->num_parameters;
+
+		memcpy(&program->attributes, &tmpprogram->attributes, sizeof(program->attributes));
+		memcpy(program->attribute_name, tmpprogram->attribute_name, sizeof(program->attribute_name));
+
+		render_program_deallocate(tmpprogram);
+	}
+
+	error_context_pop();
+
+	return success;
+}
+
+void
+render_program_unload(render_program_t* program) {
+	if (program->ref) {
+		if (!--program->ref)
+			render_program_deallocate(program);
+	}
 }

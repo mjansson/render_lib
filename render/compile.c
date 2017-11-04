@@ -87,12 +87,12 @@ render_shader_ref_compile(const uuid_t uuid, uint64_t platform, resource_source_
 	stream_t* ressource;
 	stream_t* restarget;
 
-	error_context_declare_local(
-	    char uuidbuf[40];
-	    const string_t uuidstr = string_from_uuid(uuidbuf, sizeof(uuidbuf), uuid);
-	);
+	char uuidbuf[40];
+	const string_t uuidstr = string_from_uuid(uuidbuf, sizeof(uuidbuf), uuid);
 	error_context_push(STRING_CONST("compiling shader"), STRING_ARGS(uuidstr));
 
+	log_debugf(HASH_RENDER, STRING_CONST("Compiling shader ref: %.*s platform 0x%" PRIx64),
+	           STRING_FORMAT(uuidstr), platform);
 	resource_change_t* shaderchange = resource_source_get(source, HASH_SHADER, platform);
 	uuid_t shaderuuid = shaderchange ?
 	                    string_to_uuid(STRING_ARGS(shaderchange->value.value)) :
@@ -248,6 +248,8 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 
 #if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_LINUX
 		window_create(&window, WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render compile"), 100, 100, false);
+#else
+		window_initialize(&window, nullptr);
 #endif
 
 		drawable = render_drawable_allocate();
@@ -377,8 +379,6 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 
 static render_program_t*
 render_program_compile_opengl(render_backend_t* backend, uuid_t vertexshader, uuid_t pixelshader) {
-	object_t vsobj = 0;
-	object_t psobj = 0;
 	render_shader_t* vshader = 0;
 	render_shader_t* pshader = 0;
 	render_program_t* program = 0;
@@ -389,10 +389,8 @@ render_program_compile_opengl(render_backend_t* backend, uuid_t vertexshader, uu
 	GLint log_length = 0;
 	GLint compiled = 0;
 
-	vsobj = render_backend_shader_load(backend, vertexshader);
-	psobj = render_backend_shader_load(backend, pixelshader);
-	vshader = render_backend_shader_raw(backend, vsobj);
-	pshader = render_backend_shader_raw(backend, psobj);
+	vshader = render_shader_load(backend, vertexshader);
+	pshader = render_shader_load(backend, pixelshader);
 	if (!vshader || !(vshader->shadertype & SHADER_VERTEX)) {
 		log_errorf(HASH_RESOURCE, ERROR_INVALID_VALUE, STRING_CONST("Unable to load vertex shader"));
 		goto exit;
@@ -474,6 +472,8 @@ render_program_compile_opengl(render_backend_t* backend, uuid_t vertexshader, uu
 	glGetProgramiv(handle, GL_ACTIVE_UNIFORMS, &uniforms);
 
 	program = render_program_allocate((size_t)uniforms);
+	program->vertexshader = vshader;
+	program->pixelshader = pshader;
 
 	for (GLint ia = 0; (ia < attributes) && compiled; ++ia) {
 		GLsizei num_chars = 0;
@@ -563,7 +563,6 @@ render_program_compile_opengl(render_backend_t* backend, uuid_t vertexshader, uu
 	program->attributes.size = offset;
 
 	offset = 0;
-	program->num_parameters = 0;
 	for (GLint iu = 0; (iu < uniforms) && compiled; ++iu) {
 		GLsizei num_chars = 0;
 		GLint size = 0;
@@ -603,23 +602,26 @@ render_program_compile_opengl(render_backend_t* backend, uuid_t vertexshader, uu
 			compiled = false;
 			break;
 		}
-
-		++program->num_parameters;
 	}
 
 	program->size_parameterdata = offset;
 
 exit:
 	if (!compiled) {
-		render_program_deallocate(program);
-		program = 0;
+		if (program) {
+			render_program_deallocate(program);
+			program = 0;
+		}
+		else {
+			if (vshader)
+				render_shader_unload(vshader);
+			if (pshader)
+				render_shader_unload(pshader);
+		}
 	}
 
 	if (handle)
 		glDeleteProgram(handle);
-
-	render_backend_shader_release(backend, psobj);
-	render_backend_shader_release(backend, vsobj);
 
 	memory_deallocate(log_buffer);
 
@@ -799,6 +801,8 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 
 #if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_LINUX
 		window_create(&window, WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render compile"), 100, 100, false);
+#else
+		window_initialize(&window, nullptr);
 #endif
 
 		drawable = render_drawable_allocate();

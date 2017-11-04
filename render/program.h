@@ -36,8 +36,30 @@ render_program_finalize(render_program_t* program);
 RENDER_API void
 render_program_deallocate(render_program_t* program);
 
+/*! Load the program identified by the given UUID. Returns a pointer
+to the existing program if it is already loaded. When loading a program,
+the reference count will be used and you must call render_program_unload
+to release it, NOT the render_program_deallocate function.
+\param backend Backend
+\param uuid Program UUID
+\return Program */
+RENDER_API render_program_t*
+render_program_load(render_backend_t* backend, const uuid_t uuid);
+
+/*! Lookup the program identified by the given UUID. When looking up
+a program, the reference count will be increased and you must remember to
+call render_program_unload to release it.
+\param backend Backend
+\param uuid Program UUID
+\return Program */
+RENDER_API render_program_t*
+render_program_lookup(render_backend_t* backend, const uuid_t uuid);
+
 RENDER_API bool
 render_program_reload(render_program_t* program, const uuid_t uuid);
+
+RENDER_API void
+render_program_unload(render_program_t* program);
 
 #define RENDER_PROGRAM_RESOURCE_VERSION 4
 
