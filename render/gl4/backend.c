@@ -978,9 +978,9 @@ _rb_gl4_viewport(render_backend_gl4_t* backend, render_context_t* context,
 //static const GLenum       _rb_gl4_vertex_format_type[VERTEXFORMAT_NUMTYPES] = { GL_FLOAT, GL_FLOAT, GL_FLOAT, GL_FLOAT, GL_UNSIGNED_BYTE, GL_BYTE,          GL_SHORT, GL_SHORT, GL_SHORT, GL_INT,   GL_INT,   GL_INT   };
 //static const GLboolean    _rb_gl4_vertex_format_norm[VERTEXFORMAT_NUMTYPES] = { GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE, GL_TRUE,          GL_TRUE,          GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE };
 
-//static const GLenum       _rb_gl4_primitive_type[RENDERPRIMITIVE_NUMTYPES] = { GL_TRIANGLES };
-//static const unsigned int _rb_gl4_primitive_mult[RENDERPRIMITIVE_NUMTYPES] = { 3 };
-//static const unsigned int _rb_gl4_primitive_add[RENDERPRIMITIVE_NUMTYPES]  = { 0 };
+//static const GLenum       _rb_gl4_primitive_type[RENDERPRIMITIVE_NUMTYPES] = { GL_TRIANGLES, GL_LINES };
+//static const unsigned int _rb_gl4_primitive_mult[RENDERPRIMITIVE_NUMTYPES] = { 3, 2 };
+//static const unsigned int _rb_gl4_primitive_add[RENDERPRIMITIVE_NUMTYPES]  = { 0, 0 };
 
 //                                                 BLEND_ZERO, BLEND_ONE, BLEND_SRCCOLOR, BLEND_INVSRCCOLOR,      BLEND_DESTCOLOR, BLEND_INVDESTCOLOR,     BLEND_SRCALPHA, BLEND_INVSRCALPHA,      BLEND_DESTALPHA, BLEND_INVDESTALPHA,     BLEND_FACTOR,      BLEND_INVFACTOR,             BLEND_SRCALPHASAT
 //static const GLenum       _rb_gl4_blend_func[] = { GL_ZERO,    GL_ONE,    GL_SRC_COLOR,   GL_ONE_MINUS_SRC_COLOR, GL_DST_COLOR,    GL_ONE_MINUS_DST_COLOR, GL_SRC_ALPHA,   GL_ONE_MINUS_SRC_ALPHA, GL_DST_ALPHA,    GL_ONE_MINUS_DST_ALPHA, GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA, GL_SRC_ALPHA_SATURATE };
@@ -1122,6 +1122,7 @@ _rb_gl4_dispatch(render_backend_t* backend, render_context_t** contexts, size_t 
 				break;
 
 			case RENDERCOMMAND_RENDER_TRIANGLELIST:
+			case RENDERCOMMAND_RENDER_LINELIST:
 				_rb_gl4_render(backend_gl4, context, command);
 				break;
 			}

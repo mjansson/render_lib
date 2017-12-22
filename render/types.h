@@ -242,7 +242,8 @@ typedef enum render_command_id {
 	RENDERCOMMAND_INVALID = 0,
 	RENDERCOMMAND_CLEAR,
 	RENDERCOMMAND_VIEWPORT,
-	RENDERCOMMAND_RENDER_TRIANGLELIST
+	RENDERCOMMAND_RENDER_TRIANGLELIST,
+	RENDERCOMMAND_RENDER_LINELIST
 } render_command_id;
 
 typedef struct render_backend_vtable_t render_backend_vtable_t;

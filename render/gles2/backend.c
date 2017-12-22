@@ -1004,27 +1004,25 @@ _rb_gles2_link_buffer(render_backend_t* backend, render_buffer_t* buffer,
 static void
 _rb_gles2_deallocate_shader(render_backend_t* backend, render_shader_t* shader) {
 	switch (shader->shadertype) {
-	case SHADER_VERTEX: {
-			//Vertex program backend data:
-			//  0 - Shader object (GLuint)
-			if (shader->backend_data[0]) {
-				_rb_gles2_program_unmap((unsigned int)shader->backend_data[0], 0);
-				glDeleteShader((GLuint)shader->backend_data[0]);
-			}
-			shader->backend_data[0] = 0;
-			break;
+	case SHADER_VERTEX:
+		//Vertex program backend data:
+		//  0 - Shader object (GLuint)
+		if (shader->backend_data[0]) {
+			_rb_gles2_program_unmap((unsigned int)shader->backend_data[0], 0);
+			glDeleteShader((GLuint)shader->backend_data[0]);
 		}
+		shader->backend_data[0] = 0;
+		break;
 
-	case SHADER_PIXEL: {
-			//Pixel shader backend data:
-			//  0 - Shader object (GLuint)
-			if (shader->backend_data[0]) {
-				_rb_gles2_program_unmap(0, (unsigned int)shader->backend_data[0]);
-				glDeleteShader((GLuint)shader->backend_data[0]);
-			}
-			shader->backend_data[0] = 0;
-			break;
+	case SHADER_PIXEL:
+		//Pixel shader backend data:
+		//  0 - Shader object (GLuint)
+		if (shader->backend_data[0]) {
+			_rb_gles2_program_unmap(0, (unsigned int)shader->backend_data[0]);
+			glDeleteShader((GLuint)shader->backend_data[0]);
 		}
+		shader->backend_data[0] = 0;
+		break;
 	}
 }
 
