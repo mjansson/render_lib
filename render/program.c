@@ -228,7 +228,7 @@ render_program_reload(render_program_t* program, const uuid_t uuid) {
 
 void
 render_program_unload(render_program_t* program) {
-	if (program->ref) {
+	if (program && program->ref) {
 		if (!--program->ref)
 			render_program_deallocate(program);
 	}

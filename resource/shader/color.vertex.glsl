@@ -7,5 +7,5 @@ varying vec4 frag_color;
 
 void main(void) {
 	frag_color = color;
-	gl_Position = mvp * position;
+	gl_Position = position * mvp;
 }
