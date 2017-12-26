@@ -24,29 +24,29 @@
 
 #include <render/types.h>
 
-RENDER_API render_context_t*     
-render_context_allocate( size_t commmandsize );
+RENDER_API render_context_t*
+render_context_allocate(size_t commmandsize);
 
-RENDER_API void                  
-render_context_deallocate( render_context_t* context );
+RENDER_API void
+render_context_deallocate(render_context_t* context);
 
-RENDER_API object_t              
-render_context_target( render_context_t* context );
+RENDER_API object_t
+render_context_target(render_context_t* context);
 
-RENDER_API void                  
-render_context_set_target( render_context_t* context, object_t target );
+RENDER_API void
+render_context_set_target(render_context_t* context, object_t target);
 
-RENDER_API render_command_t*     
-render_context_reserve( render_context_t* context, uint64_t sort );
+RENDER_API render_command_t*
+render_context_reserve(render_context_t* context, uint64_t sort);
 
-RENDER_API void                  
-render_context_queue( render_context_t* context, render_command_t* command, uint64_t sort );
+RENDER_API void
+render_context_queue(render_context_t* context, render_command_t* command, uint64_t sort);
 
-RENDER_API size_t          
-render_context_reserved( render_context_t* context );
+RENDER_API size_t
+render_context_reserved(render_context_t* context);
 
-RENDER_API uint8_t               
-render_context_group( render_context_t* context );
+RENDER_API uint8_t
+render_context_group(render_context_t* context);
 
-RENDER_API void                  
-render_context_set_group( render_context_t* context, uint8_t group );
+RENDER_API void
+render_context_set_group(render_context_t* context, uint8_t group);
