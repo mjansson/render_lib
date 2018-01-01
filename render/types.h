@@ -271,6 +271,7 @@ typedef struct render_vertex_decl_element_t render_vertex_decl_element_t;
 typedef struct render_parameter_t render_parameter_t;
 typedef struct render_parameterbuffer_t render_parameterbuffer_t;
 typedef struct render_statebuffer_t render_statebuffer_t;
+typedef struct render_postprocess_t render_postprocess_t;
 typedef struct render_config_t render_config_t;
 
 typedef bool (* render_backend_construct_fn)(render_backend_t*);
@@ -386,6 +387,7 @@ struct render_target_t {
 	int            height;
 	pixelformat_t  pixelformat;
 	colorspace_t   colorspace;
+	uintptr_t      backend_data[4];
 };
 
 struct render_context_t {
@@ -550,6 +552,13 @@ FOUNDATION_ALIGNED_STRUCT(render_program_t, 8) {
 	render_parameter_t* parameters;
 	RENDER_32BIT_PADDING_ARR(paramsptr, 4)
 	render_parameter_t inline_parameters[FOUNDATION_FLEXIBLE_ARRAY];
+};
+
+struct render_postprocess_t {
+	object_t source[8];
+	object_t target;
+	render_program_t* program;
+	object_t parameterbuffer;
 };
 
 struct render_resolution_t {

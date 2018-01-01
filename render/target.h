@@ -25,7 +25,7 @@
 #include <render/types.h>
 
 RENDER_API object_t
-render_target_create(render_backend_t* backend);
+render_target_create(render_backend_t* backend, int width, int height, pixelformat_t format, colorspace_t colorspace);
 
 RENDER_API render_target_t*
 render_target_acquire(object_t target);

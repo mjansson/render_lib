@@ -18,8 +18,8 @@ toolchain = generator.toolchain
 
 render_lib = generator.lib(module = 'render', sources = [
   'backend.c', 'buffer.c', 'command.c', 'context.c', 'compile.c', 'drawable.c', 'event.c', 'indexbuffer.c', 'import.c',
-  'parameter.c', 'program.c', 'projection.c', 'render.c', 'shader.c', 'state.c', 'sort.c', 'target.c', 'version.c',
-  'vertexbuffer.c',
+  'parameter.c', 'postprocess.c', 'program.c', 'projection.c', 'render.c', 'shader.c', 'state.c', 'sort.c', 'target.c',
+  'version.c', 'vertexbuffer.c',
   os.path.join('gl4', 'backend.c'), os.path.join('gl4', 'backend.m'), os.path.join('gl4', 'glprocs.c'),
   os.path.join('gl2', 'backend.c'),
   os.path.join('gles2', 'backend.c'),
