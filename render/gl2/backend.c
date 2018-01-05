@@ -297,7 +297,7 @@ _rb_gl2_upload_shader(render_backend_t* backend, render_shader_t* shader, const 
 		handle = glCreateShader(is_pixel_shader ? GL_FRAGMENT_SHADER_ARB : GL_VERTEX_SHADER_ARB);
 		if (!handle) {
 			if (!_rb_gl_check_error("Unable to compile shader: Error creating shader"))
-				log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL,
+				log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
 				           STRING_CONST("Unable to compile shader: Error creating shader (no error)"));
 			break;
 		}
@@ -309,11 +309,11 @@ _rb_gl2_upload_shader(render_backend_t* backend, render_shader_t* shader, const 
 		if (!compiled) {
 #if BUILD_DEBUG
 			GLsizei log_capacity = 2048;
-			GLchar* log_buffer = memory_allocate(HASH_RESOURCE, (size_t)log_capacity, 0, MEMORY_TEMPORARY);
+			GLchar* log_buffer = memory_allocate(HASH_RENDER, (size_t)log_capacity, 0, MEMORY_TEMPORARY);
 			GLint log_length = 0;
 			glGetShaderiv(handle, GL_COMPILE_STATUS, &compiled);
 			glGetShaderInfoLog(handle, log_capacity, &log_length, log_buffer);
-			log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL,
+			log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
 			           STRING_CONST("Unable to compile shader: %.*s (handle %u)"),
 			           (int)log_length, log_buffer, (unsigned int)handle);
 			memory_deallocate(log_buffer);
@@ -440,6 +440,90 @@ _rb_gl2_deallocate_program(render_backend_t* backend, render_program_t* program)
 	if (program->backend_data[0])
 		glDeleteProgram((GLuint)program->backend_data[0]);
 	program->backend_data[0] = 0;
+}
+
+static bool
+_rb_gl2_allocate_target(render_backend_t* backend, render_target_t* target) {
+	if (!target->width || !target->height)
+		return false;
+
+	GLuint frame_buffer = 0;
+	GLuint depth_buffer = 0;
+	GLuint render_texture = 0;
+	GLenum draw_buffers = GL_COLOR_ATTACHMENT0;
+	GLenum status;
+
+	memset(target->backend_data, 0, sizeof(target->backend_data));
+
+	glGenFramebuffers(1, &frame_buffer);
+	if (!frame_buffer) {
+		if (!_rb_gl_check_error("Unable to create render target: Error creating frame buffer")) {
+			log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
+			           STRING_CONST("Unable to create render target: Error creating frame buffer (no error)"));
+			goto failure;
+		}
+	}
+	glBindBuffer(GL_FRAMEBUFFER, frame_buffer);
+
+	glGenTextures(1, &render_texture);
+	if (!render_texture) {
+		if (!_rb_gl_check_error("Unable to create render target: Error creating texture"))
+			log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
+			           STRING_CONST("Unable to create render target: Error creating texture (no error)"));
+		goto failure;
+	}
+	glBindTexture(GL_TEXTURE_2D, render_texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, target->width, target->height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+
+	glGenRenderbuffers(1, &depth_buffer);
+	if (!depth_buffer) {
+		if (!_rb_gl_check_error("Unable to create render target: Error creating depth buffer"))
+			log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
+			           STRING_CONST("Unable to create render target: Error creating depth buffer (no error)"));
+		goto failure;
+	}
+	glBindRenderbuffer(GL_RENDERBUFFER, depth_buffer);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, target->width, target->height);
+
+	glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, render_texture, 0);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_buffer);
+
+	glDrawBuffers(1, &draw_buffers);
+
+	status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if (status != GL_FRAMEBUFFER_COMPLETE) {
+		log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
+		           STRING_CONST("Unable to create render target: Frame buffer not complete (%d)"), (int)status);
+		goto failure;
+	}
+
+	target->backend_data[0] = frame_buffer;
+	target->backend_data[1] = render_texture;
+	target->backend_data[2] = depth_buffer;
+
+	return true;
+
+failure:
+
+	if (render_texture)
+		glDeleteTextures(1, &render_texture);
+	if (depth_buffer)
+		glDeleteRenderbuffers(1, &depth_buffer);
+	if (frame_buffer)
+		glDeleteFramebuffers(1, &frame_buffer);
+
+	return false;
+}
+
+static void
+_rb_gl2_deallocate_target(render_backend_t* backend, render_target_t* target) {
+	if (target->backend_data[2])
+		glDeleteTextures(1, (const GLuint*)&target->backend_data[2]);
+	if (target->backend_data[1])
+		glDeleteRenderbuffers(1, (const GLuint*)&target->backend_data[1]);
+	if (target->backend_data[0])
+		glDeleteFramebuffers(1, (const GLuint*)&target->backend_data[0]);
+	memset(target->backend_data, 0, sizeof(target->backend_data));
 }
 
 #if 0
@@ -755,6 +839,8 @@ static render_backend_vtable_t _render_backend_vtable_gl2 = {
 	.deallocate_buffer = _rb_gl2_deallocate_buffer,
 	.deallocate_shader = _rb_gl2_deallocate_shader,
 	.deallocate_program = _rb_gl2_deallocate_program,
+	.allocate_target = _rb_gl2_allocate_target,
+	.deallocate_target = _rb_gl2_deallocate_target,
 	/*
 	.allocate_texture = _rb_gl2_allocate_texture,
 	.upload_texture = _rb_gl2_upload_texture,

@@ -129,6 +129,17 @@ PFNGLGETVERTEXATTRIBIVPROC            glGetVertexAttribiv = 0;
 PFNGLGETVERTEXATTRIBPOINTERVPROC      glGetVertexAttribPointerv = 0;
 PFNGLVERTEXATTRIBPOINTERPROC          glVertexAttribPointer = 0;
 
+PFNGLBINDFRAMEBUFFERPROC              glBindFramebuffer = 0;
+PFNGLDELETEFRAMEBUFFERSPROC           glDeleteFramebuffers = 0;
+PFNGLGENFRAMEBUFFERSPROC              glGenFramebuffers = 0;
+PFNGLCHECKFRAMEBUFFERSTATUSPROC       glCheckFramebufferStatus = 0;
+PFNGLBINDRENDERBUFFERPROC             glBindRenderbuffer = 0;
+PFNGLDELETERENDERBUFFERSPROC          glDeleteRenderbuffers = 0;
+PFNGLGENRENDERBUFFERSPROC             glGenRenderbuffers = 0;
+PFNGLRENDERBUFFERSTORAGEPROC          glRenderbufferStorage = 0;
+PFNGLFRAMEBUFFERTEXTUREPROC           glFramebufferTexture = 0;
+PFNGLFRAMEBUFFERRENDERBUFFERPROC      glFramebufferRenderbuffer = 0;
+
 #endif
 
 bool
@@ -275,6 +286,29 @@ _rb_gl_get_shader_procs(void) {
 }
 
 bool
+_rg_gl_get_framebuffer_procs(void) {
+#if !FOUNDATION_PLATFORM_MACOS
+	glBindFramebuffer = (PFNGLBINDFRAMEBUFFERPROC)_rb_gl_get_proc_address("glBindFramebuffer");
+	glDeleteFramebuffers = (PFNGLDELETEFRAMEBUFFERSPROC)_rb_gl_get_proc_address("glDeleteFramebuffers");
+	glGenFramebuffers = (PFNGLGENFRAMEBUFFERSPROC)_rb_gl_get_proc_address("glGenFramebuffers");
+	glCheckFramebufferStatus = (PFNGLCHECKFRAMEBUFFERSTATUSPROC)_rb_gl_get_proc_address("glCheckFramebufferStatus");
+	glBindRenderbuffer = (PFNGLBINDRENDERBUFFERPROC)_rb_gl_get_proc_address("glBindRenderbuffer");
+	glDeleteRenderbuffers = (PFNGLDELETERENDERBUFFERSPROC)_rb_gl_get_proc_address("glDeleteRenderbuffers");
+	glGenRenderbuffers = (PFNGLGENRENDERBUFFERSPROC)_rb_gl_get_proc_address("glGenRenderbuffers");
+	glRenderbufferStorage = (PFNGLRENDERBUFFERSTORAGEPROC)_rb_gl_get_proc_address("glRenderbufferStorage");
+	glFramebufferTexture = (PFNGLFRAMEBUFFERTEXTUREPROC)_rb_gl_get_proc_address("glFramebufferTexture");
+	glFramebufferRenderbuffer = (PFNGLFRAMEBUFFERRENDERBUFFERPROC)_rb_gl_get_proc_address("glFramebufferRenderbuffer");
+	if (!glBindFramebuffer || !glDeleteFramebuffers || !glGenFramebuffers || !glCheckFramebufferStatus ||
+	        !glBindRenderbuffer || !glDeleteRenderbuffers || !glGenRenderbuffers || !glRenderbufferStorage ||
+	        !glFramebufferTexture || !glFramebufferRenderbuffer) {
+		log_error(HASH_RENDER, ERROR_UNSUPPORTED, STRING_CONST("Unable to get GL procs for frame buffers"));
+		return false;
+	}
+#endif
+	return true;
+}
+
+bool
 _rb_gl_get_standard_procs(unsigned int major, unsigned int minor) {
 	if ((major > 1) || ((major == 1) && (minor >= 4))) {
 		if (!_rb_gl_get_texture_procs())
@@ -286,6 +320,8 @@ _rb_gl_get_standard_procs(unsigned int major, unsigned int minor) {
 	}
 	if (major >= 2) {
 		if (!_rb_gl_get_shader_procs())
+			return false;
+		if (!_rg_gl_get_framebuffer_procs())
 			return false;
 	}
 	return true;

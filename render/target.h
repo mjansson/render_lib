@@ -25,7 +25,8 @@
 #include <render/types.h>
 
 RENDER_API object_t
-render_target_create(render_backend_t* backend, int width, int height, pixelformat_t format, colorspace_t colorspace);
+render_target_create(render_backend_t* backend, unsigned int width, unsigned int height,
+                     pixelformat_t pixelformat, colorspace_t colorspace);
 
 RENDER_API render_target_t*
 render_target_acquire(object_t target);
@@ -33,10 +34,10 @@ render_target_acquire(object_t target);
 RENDER_API void
 render_target_release(object_t target);
 
-RENDER_API int
+RENDER_API unsigned int
 render_target_width(object_t target);
 
-RENDER_API int
+RENDER_API unsigned int
 render_target_height(object_t target);
 
 RENDER_API pixelformat_t

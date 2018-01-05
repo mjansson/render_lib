@@ -102,6 +102,17 @@ extern PFNGLGETVERTEXATTRIBIVPROC            glGetVertexAttribiv;
 extern PFNGLGETVERTEXATTRIBPOINTERVPROC      glGetVertexAttribPointerv;
 extern PFNGLVERTEXATTRIBPOINTERPROC          glVertexAttribPointer;
 
+extern PFNGLBINDFRAMEBUFFERPROC              glBindFramebuffer;
+extern PFNGLDELETEFRAMEBUFFERSPROC           glDeleteFramebuffers;
+extern PFNGLGENFRAMEBUFFERSPROC              glGenFramebuffers;
+extern PFNGLCHECKFRAMEBUFFERSTATUSPROC       glCheckFramebufferStatus;
+extern PFNGLBINDRENDERBUFFERPROC             glBindRenderbuffer;
+extern PFNGLDELETERENDERBUFFERSPROC          glDeleteRenderbuffers;
+extern PFNGLGENRENDERBUFFERSPROC             glGenRenderbuffers;
+extern PFNGLRENDERBUFFERSTORAGEPROC          glRenderbufferStorage;
+extern PFNGLFRAMEBUFFERTEXTUREPROC           glFramebufferTexture;
+extern PFNGLFRAMEBUFFERRENDERBUFFERPROC      glFramebufferRenderbuffer;
+
 #endif
 
 typedef void (*glfn)(void);
@@ -120,6 +131,9 @@ _rb_gl_get_buffer_procs(void);
 
 RENDER_EXTERN bool
 _rb_gl_get_shader_procs(void);
+
+RENDER_EXTERN bool
+_rg_gl_get_framebuffer_procs(void);
 
 RENDER_EXTERN bool
 _rb_gl_get_standard_procs(unsigned int major, unsigned int minor);

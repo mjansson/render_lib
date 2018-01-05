@@ -294,6 +294,8 @@ typedef void (* render_backend_deallocate_shader_fn)(render_backend_t*, render_s
 typedef void (* render_backend_deallocate_program_fn)(render_backend_t*, render_program_t*);
 typedef void (* render_backend_link_buffer_fn)(render_backend_t*, render_buffer_t*,
                                                render_program_t* program);
+typedef bool (* render_backend_allocate_target_fn)(render_backend_t*, render_target_t*);
+typedef void (* render_backend_deallocate_target_fn)(render_backend_t*, render_target_t*);
 
 struct render_config_t {
 	/*! Maximum number of concurrently allocated render targets */
@@ -322,6 +324,8 @@ struct render_backend_vtable_t {
 	render_backend_deallocate_buffer_fn   deallocate_buffer;
 	render_backend_deallocate_shader_fn   deallocate_shader;
 	render_backend_deallocate_program_fn  deallocate_program;
+	render_backend_allocate_target_fn     allocate_target;
+	render_backend_deallocate_target_fn   deallocate_target;
 };
 
 #define RENDER_DECLARE_BACKEND \
@@ -383,8 +387,8 @@ struct render_drawable_t {
 struct render_target_t {
 	render_backend_t* backend;
 	RENDER_32BIT_PADDING(backendptr)
-	int            width;
-	int            height;
+	unsigned int   width;
+	unsigned int   height;
 	pixelformat_t  pixelformat;
 	colorspace_t   colorspace;
 	uintptr_t      backend_data[4];
