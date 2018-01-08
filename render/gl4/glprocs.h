@@ -145,7 +145,7 @@ RENDER_EXTERN bool
 _rb_gl_check_context(unsigned int major, unsigned int minor);
 
 RENDER_EXTERN bool
-_rb_gl_check_extension(const char* name);
+_rb_gl_check_extension(const char* name, size_t length);
 
 RENDER_EXTERN void*
 _rb_gl_create_context(render_drawable_t* drawable, unsigned int major, unsigned int minor, void* share_context);

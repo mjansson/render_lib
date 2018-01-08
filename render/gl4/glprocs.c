@@ -286,7 +286,8 @@ _rb_gl_get_shader_procs(void) {
 }
 
 bool
-_rg_gl_get_framebuffer_procs(void) {
+_rb_gl_get_framebuffer_procs(void) {
+	//We require GL_ARB_framebuffer_object extension
 #if !FOUNDATION_PLATFORM_MACOS
 	glBindFramebuffer = (PFNGLBINDFRAMEBUFFERPROC)_rb_gl_get_proc_address("glBindFramebuffer");
 	glDeleteFramebuffers = (PFNGLDELETEFRAMEBUFFERSPROC)_rb_gl_get_proc_address("glDeleteFramebuffers");
@@ -321,7 +322,7 @@ _rb_gl_get_standard_procs(unsigned int major, unsigned int minor) {
 	if (major >= 2) {
 		if (!_rb_gl_get_shader_procs())
 			return false;
-		if (!_rg_gl_get_framebuffer_procs())
+		if (!_rb_gl_get_framebuffer_procs())
 			return false;
 	}
 	return true;

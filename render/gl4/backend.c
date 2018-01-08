@@ -227,6 +227,16 @@ _rb_gl_create_context(render_drawable_t* drawable, unsigned int major, unsigned 
 
 	if (hglrc) {
 		wglMakeCurrent(hdc, hglrc);
+
+		if (major == 2) {
+			//We require GL_ARB_framebuffer_object extension
+			if (!_rb_gl_check_extension(STRING_CONST("GL_ARB_framebuffer_object"))) {
+				log_infof(HASH_RENDER, STRING_CONST("GL version %d.%d not supported, missing framebuffer extension"), major, minor);
+				wglMakeCurrent(0, 0);
+				wglDeleteContext(hglrc);
+				hglrc = 0;
+			}
+		}
 	}
 	else {
 		if (major >= 3) {
@@ -309,10 +319,20 @@ _rb_gl_create_context(render_drawable_t* drawable, unsigned int major, unsigned 
 		}
 	}
 
+	if (context && (major == 2)) {
+		//We require GL_ARB_framebuffer_object extension
+		if (!_rb_gl_check_extension(STRING_CONST("GL_ARB_framebuffer_object"))) {
+			log_infof(HASH_RENDER, STRING_CONST("GL version %d.%d not supported, missing framebuffer extension"), major, minor);
+			glXDestroyContext(display, context);
+			context = nullptr;
+		}
+	}
+
 failed:
 
 	if (!drawable) {
-		glXDestroyContext(display, context);
+		if (context)
+			glXDestroyContext(display, context);
 		XCloseDisplay(display);
 	}
 
@@ -360,6 +380,13 @@ failed:
 		          have_major, have_minor, version);
 		goto failed;
 	}
+	else if (major == 2) {
+		//We require GL_ARB_framebuffer_object extension
+		if (!_rb_gl_check_extension(STRING_CONST("GL_ARB_framebuffer_object"))) {
+			log_infof(HASH_RENDER, STRING_CONST("GL version %d.%d not supported, missing framebuffer extension"), major, minor);
+			supported = false;
+		}
+	}
 
 failed:
 
@@ -403,9 +430,10 @@ _rb_gl_check_context(unsigned int major, unsigned int minor) {
 }
 
 bool
-_rb_gl_check_extension(const char* name) {
-	FOUNDATION_UNUSED(name);
-	return false;
+_rb_gl_check_extension(const char* name, size_t length) {
+	const char* ext = (const char*)glGetString(GL_EXTENSIONS);
+	size_t extlength = string_length(ext);
+	return string_find_string(ext, extlength, name, length, 0) != STRING_NPOS;
 }
 
 static bool
@@ -1102,6 +1130,8 @@ _rb_gl4_render(render_backend_gl4_t* backend, render_context_t* context,
 static void
 _rb_gl4_dispatch(render_backend_t* backend, render_context_t** contexts, size_t num_contexts) {
 	render_backend_gl4_t* backend_gl4 = (render_backend_gl4_t*)backend;
+
+	//TODO: Set active render target
 
 	for (size_t context_index = 0, context_size = num_contexts; context_index < context_size;
 	        ++context_index) {

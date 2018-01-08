@@ -463,7 +463,9 @@ _rb_gl2_allocate_target(render_backend_t* backend, render_target_t* target) {
 			goto failure;
 		}
 	}
-	glBindBuffer(GL_FRAMEBUFFER, frame_buffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer);
+	if (_rb_gl_check_error("Unable to create render target: Error binding framebuffer"))
+		goto failure;
 
 	glGenTextures(1, &render_texture);
 	if (!render_texture) {
@@ -474,6 +476,8 @@ _rb_gl2_allocate_target(render_backend_t* backend, render_target_t* target) {
 	}
 	glBindTexture(GL_TEXTURE_2D, render_texture);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, target->width, target->height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+	if (_rb_gl_check_error("Unable to create render target: Error setting texture storage dimensions and format"))
+		goto failure;
 
 	glGenRenderbuffers(1, &depth_buffer);
 	if (!depth_buffer) {
@@ -484,9 +488,14 @@ _rb_gl2_allocate_target(render_backend_t* backend, render_target_t* target) {
 	}
 	glBindRenderbuffer(GL_RENDERBUFFER, depth_buffer);
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, target->width, target->height);
+	if (_rb_gl_check_error("Unable to create render target: Error setting depth buffer storage dimensions"))
+		goto failure;
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
 	glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, render_texture, 0);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_buffer);
+	if (_rb_gl_check_error("Unable to create render target: Error setting target attachments"))
+		goto failure;
 
 	glDrawBuffers(1, &draw_buffers);
 
@@ -496,6 +505,8 @@ _rb_gl2_allocate_target(render_backend_t* backend, render_target_t* target) {
 		           STRING_CONST("Unable to create render target: Frame buffer not complete (%d)"), (int)status);
 		goto failure;
 	}
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	target->backend_data[0] = frame_buffer;
 	target->backend_data[1] = render_texture;
@@ -760,6 +771,8 @@ _rb_gl2_render(render_backend_gl2_t* backend, render_context_t* context,
 static void
 _rb_gl2_dispatch(render_backend_t* backend, render_context_t** contexts, size_t num_contexts) {
 	render_backend_gl2_t* backend_gl2 = (render_backend_gl2_t*)backend;
+
+	//TODO: Set active render target
 
 	for (size_t context_index = 0, context_size = num_contexts; context_index < context_size;
 	        ++context_index) {
