@@ -113,6 +113,10 @@ extern PFNGLRENDERBUFFERSTORAGEPROC          glRenderbufferStorage;
 extern PFNGLFRAMEBUFFERTEXTUREPROC           glFramebufferTexture;
 extern PFNGLFRAMEBUFFERRENDERBUFFERPROC      glFramebufferRenderbuffer;
 
+extern PFNGLBINDVERTEXARRAYPROC              glBindVertexArray;
+extern PFNGLDELETEVERTEXARRAYSPROC           glDeleteVertexArrays;
+extern PFNGLGENVERTEXARRAYSPROC              glGenVertexArrays;
+
 #endif
 
 typedef void (*glfn)(void);
@@ -162,3 +166,12 @@ _rb_gl_enumerate_adapters(render_backend_t* backend, unsigned int* store, size_t
 RENDER_EXTERN size_t
 _rb_gl_enumerate_modes(render_backend_t* backend, unsigned int adapter,
                        render_resolution_t* store, size_t capacity);
+
+RENDER_EXTERN bool
+_rb_gl_allocate_target(render_backend_t* backend, render_target_t* target);
+
+RENDER_EXTERN void
+_rb_gl_deallocate_target(render_backend_t* backend, render_target_t* target);
+
+RENDER_EXTERN bool
+_rb_gl_activate_target(render_backend_t* backend, render_target_t* target);

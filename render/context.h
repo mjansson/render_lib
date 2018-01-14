@@ -30,12 +30,6 @@ render_context_allocate(size_t commmandsize);
 RENDER_API void
 render_context_deallocate(render_context_t* context);
 
-RENDER_API object_t
-render_context_target(render_context_t* context);
-
-RENDER_API void
-render_context_set_target(render_context_t* context, object_t target);
-
 RENDER_API render_command_t*
 render_context_reserve(render_context_t* context, uint64_t sort);
 

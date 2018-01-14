@@ -123,11 +123,11 @@ render_backend_allocate(render_api_t api, bool allow_fallback) {
 			break;
 
 		case RENDERAPI_OPENGL4:
-			/*backend = render_backend_gl4_allocate();
+			backend = render_backend_gl4_allocate();
 			if (!backend || !backend->vtable.construct(backend)) {
 				log_info(HASH_RENDER, STRING_CONST("Failed to initialize OpenGL 4 render backend"));
 				render_backend_deallocate(backend), backend = 0;
-			}*/
+			}
 			break;
 
 		case RENDERAPI_DIRECTX10:
@@ -255,15 +255,15 @@ render_backend_set_format(render_backend_t* backend, const pixelformat_t format,
 	backend->colorspace  = space;
 }
 
-void
+bool
 render_backend_set_drawable(render_backend_t* backend, render_drawable_t* drawable) {
 	render_target_t* framebuffer_target;
 	render_drawable_t* old = backend->drawable;
 	if (old == drawable)
-		return;
+		return true;
 
 	if (!backend->vtable.set_drawable(backend, drawable))
-		return;
+		return false;
 
 	backend->drawable = drawable;
 	if (old)
@@ -278,6 +278,8 @@ render_backend_set_drawable(render_backend_t* backend, render_drawable_t* drawab
 	}
 
 	set_thread_backend(backend);
+
+	return true;
 }
 
 render_drawable_t*
@@ -291,9 +293,13 @@ render_backend_target_framebuffer(render_backend_t* backend) {
 }
 
 void
-render_backend_dispatch(render_backend_t* backend, render_context_t** contexts,
+render_backend_dispatch(render_backend_t* backend, object_t target, render_context_t** contexts,
                         size_t num_contexts) {
-	backend->vtable.dispatch(backend, contexts, num_contexts);
+	render_target_t* render_target = render_target_lookup(target);
+	if (!render_target)
+		return;
+
+	backend->vtable.dispatch(backend, render_target, contexts, num_contexts);
 
 	for (size_t i = 0; i < num_contexts; ++i)
 		atomic_store32(&contexts[i]->reserved, 0, memory_order_release);

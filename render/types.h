@@ -271,7 +271,8 @@ typedef struct render_vertex_decl_element_t render_vertex_decl_element_t;
 typedef struct render_parameter_t render_parameter_t;
 typedef struct render_parameterbuffer_t render_parameterbuffer_t;
 typedef struct render_statebuffer_t render_statebuffer_t;
-typedef struct render_postprocess_t render_postprocess_t;
+typedef struct render_pipeline_t render_pipeline_t;
+typedef struct render_pipeline_step_t render_pipeline_step_t;
 typedef struct render_config_t render_config_t;
 
 typedef bool (* render_backend_construct_fn)(render_backend_t*);
@@ -281,7 +282,7 @@ typedef size_t (* render_backend_enumerate_modes_fn)(render_backend_t*, unsigned
 typedef void (* render_backend_enable_thread_fn)(render_backend_t*);
 typedef void (* render_backend_disable_thread_fn)(render_backend_t*);
 typedef bool (* render_backend_set_drawable_fn)(render_backend_t*, render_drawable_t*);
-typedef void (* render_backend_dispatch_fn)(render_backend_t*, render_context_t**, size_t);
+typedef void (* render_backend_dispatch_fn)(render_backend_t*, render_target_t*, render_context_t**, size_t);
 typedef void (* render_backend_flip_fn)(render_backend_t*);
 typedef void* (* render_backend_allocate_buffer_fn)(render_backend_t*, render_buffer_t*);
 typedef void (* render_backend_deallocate_buffer_fn)(render_backend_t*, render_buffer_t*, bool,
@@ -296,6 +297,7 @@ typedef void (* render_backend_link_buffer_fn)(render_backend_t*, render_buffer_
                                                render_program_t* program);
 typedef bool (* render_backend_allocate_target_fn)(render_backend_t*, render_target_t*);
 typedef void (* render_backend_deallocate_target_fn)(render_backend_t*, render_target_t*);
+typedef void (* render_pipeline_execute_fn)(render_backend_t*, object_t target, render_context_t**, size_t);
 
 struct render_config_t {
 	/*! Maximum number of concurrently allocated render targets */
@@ -397,8 +399,6 @@ struct render_target_t {
 struct render_context_t {
 	atomic32_t        reserved;
 	int32_t           allocated;
-
-	object_t          target;
 
 	atomic64_t        key;
 
@@ -558,11 +558,15 @@ FOUNDATION_ALIGNED_STRUCT(render_program_t, 8) {
 	render_parameter_t inline_parameters[FOUNDATION_FLEXIBLE_ARRAY];
 };
 
-struct render_postprocess_t {
-	object_t source[8];
+struct render_pipeline_step_t {
 	object_t target;
-	render_program_t* program;
-	object_t parameterbuffer;
+	render_pipeline_execute_fn executor;
+	render_context_t** contexts;
+};
+
+struct render_pipeline_t {
+	render_backend_t* backend;
+	render_pipeline_step_t* steps;
 };
 
 struct render_resolution_t {

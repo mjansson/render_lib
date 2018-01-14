@@ -44,7 +44,7 @@ RENDER_API void
 render_backend_set_format(render_backend_t* backend, const pixelformat_t format,
                           const colorspace_t space);
 
-RENDER_API void
+RENDER_API bool
 render_backend_set_drawable(render_backend_t* backend, render_drawable_t* drawable);
 
 RENDER_API render_drawable_t*
@@ -54,8 +54,8 @@ RENDER_API object_t
 render_backend_target_framebuffer(render_backend_t* backend);
 
 RENDER_API void
-render_backend_dispatch(render_backend_t* backend, render_context_t** contexts,
-                        size_t num_contexts);
+render_backend_dispatch(render_backend_t* backend, object_t target,
+                        render_context_t** contexts, size_t num_contexts);
 
 RENDER_API void
 render_backend_flip(render_backend_t* backend);

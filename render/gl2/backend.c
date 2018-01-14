@@ -442,101 +442,6 @@ _rb_gl2_deallocate_program(render_backend_t* backend, render_program_t* program)
 	program->backend_data[0] = 0;
 }
 
-static bool
-_rb_gl2_allocate_target(render_backend_t* backend, render_target_t* target) {
-	if (!target->width || !target->height)
-		return false;
-
-	GLuint frame_buffer = 0;
-	GLuint depth_buffer = 0;
-	GLuint render_texture = 0;
-	GLenum draw_buffers = GL_COLOR_ATTACHMENT0;
-	GLenum status;
-
-	memset(target->backend_data, 0, sizeof(target->backend_data));
-
-	glGenFramebuffers(1, &frame_buffer);
-	if (!frame_buffer) {
-		if (!_rb_gl_check_error("Unable to create render target: Error creating frame buffer")) {
-			log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
-			           STRING_CONST("Unable to create render target: Error creating frame buffer (no error)"));
-			goto failure;
-		}
-	}
-	glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer);
-	if (_rb_gl_check_error("Unable to create render target: Error binding framebuffer"))
-		goto failure;
-
-	glGenTextures(1, &render_texture);
-	if (!render_texture) {
-		if (!_rb_gl_check_error("Unable to create render target: Error creating texture"))
-			log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
-			           STRING_CONST("Unable to create render target: Error creating texture (no error)"));
-		goto failure;
-	}
-	glBindTexture(GL_TEXTURE_2D, render_texture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, target->width, target->height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
-	if (_rb_gl_check_error("Unable to create render target: Error setting texture storage dimensions and format"))
-		goto failure;
-
-	glGenRenderbuffers(1, &depth_buffer);
-	if (!depth_buffer) {
-		if (!_rb_gl_check_error("Unable to create render target: Error creating depth buffer"))
-			log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
-			           STRING_CONST("Unable to create render target: Error creating depth buffer (no error)"));
-		goto failure;
-	}
-	glBindRenderbuffer(GL_RENDERBUFFER, depth_buffer);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, target->width, target->height);
-	if (_rb_gl_check_error("Unable to create render target: Error setting depth buffer storage dimensions"))
-		goto failure;
-	glBindRenderbuffer(GL_RENDERBUFFER, 0);
-
-	glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, render_texture, 0);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_buffer);
-	if (_rb_gl_check_error("Unable to create render target: Error setting target attachments"))
-		goto failure;
-
-	glDrawBuffers(1, &draw_buffers);
-
-	status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-	if (status != GL_FRAMEBUFFER_COMPLETE) {
-		log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
-		           STRING_CONST("Unable to create render target: Frame buffer not complete (%d)"), (int)status);
-		goto failure;
-	}
-
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-	target->backend_data[0] = frame_buffer;
-	target->backend_data[1] = render_texture;
-	target->backend_data[2] = depth_buffer;
-
-	return true;
-
-failure:
-
-	if (render_texture)
-		glDeleteTextures(1, &render_texture);
-	if (depth_buffer)
-		glDeleteRenderbuffers(1, &depth_buffer);
-	if (frame_buffer)
-		glDeleteFramebuffers(1, &frame_buffer);
-
-	return false;
-}
-
-static void
-_rb_gl2_deallocate_target(render_backend_t* backend, render_target_t* target) {
-	if (target->backend_data[2])
-		glDeleteTextures(1, (const GLuint*)&target->backend_data[2]);
-	if (target->backend_data[1])
-		glDeleteRenderbuffers(1, (const GLuint*)&target->backend_data[1]);
-	if (target->backend_data[0])
-		glDeleteFramebuffers(1, (const GLuint*)&target->backend_data[0]);
-	memset(target->backend_data, 0, sizeof(target->backend_data));
-}
-
 #if 0
 static render_parameter_block_t* _rb_gl2_allocate_parameter_block(render_backend_t* backend,
         const render_parameter_t* parameters, unsigned int num) {
@@ -626,11 +531,8 @@ _rb_gl2_clear(render_backend_gl2_t* backend, render_context_t* context, render_c
 }
 
 static void
-_rb_gl2_viewport(render_backend_gl2_t* backend, render_context_t* context,
-                 render_command_t* command) {
-	int target_width = render_target_width(context->target);
-	int target_height = render_target_height(context->target);
-
+_rb_gl2_viewport(render_backend_gl2_t* backend, render_target_t* target, 
+                 render_context_t* context, render_command_t* command) {
 	GLint x = command->data.viewport.x;
 	GLint y = command->data.viewport.y;
 	GLsizei w = command->data.viewport.width;
@@ -639,7 +541,7 @@ _rb_gl2_viewport(render_backend_gl2_t* backend, render_context_t* context,
 	glViewport(x, y, w, h);
 	glScissor(x, y, w, h);
 
-	backend->use_clear_scissor = (x || y || (w != target_width) || (h != target_height));
+	backend->use_clear_scissor = (x || y || (w != target->width) || (h != target->height));
 }
 
 static const GLint        _rb_gl2_vertex_format_size[VERTEXFORMAT_NUMTYPES] = { 1,        2,        3,        4,        4,                4,                1,        2,        4,        1,        2,        4        };
@@ -665,6 +567,7 @@ _rb_gl2_set_default_state(void) {
 static void
 _rb_gl2_set_state(render_state_t* state) {
 	FOUNDATION_UNUSED(state);
+	_rb_gl2_set_default_state();
 }
 
 static void
@@ -769,10 +672,11 @@ _rb_gl2_render(render_backend_gl2_t* backend, render_context_t* context,
 }
 
 static void
-_rb_gl2_dispatch(render_backend_t* backend, render_context_t** contexts, size_t num_contexts) {
+_rb_gl2_dispatch(render_backend_t* backend, render_target_t* target, render_context_t** contexts, size_t num_contexts) {
 	render_backend_gl2_t* backend_gl2 = (render_backend_gl2_t*)backend;
 
-	//TODO: Set active render target
+	if (!_rb_gl_activate_target(backend, target))
+		return;
 
 	for (size_t context_index = 0, context_size = num_contexts; context_index < context_size;
 	        ++context_index) {
@@ -789,7 +693,7 @@ _rb_gl2_dispatch(render_backend_t* backend, render_context_t** contexts, size_t 
 				break;
 
 			case RENDERCOMMAND_VIEWPORT:
-				_rb_gl2_viewport(backend_gl2, context, command);
+				_rb_gl2_viewport(backend_gl2, target, context, command);
 				break;
 
 			case RENDERCOMMAND_RENDER_TRIANGLELIST:
@@ -852,8 +756,8 @@ static render_backend_vtable_t _render_backend_vtable_gl2 = {
 	.deallocate_buffer = _rb_gl2_deallocate_buffer,
 	.deallocate_shader = _rb_gl2_deallocate_shader,
 	.deallocate_program = _rb_gl2_deallocate_program,
-	.allocate_target = _rb_gl2_allocate_target,
-	.deallocate_target = _rb_gl2_deallocate_target,
+	.allocate_target = _rb_gl_allocate_target,
+	.deallocate_target = _rb_gl_deallocate_target,
 	/*
 	.allocate_texture = _rb_gl2_allocate_texture,
 	.upload_texture = _rb_gl2_upload_texture,

@@ -34,7 +34,7 @@
 #include <render/vertexbuffer.h>
 #include <render/parameter.h>
 #include <render/shader.h>
-#include <render/postprocess.h>
+#include <render/pipeline.h>
 #include <render/program.h>
 #include <render/state.h>
 

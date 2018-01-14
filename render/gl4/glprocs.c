@@ -140,6 +140,10 @@ PFNGLRENDERBUFFERSTORAGEPROC          glRenderbufferStorage = 0;
 PFNGLFRAMEBUFFERTEXTUREPROC           glFramebufferTexture = 0;
 PFNGLFRAMEBUFFERRENDERBUFFERPROC      glFramebufferRenderbuffer = 0;
 
+PFNGLBINDVERTEXARRAYPROC              glBindVertexArray = 0;
+PFNGLDELETEVERTEXARRAYSPROC           glDeleteVertexArrays = 0;
+PFNGLGENVERTEXARRAYSPROC              glGenVertexArrays = 0;
+
 #endif
 
 bool
@@ -310,6 +314,20 @@ _rb_gl_get_framebuffer_procs(void) {
 }
 
 bool
+_rb_gl_get_arrays_procs(void) {
+#if !FOUNDATION_PLATFORM_MACOS
+	glBindVertexArray = (PFNGLBINDVERTEXARRAYPROC)_rb_gl_get_proc_address("glBindVertexArray");
+	glDeleteVertexArrays = (PFNGLDELETEVERTEXARRAYSPROC)_rb_gl_get_proc_address("glDeleteVertexArrays");
+	glGenVertexArrays = (PFNGLGENVERTEXARRAYSPROC)_rb_gl_get_proc_address("glGenVertexArrays");
+	if (!glBindVertexArray || !glDeleteVertexArrays || !glGenVertexArrays) {
+		log_error(HASH_RENDER, ERROR_UNSUPPORTED, STRING_CONST("Unable to get GL procs for vertex arrays"));
+		return false;
+	}
+#endif
+	return true;
+}
+
+bool
 _rb_gl_get_standard_procs(unsigned int major, unsigned int minor) {
 	if ((major > 1) || ((major == 1) && (minor >= 4))) {
 		if (!_rb_gl_get_texture_procs())
@@ -323,6 +341,10 @@ _rb_gl_get_standard_procs(unsigned int major, unsigned int minor) {
 		if (!_rb_gl_get_shader_procs())
 			return false;
 		if (!_rb_gl_get_framebuffer_procs())
+			return false;
+	}
+	if (major >= 4) {
+		if (!_rb_gl_get_arrays_procs())
 			return false;
 	}
 	return true;

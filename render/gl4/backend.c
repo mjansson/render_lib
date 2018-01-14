@@ -720,12 +720,23 @@ _rb_gl4_deallocate_buffer(render_backend_t* backend, render_buffer_t* buffer, bo
 	if (sys)
 		memory_deallocate(buffer->store);
 
-	if (aux && buffer->backend_data[0]) {
-		GLuint buffer_object = (GLuint)buffer->backend_data[0];
-		glDeleteBuffers(1, &buffer_object);
-		buffer->backend_data[0] = 0;
+	if (aux) {
+		if (buffer->backend_data[0]) {
+			GLuint buffer_object = (GLuint)buffer->backend_data[0];
+			glDeleteBuffers(1, &buffer_object);
+			buffer->backend_data[0] = 0;
+		}
+		if (buffer->backend_data[1]) {
+			GLuint vertex_array = (GLuint)buffer->backend_data[1];
+			glDeleteVertexArrays(1, &vertex_array);
+			buffer->backend_data[1] = 0;
+		}
 	}
 }
+
+static const GLint        _rb_gl4_vertex_format_size[VERTEXFORMAT_NUMTYPES] = { 1,        2,        3,        4,        4,                4,                1,        2,        4,        1,        2,        4        };
+static const GLenum       _rb_gl4_vertex_format_type[VERTEXFORMAT_NUMTYPES] = { GL_FLOAT, GL_FLOAT, GL_FLOAT, GL_FLOAT, GL_UNSIGNED_BYTE, GL_BYTE,          GL_SHORT, GL_SHORT, GL_SHORT, GL_INT,   GL_INT,   GL_INT   };
+static const GLboolean    _rb_gl4_vertex_format_norm[VERTEXFORMAT_NUMTYPES] = { GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE, GL_TRUE,          GL_TRUE,          GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE };
 
 static bool
 _rb_gl4_upload_buffer(render_backend_t* backend, render_buffer_t* buffer) {
@@ -747,7 +758,38 @@ _rb_gl4_upload_buffer(render_backend_t* backend, render_buffer_t* buffer) {
 	if (_rb_gl_check_error("Unable to upload buffer object data"))
 		return false;
 
+	if (buffer->buffertype == RENDERBUFFER_VERTEX) {
+		GLuint vertex_array = (GLuint)buffer->backend_data[1];
+		if (!vertex_array) {
+			glGenVertexArrays(1, &vertex_array);
+			if (_rb_gl_check_error("Unable to create vertex array"))
+				return false;
+			buffer->backend_data[1] = vertex_array;
+		}
+		glBindVertexArray(vertex_array);
+
+		render_vertexbuffer_t* vertexbuffer = (render_vertexbuffer_t*)buffer;
+		const render_vertex_decl_t* decl = &vertexbuffer->decl;
+		for (unsigned int attrib = 0; attrib < VERTEXATTRIBUTE_NUMATTRIBUTES; ++attrib) {
+			const uint8_t format = decl->attribute[attrib].format;
+			if (format < VERTEXFORMAT_NUMTYPES) {
+				glVertexAttribPointer(attrib, _rb_gl4_vertex_format_size[format],
+				                      _rb_gl4_vertex_format_type[format], _rb_gl4_vertex_format_norm[format],
+				                      (GLsizei)vertexbuffer->size,
+				                      (const void*)(uintptr_t)decl->attribute[attrib].offset);
+				_rb_gl_check_error("Error creating vertex array (bind attribute)");
+				glEnableVertexAttribArray(attrib);
+				_rb_gl_check_error("Error creating vertex array (enable attribute)");
+			}
+			else {
+				glDisableVertexAttribArray(attrib);
+			}
+		}
+		_rb_gl_check_error("Error creating vertex array (bind attributes)");
+	}
+
 	buffer->flags &= ~(uint32_t)RENDERBUFFER_DIRTY;
+
 	return true;
 }
 
@@ -918,6 +960,111 @@ _rb_gl4_deallocate_program(render_backend_t* backend, render_program_t* program)
 	program->backend_data[0] = 0;
 }
 
+bool
+_rb_gl_allocate_target(render_backend_t* backend, render_target_t* target) {
+	FOUNDATION_UNUSED(backend);
+	if (!target->width || !target->height)
+		return false;
+
+	GLuint frame_buffer = 0;
+	GLuint depth_buffer = 0;
+	GLuint render_texture = 0;
+	GLenum draw_buffers = GL_COLOR_ATTACHMENT0;
+	GLenum status;
+
+	memset(target->backend_data, 0, sizeof(target->backend_data));
+
+	glGenFramebuffers(1, &frame_buffer);
+	if (!frame_buffer) {
+		if (!_rb_gl_check_error("Unable to create render target: Error creating frame buffer")) {
+			log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
+			           STRING_CONST("Unable to create render target: Error creating frame buffer (no error)"));
+			goto failure;
+		}
+	}
+	glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer);
+	if (_rb_gl_check_error("Unable to create render target: Error binding framebuffer"))
+		goto failure;
+
+	glGenTextures(1, &render_texture);
+	if (!render_texture) {
+		if (!_rb_gl_check_error("Unable to create render target: Error creating texture"))
+			log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
+			           STRING_CONST("Unable to create render target: Error creating texture (no error)"));
+		goto failure;
+	}
+	glBindTexture(GL_TEXTURE_2D, render_texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, target->width, target->height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+	if (_rb_gl_check_error("Unable to create render target: Error setting texture storage dimensions and format"))
+		goto failure;
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	glGenRenderbuffers(1, &depth_buffer);
+	if (!depth_buffer) {
+		if (!_rb_gl_check_error("Unable to create render target: Error creating depth buffer"))
+			log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
+			           STRING_CONST("Unable to create render target: Error creating depth buffer (no error)"));
+		goto failure;
+	}
+	glBindRenderbuffer(GL_RENDERBUFFER, depth_buffer);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, target->width, target->height);
+	if (_rb_gl_check_error("Unable to create render target: Error setting depth buffer storage dimensions"))
+		goto failure;
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+	glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, render_texture, 0);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_buffer);
+	if (_rb_gl_check_error("Unable to create render target: Error setting target attachments"))
+		goto failure;
+
+	glDrawBuffers(1, &draw_buffers);
+
+	status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if (status != GL_FRAMEBUFFER_COMPLETE) {
+		log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
+		           STRING_CONST("Unable to create render target: Frame buffer not complete (%d)"), (int)status);
+		goto failure;
+	}
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	target->backend_data[0] = frame_buffer;
+	target->backend_data[1] = render_texture;
+	target->backend_data[2] = depth_buffer;
+
+	return true;
+
+failure:
+
+	if (render_texture)
+		glDeleteTextures(1, &render_texture);
+	if (depth_buffer)
+		glDeleteRenderbuffers(1, &depth_buffer);
+	if (frame_buffer)
+		glDeleteFramebuffers(1, &frame_buffer);
+
+	return false;
+}
+
+void
+_rb_gl_deallocate_target(render_backend_t* backend, render_target_t* target) {
+	FOUNDATION_UNUSED(backend);
+	if (target->backend_data[2])
+		glDeleteTextures(1, (const GLuint*)&target->backend_data[2]);
+	if (target->backend_data[1])
+		glDeleteRenderbuffers(1, (const GLuint*)&target->backend_data[1]);
+	if (target->backend_data[0])
+		glDeleteFramebuffers(1, (const GLuint*)&target->backend_data[0]);
+	memset(target->backend_data, 0, sizeof(target->backend_data));
+}
+
+bool
+_rb_gl_activate_target(render_backend_t* backend, render_target_t* target) {
+	FOUNDATION_UNUSED(backend);
+	glBindFramebuffer(GL_FRAMEBUFFER, (GLuint)target->backend_data[0]);
+	return true;
+}
+
 #if 0
 
 static void _rb_gl4_upload_texture(render_backend_t* backend, render_texture_t* texture,
@@ -984,11 +1131,8 @@ _rb_gl4_clear(render_backend_gl4_t* backend, render_context_t* context, render_c
 }
 
 static void
-_rb_gl4_viewport(render_backend_gl4_t* backend, render_context_t* context,
-                 render_command_t* command) {
-	int target_width = render_target_width(context->target);
-	int target_height = render_target_height(context->target);
-
+_rb_gl4_viewport(render_backend_gl4_t* backend, render_target_t* target,
+                 render_context_t* context, render_command_t* command) {
 	GLint x = command->data.viewport.x;
 	GLint y = command->data.viewport.y;
 	GLsizei w = command->data.viewport.width;
@@ -997,21 +1141,32 @@ _rb_gl4_viewport(render_backend_gl4_t* backend, render_context_t* context,
 	glViewport(x, y, w, h);
 	glScissor(x, y, w, h);
 
-	backend->use_clear_scissor = (x || y || (w != target_width) || (h != target_height));
+	backend->use_clear_scissor = (x || y || (w != target->width) || (h != target->height));
 
 	_rb_gl_check_error("Error setting viewport");
 }
 
-//static const GLint        _rb_gl4_vertex_format_size[VERTEXFORMAT_NUMTYPES] = { 1,        2,        3,        4,        4,                4,                1,        2,        4,        1,        2,        4        };
-//static const GLenum       _rb_gl4_vertex_format_type[VERTEXFORMAT_NUMTYPES] = { GL_FLOAT, GL_FLOAT, GL_FLOAT, GL_FLOAT, GL_UNSIGNED_BYTE, GL_BYTE,          GL_SHORT, GL_SHORT, GL_SHORT, GL_INT,   GL_INT,   GL_INT   };
-//static const GLboolean    _rb_gl4_vertex_format_norm[VERTEXFORMAT_NUMTYPES] = { GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE, GL_TRUE,          GL_TRUE,          GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE };
-
-//static const GLenum       _rb_gl4_primitive_type[RENDERPRIMITIVE_NUMTYPES] = { GL_TRIANGLES, GL_LINES };
-//static const unsigned int _rb_gl4_primitive_mult[RENDERPRIMITIVE_NUMTYPES] = { 3, 2 };
-//static const unsigned int _rb_gl4_primitive_add[RENDERPRIMITIVE_NUMTYPES]  = { 0, 0 };
+static const GLenum       _rb_gl4_primitive_type[RENDERPRIMITIVE_NUMTYPES] = { GL_TRIANGLES, GL_LINES };
+static const unsigned int _rb_gl4_primitive_mult[RENDERPRIMITIVE_NUMTYPES] = { 3, 2 };
+static const unsigned int _rb_gl4_primitive_add[RENDERPRIMITIVE_NUMTYPES]  = { 0, 0 };
 
 //                                                 BLEND_ZERO, BLEND_ONE, BLEND_SRCCOLOR, BLEND_INVSRCCOLOR,      BLEND_DESTCOLOR, BLEND_INVDESTCOLOR,     BLEND_SRCALPHA, BLEND_INVSRCALPHA,      BLEND_DESTALPHA, BLEND_INVDESTALPHA,     BLEND_FACTOR,      BLEND_INVFACTOR,             BLEND_SRCALPHASAT
-//static const GLenum       _rb_gl4_blend_func[] = { GL_ZERO,    GL_ONE,    GL_SRC_COLOR,   GL_ONE_MINUS_SRC_COLOR, GL_DST_COLOR,    GL_ONE_MINUS_DST_COLOR, GL_SRC_ALPHA,   GL_ONE_MINUS_SRC_ALPHA, GL_DST_ALPHA,    GL_ONE_MINUS_DST_ALPHA, GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA, GL_SRC_ALPHA_SATURATE };
+static const GLenum       _rb_gl4_blend_func[] = { GL_ZERO,    GL_ONE,    GL_SRC_COLOR,   GL_ONE_MINUS_SRC_COLOR, GL_DST_COLOR,    GL_ONE_MINUS_DST_COLOR, GL_SRC_ALPHA,   GL_ONE_MINUS_SRC_ALPHA, GL_DST_ALPHA,    GL_ONE_MINUS_DST_ALPHA, GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA, GL_SRC_ALPHA_SATURATE };
+
+static void
+_rb_gl4_set_default_state(void) {
+	glBlendFunc(GL_ONE, GL_ZERO);
+	glDepthFunc(GL_LEQUAL);
+	glDepthMask(GL_TRUE);
+	glFrontFace(GL_CCW);
+	glEnable(GL_CULL_FACE);
+}
+
+static void
+_rb_gl4_set_state(render_state_t* state) {
+	FOUNDATION_UNUSED(state);
+	_rb_gl4_set_default_state();
+}
 
 static void
 _rb_gl4_render(render_backend_gl4_t* backend, render_context_t* context,
@@ -1033,29 +1188,10 @@ _rb_gl4_render(render_backend_gl4_t* backend, render_context_t* context,
 		_rb_gl4_upload_buffer((render_backend_t*)backend, (render_buffer_t*)indexbuffer);
 	_rb_gl_check_error("Error render primitives (upload buffers)");
 
-#if 0
-	Implement using core gl4
-	//Bind vertex attributes
-	glBindBuffer(GL_ARRAY_BUFFER, (GLuint)vertexbuffer->backend_data[0]);
-	_rb_gl_check_error("Error render primitives (bind vertex buffer)");
-
-	const render_vertex_decl_t* decl = &vertexbuffer->decl;
-	for (unsigned int attrib = 0; attrib < VERTEXATTRIBUTE_NUMATTRIBUTES; ++attrib) {
-		const uint8_t format = decl->attribute[attrib].format;
-		if (format < VERTEXFORMAT_NUMTYPES) {
-			glVertexAttribPointer(attrib, _rb_gl4_vertex_format_size[format],
-			                      _rb_gl4_vertex_format_type[format], _rb_gl4_vertex_format_norm[format],
-			                      (GLsizei)vertexbuffer->size,
-			                      (const void*)(uintptr_t)decl->attribute[attrib].offset);
-			_rb_gl_check_error("Error render primitives (bind attribute)");
-			glEnableVertexAttribArray(attrib);
-			_rb_gl_check_error("Error render primitives (enable attribute)");
-		}
-		else {
-			glDisableVertexAttribArray(attrib);
-		}
-	}
-	_rb_gl_check_error("Error render primitives (bind attributes)");
+	//Bind vertex array
+	GLuint vertex_array = (GLuint)vertexbuffer->backend_data[1];
+	glBindVertexArray(vertex_array);
+	_rb_gl_check_error("Error render primitives (bind vertex array)");
 
 	//Index buffer
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, (GLuint)indexbuffer->backend_data[0]);
@@ -1066,9 +1202,8 @@ _rb_gl4_render(render_backend_gl4_t* backend, render_context_t* context,
 	_rb_gl_check_error("Error render primitives (bind program)");
 
 	// Bind the parameter blocks
-	render_parameter_decl_t* paramdecl = &parameterbuffer->decl;
-	render_parameter_t* param = paramdecl->parameters;
-	for (unsigned int ip = 0; ip < paramdecl->num_parameters; ++ip, ++param) {
+	render_parameter_t* param = parameterbuffer->parameters;
+	for (unsigned int ip = 0; ip < parameterbuffer->num_parameters; ++ip, ++param) {
 		/*if (param->type == RENDERPARAMETER_TEXTURE) {
 			//TODO: Dynamic use of texture units, reusing unit that already have correct texture bound, and least-recently-used evicting old bindings to free a new unit
 			glActiveTexture(GL_TEXTURE0 + param_info->unit);
@@ -1076,7 +1211,8 @@ _rb_gl4_render(render_backend_gl4_t* backend, render_context_t* context,
 
 			object_t object = *(object_t*)pointer_offset(block, param_info->offset);
 			render_texture_gl2_t* texture = object ? pool_lookup(_global_pool_texture, object) : 0;
-			FOUNDATAION_ASSERT_MSGFORMAT(!object || texture, "Parameter block using old/invalid texture 0x%llx", object);
+			NEO_ASSERT_MSGFORMAT(!object ||
+			                     texture, "Parameter block using old/invalid texture 0x%llx", object);
 
 			glBindTexture(GL_TEXTURE_2D, texture ? texture->object : 0);
 
@@ -1090,14 +1226,13 @@ _rb_gl4_render(render_backend_gl4_t* backend, render_context_t* context,
 		else*/ {
 			void* data = pointer_offset(parameterbuffer->store, param->offset);
 			if (param->type == RENDERPARAMETER_FLOAT4)
-				glUniform4fv(param->location, param->dim, data);
+				glUniform4fv((GLint)param->location, param->dim, data);
 			else if (param->type == RENDERPARAMETER_INT4)
-				glUniform4iv(param->location, param->dim, data);
+				glUniform4iv((GLint)param->location, param->dim, data);
 			else if (param->type == RENDERPARAMETER_MATRIX)
-				glUniformMatrix4fv(param->location, param->dim, GL_TRUE, data);
+				glUniformMatrix4fv((GLint)param->location, param->dim, GL_TRUE, data);
 		}
 	}
-	_rb_gl_check_error("Error render primitives (bind uniforms)");
 
 	//TODO: Proper states
 	/*ID3D10Device_RSSetState( device, backend_dx10->rasterizer_state[0].state );
@@ -1106,32 +1241,33 @@ _rb_gl4_render(render_backend_gl4_t* backend, render_context_t* context,
 	ID3D10Device_OMSetBlendState( device, backend_dx10->blend_state[ ( command->data.render.blend_state >> 48ULL ) & 0xFFFFULL ].state, blend_factors, 0xFFFFFFFF );
 	ID3D10Device_OMSetDepthStencilState( device, backend_dx10->depthstencil_state[0].state, 0xFFFFFFFF );*/
 
-	if (command->data.render.blend_state) {
-		unsigned int source_color = (unsigned int)(command->data.render.blend_state & 0xFULL);
-		unsigned int dest_color = (unsigned int)((command->data.render.blend_state >> 4ULL) & 0xFULL);
-
-		glBlendFunc(_rb_gl4_blend_func[source_color], _rb_gl4_blend_func[dest_color]);
+	if (command->data.render.statebuffer) {
+		//Set state from buffer
+		render_statebuffer_t* buffer = GET_BUFFER(command->data.render.statebuffer);
+		_rb_gl4_set_state(&buffer->state);
 	}
 	else {
-		glBlendFunc(GL_ONE, GL_ZERO);
+		//Set default state
+		_rb_gl4_set_default_state();
 	}
 
 	unsigned int primitive = command->type - RENDERCOMMAND_RENDER_TRIANGLELIST;
 	unsigned int num = command->count;
 	unsigned int pnum = _rb_gl4_primitive_mult[primitive] * num + _rb_gl4_primitive_add[primitive];
 
-	glDrawElements(_rb_gl4_primitive_type[primitive], pnum,
+	glDrawElements(_rb_gl4_primitive_type[primitive], (GLsizei)pnum,
 	               (indexbuffer->size == 2) ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT, 0);
 
 	_rb_gl_check_error("Error render primitives");
-#endif
 }
 
 static void
-_rb_gl4_dispatch(render_backend_t* backend, render_context_t** contexts, size_t num_contexts) {
+_rb_gl4_dispatch(render_backend_t* backend, render_target_t* target,
+                 render_context_t** contexts, size_t num_contexts) {
 	render_backend_gl4_t* backend_gl4 = (render_backend_gl4_t*)backend;
 
-	//TODO: Set active render target
+	if (!_rb_gl_activate_target(backend, target))
+		return;
 
 	for (size_t context_index = 0, context_size = num_contexts; context_index < context_size;
 	        ++context_index) {
@@ -1148,7 +1284,7 @@ _rb_gl4_dispatch(render_backend_t* backend, render_context_t** contexts, size_t 
 				break;
 
 			case RENDERCOMMAND_VIEWPORT:
-				_rb_gl4_viewport(backend_gl4, context, command);
+				_rb_gl4_viewport(backend_gl4, target, context, command);
 				break;
 
 			case RENDERCOMMAND_RENDER_TRIANGLELIST:
@@ -1209,6 +1345,8 @@ static render_backend_vtable_t _render_backend_vtable_gl4 = {
 	.deallocate_buffer = _rb_gl4_deallocate_buffer,
 	.deallocate_shader = _rb_gl4_deallocate_shader,
 	.deallocate_program = _rb_gl4_deallocate_program,
+	.allocate_target = _rb_gl_allocate_target,
+	.deallocate_target = _rb_gl_deallocate_target,
 	/*
 	.allocate_texture = _rb_gl4_allocate_texture,
 	.upload_texture = _rb_gl4_upload_texture,
