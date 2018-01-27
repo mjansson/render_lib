@@ -181,7 +181,6 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 	resource_platform_t platform_decl;
 	render_backend_t* backend = 0;
 	window_t window;
-	render_drawable_t* drawable = 0;
 	hash_t resource_type_hash;
 
 	resource_type_hash = hash(type, type_length);
@@ -252,11 +251,11 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 		window_initialize(&window, nullptr);
 #endif
 
-		drawable = render_drawable_allocate();
-		render_drawable_set_window(drawable, &window, 0);
+		render_drawable_t drawable;
+		render_drawable_initialize_window(&drawable, &window, 0);
 
 		render_backend_set_format(backend, PIXELFORMAT_R8G8B8X8, COLORSPACE_LINEAR);
-		render_backend_set_drawable(backend, drawable);
+		render_backend_set_drawable(backend, &drawable);
 
 		if ((platform_decl.render_api >= RENDERAPI_OPENGL) &&
 		        (platform_decl.render_api <= RENDERAPI_OPENGL4)) {
@@ -310,7 +309,7 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 		}
 
 		render_backend_deallocate(backend);
-		render_drawable_deallocate(drawable);
+		render_drawable_finalize(&drawable);
 		window_finalize(&window);
 
 		if (compiled_size <= 0) {
@@ -643,7 +642,6 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 	resource_platform_t platform_decl;
 	render_backend_t* backend = 0;
 	window_t window;
-	render_drawable_t* drawable = 0;
 
 	resource_type_hash = hash(type, type_length);
 
@@ -805,11 +803,11 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 		window_initialize(&window, nullptr);
 #endif
 
-		drawable = render_drawable_allocate();
-		render_drawable_set_window(drawable, &window, 0);
+		render_drawable_t drawable;
+		render_drawable_initialize_window(&drawable, &window, 0);
 
 		render_backend_set_format(backend, PIXELFORMAT_R8G8B8X8, COLORSPACE_LINEAR);
-		render_backend_set_drawable(backend, drawable);
+		render_backend_set_drawable(backend, &drawable);
 
 		resource_change_t* shaderchange = resource_source_get(source, HASH_VERTEXSHADER, subplatform);
 		vertexshader = string_to_uuid(STRING_ARGS(shaderchange->value.value));
@@ -853,7 +851,7 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 		}
 
 		render_backend_deallocate(backend);
-		render_drawable_deallocate(drawable);
+		render_drawable_finalize(&drawable);
 		window_finalize(&window);
 	}
 

@@ -20,20 +20,9 @@
 #include <render/render.h>
 #include <render/internal.h>
 
-#define GET_BUFFER(id) objectmap_lookup(_render_map_buffer, (id))
-
-object_t
-render_vertexbuffer_create(render_backend_t* backend, render_usage_t usage, size_t vertices,
-                           const render_vertex_decl_t* decl, const void* data) {
-	object_t id = objectmap_reserve(_render_map_buffer);
-	if (!id) {
-		log_error(HASH_RENDER, ERROR_OUT_OF_MEMORY,
-		          STRING_CONST("Unable to allocate vertex buffer, out of slots in object map"));
-		return 0;
-	}
-
-	memory_context_push(HASH_RENDER);
-
+render_vertexbuffer_t*
+render_vertexbuffer_allocate(render_backend_t* backend, render_usage_t usage, size_t vertices,
+                             const render_vertex_decl_t* decl, const void* data) {
 	render_vertexbuffer_t* buffer = memory_allocate(HASH_RENDER, sizeof(render_vertexbuffer_t), 0,
 	                                                MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 	buffer->backend    = backend;
@@ -43,7 +32,6 @@ render_vertexbuffer_create(render_backend_t* backend, render_usage_t usage, size
 	buffer->size       = decl->size;
 	semaphore_initialize(&buffer->lock, 1);
 	memcpy(&buffer->decl, decl, sizeof(render_vertex_decl_t));
-	objectmap_set(_render_map_buffer, id, buffer);
 
 	if (vertices) {
 		buffer->allocated = vertices;
@@ -55,115 +43,44 @@ render_vertexbuffer_create(render_backend_t* backend, render_usage_t usage, size
 		}
 	}
 
-	memory_context_pop();
-
-	return id;
-}
-
-render_vertexbuffer_t*
-render_vertexbuffer_acquire(object_t id) {
-	return (render_vertexbuffer_t*)render_buffer_acquire(id);
+	return buffer;
 }
 
 void
-render_vertexbuffer_release(object_t id) {
-	render_buffer_release(id);
-}
-
-render_usage_t
-render_vertexbuffer_usage(object_t id) {
-	render_vertexbuffer_t* buffer = GET_BUFFER(id);
-	return buffer ? (render_usage_t)buffer->usage : RENDERUSAGE_INVALID;
-}
-
-const render_vertex_decl_t*
-render_vertexbuffer_decl(object_t id) {
-	render_vertexbuffer_t* buffer = GET_BUFFER(id);
-	return buffer ? &buffer->decl : 0;
-}
-
-size_t
-render_vertexbuffer_num_allocated(object_t id) {
-	render_vertexbuffer_t* buffer = GET_BUFFER(id);
-	return buffer ? buffer->allocated : 0;
-}
-
-size_t
-render_vertexbuffer_num_elements(object_t id) {
-	render_vertexbuffer_t* buffer = GET_BUFFER(id);
-	return buffer ? buffer->used : 0;
-}
-
-void render_vertexbuffer_set_num_elements(object_t id, size_t num) {
-	render_vertexbuffer_t* buffer = GET_BUFFER(id);
-	if (buffer) {
-		buffer->used = (buffer->allocated < num) ? buffer->allocated : num;
-		buffer->flags |= RENDERBUFFER_DIRTY;
-	}
+render_vertexbuffer_deallocate(render_vertexbuffer_t* buffer) {
+	render_buffer_deallocate((render_buffer_t*)buffer);
 }
 
 void
-render_vertexbuffer_lock(object_t id, unsigned int lock) {
-	render_buffer_lock(id, lock);
+render_vertexbuffer_lock(render_vertexbuffer_t* buffer, unsigned int lock) {
+	render_buffer_lock((render_buffer_t*)buffer, lock);
 }
 
 void
-render_vertexbuffer_unlock(object_t id) {
-	render_buffer_unlock(id);
-}
-
-render_buffer_uploadpolicy_t
-render_vertexbuffer_upload_policy(object_t id) {
-	render_vertexbuffer_t* buffer = GET_BUFFER(id);
-	return buffer ? (render_buffer_uploadpolicy_t)buffer->policy : RENDERBUFFER_UPLOAD_ONDISPATCH;
+render_vertexbuffer_unlock(render_vertexbuffer_t* buffer) {
+	render_buffer_unlock((render_buffer_t*)buffer);
 }
 
 void
-render_vertexbuffer_set_upload_policy(object_t id, render_buffer_uploadpolicy_t policy) {
-	render_vertexbuffer_t* buffer = GET_BUFFER(id);
-	if (buffer)
-		buffer->policy = policy;
+render_vertexbuffer_upload(render_vertexbuffer_t* buffer) {
+	render_buffer_upload((render_buffer_t*)buffer);
 }
 
 void
-render_vertexbuffer_upload(object_t id) {
-	render_buffer_t* buffer = GET_BUFFER(id);
-	if (buffer)
-		render_buffer_upload(buffer);
-}
-
-void*
-render_vertexbuffer_element(object_t id, size_t element) {
-	render_vertexbuffer_t* buffer = GET_BUFFER(id);
-	return pointer_offset(buffer->access, buffer->size * element);
-}
-
-size_t
-render_vertexbuffer_element_size(object_t id) {
-	render_vertexbuffer_t* buffer = GET_BUFFER(id);
-	return buffer ? buffer->size : 0;
+render_vertexbuffer_free(render_vertexbuffer_t* buffer, bool sys, bool aux) {
+	buffer->backend->vtable.deallocate_buffer(buffer->backend, (render_buffer_t*)buffer, sys, aux);
 }
 
 void
-render_vertexbuffer_free(object_t id, bool sys, bool aux) {
-	render_vertexbuffer_t* buffer = GET_BUFFER(id);
-	if (buffer)
-		buffer->backend->vtable.deallocate_buffer(buffer->backend, (render_buffer_t*)buffer, sys, aux);
-}
+render_vertexbuffer_restore(render_vertexbuffer_t* buffer) {
+	buffer->backend->vtable.allocate_buffer(buffer->backend, (render_buffer_t*)buffer);
 
-void
-render_vertexbuffer_restore(object_t id) {
-	render_vertexbuffer_t* buffer = GET_BUFFER(id);
-	if (buffer) {
-		buffer->backend->vtable.allocate_buffer(buffer->backend, (render_buffer_t*)buffer);
+	//...
+	//All loadable resources should have a stream identifier, an offset and a size
+	//to be able to repoen the stream and read the raw buffer back
+	//...
 
-		//...
-		//All loadable resources should have a stream identifier, an offset and a size
-		//to be able to repoen the stream and read the raw buffer back
-		//...
-
-		buffer->flags |= RENDERBUFFER_DIRTY;
-	}
+	buffer->flags |= RENDERBUFFER_DIRTY;
 }
 
 static const uint16_t _vertex_format_size[ VERTEXFORMAT_UNKNOWN + 1 ] = {

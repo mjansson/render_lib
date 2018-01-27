@@ -27,8 +27,6 @@
 
 #include <render/gl4/glwrap.h>
 
-#define GET_BUFFER(id) objectmap_lookup(_render_map_buffer, (id))
-
 #if RENDER_ENABLE_NVGLEXPERT
 #  include <nvapi.h>
 
@@ -87,25 +85,21 @@ _rb_gl2_destruct(render_backend_t* backend) {
 	if (backend_gl2->thread_hglrc) {
 		void* hglrc = TlsGetValue(backend_gl2->thread_hglrc);
 		if (hglrc && (hglrc != backend_gl2->context))
-			_rb_gl_destroy_context(backend_gl2->drawable, hglrc);
+			_rb_gl_destroy_context(&backend_gl2->drawable, hglrc);
 		TlsFree(backend_gl2->thread_hglrc);
 		backend_gl2->thread_hglrc = 0;
 	}
 #endif
 
 	if (backend_gl2->context)
-		_rb_gl_destroy_context(backend_gl2->drawable, backend_gl2->context);
+		_rb_gl_destroy_context(&backend_gl2->drawable, backend_gl2->context);
 	backend_gl2->context = 0;
 
 	log_debug(HASH_RENDER, STRING_CONST("Destructed GL2 render backend"));
 }
 
 static bool
-_rb_gl2_set_drawable(render_backend_t* backend, render_drawable_t* drawable) {
-	if (!FOUNDATION_VALIDATE_MSG(drawable->type != RENDERDRAWABLE_OFFSCREEN,
-	                             "Offscreen drawable not implemented"))
-		return error_report(ERRORLEVEL_ERROR, ERROR_NOT_IMPLEMENTED);
-
+_rb_gl2_set_drawable(render_backend_t* backend, const render_drawable_t* drawable) {
 	render_backend_gl2_t* backend_gl2 = (render_backend_gl2_t*)backend;
 	if (!FOUNDATION_VALIDATE_MSG(!backend_gl2->context, "Drawable switching not supported yet"))
 		return error_report(ERRORLEVEL_ERROR, ERROR_NOT_IMPLEMENTED);
@@ -117,7 +111,6 @@ _rb_gl2_set_drawable(render_backend_t* backend, render_drawable_t* drawable) {
 	}
 
 #if FOUNDATION_PLATFORM_WINDOWS
-	backend_gl2->hdc = (HDC)drawable->hdc;
 	TlsSetValue(backend_gl2->thread_hglrc, backend_gl2->context);
 #endif
 
@@ -169,7 +162,7 @@ _rb_gl2_set_drawable(render_backend_t* backend, render_drawable_t* drawable) {
 	glReadBuffer(GL_BACK);
 	glDrawBuffer(GL_BACK);
 
-	glViewport(0, 0, render_drawable_width(drawable), render_drawable_height(drawable));
+	glViewport(0, 0, drawable->width, drawable->height);
 
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
@@ -189,17 +182,17 @@ _rb_gl2_enable_thread(render_backend_t* backend) {
 #if FOUNDATION_PLATFORM_WINDOWS
 	void* thread_context = TlsGetValue(backend_gl2->thread_hglrc);
 	if (!thread_context) {
-		thread_context = _rb_gl_create_context(backend->drawable, 2, 0, backend_gl2->context);
+		thread_context = _rb_gl_create_context(&backend->drawable, 2, 0, backend_gl2->context);
 		TlsSetValue(backend_gl2->thread_hglrc, thread_context);
 	}
-	if (!wglMakeCurrent((HDC)backend->drawable->hdc, (HGLRC)thread_context)) {
+	if (!wglMakeCurrent((HDC)backend->drawable.hdc, (HGLRC)thread_context)) {
 		string_const_t errmsg = system_error_message(0);
 		log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
 		           STRING_CONST("Unable to enable thread for GL2 rendering: %.*s"),
 		           STRING_FORMAT(errmsg));
 	}
 #elif FOUNDATION_PLATFORM_LINUX
-	glXMakeCurrent(backend->drawable->display, (GLXDrawable)backend->drawable->drawable,
+	glXMakeCurrent(backend->drawable.display, (GLXDrawable)backend->drawable.drawable,
 	               backend_gl2->context);
 	_rb_gl_check_error("Unable to enable thread for rendering");
 #elif FOUNDATION_PLATFORM_MACOS
@@ -216,7 +209,7 @@ _rb_gl2_disable_thread(render_backend_t* backend) {
 	render_backend_gl2_t* backend_gl2 = (render_backend_gl2_t*)backend;
 	void* thread_context = TlsGetValue(backend_gl2->thread_hglrc);
 	if (thread_context && (thread_context != backend_gl2->context)) {
-		_rb_gl_destroy_context(backend_gl2->drawable, thread_context);
+		_rb_gl_destroy_context(&backend_gl2->drawable, thread_context);
 		TlsSetValue(backend_gl2->thread_hglrc, 0);
 	}
 #else
@@ -573,9 +566,9 @@ _rb_gl2_set_state(render_state_t* state) {
 static void
 _rb_gl2_render(render_backend_gl2_t* backend, render_context_t* context,
                render_command_t* command) {
-	render_vertexbuffer_t* vertexbuffer = GET_BUFFER(command->data.render.vertexbuffer);
-	render_indexbuffer_t* indexbuffer  = GET_BUFFER(command->data.render.indexbuffer);
-	render_parameterbuffer_t* parameterbuffer = GET_BUFFER(command->data.render.parameterbuffer);
+	render_vertexbuffer_t* vertexbuffer = command->data.render.vertexbuffer;
+	render_indexbuffer_t* indexbuffer  = command->data.render.indexbuffer;
+	render_parameterbuffer_t* parameterbuffer = command->data.render.parameterbuffer;
 	render_program_t* program = command->data.render.program;
 	FOUNDATION_UNUSED(context);
 
@@ -655,7 +648,7 @@ _rb_gl2_render(render_backend_gl2_t* backend, render_context_t* context,
 
 	if (command->data.render.statebuffer) {
 		//Set state from buffer
-		render_statebuffer_t* buffer = GET_BUFFER(command->data.render.statebuffer);
+		render_statebuffer_t* buffer = command->data.render.statebuffer;
 		_rb_gl2_set_state(&buffer->state);
 	}
 	else {
@@ -730,8 +723,8 @@ _rb_gl2_flip(render_backend_t* backend) {
 
 #elif FOUNDATION_PLATFORM_LINUX
 
-	if (backend_gl2->drawable->display)
-		glXSwapBuffers(backend_gl2->drawable->display, (GLXDrawable)backend_gl2->drawable->drawable);
+	if (backend_gl2->drawable.display)
+		glXSwapBuffers(backend_gl2->drawable.display, (GLXDrawable)backend_gl2->drawable.drawable);
 
 #else
 #  error Not implemented

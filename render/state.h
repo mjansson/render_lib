@@ -24,36 +24,24 @@
 
 #include <render/types.h>
 
-RENDER_API object_t
-render_statebuffer_create(render_backend_t* backend, render_usage_t usage,
-                          const render_state_t state);
-
 RENDER_API render_statebuffer_t*
-render_statebuffer_acquire(object_t buffer);
+render_statebuffer_allocate(render_backend_t* backend, render_usage_t usage,
+                            const render_state_t state);
 
 RENDER_API void
-render_statebuffer_release(object_t buffer);
+render_statebuffer_lock(render_statebuffer_t* buffer, unsigned int lock);
 
 RENDER_API void
-render_statebuffer_lock(object_t buffer, unsigned int lock);
-
-RENDER_API void
-render_statebuffer_unlock(object_t buffer);
-
-RENDER_API render_buffer_uploadpolicy_t
-render_statebuffer_upload_policy(object_t buffer);
-
-RENDER_API void
-render_statebuffer_set_upload_policy(object_t buffer, render_buffer_uploadpolicy_t policy);
+render_statebuffer_unlock(render_statebuffer_t* buffer);
 
 RENDER_API render_state_t*
-render_statebuffer_data(object_t buffer);
+render_statebuffer_data(render_statebuffer_t* buffer);
 
 RENDER_API void
-render_statebuffer_upload(object_t buffer);
+render_statebuffer_upload(render_statebuffer_t* buffer);
 
 RENDER_API void
-render_statebuffer_free(object_t buffer, bool sys, bool aux);
+render_statebuffer_free(render_statebuffer_t* buffer, bool sys, bool aux);
 
 RENDER_API void
-render_statebuffer_restore(object_t buffer);
+render_statebuffer_restore(render_statebuffer_t* buffer);

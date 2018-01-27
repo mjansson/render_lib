@@ -30,48 +30,29 @@
 #include <render/types.h>
 #include <render/hashstrings.h>
 
-RENDER_EXTERN bool         _render_api_disabled[];
-RENDER_EXTERN objectmap_t* _render_map_target;
-RENDER_EXTERN objectmap_t* _render_map_buffer;
+RENDER_EXTERN bool _render_api_disabled[];
 RENDER_EXTERN render_config_t _render_config;
 RENDER_EXTERN render_backend_t** _render_backends;
 
 // INTERNAL FUNCTIONS
-RENDER_EXTERN int
-render_target_initialize(void);
 
 RENDER_EXTERN void
-render_target_finalize(void);
-
-RENDER_EXTERN object_t
-render_target_create_framebuffer(render_backend_t* backend);
-
-RENDER_EXTERN render_target_t*
-render_target_lookup(object_t id);
-
-RENDER_EXTERN int
-render_buffer_initialize(void);
+render_target_initialize_framebuffer(render_target_t* target, render_backend_t* backend);
 
 RENDER_EXTERN void
-render_buffer_finalize(void);
-
-RENDER_EXTERN render_buffer_t*
-render_buffer_acquire(object_t buffer);
-
-RENDER_EXTERN void
-render_buffer_release(object_t id);
+render_buffer_deallocate(render_buffer_t* buffer);
 
 RENDER_EXTERN void
 render_buffer_upload(render_buffer_t* buffer);
 
 RENDER_EXTERN void
-render_buffer_lock(object_t id, unsigned int lock);
+render_buffer_lock(render_buffer_t* buffer, unsigned int lock);
 
 RENDER_EXTERN void
-render_buffer_unlock(object_t id);
+render_buffer_unlock(render_buffer_t* buffer);
 
-render_shader_t*
+RENDER_EXTERN render_shader_t*
 render_shader_load_raw(render_backend_t* backend, const uuid_t uuid);
 
-render_program_t*
+RENDER_EXTERN render_program_t*
 render_program_load_raw(render_backend_t* backend, const uuid_t uuid);

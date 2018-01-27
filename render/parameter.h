@@ -24,46 +24,28 @@
 
 #include <render/types.h>
 
-RENDER_API object_t
-render_parameterbuffer_create(render_backend_t* backend, render_usage_t usage,
-                              const render_parameter_t* parameters, size_t num_parameters,
-                              const void* data, size_t data_size);
-
 RENDER_API render_parameterbuffer_t*
-render_parameterbuffer_acquire(object_t buffer);
+render_parameterbuffer_allocate(render_backend_t* backend, render_usage_t usage,
+                                const render_parameter_t* parameters, size_t num_parameters,
+                                const void* data, size_t data_size);
 
 RENDER_API void
-render_parameterbuffer_release(object_t buffer);
+render_parameterbuffer_deallocate(render_parameterbuffer_t* buffer);
 
 RENDER_API void
-render_parameterbuffer_link(object_t buffer, render_program_t* program);
-
-RENDER_API unsigned int
-render_parameterbuffer_num_parameters(object_t buffer);
-
-RENDER_API const render_parameter_t*
-render_parameterbuffer_parameters(object_t buffer);
+render_parameterbuffer_link(render_parameterbuffer_t* buffer, render_program_t* program);
 
 RENDER_API void
-render_parameterbuffer_lock(object_t buffer, unsigned int lock);
+render_parameterbuffer_lock(render_parameterbuffer_t* buffer, unsigned int lock);
 
 RENDER_API void
-render_parameterbuffer_unlock(object_t buffer);
-
-RENDER_API render_buffer_uploadpolicy_t
-render_parameterbuffer_upload_policy(object_t buffer);
+render_parameterbuffer_unlock(render_parameterbuffer_t* buffer);
 
 RENDER_API void
-render_parameterbuffer_set_upload_policy(object_t buffer, render_buffer_uploadpolicy_t policy);
-
-RENDER_API void*
-render_parameterbuffer_data(object_t buffer);
+render_parameterbuffer_upload(render_parameterbuffer_t* buffer);
 
 RENDER_API void
-render_parameterbuffer_upload(object_t buffer);
+render_parameterbuffer_free(render_parameterbuffer_t* buffer, bool sys, bool aux);
 
 RENDER_API void
-render_parameterbuffer_free(object_t buffer, bool sys, bool aux);
-
-RENDER_API void
-render_parameterbuffer_restore(object_t buffer);
+render_parameterbuffer_restore(render_parameterbuffer_t* buffer);

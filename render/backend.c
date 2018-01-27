@@ -189,7 +189,7 @@ render_backend_allocate(render_api_t api, bool allow_fallback) {
 		}
 	}
 
-	backend->framebuffer = render_target_create_framebuffer(backend);
+	render_target_initialize_framebuffer(&backend->framebuffer, backend);
 	backend->framecount = 1;
 
 	uuidmap_initialize((uuidmap_t*)&backend->shadertable,
@@ -216,8 +216,7 @@ render_backend_deallocate(render_backend_t* backend) {
 	uuidmap_finalize((uuidmap_t*)&backend->shadertable);
 	uuidmap_finalize((uuidmap_t*)&backend->programtable);
 
-	if (backend->framebuffer)
-		render_target_release(backend->framebuffer);
+	render_target_finalize(&backend->framebuffer);
 
 	for (size_t ib = 0, bsize = array_size(_render_backends); ib < bsize; ++ib) {
 		if (_render_backends[ib] == backend) {
@@ -248,7 +247,7 @@ render_backend_enumerate_modes(render_backend_t* backend, unsigned int adapter,
 void
 render_backend_set_format(render_backend_t* backend, const pixelformat_t format,
                           const colorspace_t space) {
-	if (!FOUNDATION_VALIDATE_MSG(!backend->drawable,
+	if (!FOUNDATION_VALIDATE_MSG(!backend->drawable.type,
 	                             "Unable to change format when drawable is already set"))
 		return;
 	backend->pixelformat = format;
@@ -256,26 +255,21 @@ render_backend_set_format(render_backend_t* backend, const pixelformat_t format,
 }
 
 bool
-render_backend_set_drawable(render_backend_t* backend, render_drawable_t* drawable) {
-	render_target_t* framebuffer_target;
-	render_drawable_t* old = backend->drawable;
-	if (old == drawable)
-		return true;
-
+render_backend_set_drawable(render_backend_t* backend, const render_drawable_t* drawable) {
 	if (!backend->vtable.set_drawable(backend, drawable))
 		return false;
 
-	backend->drawable = drawable;
-	if (old)
-		render_drawable_deallocate(old);
+	render_drawable_finalize(&backend->drawable);
+	if (drawable->type == RENDERDRAWABLE_WINDOW)
+		render_drawable_initialize_window(&backend->drawable, drawable->window, drawable->tag);
+	else if (drawable->type == RENDERDRAWABLE_FULLSCREEN)
+		render_drawable_initialize_fullscreen(&backend->drawable, drawable->adapter, drawable->width,
+		                                      drawable->height, drawable->refresh);
 
-	framebuffer_target = render_target_lookup(backend->framebuffer);
-	if (framebuffer_target) {
-		framebuffer_target->width = render_drawable_width(drawable);
-		framebuffer_target->height = render_drawable_height(drawable);
-		framebuffer_target->pixelformat = backend->pixelformat;
-		framebuffer_target->colorspace = backend->colorspace;
-	}
+	backend->framebuffer.width = backend->drawable.width;
+	backend->framebuffer.height = backend->drawable.height;
+	backend->framebuffer.pixelformat = backend->pixelformat;
+	backend->framebuffer.colorspace = backend->colorspace;
 
 	set_thread_backend(backend);
 
@@ -284,22 +278,18 @@ render_backend_set_drawable(render_backend_t* backend, render_drawable_t* drawab
 
 render_drawable_t*
 render_backend_drawable(render_backend_t* backend) {
-	return backend->drawable;
+	return &backend->drawable;
 }
 
-object_t
+render_target_t*
 render_backend_target_framebuffer(render_backend_t* backend) {
-	return backend->framebuffer;
+	return &backend->framebuffer;
 }
 
 void
-render_backend_dispatch(render_backend_t* backend, object_t target, render_context_t** contexts,
+render_backend_dispatch(render_backend_t* backend, render_target_t* target, render_context_t** contexts,
                         size_t num_contexts) {
-	render_target_t* render_target = render_target_lookup(target);
-	if (!render_target)
-		return;
-
-	backend->vtable.dispatch(backend, render_target, contexts, num_contexts);
+	backend->vtable.dispatch(backend, target, contexts, num_contexts);
 
 	for (size_t i = 0; i < num_contexts; ++i)
 		atomic_store32(&contexts[i]->reserved, 0, memory_order_release);

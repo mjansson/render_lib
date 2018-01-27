@@ -46,10 +46,10 @@ void
 render_pipeline_remove_step(render_pipeline_t* pipeline, render_pipeline_step_t* step);
 
 void
-render_pipeline_step_initialize(render_pipeline_step_t* step, object_t target, render_pipeline_execute_fn executor);
+render_pipeline_step_initialize(render_pipeline_step_t* step, render_target_t* target, render_pipeline_execute_fn executor);
 
 void
 render_pipeline_step_finalize(render_pipeline_step_t* step);
 
 void
-render_pipeline_step_blit_initialize(render_pipeline_step_t* step, object_t target_source, object_t target_destination);
+render_pipeline_step_blit_initialize(render_pipeline_step_t* step, render_target_t* target_source, render_target_t* target_destination);

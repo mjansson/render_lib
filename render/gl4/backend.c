@@ -48,9 +48,6 @@ typedef struct render_backend_gl4_t {
 	RENDER_DECLARE_BACKEND;
 
 	void* context;
-#if FOUNDATION_PLATFORM_WINDOWS
-	HDC hdc;
-#endif
 	render_resolution_t resolution;
 
 	bool use_clear_scissor;
@@ -115,7 +112,7 @@ _rb_gl_debug_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GL
 */
 
 void
-_rb_gl_destroy_context(render_drawable_t* drawable, void* context) {
+_rb_gl_destroy_context(const render_drawable_t* drawable, void* context) {
 #if FOUNDATION_PLATFORM_WINDOWS
 	FOUNDATION_UNUSED(drawable);
 	if (context) {
@@ -132,13 +129,8 @@ _rb_gl_destroy_context(render_drawable_t* drawable, void* context) {
 }
 
 void*
-_rb_gl_create_context(render_drawable_t* drawable, unsigned int major, unsigned int minor,
+_rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, unsigned int minor,
                       void* share_context) {
-	if (drawable && (drawable->type == RENDERDRAWABLE_OFFSCREEN)) {
-		log_error(HASH_RENDER, ERROR_NOT_IMPLEMENTED, STRING_CONST("Offscreen drawable not implemented"));
-		return 0;
-	}
-
 #if FOUNDATION_PLATFORM_WINDOWS
 
 	HDC hdc = 0;
@@ -409,14 +401,14 @@ _rb_gl_check_context(unsigned int major, unsigned int minor) {
 	window_t window_check;
 	window_create(&window_check, WINDOW_ADAPTER_DEFAULT, STRING_CONST("__render_gl_check"),
 	              10, 10, false);
-	render_drawable_t* drawable = render_drawable_allocate();
-	render_drawable_set_window(drawable, &window_check, 0);
-	context = _rb_gl_create_context(drawable, major, minor, 0);
-	window_finalize(&window_check);
-	render_drawable_deallocate(drawable);
+	render_drawable_t drawable;
+	render_drawable_initialize_window(&drawable, &window_check, 0);
+	context = _rb_gl_create_context(&drawable, major, minor, 0);
 	wglMakeCurrent(0, 0);
 	if (context)
 		wglDeleteContext((HGLRC)context);
+	window_finalize(&window_check);
+	render_drawable_finalize(&drawable);
 
 #elif FOUNDATION_PLATFORM_LINUX || FOUNDATION_PLATFORM_MACOS
 
@@ -452,18 +444,14 @@ static void
 _rb_gl4_destruct(render_backend_t* backend) {
 	render_backend_gl4_t* backend_gl4 = (render_backend_gl4_t*)backend;
 	if (backend_gl4->context)
-		_rb_gl_destroy_context(backend_gl4->drawable, backend_gl4->context);
+		_rb_gl_destroy_context(&backend_gl4->drawable, backend_gl4->context);
 	backend_gl4->context = 0;
 
 	log_debug(HASH_RENDER, STRING_CONST("Destructed GL4 render backend"));
 }
 
 static bool
-_rb_gl4_set_drawable(render_backend_t* backend, render_drawable_t* drawable) {
-	if (!FOUNDATION_VALIDATE_MSG(drawable->type != RENDERDRAWABLE_OFFSCREEN,
-	                             "Offscreen drawable not implemented"))
-		return error_report(ERRORLEVEL_ERROR, ERROR_NOT_IMPLEMENTED);
-
+_rb_gl4_set_drawable(render_backend_t* backend, const render_drawable_t* drawable) {
 	render_backend_gl4_t* backend_gl4 = (render_backend_gl4_t*)backend;
 	if (!FOUNDATION_VALIDATE_MSG(!backend_gl4->context, "Drawable switching not supported yet"))
 		return error_report(ERRORLEVEL_ERROR, ERROR_NOT_IMPLEMENTED);
@@ -475,12 +463,6 @@ _rb_gl4_set_drawable(render_backend_t* backend, render_drawable_t* drawable) {
 	}
 
 	set_thread_gl4_context(backend_gl4->context);
-
-#if FOUNDATION_PLATFORM_WINDOWS
-
-	backend_gl4->hdc = (HDC)drawable->hdc;
-
-#endif
 
 #if FOUNDATION_PLATFORM_LINUX
 
@@ -533,7 +515,7 @@ _rb_gl4_set_drawable(render_backend_t* backend, render_drawable_t* drawable) {
 	glReadBuffer(GL_BACK);
 	glDrawBuffer(GL_BACK);
 
-	glViewport(0, 0, render_drawable_width(drawable), render_drawable_height(drawable));
+	glViewport(0, 0, drawable->width, drawable->height);
 
 	_rb_gl_check_error("Error setting up default state");
 
@@ -546,17 +528,17 @@ _rb_gl4_enable_thread(render_backend_t* backend) {
 
 	void* thread_context = get_thread_gl4_context();
 	if (!thread_context) {
-		thread_context = _rb_gl_create_context(backend->drawable, 4, 0, backend_gl4->context);
+		thread_context = _rb_gl_create_context(&backend->drawable, 4, 0, backend_gl4->context);
 		set_thread_gl4_context(thread_context);
 	}
 
 #if FOUNDATION_PLATFORM_WINDOWS
-	if (!wglMakeCurrent((HDC)backend->drawable->hdc, (HGLRC)thread_context))
+	if (!wglMakeCurrent((HDC)backend->drawable.hdc, (HGLRC)thread_context))
 		_rb_gl_check_error("Unable to enable thread for rendering");
 	else
 		log_debug(HASH_RENDER, STRING_CONST("Enabled thread for GL4 rendering"));
 #elif FOUNDATION_PLATFORM_LINUX
-	glXMakeCurrent(backend->drawable->display, (GLXDrawable)backend->drawable->drawable,
+	glXMakeCurrent(backend->drawable.display, (GLXDrawable)backend->drawable.drawable,
 	               thread_context);
 	_rb_gl_check_error("Unable to enable thread for rendering");
 #else
@@ -571,7 +553,7 @@ _rb_gl4_disable_thread(render_backend_t* backend) {
 
 	void* thread_context = get_thread_gl4_context();
 	if (thread_context) {
-		_rb_gl_destroy_context(backend_gl4->drawable, thread_context);
+		_rb_gl_destroy_context(&backend_gl4->drawable, thread_context);
 		log_debug(HASH_RENDER, STRING_CONST("Disabled thread for GL4 rendering"));
 	}
 	set_thread_gl4_context(0);
@@ -1171,9 +1153,9 @@ _rb_gl4_set_state(render_state_t* state) {
 static void
 _rb_gl4_render(render_backend_gl4_t* backend, render_context_t* context,
                render_command_t* command) {
-	render_vertexbuffer_t* vertexbuffer = GET_BUFFER(command->data.render.vertexbuffer);
-	render_indexbuffer_t* indexbuffer  = GET_BUFFER(command->data.render.indexbuffer);
-	render_parameterbuffer_t* parameterbuffer = GET_BUFFER(command->data.render.parameterbuffer);
+	render_vertexbuffer_t* vertexbuffer = command->data.render.vertexbuffer;
+	render_indexbuffer_t* indexbuffer  = command->data.render.indexbuffer;
+	render_parameterbuffer_t* parameterbuffer = command->data.render.parameterbuffer;
 	render_program_t* program = command->data.render.program;
 	FOUNDATION_UNUSED(context);
 
@@ -1243,7 +1225,7 @@ _rb_gl4_render(render_backend_gl4_t* backend, render_context_t* context,
 
 	if (command->data.render.statebuffer) {
 		//Set state from buffer
-		render_statebuffer_t* buffer = GET_BUFFER(command->data.render.statebuffer);
+		render_statebuffer_t* buffer = command->data.render.statebuffer;
 		_rb_gl4_set_state(&buffer->state);
 	}
 	else {
@@ -1302,8 +1284,8 @@ _rb_gl4_flip(render_backend_t* backend) {
 
 #if FOUNDATION_PLATFORM_WINDOWS
 
-	if (backend_gl4->hdc) {
-		if (!SwapBuffers(backend_gl4->hdc)) {
+	if (backend_gl4->drawable.hdc) {
+		if (!SwapBuffers(backend_gl4->drawable.hdc)) {
 			string_const_t errmsg = system_error_message(0);
 			log_warnf(HASH_RENDER, WARNING_SYSTEM_CALL_FAIL, STRING_CONST("SwapBuffers failed: %.*s"),
 			          STRING_FORMAT(errmsg));

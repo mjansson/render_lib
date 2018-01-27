@@ -56,7 +56,7 @@ _rb_null_enumerate_modes(render_backend_t* backend, unsigned int adapter,
 }
 
 static bool
-_rb_null_set_drawable(render_backend_t* backend, render_drawable_t* drawable) {
+_rb_null_set_drawable(render_backend_t* backend, const render_drawable_t* drawable) {
 	FOUNDATION_UNUSED(backend);
 	FOUNDATION_UNUSED(drawable);
 	return true;
@@ -134,6 +134,19 @@ _rb_null_deallocate_program(render_backend_t* backend, render_program_t* program
 	FOUNDATION_UNUSED(program);
 }
 
+static bool
+_rb_null_allocate_target(render_backend_t* backend, render_target_t* target) {
+	FOUNDATION_UNUSED(backend);
+	FOUNDATION_UNUSED(target);
+	return true;
+}
+
+static void
+_rb_null_deallocate_target(render_backend_t* backend, render_target_t* target) {
+	FOUNDATION_UNUSED(backend);
+	FOUNDATION_UNUSED(target);
+}
+
 static render_backend_vtable_t _render_backend_vtable_null = {
 	.construct = _rb_null_construct,
 	.destruct  = _rb_null_destruct,
@@ -149,7 +162,9 @@ static render_backend_vtable_t _render_backend_vtable_null = {
 	.link_buffer = _rb_null_link_buffer,
 	.deallocate_buffer = _rb_null_deallocate_buffer,
 	.deallocate_shader = _rb_null_deallocate_shader,
-	.deallocate_program = _rb_null_deallocate_program
+	.deallocate_program = _rb_null_deallocate_program,
+	.allocate_target = _rb_null_allocate_target,
+	.deallocate_target = _rb_null_deallocate_target
 };
 
 render_backend_t*

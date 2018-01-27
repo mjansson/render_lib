@@ -64,7 +64,7 @@ render_pipeline_execute(render_pipeline_t* pipeline) {
 }
 
 void
-render_pipeline_step_initialize(render_pipeline_step_t* step, object_t target, render_pipeline_execute_fn executor) {
+render_pipeline_step_initialize(render_pipeline_step_t* step, render_target_t* target, render_pipeline_execute_fn executor) {
 	step->target = target;
 	step->contexts = nullptr;
 	step->executor = executor;

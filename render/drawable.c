@@ -35,24 +35,16 @@ render_drawable_allocate(void) {
 
 void
 render_drawable_deallocate(render_drawable_t* drawable) {
-	if (drawable) {
-#if FOUNDATION_PLATFORM_WINDOWS
-		if (drawable->hdc)
-			window_release_hdc(drawable->hwnd, drawable->hdc);
-#elif FOUNDATION_PLATFORM_LINUX_RASPBERRYPI
-		if (drawable->native)
-			memory_deallocate(drawable->native);
-#endif
-		memory_deallocate(drawable);
-	}
+	render_drawable_finalize(drawable);
+	memory_deallocate(drawable);
 }
 
 void
-render_drawable_set_window(render_drawable_t* drawable, window_t* window, unsigned int tag) {
-	FOUNDATION_UNUSED(tag);
+render_drawable_initialize_window(render_drawable_t* drawable, window_t* window, unsigned int tag) {
 	drawable->type = RENDERDRAWABLE_WINDOW;
 	drawable->adapter = window_adapter(window);
 	drawable->window = window;
+	drawable->tag = tag;
 	drawable->width = window_width(window);
 	drawable->height = window_height(window);
 	drawable->refresh = 0;
@@ -81,15 +73,8 @@ render_drawable_set_window(render_drawable_t* drawable, window_t* window, unsign
 }
 
 void
-render_drawable_set_offscreen(render_drawable_t* drawable, object_t buffer) {
-	drawable->type = RENDERDRAWABLE_OFFSCREEN;
-	drawable->buffer = buffer;
-	FOUNDATION_ASSERT_FAIL("Not implemented");
-}
-
-void
-render_drawable_set_fullscreen(render_drawable_t* drawable, unsigned int adapter,
-                               int width, int height, int refresh) {
+render_drawable_initialize_fullscreen(render_drawable_t* drawable, unsigned int adapter,
+                                      unsigned int width, unsigned int height, unsigned int refresh) {
 	drawable->type = RENDERDRAWABLE_FULLSCREEN;
 	drawable->adapter = adapter;
 	drawable->width = width;
@@ -100,18 +85,16 @@ render_drawable_set_fullscreen(render_drawable_t* drawable, unsigned int adapter
 #endif
 }
 
-render_drawable_type_t
-render_drawable_type(render_drawable_t* drawable) {
-	return drawable->type;
+void
+render_drawable_finalize(render_drawable_t* drawable) {
+	if (drawable) {
+#if FOUNDATION_PLATFORM_WINDOWS
+		if (drawable->hdc)
+			window_release_hdc(drawable->hwnd, drawable->hdc);
+#elif FOUNDATION_PLATFORM_LINUX_RASPBERRYPI
+		if (drawable->native)
+			memory_deallocate(drawable->native);
+#endif
+	}
+	memset(drawable, 0, sizeof(render_drawable_t));
 }
-
-int
-render_drawable_width(render_drawable_t* drawable) {
-	return drawable->width;
-}
-
-int
-render_drawable_height(render_drawable_t* drawable) {
-	return drawable->height;
-}
-

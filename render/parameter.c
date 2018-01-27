@@ -20,21 +20,10 @@
 #include <render/render.h>
 #include <render/internal.h>
 
-#define GET_BUFFER(id) objectmap_lookup(_render_map_buffer, (id))
-
-object_t
-render_parameterbuffer_create(render_backend_t* backend, render_usage_t usage,
-                              const render_parameter_t* parameters, size_t num_parameters,
-                              const void* data, size_t data_size) {
-	object_t id = objectmap_reserve(_render_map_buffer);
-	if (!id) {
-		log_error(HASH_RENDER, ERROR_OUT_OF_MEMORY,
-		          STRING_CONST("Unable to allocate parameter buffer, out of slots in object map"));
-		return 0;
-	}
-
-	memory_context_push(HASH_RENDER);
-
+render_parameterbuffer_t*
+render_parameterbuffer_allocate(render_backend_t* backend, render_usage_t usage,
+                                const render_parameter_t* parameters, size_t num_parameters,
+                                const void* data, size_t data_size) {
 	size_t paramsize = sizeof(render_parameter_t) * num_parameters;
 	render_parameterbuffer_t* buffer = memory_allocate(HASH_RENDER,
 	                                                   sizeof(render_parameterbuffer_t) + paramsize, 0,
@@ -47,7 +36,6 @@ render_parameterbuffer_create(render_backend_t* backend, render_usage_t usage,
 	buffer->num_parameters = (unsigned int)num_parameters;
 	semaphore_initialize(&buffer->lock, 1);
 	memcpy(&buffer->parameters, parameters, paramsize);
-	objectmap_set(_render_map_buffer, id, buffer);
 
 	buffer->allocated = 1;
 	buffer->used = 1;
@@ -57,94 +45,47 @@ render_parameterbuffer_create(render_backend_t* backend, render_usage_t usage,
 		buffer->flags |= RENDERBUFFER_DIRTY;
 	}
 
-	memory_context_pop();
-
-	return id;
-}
-
-render_parameterbuffer_t*
-render_parameterbuffer_acquire(object_t id) {
-	return (render_parameterbuffer_t*)render_buffer_acquire(id);
+	return buffer;
 }
 
 void
-render_parameterbuffer_release(object_t id) {
-	render_buffer_release(id);
+render_parameterbuffer_deallocate(render_parameterbuffer_t* buffer) {
+	render_buffer_deallocate((render_buffer_t*)buffer);
 }
 
 void
-render_parameterbuffer_link(object_t id, render_program_t* program) {
-	render_buffer_t* buffer = GET_BUFFER(id);
-	if (buffer)
-		buffer->backend->vtable.link_buffer(buffer->backend, buffer, program);
-}
-
-unsigned int
-render_parameterbuffer_num_parameters(object_t id) {
-	render_parameterbuffer_t* buffer = GET_BUFFER(id);
-	return buffer ? buffer->num_parameters : 0;
-}
-
-const render_parameter_t*
-render_parameterbuffer_parameters(object_t id) {
-	render_parameterbuffer_t* buffer = GET_BUFFER(id);
-	return buffer ? buffer->parameters : nullptr;
+render_parameterbuffer_link(render_parameterbuffer_t* buffer, render_program_t* program) {
+	buffer->backend->vtable.link_buffer(buffer->backend, (render_buffer_t*)buffer, program);
 }
 
 void
-render_parameterbuffer_lock(object_t id, unsigned int lock) {
-	render_buffer_lock(id, lock);
+render_parameterbuffer_lock(render_parameterbuffer_t* buffer, unsigned int lock) {
+	render_buffer_lock((render_buffer_t*)buffer, lock);
 }
 
 void
-render_parameterbuffer_unlock(object_t id) {
-	render_buffer_unlock(id);
-}
-
-void*
-render_parameterbuffer_data(object_t id) {
-	render_buffer_t* buffer = GET_BUFFER(id);
-	return buffer ? buffer->access : nullptr;
-}
-
-render_buffer_uploadpolicy_t
-render_parameterbuffer_upload_policy(object_t id) {
-	render_parameterbuffer_t* buffer = GET_BUFFER(id);
-	return buffer ? buffer->policy : RENDERBUFFER_UPLOAD_ONUNLOCK;
+render_parameterbuffer_unlock(render_parameterbuffer_t* buffer) {
+	render_buffer_unlock((render_buffer_t*)buffer);
 }
 
 void
-render_parameterbuffer_set_upload_policy(object_t id, render_buffer_uploadpolicy_t policy) {
-	render_parameterbuffer_t* buffer = GET_BUFFER(id);
-	if (buffer)
-		buffer->policy = policy;
+render_parameterbuffer_upload(render_parameterbuffer_t* buffer) {
+	render_buffer_upload((render_buffer_t*)buffer);
 }
 
 void
-render_parameterbuffer_upload(object_t id) {
-	render_buffer_t* buffer = GET_BUFFER(id);
-	if (buffer)
-		render_buffer_upload(buffer);
+render_parameterbuffer_free(render_parameterbuffer_t* buffer, bool sys, bool aux) {
+	buffer->backend->vtable.deallocate_buffer(buffer->backend, (render_buffer_t*)buffer, sys, aux);
 }
 
 void
-render_parameterbuffer_free(object_t id, bool sys, bool aux) {
-	render_parameterbuffer_t* buffer = GET_BUFFER(id);
-	if (buffer)
-		buffer->backend->vtable.deallocate_buffer(buffer->backend, (render_buffer_t*)buffer, sys, aux);
-}
+render_parameterbuffer_restore(render_parameterbuffer_t* buffer) {
+	buffer->backend->vtable.allocate_buffer(buffer->backend, (render_buffer_t*)buffer);
 
-void
-render_parameterbuffer_restore(object_t id) {
-	render_parameterbuffer_t* buffer = GET_BUFFER(id);
-	if (buffer) {
-		buffer->backend->vtable.allocate_buffer(buffer->backend, (render_buffer_t*)buffer);
+	//...
+	//All loadable resources should have a stream identifier, an offset and a size
+	//to be able to repoen the stream and read the raw buffer back
+	//...
 
-		//...
-		//All loadable resources should have a stream identifier, an offset and a size
-		//to be able to repoen the stream and read the raw buffer back
-		//...
-
-		buffer->flags |= RENDERBUFFER_DIRTY;
-	}
+	buffer->flags |= RENDERBUFFER_DIRTY;
 }

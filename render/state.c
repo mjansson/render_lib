@@ -20,20 +20,9 @@
 #include <render/render.h>
 #include <render/internal.h>
 
-#define GET_BUFFER(id) objectmap_lookup(_render_map_buffer, (id))
-
-object_t
-render_statebuffer_create(render_backend_t* backend, render_usage_t usage,
-                          const render_state_t state) {
-	object_t id = objectmap_reserve(_render_map_buffer);
-	if (!id) {
-		log_error(HASH_RENDER, ERROR_OUT_OF_MEMORY,
-		          STRING_CONST("Unable to allocate state buffer, out of slots in object map"));
-		return 0;
-	}
-
-	memory_context_push(HASH_RENDER);
-
+render_statebuffer_t*
+render_statebuffer_allocate(render_backend_t* backend, render_usage_t usage,
+                            const render_state_t state) {
 	render_statebuffer_t* buffer = memory_allocate(HASH_RENDER,
 	                                               sizeof(render_statebuffer_t), 0,
 	                                               MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
@@ -42,82 +31,48 @@ render_statebuffer_create(render_backend_t* backend, render_usage_t usage,
 	buffer->buffertype = RENDERBUFFER_STATE;
 	buffer->policy     = RENDERBUFFER_UPLOAD_ONDISPATCH;
 	buffer->size       = sizeof(render_state_t);
-	objectmap_set(_render_map_buffer, id, buffer);
 
 	buffer->allocated = 1;
 	buffer->used = 1;
 	buffer->state = state;
 	buffer->store = &buffer->state;
 
-	memory_context_pop();
-
-	return id;
-}
-
-render_statebuffer_t*
-render_statebuffer_acquire(object_t id) {
-	return (render_statebuffer_t*)render_buffer_acquire(id);
+	return buffer;
 }
 
 void
-render_statebuffer_release(object_t id) {
-	render_buffer_release(id);
+render_statebuffer_lock(render_statebuffer_t* buffer, unsigned int lock) {
+	render_buffer_lock((render_buffer_t*)buffer, lock);
 }
 
 void
-render_statebuffer_lock(object_t id, unsigned int lock) {
-	render_buffer_lock(id, lock);
-}
-
-void
-render_statebuffer_unlock(object_t id) {
-	render_buffer_unlock(id);
+render_statebuffer_unlock(render_statebuffer_t* buffer) {
+	render_buffer_unlock((render_buffer_t*)buffer);
 }
 
 render_state_t*
-render_statebuffer_data(object_t id) {
-	render_statebuffer_t* buffer = GET_BUFFER(id);
+render_statebuffer_data(render_statebuffer_t* buffer) {
 	return buffer ? buffer->access : nullptr;	
 }
 
-render_buffer_uploadpolicy_t
-render_statebuffer_upload_policy(object_t id) {
-	render_statebuffer_t* buffer = GET_BUFFER(id);
-	return buffer ? buffer->policy : RENDERBUFFER_UPLOAD_ONUNLOCK;
+void
+render_statebuffer_upload(render_statebuffer_t* buffer) {
+	render_buffer_upload((render_buffer_t*)buffer);
 }
 
 void
-render_statebuffer_set_upload_policy(object_t id, render_buffer_uploadpolicy_t policy) {
-	render_statebuffer_t* buffer = GET_BUFFER(id);
-	if (buffer)
-		buffer->policy = policy;
+render_statebuffer_free(render_statebuffer_t* buffer, bool sys, bool aux) {
+	buffer->backend->vtable.deallocate_buffer(buffer->backend, (render_buffer_t*)buffer, sys, aux);
 }
 
 void
-render_statebuffer_upload(object_t id) {
-	render_buffer_t* buffer = GET_BUFFER(id);
-	if (buffer)
-		render_buffer_upload(buffer);
-}
+render_statebuffer_restore(render_statebuffer_t* buffer) {
+	buffer->backend->vtable.allocate_buffer(buffer->backend, (render_buffer_t*)buffer);
 
-void
-render_statebuffer_free(object_t id, bool sys, bool aux) {
-	render_statebuffer_t* buffer = GET_BUFFER(id);
-	if (buffer)
-		buffer->backend->vtable.deallocate_buffer(buffer->backend, (render_buffer_t*)buffer, sys, aux);
-}
+	//...
+	//All loadable resources should have a stream identifier, an offset and a size
+	//to be able to repoen the stream and read the raw buffer back
+	//...
 
-void
-render_statebuffer_restore(object_t id) {
-	render_statebuffer_t* buffer = GET_BUFFER(id);
-	if (buffer) {
-		buffer->backend->vtable.allocate_buffer(buffer->backend, (render_buffer_t*)buffer);
-
-		//...
-		//All loadable resources should have a stream identifier, an offset and a size
-		//to be able to repoen the stream and read the raw buffer back
-		//...
-
-		buffer->flags |= RENDERBUFFER_DIRTY;
-	}
+	buffer->flags |= RENDERBUFFER_DIRTY;
 }

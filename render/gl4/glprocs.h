@@ -152,10 +152,10 @@ RENDER_EXTERN bool
 _rb_gl_check_extension(const char* name, size_t length);
 
 RENDER_EXTERN void*
-_rb_gl_create_context(render_drawable_t* drawable, unsigned int major, unsigned int minor, void* share_context);
+_rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, unsigned int minor, void* share_context);
 
 RENDER_EXTERN void
-_rb_gl_destroy_context(render_drawable_t* drawable, void* context);
+_rb_gl_destroy_context(const render_drawable_t* drawable, void* context);
 
 RENDER_EXTERN const char*
 _rb_gl_error_message(GLenum err);

@@ -54,12 +54,6 @@ render_module_initialize(render_config_t config) {
 	_render_api_disabled[RENDERAPI_DIRECTX] = true;
 	_render_api_disabled[RENDERAPI_GLES] = true;
 
-	if (render_target_initialize() < 0)
-		return -1;
-
-	if (render_buffer_initialize() < 0)
-		return -1;
-
 	resource_import_register(render_import);
 	resource_compile_register(render_compile);
 
@@ -72,9 +66,6 @@ void
 render_module_finalize(void) {
 	if (!_render_initialized)
 		return;
-
-	render_buffer_finalize();
-	render_target_finalize();
 
 	array_deallocate(_render_backends);
 

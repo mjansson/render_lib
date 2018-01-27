@@ -104,54 +104,24 @@ RENDER_API size_t
 render_vertex_decl_calculate_size(const render_vertex_decl_t* decl);
 
 
-RENDER_API object_t
-render_vertexbuffer_create(render_backend_t* backend, render_usage_t usage, size_t vertices,
-                           const render_vertex_decl_t* decl, const void* data);
-
 RENDER_API render_vertexbuffer_t*
-render_vertexbuffer_acquire(object_t buffer);
+render_vertexbuffer_allocate(render_backend_t* backend, render_usage_t usage, size_t vertices,
+                             const render_vertex_decl_t* decl, const void* data);
 
 RENDER_API void
-render_vertexbuffer_release(object_t buffer);
-
-RENDER_API render_usage_t
-render_vertexbuffer_usage(object_t buffer);
-
-RENDER_API const render_vertex_decl_t*
-render_vertexbuffer_decl(object_t buffer);
-
-RENDER_API size_t
-render_vertexbuffer_num_allocated(object_t buffer);
-
-RENDER_API size_t
-render_vertexbuffer_num_elements(object_t buffer);
+render_vertexbuffer_deallocate(render_vertexbuffer_t* buffer);
 
 RENDER_API void
-render_vertexbuffer_set_num_elements(object_t buffer, size_t num);
+render_vertexbuffer_lock(render_vertexbuffer_t* buffer, unsigned int lock);
 
 RENDER_API void
-render_vertexbuffer_lock(object_t buffer, unsigned int lock);
+render_vertexbuffer_unlock(render_vertexbuffer_t* buffer);
 
 RENDER_API void
-render_vertexbuffer_unlock(object_t buffer);
-
-RENDER_API render_buffer_uploadpolicy_t
-render_vertexbuffer_upload_policy(object_t buffer);
+render_vertexbuffer_upload(render_vertexbuffer_t* buffer);
 
 RENDER_API void
-render_vertexbuffer_set_upload_policy(object_t buffer, render_buffer_uploadpolicy_t policy);
+render_vertexbuffer_free(render_vertexbuffer_t* buffer, bool sys, bool aux);
 
 RENDER_API void
-render_vertexbuffer_upload(object_t buffer);
-
-RENDER_API void*
-render_vertexbuffer_element(object_t buffer, size_t element);
-
-RENDER_API size_t
-render_vertexbuffer_element_size(object_t buffer);
-
-RENDER_API void
-render_vertexbuffer_free(object_t buffer, bool sys, bool aux);
-
-RENDER_API void
-render_vertexbuffer_restore(object_t buffer);
+render_vertexbuffer_restore(render_vertexbuffer_t* buffer);

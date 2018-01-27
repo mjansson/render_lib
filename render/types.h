@@ -62,7 +62,6 @@ typedef enum render_api_group_t {
 typedef enum render_drawable_type_t {
 	RENDERDRAWABLE_INVALID = 0,
 	RENDERDRAWABLE_WINDOW,
-	RENDERDRAWABLE_OFFSCREEN,
 	RENDERDRAWABLE_FULLSCREEN
 } render_drawable_type_t;
 
@@ -281,7 +280,7 @@ typedef size_t (* render_backend_enumerate_adapters_fn)(render_backend_t*, unsig
 typedef size_t (* render_backend_enumerate_modes_fn)(render_backend_t*, unsigned int, render_resolution_t*, size_t);
 typedef void (* render_backend_enable_thread_fn)(render_backend_t*);
 typedef void (* render_backend_disable_thread_fn)(render_backend_t*);
-typedef bool (* render_backend_set_drawable_fn)(render_backend_t*, render_drawable_t*);
+typedef bool (* render_backend_set_drawable_fn)(render_backend_t*, const render_drawable_t*);
 typedef void (* render_backend_dispatch_fn)(render_backend_t*, render_target_t*, render_context_t**, size_t);
 typedef void (* render_backend_flip_fn)(render_backend_t*);
 typedef void* (* render_backend_allocate_buffer_fn)(render_backend_t*, render_buffer_t*);
@@ -297,7 +296,7 @@ typedef void (* render_backend_link_buffer_fn)(render_backend_t*, render_buffer_
                                                render_program_t* program);
 typedef bool (* render_backend_allocate_target_fn)(render_backend_t*, render_target_t*);
 typedef void (* render_backend_deallocate_target_fn)(render_backend_t*, render_target_t*);
-typedef void (* render_pipeline_execute_fn)(render_backend_t*, object_t target, render_context_t**, size_t);
+typedef void (* render_pipeline_execute_fn)(render_backend_t*, render_target_t* target, render_context_t**, size_t);
 
 struct render_config_t {
 	/*! Maximum number of concurrently allocated render targets */
@@ -330,27 +329,11 @@ struct render_backend_vtable_t {
 	render_backend_deallocate_target_fn   deallocate_target;
 };
 
-#define RENDER_DECLARE_BACKEND \
-	render_api_t             api; \
-	render_api_group_t       api_group; \
-	render_backend_vtable_t  vtable; \
-	render_drawable_t*       drawable; \
-	pixelformat_t            pixelformat; \
-	colorspace_t             colorspace; \
-	object_t                 framebuffer; \
-	uint64_t                 framecount; \
-	uint64_t                 platform; \
-	uuidmap_fixed_t          shadertable; \
-	uuidmap_fixed_t          programtable
-
-struct render_backend_t {
-	RENDER_DECLARE_BACKEND;
-};
-
 struct render_drawable_t {
 	render_drawable_type_t type;
 	unsigned int adapter;
 	window_t*    window;
+	unsigned int tag;
 #if FOUNDATION_PLATFORM_WINDOWS
 	void* hwnd;
 	void* hdc;
@@ -372,10 +355,9 @@ struct render_drawable_t {
 #else
 #  error Not implemented
 #endif
-	object_t buffer;
-	int      width;
-	int      height;
-	int      refresh;
+	unsigned int width;
+	unsigned int height;
+	unsigned int refresh;
 };
 
 #if FOUNDATION_SIZE_POINTER == 4
@@ -394,6 +376,23 @@ struct render_target_t {
 	pixelformat_t  pixelformat;
 	colorspace_t   colorspace;
 	uintptr_t      backend_data[4];
+};
+
+#define RENDER_DECLARE_BACKEND \
+	render_api_t             api; \
+	render_api_group_t       api_group; \
+	render_backend_vtable_t  vtable; \
+	render_drawable_t        drawable; \
+	pixelformat_t            pixelformat; \
+	colorspace_t             colorspace; \
+	render_target_t          framebuffer; \
+	uint64_t                 framecount; \
+	uint64_t                 platform; \
+	uuidmap_fixed_t          shadertable; \
+	uuidmap_fixed_t          programtable
+
+struct render_backend_t {
+	RENDER_DECLARE_BACKEND;
 };
 
 struct render_context_t {
@@ -443,11 +442,11 @@ struct render_command_viewport_t {
 };
 
 struct render_command_render_t {
-	render_program_t* program;
-	object_t vertexbuffer;
-	object_t indexbuffer;
-	object_t parameterbuffer;
-	object_t statebuffer;
+	render_program_t*         program;
+	render_vertexbuffer_t*    vertexbuffer;
+	render_indexbuffer_t*     indexbuffer;
+	render_parameterbuffer_t* parameterbuffer;
+	render_statebuffer_t*     statebuffer;
 };
 
 struct render_command_t {
@@ -496,7 +495,6 @@ struct render_parameter_t {
 	size_t      size; \
 	void*       store; \
 	void*       access; \
-	object_t    vram; \
 	uintptr_t   backend_data[4]; \
 	semaphore_t lock
 
@@ -559,7 +557,7 @@ FOUNDATION_ALIGNED_STRUCT(render_program_t, 8) {
 };
 
 struct render_pipeline_step_t {
-	object_t target;
+	render_target_t* target;
 	render_pipeline_execute_fn executor;
 	render_context_t** contexts;
 };
