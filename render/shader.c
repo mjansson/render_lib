@@ -28,7 +28,7 @@ FOUNDATION_STATIC_ASSERT(sizeof(render_shader_t) == 64, "invalid shader size");
 
 render_shader_t*
 render_pixelshader_allocate(void) {
-	render_shader_t* shader = memory_allocate(HASH_RENDER, sizeof(render_shader_t), 0,
+	render_shader_t* shader = memory_allocate(HASH_RENDER, sizeof(render_shader_t), 16,
 	                                          MEMORY_PERSISTENT);
 	render_pixelshader_initialize(shader);
 	return shader;
@@ -73,7 +73,7 @@ render_shader_t*
 render_shader_lookup(render_backend_t* backend, const uuid_t uuid) {
 	render_shader_t* shader = uuidmap_lookup(render_backend_shader_table(backend), uuid);
 	if (shader)
-		++shader->ref;
+		atomic_incr32(&shader->ref, memory_order_release);
 	return shader;
 }
 
@@ -158,7 +158,7 @@ retry:
 	}
 
 	if (shader) {
-		shader->ref = 1;
+		atomic_store32(&shader->ref, 1, memory_order_release);
 		shader->uuid = uuid;
 		uuidmap_insert(render_backend_shader_table(backend), uuid, shader);
 	}
@@ -238,8 +238,8 @@ render_shader_reload(render_shader_t* shader, const uuid_t uuid) {
 
 void
 render_shader_unload(render_shader_t* shader) {
-	if (shader && shader->ref) {
-		if (!--shader->ref)
+	if (shader && atomic_load32(&shader->ref, memory_order_acquire)) {
+		if (!atomic_decr32(&shader->ref, memory_order_release))
 			render_shader_deallocate(shader);
 	}	
 }

@@ -17,3 +17,4 @@ HASH_VERTEXSHADER                          vertexshader
 HASH_PIXELSHADER                           pixelshader
 HASH_SHADER                                shader
 HASH_PROGRAM                               program
+HASH_TEXTURE                               texture

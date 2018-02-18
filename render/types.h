@@ -264,6 +264,7 @@ typedef struct render_shader_ref_t render_shader_ref_t;
 typedef struct render_vertexshader_t render_vertexshader_t;
 typedef struct render_pixelshader_t render_pixelshader_t;
 typedef struct render_program_t render_program_t;
+typedef struct render_texture_t render_texture_t;
 typedef struct render_state_t render_state_t;
 typedef struct render_resolution_t render_resolution_t;
 typedef struct render_vertex_decl_element_t render_vertex_decl_element_t;
@@ -290,8 +291,11 @@ typedef bool (* render_backend_upload_buffer_fn)(render_backend_t*, render_buffe
 typedef bool (* render_backend_upload_shader_fn)(render_backend_t*, render_shader_t*, const void*,
                                                  size_t);
 typedef bool (* render_backend_upload_program_fn)(render_backend_t*, render_program_t*);
+typedef bool (* render_backend_upload_texture_fn)(render_backend_t*, render_texture_t*, const void*,
+                                                 size_t);
 typedef void (* render_backend_deallocate_shader_fn)(render_backend_t*, render_shader_t*);
 typedef void (* render_backend_deallocate_program_fn)(render_backend_t*, render_program_t*);
+typedef void (* render_backend_deallocate_texture_fn)(render_backend_t*, render_texture_t*);
 typedef void (* render_backend_link_buffer_fn)(render_backend_t*, render_buffer_t*,
                                                render_program_t* program);
 typedef bool (* render_backend_allocate_target_fn)(render_backend_t*, render_target_t*);
@@ -321,10 +325,12 @@ struct render_backend_vtable_t {
 	render_backend_upload_buffer_fn       upload_buffer;
 	render_backend_upload_shader_fn       upload_shader;
 	render_backend_upload_program_fn      upload_program;
+	render_backend_upload_texture_fn      upload_texture;
 	render_backend_link_buffer_fn         link_buffer;
 	render_backend_deallocate_buffer_fn   deallocate_buffer;
 	render_backend_deallocate_shader_fn   deallocate_shader;
 	render_backend_deallocate_program_fn  deallocate_program;
+	render_backend_deallocate_texture_fn  deallocate_texture;
 	render_backend_allocate_target_fn     allocate_target;
 	render_backend_deallocate_target_fn   deallocate_target;
 };
@@ -389,7 +395,8 @@ struct render_target_t {
 	uint64_t                 framecount; \
 	uint64_t                 platform; \
 	uuidmap_fixed_t          shadertable; \
-	uuidmap_fixed_t          programtable
+	uuidmap_fixed_t          programtable; \
+	uuidmap_fixed_t          texturetable
 
 struct render_backend_t {
 	RENDER_DECLARE_BACKEND;
@@ -498,16 +505,6 @@ struct render_parameter_t {
 	uintptr_t   backend_data[4]; \
 	semaphore_t lock
 
-#define RENDER_DECLARE_SHADER \
-	render_backend_t* backend; \
-	RENDER_32BIT_PADDING(backendptr) \
-	unsigned int shadertype:8; \
-	unsigned int unused:24; \
-	uint32_t ref; \
-	uintptr_t backend_data[4]; \
-	RENDER_32BIT_PADDING_ARR(backend_data, 4) \
-	uuid_t uuid
-
 struct render_buffer_t {
 	RENDER_DECLARE_BUFFER;
 };
@@ -532,6 +529,16 @@ struct render_statebuffer_t {
 	render_state_t state;
 };
 
+#define RENDER_DECLARE_SHADER \
+	render_backend_t* backend; \
+	RENDER_32BIT_PADDING(backendptr) \
+	unsigned int shadertype:8; \
+	unsigned int unused:24; \
+	atomic32_t ref; \
+	uintptr_t backend_data[4]; \
+	RENDER_32BIT_PADDING_ARR(backend_data, 4) \
+	uuid_t uuid
+
 FOUNDATION_ALIGNED_STRUCT(render_shader_t, 8) {
 	RENDER_DECLARE_SHADER;
 };
@@ -544,7 +551,7 @@ FOUNDATION_ALIGNED_STRUCT(render_program_t, 8) {
 	RENDER_32BIT_PADDING_ARR(shaderptr, 2)
 	uintptr_t backend_data[4];
 	RENDER_32BIT_PADDING_ARR(data, 4)
-	uint32_t ref;
+	atomic32_t ref;
 	uint32_t size_parameterdata;
 	uint32_t num_parameters;
 	uint32_t unused;
@@ -554,6 +561,28 @@ FOUNDATION_ALIGNED_STRUCT(render_program_t, 8) {
 	render_parameter_t* parameters;
 	RENDER_32BIT_PADDING_ARR(paramsptr, 4)
 	render_parameter_t inline_parameters[FOUNDATION_FLEXIBLE_ARRAY];
+};
+
+#define RENDER_DECLARE_TEXTURE \
+	render_backend_t* backend; \
+	RENDER_32BIT_PADDING(backendptr) \
+	unsigned int texturetype:8; \
+	unsigned int usage:8; \
+	unsigned int unused:16; \
+	atomic32_t ref; \
+	pixelformat_t format; \
+	colorspace_t colorspace; \
+	unsigned int width; \
+	unsigned int height; \
+	unsigned int depth; \
+	unsigned int levels; \
+	uint32_t __unused; \
+	uintptr_t backend_data[4]; \
+	RENDER_32BIT_PADDING_ARR(backend_data, 4) \
+	uuid_t uuid
+
+FOUNDATION_ALIGNED_STRUCT(render_texture_t, 8) {
+	RENDER_DECLARE_TEXTURE;
 };
 
 struct render_pipeline_step_t {

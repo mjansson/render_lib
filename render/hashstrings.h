@@ -23,3 +23,4 @@
 #define HASH_PIXELSHADER static_hash_string("pixelshader", 11, 0x2792ba8c77e0f0ceULL)
 #define HASH_SHADER static_hash_string("shader", 6, 0x65475a9f9c166495ULL)
 #define HASH_PROGRAM static_hash_string("program", 7, 0x6fed8207d1b48fc0ULL)
+#define HASH_TEXTURE static_hash_string("texture", 7, 0x4b61d4f340e798f6ULL)

@@ -56,3 +56,6 @@ render_shader_load_raw(render_backend_t* backend, const uuid_t uuid);
 
 RENDER_EXTERN render_program_t*
 render_program_load_raw(render_backend_t* backend, const uuid_t uuid);
+
+RENDER_EXTERN render_texture_t*
+render_texture_load_raw(render_backend_t* backend, const uuid_t uuid);

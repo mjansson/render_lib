@@ -91,5 +91,12 @@ render_backend_program_upload(render_backend_t* backend, render_program_t* progr
 RENDER_API uuidmap_t*
 render_backend_program_table(render_backend_t* backend);
 
+RENDER_API bool
+render_backend_texture_upload(render_backend_t* backend, render_texture_t* texture,
+                              const void* buffer, size_t size);
+
+RENDER_API uuidmap_t*
+render_backend_texture_table(render_backend_t* backend);
+
 RENDER_API render_backend_t**
 render_backends(void);

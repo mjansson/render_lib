@@ -37,6 +37,7 @@
 #include <render/pipeline.h>
 #include <render/program.h>
 #include <render/state.h>
+#include <render/texture.h>
 
 #include <render/import.h>
 #include <render/compile.h>

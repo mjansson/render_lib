@@ -68,7 +68,7 @@ render_program_t*
 render_program_lookup(render_backend_t* backend, const uuid_t uuid) {
 	render_program_t* program = uuidmap_lookup(render_backend_program_table(backend), uuid);
 	if (program)
-		++program->ref;
+		atomic_incr32(&program->ref, memory_order_release);
 	return program;
 }
 
@@ -170,7 +170,7 @@ render_program_load(render_backend_t* backend, const uuid_t uuid) {
 	program = render_program_load_impl(backend, uuid);
 
 	if (program) {
-		program->ref = 1;
+		atomic_store32(&program->ref, 1, memory_order_release);
 		program->uuid = uuid;
 		uuidmap_insert(render_backend_program_table(backend), uuid, program);
 	}
@@ -228,8 +228,8 @@ render_program_reload(render_program_t* program, const uuid_t uuid) {
 
 void
 render_program_unload(render_program_t* program) {
-	if (program && program->ref) {
-		if (!--program->ref)
+	if (program && atomic_load32(&program->ref, memory_order_acquire)) {
+		if (!atomic_decr32(&program->ref, memory_order_release))
 			render_program_deallocate(program);
 	}
 }

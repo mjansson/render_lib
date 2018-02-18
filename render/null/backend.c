@@ -114,6 +114,22 @@ _rb_null_upload_program(render_backend_t* backend, render_program_t* program) {
 	return true;
 }
 
+static bool
+_rb_null_upload_texture(render_backend_t* backend, render_texture_t* texture,
+                        const void* buffer, size_t size) {
+	FOUNDATION_UNUSED(backend);
+	FOUNDATION_UNUSED(texture);
+	FOUNDATION_UNUSED(buffer);
+	FOUNDATION_UNUSED(size);
+	return true;
+}
+
+static void
+_rb_null_deallocate_texture(render_backend_t* backend, render_texture_t* texture) {
+	FOUNDATION_UNUSED(backend);
+	FOUNDATION_UNUSED(texture);
+}
+
 static void
 _rb_null_link_buffer(render_backend_t* backend, render_buffer_t* buffer,
                      render_program_t* program) {
@@ -159,10 +175,12 @@ static render_backend_vtable_t _render_backend_vtable_null = {
 	.upload_buffer = _rb_null_upload_buffer,
 	.upload_shader = _rb_null_upload_shader,
 	.upload_program = _rb_null_upload_program,
+	.upload_texture = _rb_null_upload_texture,
 	.link_buffer = _rb_null_link_buffer,
 	.deallocate_buffer = _rb_null_deallocate_buffer,
 	.deallocate_shader = _rb_null_deallocate_shader,
 	.deallocate_program = _rb_null_deallocate_program,
+	.deallocate_texture = _rb_null_deallocate_texture,
 	.allocate_target = _rb_null_allocate_target,
 	.deallocate_target = _rb_null_deallocate_target
 };

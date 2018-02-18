@@ -459,30 +459,17 @@ static void _rb_gl2_deallocate_parameter_block(render_backend_t* backend,
                                                render_parameter_block_t* block) {
 	memory_deallocate(block);
 }
-
-
-static void _rb_gl2_upload_texture(render_backend_t* backend, render_texture_t* texture,
-                                   unsigned int width, unsigned int height, unsigned int depth, unsigned int levels,
-                                   const void* data) {
-}
-
-
-static render_texture_t* _rb_gl2_allocate_texture(render_backend_t* backend,
-                                                  render_texture_type_t type, render_usage_t usage, pixelformat_t format, colorspace_t colorspace) {
-	render_texture_t* texture = memory_allocate(HASH_RENDER, sizeof(render_texture_t), 0,
-	                                            MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZE);
-	texture->textype = type;
-	texture->usage = usage;
-	texture->format = format;
-	texture->colorspace = colorspace;
-	return texture;
-}
-
-
-static void _rb_gl2_deallocate_texture(render_backend_t* backend, render_texture_t* texture) {
-	memory_deallocate(texture);
-}
 #endif
+
+static bool
+_rb_gl2_upload_texture(render_backend_t* backend, render_texture_t* texture,
+                                   const void* buffer, size_t size) {
+	return false;
+}
+
+static void
+_rb_gl2_deallocate_texture(render_backend_t* backend, render_texture_t* texture) {
+}
 
 static void
 _rb_gl2_clear(render_backend_gl2_t* backend, render_context_t* context, render_command_t* command) {
@@ -745,17 +732,14 @@ static render_backend_vtable_t _render_backend_vtable_gl2 = {
 	.upload_buffer = _rb_gl2_upload_buffer,
 	.upload_shader = _rb_gl2_upload_shader,
 	.upload_program = _rb_gl2_upload_program,
+	.upload_texture = _rb_gl2_upload_texture,
 	.link_buffer = _rb_gl2_link_buffer,
 	.deallocate_buffer = _rb_gl2_deallocate_buffer,
 	.deallocate_shader = _rb_gl2_deallocate_shader,
 	.deallocate_program = _rb_gl2_deallocate_program,
+	.deallocate_texture = _rb_gl2_deallocate_texture,
 	.allocate_target = _rb_gl_allocate_target,
 	.deallocate_target = _rb_gl_deallocate_target,
-	/*
-	.allocate_texture = _rb_gl2_allocate_texture,
-	.upload_texture = _rb_gl2_upload_texture,
-	.deallocate_texture = _rb_gl2_deallocate_texture,
-	*/
 	.dispatch = _rb_gl2_dispatch,
 	.flip = _rb_gl2_flip
 };

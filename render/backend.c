@@ -196,6 +196,8 @@ render_backend_allocate(render_api_t api, bool allow_fallback) {
 	                   sizeof(backend->shadertable.bucket) / sizeof(backend->shadertable.bucket[0]), 0);
 	uuidmap_initialize((uuidmap_t*)&backend->programtable,
 	                   sizeof(backend->programtable.bucket) / sizeof(backend->programtable.bucket[0]), 0);
+	uuidmap_initialize((uuidmap_t*)&backend->texturetable,
+	                   sizeof(backend->texturetable.bucket) / sizeof(backend->texturetable.bucket[0]), 0);
 
 	render_backend_set_resource_platform(backend, 0);
 
@@ -215,6 +217,7 @@ render_backend_deallocate(render_backend_t* backend) {
 
 	uuidmap_finalize((uuidmap_t*)&backend->shadertable);
 	uuidmap_finalize((uuidmap_t*)&backend->programtable);
+	uuidmap_finalize((uuidmap_t*)&backend->texturetable);
 
 	render_target_finalize(&backend->framebuffer);
 
@@ -345,6 +348,11 @@ render_backend_program_table(render_backend_t* backend) {
 	return (uuidmap_t*)&backend->programtable;
 }
 
+uuidmap_t*
+render_backend_texture_table(render_backend_t* backend) {
+	return (uuidmap_t*)&backend->texturetable;
+}
+
 bool
 render_backend_shader_upload(render_backend_t* backend, render_shader_t* shader,
                              const void* buffer, size_t size) {
@@ -365,6 +373,19 @@ render_backend_program_upload(render_backend_t* backend, render_program_t* progr
 	program->backend = nullptr;
 	if (backend->vtable.upload_program(backend, program)) {
 		program->backend = backend;
+		return true;
+	}
+	return false;
+}
+
+bool
+render_backend_texture_upload(render_backend_t* backend, render_texture_t* texture,
+                              const void* buffer, size_t size) {
+	if (texture->backend && (texture->backend != backend))
+		texture->backend->vtable.deallocate_texture(texture->backend, texture);
+	texture->backend = nullptr;
+	if (backend->vtable.upload_texture(backend, texture, buffer, size)) {
+		texture->backend = backend;
 		return true;
 	}
 	return false;
