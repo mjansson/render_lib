@@ -464,11 +464,61 @@ static void _rb_gl2_deallocate_parameter_block(render_backend_t* backend,
 static bool
 _rb_gl2_upload_texture(render_backend_t* backend, render_texture_t* texture,
                                    const void* buffer, size_t size) {
-	return false;
+	glActiveTexture(GL_TEXTURE0);
+	GLuint texture_name = (GLuint)texture->backend_data[0];
+	if (!texture_name) {
+		glGenTextures(1, &texture_name);
+		if (!texture_name) {
+			_rb_gl_check_error("Unable to create texture object");
+			return false;
+		}
+		texture->backend_data[0] = texture_name;
+	}
+
+	glBindTexture(GL_TEXTURE_2D, texture_name);
+	glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_FALSE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	//glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, texture->levels > 1 ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	bool compressed = false;
+	GLint internal_format = GL_RGBA;
+	GLenum data_format = GL_RGBA;
+	GLenum data_type = GL_UNSIGNED_BYTE;
+
+	if (texture->pixelformat == PIXELFORMAT_A8) {
+		internal_format = GL_ALPHA;
+		data_format = GL_ALPHA;
+	}
+
+	const void* data = buffer;
+	unsigned int level_width = texture->width;
+	unsigned int level_height = texture->height;
+	for (unsigned int ilevel = 0; ilevel < texture->levels; ++ilevel) {
+		unsigned int data_length = image_raw_buffer_size(texture->pixelformat, level_width, level_height, 1, 1);
+		if( !compressed )
+			glTexImage2D(GL_TEXTURE_2D, ilevel, internal_format, level_width, level_height, 0, data_format, data_type, data);
+		else
+			glCompressedTexImage2D(GL_TEXTURE_2D, ilevel, internal_format, level_width, level_height, 0, data_length, data);
+
+		data = pointer_offset_const(data, data_length);
+		level_width = math_max(level_width >> 1, 1);
+		level_height = math_max(level_height >> 1, 1);
+	}
+	
+	if (_rb_gl_check_error("Unable to upload texture data"))
+		return false;
 }
 
 static void
 _rb_gl2_deallocate_texture(render_backend_t* backend, render_texture_t* texture) {
+	FOUNDATION_UNUSED(backend);
+	if (texture->backend_data[0])
+		glDeleteTextures(1, (GLuint*)&texture->backend_data[0]);
+	texture->backend_data[0] = 0;
 }
 
 static void

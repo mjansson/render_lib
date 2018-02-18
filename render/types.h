@@ -570,7 +570,7 @@ FOUNDATION_ALIGNED_STRUCT(render_program_t, 8) {
 	unsigned int usage:8; \
 	unsigned int unused:16; \
 	atomic32_t ref; \
-	pixelformat_t format; \
+	pixelformat_t pixelformat; \
 	colorspace_t colorspace; \
 	unsigned int width; \
 	unsigned int height; \

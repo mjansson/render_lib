@@ -211,7 +211,7 @@ render_texture_reload(render_texture_t* texture, const uuid_t uuid) {
 		memcpy(swapdata, texture->backend_data, sizeof(swapdata));
 		memcpy(texture->backend_data, tmptexture.backend_data, sizeof(texture->backend_data));
 		memcpy(tmptexture.backend_data, swapdata, sizeof(swapdata));
-		texture->format = tmptexture.format;
+		texture->pixelformat = tmptexture.pixelformat;
 		texture->colorspace = tmptexture.colorspace;
 		texture->width = tmptexture.width;
 		texture->height = tmptexture.height;
