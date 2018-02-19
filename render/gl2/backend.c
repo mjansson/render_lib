@@ -48,7 +48,6 @@ typedef struct render_backend_gl2_t {
 	void* context;
 #if FOUNDATION_PLATFORM_WINDOWS
 	HDC hdc;
-	DWORD thread_hglrc;
 #endif
 
 	render_resolution_t resolution;
@@ -68,7 +67,6 @@ _rb_gl2_construct(render_backend_t* backend) {
 
 #if FOUNDATION_PLATFORM_WINDOWS
 	render_backend_gl2_t* backend_gl2 = (render_backend_gl2_t*)backend;
-	backend_gl2->thread_hglrc = TlsAlloc();
 #else
 	FOUNDATION_UNUSED(backend);
 #endif
@@ -81,18 +79,10 @@ static void
 _rb_gl2_destruct(render_backend_t* backend) {
 	render_backend_gl2_t* backend_gl2 = (render_backend_gl2_t*)backend;
 
-#if FOUNDATION_PLATFORM_WINDOWS
-	if (backend_gl2->thread_hglrc) {
-		void* hglrc = TlsGetValue(backend_gl2->thread_hglrc);
-		if (hglrc && (hglrc != backend_gl2->context))
-			_rb_gl_destroy_context(&backend_gl2->drawable, hglrc);
-		TlsFree(backend_gl2->thread_hglrc);
-		backend_gl2->thread_hglrc = 0;
-	}
-#endif
-
 	if (backend_gl2->context)
 		_rb_gl_destroy_context(&backend_gl2->drawable, backend_gl2->context);
+	if (_rb_gl_get_thread_context() == backend_gl2->context)
+		_rb_gl_set_thread_context(0);
 	backend_gl2->context = 0;
 
 	log_debug(HASH_RENDER, STRING_CONST("Destructed GL2 render backend"));
@@ -110,9 +100,7 @@ _rb_gl2_set_drawable(render_backend_t* backend, const render_drawable_t* drawabl
 		return false;
 	}
 
-#if FOUNDATION_PLATFORM_WINDOWS
-	TlsSetValue(backend_gl2->thread_hglrc, backend_gl2->context);
-#endif
+	_rb_gl_set_thread_context(backend_gl2->context);
 
 #if FOUNDATION_PLATFORM_LINUX
 	glXMakeCurrent(drawable->display, (GLXDrawable)drawable->drawable, backend_gl2->context);
@@ -179,42 +167,42 @@ static void
 _rb_gl2_enable_thread(render_backend_t* backend) {
 	render_backend_gl2_t* backend_gl2 = (render_backend_gl2_t*)backend;
 
-#if FOUNDATION_PLATFORM_WINDOWS
-	void* thread_context = TlsGetValue(backend_gl2->thread_hglrc);
+	void* thread_context = _rb_gl_get_thread_context();
 	if (!thread_context) {
 		thread_context = _rb_gl_create_context(&backend->drawable, 2, 0, backend_gl2->context);
-		TlsSetValue(backend_gl2->thread_hglrc, thread_context);
+		_rb_gl_set_thread_context(thread_context);
 	}
+
+#if FOUNDATION_PLATFORM_WINDOWS
 	if (!wglMakeCurrent((HDC)backend->drawable.hdc, (HGLRC)thread_context)) {
 		string_const_t errmsg = system_error_message(0);
 		log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
 		           STRING_CONST("Unable to enable thread for GL2 rendering: %.*s"),
 		           STRING_FORMAT(errmsg));
 	}
+	else {
+		log_debug(HASH_RENDER, STRING_CONST("Enabled thread for GL2 rendering"));
+	}
 #elif FOUNDATION_PLATFORM_LINUX
 	glXMakeCurrent(backend->drawable.display, (GLXDrawable)backend->drawable.drawable,
-	               backend_gl2->context);
-	_rb_gl_check_error("Unable to enable thread for rendering");
-#elif FOUNDATION_PLATFORM_MACOS
-	_rb_gl_make_agl_context_current(backend_gl2->context);
+	               thread_context);
+	_rb_gl_check_error("Unable to enable thread for GL2 rendering");
 #else
-	FOUNDATION_ASSERT_FAIL("Unable to enable thread for rendering, platform not implemented");
+	FOUNDATION_ASSERT_FAIL("Platform not implemented");
 	error_report(ERRORLEVEL_ERROR, ERROR_NOT_IMPLEMENTED);
 #endif
 }
 
 static void
 _rb_gl2_disable_thread(render_backend_t* backend) {
-#if FOUNDATION_PLATFORM_WINDOWS
 	render_backend_gl2_t* backend_gl2 = (render_backend_gl2_t*)backend;
-	void* thread_context = TlsGetValue(backend_gl2->thread_hglrc);
-	if (thread_context && (thread_context != backend_gl2->context)) {
+
+	void* thread_context = _rb_gl_get_thread_context();
+	if (thread_context) {
 		_rb_gl_destroy_context(&backend_gl2->drawable, thread_context);
-		TlsSetValue(backend_gl2->thread_hglrc, 0);
+		log_debug(HASH_RENDER, STRING_CONST("Disabled thread for GL2 rendering"));
 	}
-#else
-	FOUNDATION_UNUSED(backend);
-#endif
+	_rb_gl_set_thread_context(0);
 }
 
 static void*
@@ -498,7 +486,7 @@ _rb_gl2_upload_texture(render_backend_t* backend, render_texture_t* texture,
 	unsigned int level_width = texture->width;
 	unsigned int level_height = texture->height;
 	for (unsigned int ilevel = 0; ilevel < texture->levels; ++ilevel) {
-		unsigned int data_length = image_raw_buffer_size(texture->pixelformat, level_width, level_height, 1, 1);
+		unsigned int data_length = 0; //image_raw_buffer_size(texture->pixelformat, level_width, level_height, 1, 1);
 		if( !compressed )
 			glTexImage2D(GL_TEXTURE_2D, ilevel, internal_format, level_width, level_height, 0, data_format, data_type, data);
 		else
@@ -511,6 +499,8 @@ _rb_gl2_upload_texture(render_backend_t* backend, render_texture_t* texture,
 	
 	if (_rb_gl_check_error("Unable to upload texture data"))
 		return false;
+
+	return true;
 }
 
 static void
