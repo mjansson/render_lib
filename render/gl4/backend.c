@@ -445,6 +445,8 @@ _rb_gl4_destruct(render_backend_t* backend) {
 	render_backend_gl4_t* backend_gl4 = (render_backend_gl4_t*)backend;
 	if (backend_gl4->context)
 		_rb_gl_destroy_context(&backend_gl4->drawable, backend_gl4->context);
+	if (get_thread_gl4_context() == backend_gl4->context)
+		set_thread_gl4_context(0);
 	backend_gl4->context = 0;
 
 	log_debug(HASH_RENDER, STRING_CONST("Destructed GL4 render backend"));
@@ -533,10 +535,15 @@ _rb_gl4_enable_thread(render_backend_t* backend) {
 	}
 
 #if FOUNDATION_PLATFORM_WINDOWS
-	if (!wglMakeCurrent((HDC)backend->drawable.hdc, (HGLRC)thread_context))
-		_rb_gl_check_error("Unable to enable thread for rendering");
-	else
+	if (!wglMakeCurrent((HDC)backend->drawable.hdc, (HGLRC)thread_context)) {
+		string_const_t errmsg = system_error_message(0);
+		log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
+		           STRING_CONST("Unable to enable thread for GL4 rendering: %.*s"),
+		           STRING_FORMAT(errmsg));
+	}
+	else {
 		log_debug(HASH_RENDER, STRING_CONST("Enabled thread for GL4 rendering"));
+	}
 #elif FOUNDATION_PLATFORM_LINUX
 	glXMakeCurrent(backend->drawable.display, (GLXDrawable)backend->drawable.drawable,
 	               thread_context);
