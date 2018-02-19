@@ -43,8 +43,8 @@ render_command_clear(render_command_t* command, unsigned int buffer_mask, uint32
 }
 
 void
-render_command_viewport(render_command_t* command, int x, int y,
-                        int width, int height, real min_z, real max_z) {
+render_command_viewport(render_command_t* command, unsigned int x, unsigned int y,
+                        unsigned int width, unsigned int height, real min_z, real max_z) {
 	command->type                   = RENDERCOMMAND_VIEWPORT;
 	command->data.viewport.x        = (uint16_t)x;
 	command->data.viewport.y        = (uint16_t)y;

@@ -150,7 +150,7 @@ _rb_gl2_set_drawable(render_backend_t* backend, const render_drawable_t* drawabl
 	glReadBuffer(GL_BACK);
 	glDrawBuffer(GL_BACK);
 
-	glViewport(0, 0, drawable->width, drawable->height);
+	glViewport(0, 0, (GLsizei)drawable->width, (GLsizei)drawable->height);
 
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
@@ -452,6 +452,9 @@ static void _rb_gl2_deallocate_parameter_block(render_backend_t* backend,
 static bool
 _rb_gl2_upload_texture(render_backend_t* backend, render_texture_t* texture,
                                    const void* buffer, size_t size) {
+	FOUNDATION_UNUSED(backend);
+	FOUNDATION_UNUSED(size);
+
 	glActiveTexture(GL_TEXTURE0);
 	GLuint texture_name = (GLuint)texture->backend_data[0];
 	if (!texture_name) {
@@ -473,7 +476,7 @@ _rb_gl2_upload_texture(render_backend_t* backend, render_texture_t* texture,
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	bool compressed = false;
-	GLint internal_format = GL_RGBA;
+	GLenum internal_format = GL_RGBA;
 	GLenum data_format = GL_RGBA;
 	GLenum data_type = GL_UNSIGNED_BYTE;
 
@@ -485,14 +488,21 @@ _rb_gl2_upload_texture(render_backend_t* backend, render_texture_t* texture,
 	const void* data = buffer;
 	unsigned int level_width = texture->width;
 	unsigned int level_height = texture->height;
-	for (unsigned int ilevel = 0; ilevel < texture->levels; ++ilevel) {
+	for (GLint ilevel = 0; ilevel < (GLint)texture->levels; ++ilevel) {
 		unsigned int data_length = 0; //image_raw_buffer_size(texture->pixelformat, level_width, level_height, 1, 1);
+		if (data_length > size) {
+			log_error(HASH_RENDER, ERROR_INVALID_VALUE, STRING_CONST("Data size too small"));
+			return false;
+		}
 		if( !compressed )
-			glTexImage2D(GL_TEXTURE_2D, ilevel, internal_format, level_width, level_height, 0, data_format, data_type, data);
+			glTexImage2D(GL_TEXTURE_2D, ilevel, (GLint)internal_format, (GLsizei)level_width, (GLsizei)level_height,
+			             0, data_format, data_type, data);
 		else
-			glCompressedTexImage2D(GL_TEXTURE_2D, ilevel, internal_format, level_width, level_height, 0, data_length, data);
+			glCompressedTexImage2D(GL_TEXTURE_2D, ilevel, internal_format, (GLsizei)level_width, (GLsizei)level_height,
+			                       0, (GLsizei)data_length, data);
 
 		data = pointer_offset_const(data, data_length);
+		size -= data_length;
 		level_width = math_max(level_width >> 1, 1);
 		level_height = math_max(level_height >> 1, 1);
 	}
@@ -553,15 +563,16 @@ _rb_gl2_clear(render_backend_gl2_t* backend, render_context_t* context, render_c
 static void
 _rb_gl2_viewport(render_backend_gl2_t* backend, render_target_t* target, 
                  render_context_t* context, render_command_t* command) {
-	GLint x = command->data.viewport.x;
-	GLint y = command->data.viewport.y;
-	GLsizei w = command->data.viewport.width;
-	GLsizei h = command->data.viewport.height;
+	FOUNDATION_UNUSED(context);
+	GLint x = (GLint)command->data.viewport.x;
+	GLint y = (GLint)command->data.viewport.y;
+	GLsizei w = (GLsizei)command->data.viewport.width;
+	GLsizei h = (GLsizei)command->data.viewport.height;
 
 	glViewport(x, y, w, h);
 	glScissor(x, y, w, h);
 
-	backend->use_clear_scissor = (x || y || (w != target->width) || (h != target->height));
+	backend->use_clear_scissor = (x || y || (w != (GLsizei)target->width) || (h != (GLsizei)target->height));
 }
 
 static const GLint        _rb_gl2_vertex_format_size[VERTEXFORMAT_NUMTYPES] = { 1,        2,        3,        4,        4,                4,                1,        2,        4,        1,        2,        4        };

@@ -92,7 +92,7 @@ render_backend_allocate(render_api_t api, bool allow_fallback) {
 			if (!backend || !backend->vtable.construct(backend)) {
 				log_info(HASH_RENDER, STRING_CONST("Failed to initialize OpenGL ES 2 render backend"));
 				render_backend_deallocate(backend);
-				backend = 0;
+				backend = nullptr;
 			}
 			break;
 
@@ -109,7 +109,7 @@ render_backend_allocate(render_api_t api, bool allow_fallback) {
 			if (!backend || !backend->vtable.construct(backend)) {
 				log_info(HASH_RENDER, STRING_CONST("Failed to initialize OpenGL 2 render backend"));
 				render_backend_deallocate(backend);
-				backend = 0;
+				backend = nullptr;
 			}
 			break;
 
@@ -126,7 +126,8 @@ render_backend_allocate(render_api_t api, bool allow_fallback) {
 			backend = render_backend_gl4_allocate();
 			if (!backend || !backend->vtable.construct(backend)) {
 				log_info(HASH_RENDER, STRING_CONST("Failed to initialize OpenGL 4 render backend"));
-				render_backend_deallocate(backend), backend = 0;
+				render_backend_deallocate(backend);
+				backend = nullptr;
 			}
 			break;
 

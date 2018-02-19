@@ -27,8 +27,6 @@
 
 #include <render/gl4/glwrap.h>
 
-#define GET_BUFFER(id) objectmap_lookup(_render_map_buffer, (id))
-
 #if RENDER_ENABLE_NVGLEXPERT
 #  include <nvapi.h>
 
@@ -527,7 +525,7 @@ _rb_gl4_set_drawable(render_backend_t* backend, const render_drawable_t* drawabl
 	glReadBuffer(GL_BACK);
 	glDrawBuffer(GL_BACK);
 
-	glViewport(0, 0, drawable->width, drawable->height);
+	glViewport(0, 0, (GLsizei)drawable->width, (GLsizei)drawable->height);
 
 	_rb_gl_check_error("Error setting up default state");
 
@@ -588,6 +586,8 @@ size_t
 _rb_gl_enumerate_modes(render_backend_t* backend, unsigned int adapter,
                        render_resolution_t* store, size_t capacity) {
 	size_t count = 0;
+	size_t numout = 0;
+	FOUNDATION_UNUSED(backend);
 
 #if FOUNDATION_PLATFORM_LINUX
 	FOUNDATION_ASSERT_MSG(adapter == WINDOW_ADAPTER_DEFAULT,
@@ -649,14 +649,14 @@ _rb_gl_enumerate_modes(render_backend_t* backend, unsigned int adapter,
 				};
 
 				bool found = false;
-				for (size_t c = 0, size = array_size(modes); c < size; ++c) {
+				for (size_t c = 0; c < numout; ++c) {
 					if (!memcmp(store + c, &mode, sizeof(render_resolution_t))) {
 						found = true;
 						break;
 					}
 				}
-				if (!found && (count < capacity))
-					store[count] = mode;
+				if (!found && (numout < capacity))
+					store[numout++] = mode;
 				++count;
 			}
 
@@ -993,7 +993,7 @@ _rb_gl_allocate_target(render_backend_t* backend, render_target_t* target) {
 		goto failure;
 	}
 	glBindTexture(GL_TEXTURE_2D, render_texture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, target->width, target->height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, (GLsizei)target->width, (GLsizei)target->height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
 	if (_rb_gl_check_error("Unable to create render target: Error setting texture storage dimensions and format"))
 		goto failure;
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -1006,7 +1006,7 @@ _rb_gl_allocate_target(render_backend_t* backend, render_target_t* target) {
 		goto failure;
 	}
 	glBindRenderbuffer(GL_RENDERBUFFER, depth_buffer);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, target->width, target->height);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, (GLsizei)target->width, (GLsizei)target->height);
 	if (_rb_gl_check_error("Unable to create render target: Error setting depth buffer storage dimensions"))
 		goto failure;
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
@@ -1067,11 +1067,17 @@ _rb_gl_activate_target(render_backend_t* backend, render_target_t* target) {
 static bool
 _rb_gl4_upload_texture(render_backend_t* backend, render_texture_t* texture,
                        const void* buffer, size_t size) {
+	FOUNDATION_UNUSED(backend);
+	FOUNDATION_UNUSED(texture);
+	FOUNDATION_UNUSED(buffer);
+	FOUNDATION_UNUSED(size);
 	return false;
 }
 
 static void
 _rb_gl4_deallocate_texture(render_backend_t* backend, render_texture_t* texture) {
+	FOUNDATION_UNUSED(backend);
+	FOUNDATION_UNUSED(texture);
 }
 
 static void
@@ -1118,15 +1124,16 @@ _rb_gl4_clear(render_backend_gl4_t* backend, render_context_t* context, render_c
 static void
 _rb_gl4_viewport(render_backend_gl4_t* backend, render_target_t* target,
                  render_context_t* context, render_command_t* command) {
-	GLint x = command->data.viewport.x;
-	GLint y = command->data.viewport.y;
-	GLsizei w = command->data.viewport.width;
-	GLsizei h = command->data.viewport.height;
+	FOUNDATION_UNUSED(context);
+	GLint x = (GLint)command->data.viewport.x;
+	GLint y = (GLint)command->data.viewport.y;
+	GLsizei w = (GLsizei)command->data.viewport.width;
+	GLsizei h = (GLsizei)command->data.viewport.height;
 
 	glViewport(x, y, w, h);
 	glScissor(x, y, w, h);
 
-	backend->use_clear_scissor = (x || y || (w != target->width) || (h != target->height));
+	backend->use_clear_scissor = (x || y || (w != (GLsizei)target->width) || (h != (GLsizei)target->height));
 
 	_rb_gl_check_error("Error setting viewport");
 }
@@ -1136,7 +1143,7 @@ static const unsigned int _rb_gl4_primitive_mult[RENDERPRIMITIVE_NUMTYPES] = { 3
 static const unsigned int _rb_gl4_primitive_add[RENDERPRIMITIVE_NUMTYPES]  = { 0, 0 };
 
 //                                                 BLEND_ZERO, BLEND_ONE, BLEND_SRCCOLOR, BLEND_INVSRCCOLOR,      BLEND_DESTCOLOR, BLEND_INVDESTCOLOR,     BLEND_SRCALPHA, BLEND_INVSRCALPHA,      BLEND_DESTALPHA, BLEND_INVDESTALPHA,     BLEND_FACTOR,      BLEND_INVFACTOR,             BLEND_SRCALPHASAT
-static const GLenum       _rb_gl4_blend_func[] = { GL_ZERO,    GL_ONE,    GL_SRC_COLOR,   GL_ONE_MINUS_SRC_COLOR, GL_DST_COLOR,    GL_ONE_MINUS_DST_COLOR, GL_SRC_ALPHA,   GL_ONE_MINUS_SRC_ALPHA, GL_DST_ALPHA,    GL_ONE_MINUS_DST_ALPHA, GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA, GL_SRC_ALPHA_SATURATE };
+//static const GLenum       _rb_gl4_blend_func[] = { GL_ZERO,    GL_ONE,    GL_SRC_COLOR,   GL_ONE_MINUS_SRC_COLOR, GL_DST_COLOR,    GL_ONE_MINUS_DST_COLOR, GL_SRC_ALPHA,   GL_ONE_MINUS_SRC_ALPHA, GL_DST_ALPHA,    GL_ONE_MINUS_DST_ALPHA, GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA, GL_SRC_ALPHA_SATURATE };
 
 static void
 _rb_gl4_set_default_state(void) {
@@ -1304,8 +1311,8 @@ _rb_gl4_flip(render_backend_t* backend) {
 
 #elif FOUNDATION_PLATFORM_LINUX
 
-	if (backend_gl4->drawable->display)
-		glXSwapBuffers(backend_gl4->drawable->display, (GLXDrawable)backend_gl4->drawable->drawable);
+	if (backend_gl4->drawable.display)
+		glXSwapBuffers(backend_gl4->drawable.display, (GLXDrawable)backend_gl4->drawable.drawable);
 
 #else
 #  error Not implemented

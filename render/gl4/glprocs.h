@@ -137,7 +137,10 @@ RENDER_EXTERN bool
 _rb_gl_get_shader_procs(void);
 
 RENDER_EXTERN bool
-_rg_gl_get_framebuffer_procs(void);
+_rb_gl_get_framebuffer_procs(void);
+
+RENDER_EXTERN bool
+_rb_gl_get_arrays_procs(void);
 
 RENDER_EXTERN bool
 _rb_gl_get_standard_procs(unsigned int major, unsigned int minor);

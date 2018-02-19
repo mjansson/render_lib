@@ -30,8 +30,6 @@ static bool _render_initialized;
 //Global data
 render_config_t _render_config;
 bool _render_api_disabled[RENDERAPI_NUM];
-objectmap_t* _render_map_target;
-objectmap_t* _render_map_buffer;
 render_backend_t** _render_backends;
 
 int

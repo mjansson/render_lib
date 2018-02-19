@@ -45,8 +45,8 @@ render_drawable_initialize_window(render_drawable_t* drawable, window_t* window,
 	drawable->adapter = window_adapter(window);
 	drawable->window = window;
 	drawable->tag = tag;
-	drawable->width = window_width(window);
-	drawable->height = window_height(window);
+	drawable->width = (unsigned int)window_width(window);
+	drawable->height = (unsigned int)window_height(window);
 	drawable->refresh = 0;
 #if FOUNDATION_PLATFORM_WINDOWS
 	drawable->hwnd = window_hwnd(window);
