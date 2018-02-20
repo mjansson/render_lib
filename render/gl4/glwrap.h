@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include <foundation/platform.h>
+
 #ifndef STDCALL
 #  define STDCALL
 #endif
@@ -31,6 +33,8 @@
 #  include "gl/wglext.h"
 
 #elif FOUNDATION_PLATFORM_MACOS
+
+#  define GL_GLEXT_PROTOTYPES
 
 #  include <foundation/apple.h>
 #  include <render/types.h>
@@ -58,7 +62,10 @@ _rb_gl_flush_drawable(void* context);
 
 #elif FOUNDATION_PLATFORM_LINUX
 
+#  define GL_GLEXT_PROTOTYPES
+
 #  include <foundation/posix.h>
+
 #  include <X11/Xlib.h>
 #  include <X11/extensions/xf86vmode.h>
 #  include <GL/gl.h>

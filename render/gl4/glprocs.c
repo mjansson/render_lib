@@ -44,7 +44,7 @@ _rb_gl_get_proc_address(const char* name) {
 #endif
 }
 
-#if !FOUNDATION_PLATFORM_LINUX && !FOUNDATION_PLATFORM_MACOS
+#ifndef GL_GLEXT_PROTOTYPES
 
 PFNGLACTIVETEXTUREPROC                glActiveTexture = 0;
 PFNGLSAMPLECOVERAGEPROC               glSampleCoverage = 0;
@@ -55,10 +55,6 @@ PFNGLCOMPRESSEDTEXSUBIMAGE3DPROC      glCompressedTexSubImage3D = 0;
 PFNGLCOMPRESSEDTEXSUBIMAGE2DPROC      glCompressedTexSubImage2D = 0;
 PFNGLCOMPRESSEDTEXSUBIMAGE1DPROC      glCompressedTexSubImage1D = 0;
 PFNGLGETCOMPRESSEDTEXIMAGEPROC        glGetCompressedTexImage = 0;
-
-#endif
-
-#if !FOUNDATION_PLATFORM_MACOS
 
 PFNGLGENQUERIESPROC                   glGenQueries = 0;
 PFNGLDELETEQUERIESPROC                glDeleteQueries = 0;
@@ -148,7 +144,7 @@ PFNGLGENVERTEXARRAYSPROC              glGenVertexArrays = 0;
 
 bool
 _rb_gl_get_texture_procs(void) {
-#if !FOUNDATION_PLATFORM_LINUX && !FOUNDATION_PLATFORM_MACOS
+#ifndef GL_GLEXT_PROTOTYPES
 	glActiveTexture = (PFNGLACTIVETEXTUREPROC)_rb_gl_get_proc_address("glActiveTexture");
 	glSampleCoverage = (PFNGLSAMPLECOVERAGEPROC)_rb_gl_get_proc_address("glSampleCoverage");
 	glCompressedTexImage3D = (PFNGLCOMPRESSEDTEXIMAGE3DPROC)_rb_gl_get_proc_address("glCompressedTexImage3D");
@@ -174,7 +170,7 @@ _rb_gl_get_texture_procs(void) {
 
 bool
 _rb_gl_get_query_procs(void) {
-#if !FOUNDATION_PLATFORM_MACOS
+#ifndef GL_GLEXT_PROTOTYPES
 	glGenQueries = (PFNGLGENQUERIESPROC)_rb_gl_get_proc_address("glGenQueries");
 	glDeleteQueries = (PFNGLDELETEQUERIESPROC)_rb_gl_get_proc_address("glDeleteQueries");
 	glIsQuery = (PFNGLISQUERYPROC)_rb_gl_get_proc_address("glIsQuery");
@@ -194,7 +190,7 @@ _rb_gl_get_query_procs(void) {
 
 bool
 _rb_gl_get_buffer_procs(void) {
-#if !FOUNDATION_PLATFORM_MACOS
+#ifndef GL_GLEXT_PROTOTYPES
 	glBindBuffer = (PFNGLBINDBUFFERPROC)_rb_gl_get_proc_address("glBindBuffer");
 	glDeleteBuffers = (PFNGLDELETEBUFFERSPROC)_rb_gl_get_proc_address("glDeleteBuffers");
 	glGenBuffers = (PFNGLGENBUFFERSPROC)_rb_gl_get_proc_address("glGenBuffers");
@@ -218,7 +214,7 @@ _rb_gl_get_buffer_procs(void) {
 
 bool
 _rb_gl_get_shader_procs(void) {
-#if !FOUNDATION_PLATFORM_MACOS
+#ifndef GL_GLEXT_PROTOTYPES
 	glBlendEquationSeparate = (PFNGLBLENDEQUATIONSEPARATEPROC)
 	                          _rb_gl_get_proc_address("glBlendEquationSeparate");
 	glStencilOpSeparate = (PFNGLSTENCILOPSEPARATEPROC)_rb_gl_get_proc_address("glStencilOpSeparate");
@@ -292,7 +288,7 @@ _rb_gl_get_shader_procs(void) {
 bool
 _rb_gl_get_framebuffer_procs(void) {
 	//We require GL_ARB_framebuffer_object extension
-#if !FOUNDATION_PLATFORM_MACOS
+#ifndef GL_GLEXT_PROTOTYPES
 	glBindFramebuffer = (PFNGLBINDFRAMEBUFFERPROC)_rb_gl_get_proc_address("glBindFramebuffer");
 	glDeleteFramebuffers = (PFNGLDELETEFRAMEBUFFERSPROC)_rb_gl_get_proc_address("glDeleteFramebuffers");
 	glGenFramebuffers = (PFNGLGENFRAMEBUFFERSPROC)_rb_gl_get_proc_address("glGenFramebuffers");
@@ -315,7 +311,7 @@ _rb_gl_get_framebuffer_procs(void) {
 
 bool
 _rb_gl_get_arrays_procs(void) {
-#if !FOUNDATION_PLATFORM_MACOS
+#ifndef GL_GLEXT_PROTOTYPES
 	glBindVertexArray = (PFNGLBINDVERTEXARRAYPROC)_rb_gl_get_proc_address("glBindVertexArray");
 	glDeleteVertexArrays = (PFNGLDELETEVERTEXARRAYSPROC)_rb_gl_get_proc_address("glDeleteVertexArrays");
 	glGenVertexArrays = (PFNGLGENVERTEXARRAYSPROC)_rb_gl_get_proc_address("glGenVertexArrays");
