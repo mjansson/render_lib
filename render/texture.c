@@ -165,7 +165,7 @@ render_texture_reload(render_texture_t* texture, const uuid_t uuid) {
 	render_backend_enable_thread(backend);
 
 	bool success = false;
-	render_texture_t tmptexture;
+	render_texture_t tmptexture = {0};
 
 	uint64_t platform = render_backend_resource_platform(backend);
 

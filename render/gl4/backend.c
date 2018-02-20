@@ -184,7 +184,6 @@ _rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, uns
 	array_push(attributes, WGL_CONTEXT_CORE_PROFILE_BIT_ARB);
 	array_push(attributes, 0);
 
-	int err = 0;
 	PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)
 	        _rb_gl_get_proc_address("wglCreateContextAttribsARB");
 	if (wglCreateContextAttribsARB)
@@ -586,7 +585,6 @@ size_t
 _rb_gl_enumerate_modes(render_backend_t* backend, unsigned int adapter,
                        render_resolution_t* store, size_t capacity) {
 	size_t count = 0;
-	size_t numout = 0;
 	FOUNDATION_UNUSED(backend);
 
 #if FOUNDATION_PLATFORM_LINUX
@@ -600,6 +598,7 @@ _rb_gl_enumerate_modes(render_backend_t* backend, unsigned int adapter,
 		goto exit;
 	}
 
+	size_t numout = 0;
 	int depths[] = { 15, 16, 24, 32 };
 	for (int i = 0; i < 4; ++i) {
 		int num = 0;

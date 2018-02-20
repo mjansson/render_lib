@@ -60,17 +60,10 @@ _rb_gl2_set_default_state(void);
 
 static bool
 _rb_gl2_construct(render_backend_t* backend) {
-
 	//TODO: Caps check
 	//if( !... )
 	//  return false;
-
-#if FOUNDATION_PLATFORM_WINDOWS
-	render_backend_gl2_t* backend_gl2 = (render_backend_gl2_t*)backend;
-#else
 	FOUNDATION_UNUSED(backend);
-#endif
-
 	log_debug(HASH_RENDER, STRING_CONST("Constructed GL2 render backend"));
 	return true;
 }
