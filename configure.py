@@ -9,7 +9,7 @@ sys.path.insert(0, os.path.join('build', 'ninja'))
 
 import generator
 
-dependlibs = ['resource', 'vector', 'window', 'network', 'foundation']
+dependlibs = ['render', 'resource', 'vector', 'window', 'network', 'foundation']
 
 generator = generator.Generator(project = 'render', dependlibs = dependlibs, variables = [('bundleidentifier', 'com.rampantpixels.render.$(binname)')])
 target = generator.target
@@ -37,7 +37,7 @@ if target.is_windows():
 if target.is_linux():
   gllibs = ['GL', 'Xxf86vm', 'Xext', 'X11']
 
-linklibs = ['render'] + gllibs
+linklibs = gllibs
 
 if not target.is_ios() and not target.is_android() and not target.is_tizen():
   configs = [config for config in toolchain.configs if config not in ['profile', 'deploy']]
