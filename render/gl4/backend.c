@@ -46,6 +46,7 @@ typedef struct render_backend_gl4_t {
 	RENDER_DECLARE_BACKEND;
 
 	void* context;
+	atomic32_t context_used;
 	render_resolution_t resolution;
 
 	bool use_clear_scissor;
@@ -260,11 +261,6 @@ _rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, uns
 	int numconfig = 0;
 	bool verify_only = false;
 
-	if (share_context) {
-		log_error(HASH_RENDER, ERROR_NOT_IMPLEMENTED, STRING_CONST("Context sharing not implemented"));
-		goto failed;
-	}
-
 	if (!drawable) {
 		display = XOpenDisplay(0);
 		screen = DefaultScreen(display);
@@ -305,7 +301,7 @@ _rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, uns
 			array_push(attributes, 0); array_push(attributes, 0);
 
 			for (int ic = 0; ic < numconfig; ++ic) {
-				context = glXCreateContextAttribs(display, fbconfig[ic], 0, true, attributes);
+				context = glXCreateContextAttribs(display, fbconfig[ic], share_context, 1, attributes);
 				if (context)
 					break;
 			}
@@ -450,11 +446,27 @@ _rb_gl4_construct(render_backend_t* backend) {
 static void
 _rb_gl4_destruct(render_backend_t* backend) {
 	render_backend_gl4_t* backend_gl4 = (render_backend_gl4_t*)backend;
+	
+	/*need to keep track of current backend
+	in enable thread
+	  if different backend
+	    if current context not current backend base context, destroy it
+	  if same backend
+	  	grab base context if free, otherwise create new
+	  set current backend
+	in disable thread
+	  if different backend
+	    ignore call
+	  if same backend
+	  	if not base context, destroy it
+	    reset current backend to null
+	    reset current context*/
+
+	_rb_gl4_disable_thread();
 	if (backend_gl4->context)
 		_rb_gl_destroy_context(&backend_gl4->drawable, backend_gl4->context);
-	if (_rb_gl_get_thread_context() == backend_gl4->context)
-		_rb_gl_set_thread_context(0);
 	backend_gl4->context = 0;
+	atomic_store32(&backend_gl4->context_used, 0, memory_order_release);
 
 	log_debug(HASH_RENDER, STRING_CONST("Destructed GL4 render backend"));
 }
@@ -465,9 +477,11 @@ _rb_gl4_set_drawable(render_backend_t* backend, const render_drawable_t* drawabl
 	if (!FOUNDATION_VALIDATE_MSG(!backend_gl4->context, "Drawable switching not supported yet"))
 		return error_report(ERRORLEVEL_ERROR, ERROR_NOT_IMPLEMENTED);
 
+	atomic_store32(&backend_gl4->context_used, 1, memory_order_release);
 	backend_gl4->context = _rb_gl_create_context(drawable, 4, 0, 0);
 	if (!backend_gl4->context) {
 		log_error(HASH_RENDER, ERROR_UNSUPPORTED, STRING_CONST("Unable to create OpenGL 4 context"));
+		atomic_store32(&backend_gl4->context_used, 0, memory_order_release);
 		return false;
 	}
 
@@ -537,7 +551,10 @@ _rb_gl4_enable_thread(render_backend_t* backend) {
 
 	void* thread_context = _rb_gl_get_thread_context();
 	if (!thread_context) {
-		thread_context = _rb_gl_create_context(&backend->drawable, 4, 0, backend_gl4->context);
+		if (atomic_cas32(&backend_gl4->context_used, 1, 0, memory_order_release, memory_order_acquire))
+			thread_context = backend_gl4->context;
+		else
+			thread_context = _rb_gl_create_context(&backend->drawable, 4, 0, backend_gl4->context);
 		_rb_gl_set_thread_context(thread_context);
 	}
 
@@ -567,7 +584,10 @@ _rb_gl4_disable_thread(render_backend_t* backend) {
 
 	void* thread_context = _rb_gl_get_thread_context();
 	if (thread_context) {
-		_rb_gl_destroy_context(&backend_gl4->drawable, thread_context);
+		if (thread_context == backend_gl4->context)
+			atomic_store32(&backend_gl4->context_used, 0, memory_order_release);
+		else
+			_rb_gl_destroy_context(&backend_gl4->drawable, thread_context);
 		log_debug(HASH_RENDER, STRING_CONST("Disabled thread for GL4 rendering"));
 	}
 	_rb_gl_set_thread_context(0);
