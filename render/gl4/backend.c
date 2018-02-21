@@ -431,6 +431,56 @@ _rb_gl_check_extension(const char* name, size_t length) {
 	return string_find_string(ext, extlength, name, length, 0) != STRING_NPOS;
 }
 
+static void
+_rb_gl4_disable_thread(render_backend_t* backend) {
+	render_backend_gl4_t* backend_gl4 = (render_backend_gl4_t*)backend;
+
+	void* thread_context = _rb_gl_get_thread_context();
+	if (thread_context) {
+		if (thread_context == backend_gl4->context)
+			atomic_store32(&backend_gl4->context_used, 0, memory_order_release);
+		else
+			_rb_gl_destroy_context(&backend_gl4->drawable, thread_context);
+		log_debug(HASH_RENDER, STRING_CONST("Disabled thread for GL4 rendering"));
+	}
+	_rb_gl_set_thread_context(0);
+}
+
+static void
+_rb_gl4_enable_thread(render_backend_t* backend) {
+	render_backend_gl4_t* backend_gl4 = (render_backend_gl4_t*)backend;
+
+	void* thread_context = _rb_gl_get_thread_context();
+	if (!thread_context) {
+		if (!backend_gl4->context)
+			return;
+		if (atomic_cas32(&backend_gl4->context_used, 1, 0, memory_order_release, memory_order_acquire))
+			thread_context = backend_gl4->context;
+		else
+			thread_context = _rb_gl_create_context(&backend->drawable, 4, 0, backend_gl4->context);
+		_rb_gl_set_thread_context(thread_context);
+	}
+
+#if FOUNDATION_PLATFORM_WINDOWS
+	if (!wglMakeCurrent((HDC)backend->drawable.hdc, (HGLRC)thread_context)) {
+		string_const_t errmsg = system_error_message(0);
+		log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
+		           STRING_CONST("Unable to enable thread for GL4 rendering: %.*s"),
+		           STRING_FORMAT(errmsg));
+	}
+	else {
+		log_debug(HASH_RENDER, STRING_CONST("Enabled thread for GL4 rendering"));
+	}
+#elif FOUNDATION_PLATFORM_LINUX
+	glXMakeCurrent(backend->drawable.display, (GLXDrawable)backend->drawable.drawable,
+	               thread_context);
+	_rb_gl_check_error("Unable to enable thread for GL4 rendering");
+#else
+	FOUNDATION_ASSERT_FAIL("Platform not implemented");
+	error_report(ERRORLEVEL_ERROR, ERROR_NOT_IMPLEMENTED);
+#endif
+}
+
 static bool
 _rb_gl4_construct(render_backend_t* backend) {
 	FOUNDATION_UNUSED(backend);
@@ -446,29 +496,22 @@ _rb_gl4_construct(render_backend_t* backend) {
 static void
 _rb_gl4_destruct(render_backend_t* backend) {
 	render_backend_gl4_t* backend_gl4 = (render_backend_gl4_t*)backend;
-	
-	/*need to keep track of current backend
-	in enable thread
-	  if different backend
-	    if current context not current backend base context, destroy it
-	  if same backend
-	  	grab base context if free, otherwise create new
-	  set current backend
-	in disable thread
-	  if different backend
-	    ignore call
-	  if same backend
-	  	if not base context, destroy it
-	    reset current backend to null
-	    reset current context*/
 
-	_rb_gl4_disable_thread();
+	_rb_gl4_disable_thread(backend);
 	if (backend_gl4->context)
 		_rb_gl_destroy_context(&backend_gl4->drawable, backend_gl4->context);
 	backend_gl4->context = 0;
 	atomic_store32(&backend_gl4->context_used, 0, memory_order_release);
 
 	log_debug(HASH_RENDER, STRING_CONST("Destructed GL4 render backend"));
+}
+
+size_t
+_rb_gl_enumerate_adapters(render_backend_t* backend, unsigned int* store, size_t capacity) {
+	FOUNDATION_UNUSED(backend);
+	if (capacity)
+		store[0] = (unsigned int)WINDOW_ADAPTER_DEFAULT;
+	return 1;
 }
 
 static bool
@@ -543,62 +586,6 @@ _rb_gl4_set_drawable(render_backend_t* backend, const render_drawable_t* drawabl
 	_rb_gl_check_error("Error setting up default state");
 
 	return true;
-}
-
-static void
-_rb_gl4_enable_thread(render_backend_t* backend) {
-	render_backend_gl4_t* backend_gl4 = (render_backend_gl4_t*)backend;
-
-	void* thread_context = _rb_gl_get_thread_context();
-	if (!thread_context) {
-		if (atomic_cas32(&backend_gl4->context_used, 1, 0, memory_order_release, memory_order_acquire))
-			thread_context = backend_gl4->context;
-		else
-			thread_context = _rb_gl_create_context(&backend->drawable, 4, 0, backend_gl4->context);
-		_rb_gl_set_thread_context(thread_context);
-	}
-
-#if FOUNDATION_PLATFORM_WINDOWS
-	if (!wglMakeCurrent((HDC)backend->drawable.hdc, (HGLRC)thread_context)) {
-		string_const_t errmsg = system_error_message(0);
-		log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
-		           STRING_CONST("Unable to enable thread for GL4 rendering: %.*s"),
-		           STRING_FORMAT(errmsg));
-	}
-	else {
-		log_debug(HASH_RENDER, STRING_CONST("Enabled thread for GL4 rendering"));
-	}
-#elif FOUNDATION_PLATFORM_LINUX
-	glXMakeCurrent(backend->drawable.display, (GLXDrawable)backend->drawable.drawable,
-	               thread_context);
-	_rb_gl_check_error("Unable to enable thread for GL4 rendering");
-#else
-	FOUNDATION_ASSERT_FAIL("Platform not implemented");
-	error_report(ERRORLEVEL_ERROR, ERROR_NOT_IMPLEMENTED);
-#endif
-}
-
-static void
-_rb_gl4_disable_thread(render_backend_t* backend) {
-	render_backend_gl4_t* backend_gl4 = (render_backend_gl4_t*)backend;
-
-	void* thread_context = _rb_gl_get_thread_context();
-	if (thread_context) {
-		if (thread_context == backend_gl4->context)
-			atomic_store32(&backend_gl4->context_used, 0, memory_order_release);
-		else
-			_rb_gl_destroy_context(&backend_gl4->drawable, thread_context);
-		log_debug(HASH_RENDER, STRING_CONST("Disabled thread for GL4 rendering"));
-	}
-	_rb_gl_set_thread_context(0);
-}
-
-size_t
-_rb_gl_enumerate_adapters(render_backend_t* backend, unsigned int* store, size_t capacity) {
-	FOUNDATION_UNUSED(backend);
-	if (capacity)
-		store[0] = (unsigned int)WINDOW_ADAPTER_DEFAULT;
-	return 1;
 }
 
 size_t

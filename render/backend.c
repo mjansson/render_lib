@@ -49,13 +49,12 @@ render_api_fallback(render_api_t api) {
 	case RENDERAPI_DIRECTX:   return RENDERAPI_DIRECTX11;
 	case RENDERAPI_GLES:      return RENDERAPI_GLES3;
 
-	case RENDERAPI_OPENGL3:   return RENDERAPI_OPENGL2;
 #if FOUNDATION_PLATFORM_WINDOWS
 	case RENDERAPI_OPENGL4:   return RENDERAPI_DIRECTX10;
 #else
-	case RENDERAPI_OPENGL4:   return RENDERAPI_OPENGL3;
+	case RENDERAPI_OPENGL4:   return RENDERAPI_OPENGL2;
 #endif
-	case RENDERAPI_DIRECTX10: return RENDERAPI_OPENGL3;
+	case RENDERAPI_DIRECTX10: return RENDERAPI_OPENGL2;
 	case RENDERAPI_DIRECTX11: return RENDERAPI_OPENGL4;
 	case RENDERAPI_GLES3:     return RENDERAPI_GLES2;
 	case RENDERAPI_GLES2:     return RENDERAPI_NULL;
@@ -111,15 +110,6 @@ render_backend_allocate(render_api_t api, bool allow_fallback) {
 				render_backend_deallocate(backend);
 				backend = nullptr;
 			}
-			break;
-
-		case RENDERAPI_OPENGL3:
-			/*backend = render_gl3_allocate();
-			if( !backend || !backend->vtable.construct( backend ) )
-			{
-				log_info( HASH_RENDER, "Failed to initialize OpenGL 3 render backend" );
-				render_deallocate( backend ), backend = 0;
-			}*/
 			break;
 
 		case RENDERAPI_OPENGL4:
@@ -206,6 +196,8 @@ render_backend_allocate(render_api_t api, bool allow_fallback) {
 
 	memory_context_pop();
 
+	render_backend_enable_thread(backend);
+
 	return backend;
 }
 
@@ -260,6 +252,10 @@ render_backend_set_format(render_backend_t* backend, const pixelformat_t format,
 
 bool
 render_backend_set_drawable(render_backend_t* backend, const render_drawable_t* drawable) {
+	render_backend_t* prev_backend = get_thread_backend();
+	if (prev_backend && (prev_backend != backend))
+		prev_backend->vtable.disable_thread(prev_backend);
+
 	if (!backend->vtable.set_drawable(backend, drawable))
 		return false;
 
@@ -311,14 +307,19 @@ render_backend_frame_count(render_backend_t* backend) {
 
 void
 render_backend_enable_thread(render_backend_t* backend) {
-	backend->vtable.enable_thread(backend);
+	render_backend_t* prev_backend = get_thread_backend();
+	if (prev_backend && (prev_backend != backend))
+		prev_backend->vtable.disable_thread(prev_backend);
 	set_thread_backend(backend);
+	backend->vtable.enable_thread(backend);
 }
 
 void
 render_backend_disable_thread(render_backend_t* backend) {
+	render_backend_t* prev_backend = get_thread_backend();
 	backend->vtable.disable_thread(backend);
-	set_thread_backend(nullptr);
+	if (prev_backend == backend)
+		set_thread_backend(nullptr);
 }
 
 render_backend_t*

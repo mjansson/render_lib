@@ -34,7 +34,6 @@ typedef enum render_api_t {
 	RENDERAPI_NULL,
 	RENDERAPI_OPENGL,
 	RENDERAPI_OPENGL2,
-	RENDERAPI_OPENGL3,
 	RENDERAPI_OPENGL4,
 	RENDERAPI_DIRECTX,
 	RENDERAPI_DIRECTX10,
@@ -411,7 +410,7 @@ struct render_context_t {
 	render_command_t* commands;
 	uint64_t*         keys;
 	radixsort_t*      sort;
-	uint8_t           group;
+	uint32_t          group;
 
 	const radixsort_index_t* order;
 };

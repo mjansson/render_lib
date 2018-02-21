@@ -64,7 +64,8 @@ render_pipeline_execute(render_pipeline_t* pipeline) {
 }
 
 void
-render_pipeline_step_initialize(render_pipeline_step_t* step, render_target_t* target, render_pipeline_execute_fn executor) {
+render_pipeline_step_initialize(render_pipeline_step_t* step, render_target_t* target,
+                                render_pipeline_execute_fn executor) {
 	step->target = target;
 	step->contexts = nullptr;
 	step->executor = executor;
@@ -75,4 +76,14 @@ render_pipeline_step_finalize(render_pipeline_step_t* step) {
 	for (size_t icontext = 0, csize = array_size(step->contexts); icontext < csize; ++icontext)
 		render_context_deallocate(step->contexts[icontext]);
 	array_deallocate(step->contexts);
+}
+
+void
+render_pipeline_step_blit_initialize(render_pipeline_step_t* step, render_target_t* target_source,
+                                     render_target_t* target_destination) {
+	step->target = target_destination;
+	//step->contexts = nullptr;
+	//step->executor = executor;
+
+	FOUNDATION_UNUSED(target_source);
 }

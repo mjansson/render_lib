@@ -39,17 +39,13 @@ render_pipeline_deallocate(render_pipeline_t* pipeline);
 void
 render_pipeline_execute(render_pipeline_t* pipeline);
 
-render_pipeline_step_t*
-render_pipeline_add_step(render_pipeline_t* pipeline);
-
 void
-render_pipeline_remove_step(render_pipeline_t* pipeline, render_pipeline_step_t* step);
-
-void
-render_pipeline_step_initialize(render_pipeline_step_t* step, render_target_t* target, render_pipeline_execute_fn executor);
+render_pipeline_step_initialize(render_pipeline_step_t* step, render_target_t* target,
+                                render_pipeline_execute_fn executor);
 
 void
 render_pipeline_step_finalize(render_pipeline_step_t* step);
 
 void
-render_pipeline_step_blit_initialize(render_pipeline_step_t* step, render_target_t* target_source, render_target_t* target_destination);
+render_pipeline_step_blit_initialize(render_pipeline_step_t* step, render_target_t* target_source,
+                                     render_target_t* target_destination);

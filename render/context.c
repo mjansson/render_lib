@@ -24,7 +24,10 @@ render_context_t*
 render_context_allocate(size_t commands) {
 	render_context_t* context;
 
-	FOUNDATION_ASSERT(commands < (radixsort_index_t) - 1);
+	if (!FOUNDATION_VALIDATE_MSG(commands < (radixsort_index_t)(-1), "Oversized context"))
+		commands = (radixsort_index_t)(-1) - 1;
+	if (!FOUNDATION_VALIDATE_MSG(commands > 0, "Cannot create empty contexts"))
+		commands = 8;
 
 	memory_context_push(HASH_RENDER);
 
@@ -56,8 +59,9 @@ render_context_deallocate(render_context_t* context) {
 render_command_t*
 render_context_reserve(render_context_t* context, uint64_t sort) {
 	int32_t idx = atomic_exchange_and_add32(&context->reserved, 1, memory_order_relaxed);
-	FOUNDATION_ASSERT_MSG(idx < context->allocated, "Render command overallocation");
-	context->keys[ idx ] = sort;
+	if (!FOUNDATION_VALIDATE_MSG(idx < context->allocated, "Render command overallocation"))
+		idx = context->allocated - 1;
+	context->keys[idx] = sort;
 	return context->commands + idx;
 }
 
@@ -72,14 +76,4 @@ render_context_queue(render_context_t* context, render_command_t* command, uint6
 size_t
 render_context_reserved(render_context_t* context) {
 	return (size_t)atomic_load32(&context->reserved, memory_order_acquire);
-}
-
-uint8_t
-render_context_group(render_context_t* context) {
-	return context->group;
-}
-
-void
-render_context_set_group(render_context_t* context, uint8_t group) {
-	context->group = group;
 }

@@ -38,9 +38,3 @@ render_context_queue(render_context_t* context, render_command_t* command, uint6
 
 RENDER_API size_t
 render_context_reserved(render_context_t* context);
-
-RENDER_API uint8_t
-render_context_group(render_context_t* context);
-
-RENDER_API void
-render_context_set_group(render_context_t* context, uint8_t group);

@@ -46,6 +46,7 @@ typedef struct render_backend_gl2_t {
 	RENDER_DECLARE_BACKEND;
 
 	void* context;
+	atomic32_t context_used;
 #if FOUNDATION_PLATFORM_WINDOWS
 	HDC hdc;
 #endif
@@ -57,6 +58,56 @@ typedef struct render_backend_gl2_t {
 
 static void
 _rb_gl2_set_default_state(void);
+
+static void
+_rb_gl2_disable_thread(render_backend_t* backend) {
+	render_backend_gl2_t* backend_gl2 = (render_backend_gl2_t*)backend;
+
+	void* thread_context = _rb_gl_get_thread_context();
+	if (thread_context) {
+		if (thread_context == backend_gl2->context)
+			atomic_store32(&backend_gl2->context_used, 0, memory_order_release);
+		else
+			_rb_gl_destroy_context(&backend_gl2->drawable, thread_context);
+		log_debug(HASH_RENDER, STRING_CONST("Disabled thread for GL2 rendering"));
+	}
+	_rb_gl_set_thread_context(0);
+}
+
+static void
+_rb_gl2_enable_thread(render_backend_t* backend) {
+	render_backend_gl2_t* backend_gl2 = (render_backend_gl2_t*)backend;
+
+	void* thread_context = _rb_gl_get_thread_context();
+	if (!thread_context) {
+		if (!backend_gl2->context)
+			return;
+		if (atomic_cas32(&backend_gl2->context_used, 1, 0, memory_order_release, memory_order_acquire))
+			thread_context = backend_gl2->context;
+		else
+			thread_context = _rb_gl_create_context(&backend->drawable, 2, 0, backend_gl2->context);
+		_rb_gl_set_thread_context(thread_context);
+	}
+
+#if FOUNDATION_PLATFORM_WINDOWS
+	if (!wglMakeCurrent((HDC)backend->drawable.hdc, (HGLRC)thread_context)) {
+		string_const_t errmsg = system_error_message(0);
+		log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
+		           STRING_CONST("Unable to enable thread for GL2 rendering: %.*s"),
+		           STRING_FORMAT(errmsg));
+	}
+	else {
+		log_debug(HASH_RENDER, STRING_CONST("Enabled thread for GL2 rendering"));
+	}
+#elif FOUNDATION_PLATFORM_LINUX
+	glXMakeCurrent(backend->drawable.display, (GLXDrawable)backend->drawable.drawable,
+	               thread_context);
+	_rb_gl_check_error("Unable to enable thread for GL2 rendering");
+#else
+	FOUNDATION_ASSERT_FAIL("Platform not implemented");
+	error_report(ERRORLEVEL_ERROR, ERROR_NOT_IMPLEMENTED);
+#endif
+}
 
 static bool
 _rb_gl2_construct(render_backend_t* backend) {
@@ -72,11 +123,11 @@ static void
 _rb_gl2_destruct(render_backend_t* backend) {
 	render_backend_gl2_t* backend_gl2 = (render_backend_gl2_t*)backend;
 
+	_rb_gl2_disable_thread(backend);
 	if (backend_gl2->context)
 		_rb_gl_destroy_context(&backend_gl2->drawable, backend_gl2->context);
-	if (_rb_gl_get_thread_context() == backend_gl2->context)
-		_rb_gl_set_thread_context(0);
 	backend_gl2->context = 0;
+	atomic_store32(&backend_gl2->context_used, 0, memory_order_release);
 
 	log_debug(HASH_RENDER, STRING_CONST("Destructed GL2 render backend"));
 }
@@ -87,9 +138,11 @@ _rb_gl2_set_drawable(render_backend_t* backend, const render_drawable_t* drawabl
 	if (!FOUNDATION_VALIDATE_MSG(!backend_gl2->context, "Drawable switching not supported yet"))
 		return error_report(ERRORLEVEL_ERROR, ERROR_NOT_IMPLEMENTED);
 
+	atomic_store32(&backend_gl2->context_used, 1, memory_order_release);
 	backend_gl2->context = _rb_gl_create_context(drawable, 2, 0, 0);
 	if (!backend_gl2->context) {
 		log_error(HASH_RENDER, ERROR_UNSUPPORTED, STRING_CONST("Unable to create OpenGL 2 context"));
+		atomic_store32(&backend_gl2->context_used, 0, memory_order_release);
 		return false;
 	}
 
@@ -156,48 +209,6 @@ _rb_gl2_set_drawable(render_backend_t* backend, const render_drawable_t* drawabl
 	return true;
 }
 
-static void
-_rb_gl2_enable_thread(render_backend_t* backend) {
-	render_backend_gl2_t* backend_gl2 = (render_backend_gl2_t*)backend;
-
-	void* thread_context = _rb_gl_get_thread_context();
-	if (!thread_context) {
-		thread_context = _rb_gl_create_context(&backend->drawable, 2, 0, backend_gl2->context);
-		_rb_gl_set_thread_context(thread_context);
-	}
-
-#if FOUNDATION_PLATFORM_WINDOWS
-	if (!wglMakeCurrent((HDC)backend->drawable.hdc, (HGLRC)thread_context)) {
-		string_const_t errmsg = system_error_message(0);
-		log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
-		           STRING_CONST("Unable to enable thread for GL2 rendering: %.*s"),
-		           STRING_FORMAT(errmsg));
-	}
-	else {
-		log_debug(HASH_RENDER, STRING_CONST("Enabled thread for GL2 rendering"));
-	}
-#elif FOUNDATION_PLATFORM_LINUX
-	glXMakeCurrent(backend->drawable.display, (GLXDrawable)backend->drawable.drawable,
-	               thread_context);
-	_rb_gl_check_error("Unable to enable thread for GL2 rendering");
-#else
-	FOUNDATION_ASSERT_FAIL("Platform not implemented");
-	error_report(ERRORLEVEL_ERROR, ERROR_NOT_IMPLEMENTED);
-#endif
-}
-
-static void
-_rb_gl2_disable_thread(render_backend_t* backend) {
-	render_backend_gl2_t* backend_gl2 = (render_backend_gl2_t*)backend;
-
-	void* thread_context = _rb_gl_get_thread_context();
-	if (thread_context) {
-		_rb_gl_destroy_context(&backend_gl2->drawable, thread_context);
-		log_debug(HASH_RENDER, STRING_CONST("Disabled thread for GL2 rendering"));
-	}
-	_rb_gl_set_thread_context(0);
-}
-
 static void*
 _rb_gl2_allocate_buffer(render_backend_t* backend, render_buffer_t* buffer) {
 	FOUNDATION_UNUSED(backend);
@@ -252,7 +263,7 @@ static bool
 _rb_gl2_upload_shader(render_backend_t* backend, render_shader_t* shader, const void* buffer,
                       size_t size) {
 	bool is_pixel_shader = (shader->shadertype == SHADER_PIXEL);
-	//render_backend_gl2_t* backend_gl2 = (render_backend_gl4_t*)backend;
+	//render_backend_gl2_t* backend_gl2 = (render_backend_gl2_t*)backend;
 	FOUNDATION_UNUSED(backend);
 
 	//Shader backend data:

@@ -34,5 +34,5 @@ RENDER_API uint64_t
 render_sort_sequential_key(render_context_t* context);
 
 RENDER_API uint64_t
-render_sort_render_key(render_context_t* context, object_t vertexbuffer, object_t indexbuffer,
-                       object_t blend_state);
+render_sort_render_key(render_context_t* context, render_buffer_t* vertexbuffer,
+                       render_buffer_t* indexbuffer, render_state_t* state);
