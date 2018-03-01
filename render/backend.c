@@ -113,12 +113,12 @@ render_backend_allocate(render_api_t api, bool allow_fallback) {
 			break;
 
 		case RENDERAPI_OPENGL4:
-			backend = render_backend_gl4_allocate();
+			/*backend = render_backend_gl4_allocate();
 			if (!backend || !backend->vtable.construct(backend)) {
 				log_info(HASH_RENDER, STRING_CONST("Failed to initialize OpenGL 4 render backend"));
 				render_backend_deallocate(backend);
 				backend = nullptr;
-			}
+			}*/
 			break;
 
 		case RENDERAPI_DIRECTX10:

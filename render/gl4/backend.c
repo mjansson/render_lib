@@ -1310,10 +1310,12 @@ _rb_gl4_flip(render_backend_t* backend) {
 
 #elif FOUNDATION_PLATFORM_MACOS
 
-	/*if( _fullscreen && _context )
-		CGLFlushDrawable( _context );
-	else
-	window::objc::flushDrawable( (void*)_context );*/
+	if (backend_gl2->context) {
+		/*if( backend_gl2->fullscreen )
+			CGLFlushDrawable( backend_gl2->context );
+		else*/
+		_rb_gl_flush_drawable(backend_gl2->context);
+	}
 
 #elif FOUNDATION_PLATFORM_LINUX
 
@@ -1324,7 +1326,7 @@ _rb_gl4_flip(render_backend_t* backend) {
 #  error Not implemented
 #endif
 
-	++backend_gl4->framecount;
+	++backend->framecount;
 }
 
 static render_backend_vtable_t _render_backend_vtable_gl4 = {

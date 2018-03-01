@@ -47,9 +47,6 @@ typedef struct render_backend_gl2_t {
 
 	void* context;
 	atomic32_t context_used;
-#if FOUNDATION_PLATFORM_WINDOWS
-	HDC hdc;
-#endif
 
 	render_resolution_t resolution;
 
@@ -746,8 +743,8 @@ _rb_gl2_flip(render_backend_t* backend) {
 
 #if FOUNDATION_PLATFORM_WINDOWS
 
-	if (backend_gl2->hdc) {
-		if (!SwapBuffers(backend_gl2->hdc)) {
+	if (backend_gl2->drawable.hdc) {
+		if (!SwapBuffers(backend_gl2->drawable.hdc)) {
 			string_const_t errmsg = system_error_message(0);
 			log_warnf(HASH_RENDER, WARNING_SYSTEM_CALL_FAIL, STRING_CONST("SwapBuffers failed: %.*s"),
 			          STRING_FORMAT(errmsg));
