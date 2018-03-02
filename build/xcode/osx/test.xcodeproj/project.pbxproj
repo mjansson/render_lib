@@ -54,7 +54,7 @@
 		451386B7193A753D00BA2092 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = ../../../test/render/osx/Images.xcassets; sourceTree = "<group>"; };
 		451386B8193A753D00BA2092 /* test-render.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "test-render.plist"; path = "../../../test/render/osx/test-render.plist"; sourceTree = "<group>"; };
 		451386B9193A753D00BA2092 /* test-render.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = "test-render.xib"; path = "../../../test/render/osx/test-render.xib"; sourceTree = "<group>"; };
-		451386BF193A75DB00BA2092 /* librender.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = librender.a; path = ../../../lib/macosx/debug/librender.a; sourceTree = "<group>"; };
+		451386BF193A75DB00BA2092 /* librender.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = librender.a; path = ../../../lib/macos/debug/librender.a; sourceTree = "<group>"; };
 		45BB33551A59726E00D30F3E /* OpenCL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenCL.framework; path = System/Library/Frameworks/OpenCL.framework; sourceTree = SDKROOT; };
 		45BB33571A59728200D30F3E /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
@@ -385,7 +385,7 @@
 				COPY_PHASE_STRIP = NO;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					/Users/mjansson/projects/render_lib/lib/macosx/debug,
+					/Users/mjansson/projects/render_lib/lib/macos/debug,
 				);
 				OTHER_LDFLAGS = (
 					"-lwindow",
@@ -402,7 +402,7 @@
 				COPY_PHASE_STRIP = YES;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					/Users/mjansson/projects/render_lib/lib/macosx/debug,
+					/Users/mjansson/projects/render_lib/lib/macos/debug,
 				);
 				OTHER_LDFLAGS = (
 					"-lwindow",
@@ -527,7 +527,7 @@
 				COPY_PHASE_STRIP = YES;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					/Users/mjansson/projects/render_lib/lib/macosx/debug,
+					/Users/mjansson/projects/render_lib/lib/macos/debug,
 				);
 				OTHER_LDFLAGS = (
 					"-lwindow",
@@ -631,7 +631,7 @@
 				COPY_PHASE_STRIP = YES;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					/Users/mjansson/projects/render_lib/lib/macosx/debug,
+					/Users/mjansson/projects/render_lib/lib/macos/debug,
 				);
 				OTHER_LDFLAGS = (
 					"-lwindow",

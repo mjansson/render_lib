@@ -35,14 +35,14 @@ event_loop(void* arg) {
 		while ((event = event_next(block, event))) {
 			switch (event->id) {
 			case FOUNDATIONEVENT_START:
-#if FOUNDATION_PLATFORM_IOS || FOUNDATION_PLATFORM_ANDROID || FOUNDATION_PLATFORM_PNACL
+#if FOUNDATION_PLATFORM_IOS || FOUNDATION_PLATFORM_ANDROID
 				log_debug(HASH_TEST, STRING_CONST("Application start event received"));
 				_test_should_start = true;
 #endif
 				break;
 
 			case FOUNDATIONEVENT_TERMINATE:
-#if FOUNDATION_PLATFORM_IOS || FOUNDATION_PLATFORM_ANDROID || FOUNDATION_PLATFORM_PNACL
+#if FOUNDATION_PLATFORM_IOS || FOUNDATION_PLATFORM_ANDROID
 				log_debug(HASH_TEST, STRING_CONST("Application stop/terminate event received"));
 				_test_should_terminate = true;
 				break;
@@ -193,7 +193,7 @@ main_initialize(void) {
 	log_set_handler(test_log_handler);
 #endif
 
-#if !FOUNDATION_PLATFORM_IOS && !FOUNDATION_PLATFORM_ANDROID && !FOUNDATION_PLATFORM_PNACL
+#if !FOUNDATION_PLATFORM_IOS && !FOUNDATION_PLATFORM_ANDROID
 
 	_test_should_start = true;
 
@@ -285,7 +285,7 @@ main_run(void* main_arg) {
 #else
 	void* test_result;
 #endif
-#if FOUNDATION_PLATFORM_IOS || FOUNDATION_PLATFORM_ANDROID || FOUNDATION_PLATFORM_PNACL
+#if FOUNDATION_PLATFORM_IOS || FOUNDATION_PLATFORM_ANDROID
 	int remain_counter = 0;
 #endif
 #if BUILD_DEBUG
@@ -324,7 +324,7 @@ main_run(void* main_arg) {
 	while (!thread_is_running(&event_thread))
 		thread_sleep(10);
 
-#if FOUNDATION_PLATFORM_IOS || FOUNDATION_PLATFORM_ANDROID || FOUNDATION_PLATFORM_PNACL
+#if FOUNDATION_PLATFORM_IOS || FOUNDATION_PLATFORM_ANDROID
 	while (!_test_should_start) {
 #if FOUNDATION_PLATFORM_ANDROID
 		system_process_events();
@@ -388,7 +388,7 @@ main_run(void* main_arg) {
 		test_log_view_append(STRING_CONST("Tests PASSED\n"));
 #endif
 
-#if FOUNDATION_PLATFORM_IOS || FOUNDATION_PLATFORM_ANDROID || FOUNDATION_PLATFORM_PNACL
+#if FOUNDATION_PLATFORM_IOS || FOUNDATION_PLATFORM_ANDROID
 
 	while (!_test_should_terminate && _test_have_focus && (remain_counter < 50)) {
 		system_process_events();
