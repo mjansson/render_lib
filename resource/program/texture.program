@@ -1,0 +1,2 @@
+pixelshader ../shader/texture.pixel.shader
+vertexshader ../shader/texture.vertex.shader

@@ -1200,28 +1200,19 @@ _rb_gl4_render(render_backend_gl4_t* backend, render_context_t* context,
 	_rb_gl_check_error("Error render primitives (bind program)");
 
 	// Bind the parameter blocks
+	GLint unit = 0;
 	render_parameter_t* param = parameterbuffer->parameters;
 	for (unsigned int ip = 0; ip < parameterbuffer->num_parameters; ++ip, ++param) {
-		/*if (param->type == RENDERPARAMETER_TEXTURE) {
-			//TODO: Dynamic use of texture units, reusing unit that already have correct texture bound, and least-recently-used evicting old bindings to free a new unit
-			glActiveTexture(GL_TEXTURE0 + param_info->unit);
+		if (param->type == RENDERPARAMETER_TEXTURE) {
+			glActiveTexture(GL_TEXTURE0 + unit);
 			glEnable(GL_TEXTURE_2D);
 
-			object_t object = *(object_t*)pointer_offset(block, param_info->offset);
-			render_texture_gl2_t* texture = object ? pool_lookup(_global_pool_texture, object) : 0;
-			NEO_ASSERT_MSGFORMAT(!object ||
-			                     texture, "Parameter block using old/invalid texture 0x%llx", object);
-
-			glBindTexture(GL_TEXTURE_2D, texture ? texture->object : 0);
-
-			for (unsigned int iu = 0; iu < program->num_uniforms; ++iu) {
-				if (program->uniforms[iu].name == *param_name) {
-					glUniform1i(program->uniforms[iu].location, param_info->unit);
-					break;
-				}
-			}
+			render_texture_t* texture = *(render_texture_t**)pointer_offset(parameterbuffer->store, param->offset);
+			glBindTexture(GL_TEXTURE_2D, texture ? (GLuint)texture->backend_data[0] : 0);
+			glUniform1i(param->location, unit);
+			++unit;
 		}
-		else*/ {
+		else {
 			void* data = pointer_offset(parameterbuffer->store, param->offset);
 			if (param->type == RENDERPARAMETER_FLOAT4)
 				glUniform4fv((GLint)param->location, param->dim, data);
@@ -1231,6 +1222,7 @@ _rb_gl4_render(render_backend_gl4_t* backend, render_context_t* context,
 				glUniformMatrix4fv((GLint)param->location, param->dim, GL_TRUE, data);
 		}
 	}
+	_rb_gl_check_error("Error render primitives (bind uniforms)");
 
 	//TODO: Proper states
 	/*ID3D10Device_RSSetState( device, backend_dx10->rasterizer_state[0].state );
