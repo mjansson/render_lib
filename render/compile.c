@@ -592,7 +592,7 @@ render_program_compile_opengl(render_backend_t* backend, uuid_t vertexshader, uu
 			break;
 		case GL_SAMPLER_2D:
 			parameter->type = RENDERPARAMETER_TEXTURE;
-			offset += 4;
+			offset += sizeof(GLuint);
 			break;
 		default:
 			log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL,

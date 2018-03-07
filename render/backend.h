@@ -95,6 +95,10 @@ RENDER_API bool
 render_backend_texture_upload(render_backend_t* backend, render_texture_t* texture,
                               const void* buffer, size_t size);
 
+RENDER_API void
+render_backend_texture_bind(render_backend_t* backend, render_texture_t* texture,
+                            void* buffer);
+
 RENDER_API uuidmap_t*
 render_backend_texture_table(render_backend_t* backend);
 

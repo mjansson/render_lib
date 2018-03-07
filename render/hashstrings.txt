@@ -18,3 +18,6 @@ HASH_PIXELSHADER                           pixelshader
 HASH_SHADER                                shader
 HASH_PROGRAM                               program
 HASH_TEXTURE                               texture
+
+HASH_MVP                                   mvp
+HASH_TEX                                   tex

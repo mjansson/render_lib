@@ -292,6 +292,7 @@ typedef bool (* render_backend_upload_shader_fn)(render_backend_t*, render_shade
 typedef bool (* render_backend_upload_program_fn)(render_backend_t*, render_program_t*);
 typedef bool (* render_backend_upload_texture_fn)(render_backend_t*, render_texture_t*, const void*,
                                                  size_t);
+typedef void (* render_backend_bind_texture_fn)(render_backend_t*, render_texture_t*, void*);
 typedef void (* render_backend_deallocate_shader_fn)(render_backend_t*, render_shader_t*);
 typedef void (* render_backend_deallocate_program_fn)(render_backend_t*, render_program_t*);
 typedef void (* render_backend_deallocate_texture_fn)(render_backend_t*, render_texture_t*);
@@ -325,6 +326,7 @@ struct render_backend_vtable_t {
 	render_backend_upload_shader_fn       upload_shader;
 	render_backend_upload_program_fn      upload_program;
 	render_backend_upload_texture_fn      upload_texture;
+	render_backend_bind_texture_fn        bind_texture;
 	render_backend_link_buffer_fn         link_buffer;
 	render_backend_deallocate_buffer_fn   deallocate_buffer;
 	render_backend_deallocate_shader_fn   deallocate_shader;

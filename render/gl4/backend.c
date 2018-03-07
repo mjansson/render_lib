@@ -1081,6 +1081,12 @@ _rb_gl4_upload_texture(render_backend_t* backend, render_texture_t* texture,
 }
 
 static void
+_rb_gl4_bind_texture(render_backend_t* backend, render_texture_t* texture, void* buffer) {
+	FOUNDATION_UNUSED(backend);
+	*(GLuint*)buffer = (GLuint)texture->backend_data[0];
+}
+
+static void
 _rb_gl4_deallocate_texture(render_backend_t* backend, render_texture_t* texture) {
 	FOUNDATION_UNUSED(backend);
 	FOUNDATION_UNUSED(texture);
@@ -1203,24 +1209,20 @@ _rb_gl4_render(render_backend_gl4_t* backend, render_context_t* context,
 	GLint unit = 0;
 	render_parameter_t* param = parameterbuffer->parameters;
 	for (unsigned int ip = 0; ip < parameterbuffer->num_parameters; ++ip, ++param) {
+		void* data = pointer_offset(parameterbuffer->store, param->offset);
 		if (param->type == RENDERPARAMETER_TEXTURE) {
 			glActiveTexture(GL_TEXTURE0 + unit);
 			glEnable(GL_TEXTURE_2D);
-
-			render_texture_t* texture = *(render_texture_t**)pointer_offset(parameterbuffer->store, param->offset);
-			glBindTexture(GL_TEXTURE_2D, texture ? (GLuint)texture->backend_data[0] : 0);
+			glBindTexture(GL_TEXTURE_2D, *(GLuint*)data);
 			glUniform1i(param->location, unit);
 			++unit;
 		}
-		else {
-			void* data = pointer_offset(parameterbuffer->store, param->offset);
-			if (param->type == RENDERPARAMETER_FLOAT4)
-				glUniform4fv((GLint)param->location, param->dim, data);
-			else if (param->type == RENDERPARAMETER_INT4)
-				glUniform4iv((GLint)param->location, param->dim, data);
-			else if (param->type == RENDERPARAMETER_MATRIX)
-				glUniformMatrix4fv((GLint)param->location, param->dim, GL_TRUE, data);
-		}
+		else if (param->type == RENDERPARAMETER_FLOAT4)
+			glUniform4fv((GLint)param->location, param->dim, data);
+		else if (param->type == RENDERPARAMETER_INT4)
+			glUniform4iv((GLint)param->location, param->dim, data);
+		else if (param->type == RENDERPARAMETER_MATRIX)
+			glUniformMatrix4fv((GLint)param->location, param->dim, GL_TRUE, data);
 	}
 	_rb_gl_check_error("Error render primitives (bind uniforms)");
 
@@ -1334,6 +1336,7 @@ static render_backend_vtable_t _render_backend_vtable_gl4 = {
 	.upload_shader = _rb_gl4_upload_shader,
 	.upload_program = _rb_gl4_upload_program,
 	.upload_texture = _rb_gl4_upload_texture,
+	.bind_texture = _rb_gl4_bind_texture,
 	.link_buffer = _rb_gl4_link_buffer,
 	.deallocate_buffer = _rb_gl4_deallocate_buffer,
 	.deallocate_shader = _rb_gl4_deallocate_shader,

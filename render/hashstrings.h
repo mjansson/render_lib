@@ -24,3 +24,5 @@
 #define HASH_SHADER static_hash_string("shader", 6, 0x65475a9f9c166495ULL)
 #define HASH_PROGRAM static_hash_string("program", 7, 0x6fed8207d1b48fc0ULL)
 #define HASH_TEXTURE static_hash_string("texture", 7, 0x4b61d4f340e798f6ULL)
+#define HASH_MVP static_hash_string("mvp", 3, 0x8b2f039c2c4efa26ULL)
+#define HASH_TEX static_hash_string("tex", 3, 0x35bf00462d0bc065ULL)

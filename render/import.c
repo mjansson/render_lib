@@ -71,8 +71,9 @@ glsl_type_to_parameter_type(const string_const_t type) {
 		return RENDERPARAMETER_INT4;
 	else if ((type.length >= 4) && string_equal(type.str, 4, STRING_CONST("mat4")))
 		return RENDERPARAMETER_MATRIX;
-	else if ((type.length >= 7) && (string_equal(type.str, 6, STRING_CONST("sampler")) ||
-	                                string_equal(type.str + 1, 6, STRING_CONST("sampler"))))
+	else if ((type.length >= 7) && string_equal(type.str, 7, STRING_CONST("sampler")))
+		return RENDERPARAMETER_TEXTURE;
+	else if ((type.length >= 8) && string_equal(type.str + 1, 7, STRING_CONST("sampler")))
 		return RENDERPARAMETER_TEXTURE;
 	return -1;
 }

@@ -36,6 +36,7 @@
 #include <render/shader.h>
 #include <render/pipeline.h>
 #include <render/program.h>
+#include <render/projection.h>
 #include <render/state.h>
 #include <render/texture.h>
 

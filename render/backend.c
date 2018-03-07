@@ -392,3 +392,9 @@ render_backend_texture_upload(render_backend_t* backend, render_texture_t* textu
 	}
 	return false;
 }
+
+void
+render_backend_texture_bind(render_backend_t* backend, render_texture_t* texture,
+                            void* buffer) {
+	backend->vtable.bind_texture(backend, texture, buffer);
+}
