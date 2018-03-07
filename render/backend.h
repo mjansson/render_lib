@@ -96,8 +96,12 @@ render_backend_texture_upload(render_backend_t* backend, render_texture_t* textu
                               const void* buffer, size_t size);
 
 RENDER_API void
-render_backend_texture_bind(render_backend_t* backend, render_texture_t* texture,
-                            void* buffer);
+render_backend_parameter_bind_texture(render_backend_t* backend, void* buffer,
+                                      render_texture_t* texture);
+
+RENDER_API void
+render_backend_parameter_bind_target(render_backend_t* backend, void* buffer,
+                                     render_target_t* target);
 
 RENDER_API uuidmap_t*
 render_backend_texture_table(render_backend_t* backend);

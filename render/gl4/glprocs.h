@@ -175,6 +175,19 @@ _rb_gl_deallocate_target(render_backend_t* backend, render_target_t* target);
 RENDER_EXTERN bool
 _rb_gl_activate_target(render_backend_t* backend, render_target_t* target);
 
+RENDER_EXTERN bool
+_rb_gl_upload_texture(render_backend_t* backend, render_texture_t* texture,
+                      const void* buffer, size_t size);
+
+RENDER_EXTERN void
+_rb_gl_deallocate_texture(render_backend_t* backend, render_texture_t* texture);
+
+RENDER_EXTERN void
+_rb_gl_parameter_bind_texture(render_backend_t* backend, void* buffer, render_texture_t* texture);
+
+RENDER_EXTERN void
+_rb_gl_parameter_bind_target(render_backend_t* backend, void* buffer, render_target_t* target);
+
 RENDER_EXTERN void*
 _rb_gl_get_thread_context(void);
 

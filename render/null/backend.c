@@ -131,10 +131,17 @@ _rb_null_deallocate_texture(render_backend_t* backend, render_texture_t* texture
 }
 
 static void
-_rb_null_bind_texture(render_backend_t* backend, render_texture_t* texture, void* buffer) {
+_rb_null_parameter_bind_texture(render_backend_t* backend, void* buffer, render_texture_t* texture) {
 	FOUNDATION_UNUSED(backend);
-	FOUNDATION_UNUSED(texture);
 	FOUNDATION_UNUSED(buffer);
+	FOUNDATION_UNUSED(texture);
+}
+
+static void
+_rb_null_parameter_bind_target(render_backend_t* backend, void* buffer, render_target_t* target) {
+	FOUNDATION_UNUSED(backend);
+	FOUNDATION_UNUSED(buffer);
+	FOUNDATION_UNUSED(target);
 }
 
 static void
@@ -183,7 +190,8 @@ static render_backend_vtable_t _render_backend_vtable_null = {
 	.upload_shader = _rb_null_upload_shader,
 	.upload_program = _rb_null_upload_program,
 	.upload_texture = _rb_null_upload_texture,
-	.bind_texture = _rb_null_bind_texture,
+	.parameter_bind_texture = _rb_null_parameter_bind_texture,
+	.parameter_bind_target = _rb_null_parameter_bind_target,
 	.link_buffer = _rb_null_link_buffer,
 	.deallocate_buffer = _rb_null_deallocate_buffer,
 	.deallocate_shader = _rb_null_deallocate_shader,

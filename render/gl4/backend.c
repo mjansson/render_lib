@@ -1034,8 +1034,8 @@ _rb_gl_allocate_target(render_backend_t* backend, render_target_t* target) {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	target->backend_data[0] = frame_buffer;
-	target->backend_data[1] = render_texture;
-	target->backend_data[2] = depth_buffer;
+	target->backend_data[1] = depth_buffer;
+	target->backend_data[2] = render_texture;
 
 	return true;
 
@@ -1070,26 +1070,88 @@ _rb_gl_activate_target(render_backend_t* backend, render_target_t* target) {
 	return true;
 }
 
-static bool
-_rb_gl4_upload_texture(render_backend_t* backend, render_texture_t* texture,
-                       const void* buffer, size_t size) {
+bool
+_rb_gl_upload_texture(render_backend_t* backend, render_texture_t* texture,
+                      const void* buffer, size_t size) {
 	FOUNDATION_UNUSED(backend);
-	FOUNDATION_UNUSED(texture);
-	FOUNDATION_UNUSED(buffer);
 	FOUNDATION_UNUSED(size);
-	return false;
+
+	glActiveTexture(GL_TEXTURE0);
+	GLuint texture_name = (GLuint)texture->backend_data[0];
+	if (!texture_name) {
+		glGenTextures(1, &texture_name);
+		if (!texture_name) {
+			_rb_gl_check_error("Unable to create texture object");
+			return false;
+		}
+		texture->backend_data[0] = texture_name;
+	}
+
+	glBindTexture(GL_TEXTURE_2D, texture_name);
+	glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_FALSE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	//glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, texture->levels > 1 ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	bool compressed = false;
+	GLenum internal_format = GL_RGBA;
+	GLenum data_format = GL_RGBA;
+	GLenum data_type = GL_UNSIGNED_BYTE;
+
+	if (texture->pixelformat == PIXELFORMAT_A8) {
+		internal_format = GL_ALPHA;
+		data_format = GL_ALPHA;
+	}
+
+	const void* data = buffer;
+	unsigned int level_width = texture->width;
+	unsigned int level_height = texture->height;
+	for (GLint ilevel = 0; ilevel < (GLint)texture->levels; ++ilevel) {
+		unsigned int data_length = 0; //image_raw_buffer_size(texture->pixelformat, level_width, level_height, 1, 1);
+		if (data_length > size) {
+			log_error(HASH_RENDER, ERROR_INVALID_VALUE, STRING_CONST("Data size too small"));
+			return false;
+		}
+		if( !compressed )
+			glTexImage2D(GL_TEXTURE_2D, ilevel, (GLint)internal_format, (GLsizei)level_width, (GLsizei)level_height,
+			             0, data_format, data_type, data);
+		else
+			glCompressedTexImage2D(GL_TEXTURE_2D, ilevel, internal_format, (GLsizei)level_width, (GLsizei)level_height,
+			                       0, (GLsizei)data_length, data);
+
+		data = pointer_offset_const(data, data_length);
+		size -= data_length;
+		level_width = math_max(level_width >> 1, 1);
+		level_height = math_max(level_height >> 1, 1);
+	}
+	
+	if (_rb_gl_check_error("Unable to upload texture data"))
+		return false;
+
+	return true;
 }
 
-static void
-_rb_gl4_bind_texture(render_backend_t* backend, render_texture_t* texture, void* buffer) {
+void
+_rb_gl_parameter_bind_texture(render_backend_t* backend, void* buffer, render_texture_t* texture) {
 	FOUNDATION_UNUSED(backend);
 	*(GLuint*)buffer = (GLuint)texture->backend_data[0];
 }
 
-static void
-_rb_gl4_deallocate_texture(render_backend_t* backend, render_texture_t* texture) {
+void
+_rb_gl_parameter_bind_target(render_backend_t* backend, void* buffer, render_target_t* target) {
 	FOUNDATION_UNUSED(backend);
-	FOUNDATION_UNUSED(texture);
+	*(GLuint*)buffer = (GLuint)target->backend_data[2];
+}
+
+void
+_rb_gl_deallocate_texture(render_backend_t* backend, render_texture_t* texture) {
+	FOUNDATION_UNUSED(backend);
+	if (texture->backend_data[0])
+		glDeleteTextures(1, (GLuint*)&texture->backend_data[0]);
+	texture->backend_data[0] = 0;
 }
 
 static void
@@ -1335,13 +1397,14 @@ static render_backend_vtable_t _render_backend_vtable_gl4 = {
 	.upload_buffer = _rb_gl4_upload_buffer,
 	.upload_shader = _rb_gl4_upload_shader,
 	.upload_program = _rb_gl4_upload_program,
-	.upload_texture = _rb_gl4_upload_texture,
-	.bind_texture = _rb_gl4_bind_texture,
+	.upload_texture = _rb_gl_upload_texture,
+	.parameter_bind_texture = _rb_gl_parameter_bind_texture,
+	.parameter_bind_target = _rb_gl_parameter_bind_target,
 	.link_buffer = _rb_gl4_link_buffer,
 	.deallocate_buffer = _rb_gl4_deallocate_buffer,
 	.deallocate_shader = _rb_gl4_deallocate_shader,
 	.deallocate_program = _rb_gl4_deallocate_program,
-	.deallocate_texture = _rb_gl4_deallocate_texture,
+	.deallocate_texture = _rb_gl_deallocate_texture,
 	.allocate_target = _rb_gl_allocate_target,
 	.deallocate_target = _rb_gl_deallocate_target,
 	.dispatch = _rb_gl4_dispatch,

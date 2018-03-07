@@ -394,7 +394,13 @@ render_backend_texture_upload(render_backend_t* backend, render_texture_t* textu
 }
 
 void
-render_backend_texture_bind(render_backend_t* backend, render_texture_t* texture,
-                            void* buffer) {
-	backend->vtable.bind_texture(backend, texture, buffer);
+render_backend_parameter_bind_texture(render_backend_t* backend, void* buffer,
+                                      render_texture_t* texture) {
+	backend->vtable.parameter_bind_texture(backend, buffer, texture);
+}
+
+void
+render_backend_parameter_bind_target(render_backend_t* backend, void* buffer,
+                                     render_target_t* target) {
+	backend->vtable.parameter_bind_target(backend, buffer, target);
 }
