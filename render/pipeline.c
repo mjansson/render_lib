@@ -66,6 +66,7 @@ render_pipeline_execute(render_pipeline_t* pipeline) {
 void
 render_pipeline_step_initialize(render_pipeline_step_t* step, render_target_t* target,
                                 render_pipeline_execute_fn executor) {
+	memset(step, 0, sizeof(render_pipeline_step_t));
 	step->target = target;
 	step->contexts = nullptr;
 	step->executor = executor;
@@ -81,6 +82,7 @@ render_pipeline_step_finalize(render_pipeline_step_t* step) {
 void
 render_pipeline_step_blit_initialize(render_pipeline_step_t* step, render_target_t* target_source,
                                      render_target_t* target_destination) {
+	memset(step, 0, sizeof(render_pipeline_step_t));
 	step->target = target_destination;
 	//step->contexts = nullptr;
 	//step->executor = executor;
