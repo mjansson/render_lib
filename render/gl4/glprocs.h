@@ -28,6 +28,7 @@ extern PFNGLCOMPRESSEDTEXSUBIMAGE3DPROC      glCompressedTexSubImage3D;
 extern PFNGLCOMPRESSEDTEXSUBIMAGE2DPROC      glCompressedTexSubImage2D;
 extern PFNGLCOMPRESSEDTEXSUBIMAGE1DPROC      glCompressedTexSubImage1D;
 extern PFNGLGETCOMPRESSEDTEXIMAGEPROC        glGetCompressedTexImage;
+extern PFNGLGENERATEMIPMAPPROC               glGenerateMipmap;
 
 extern PFNGLGENQUERIESPROC                   glGenQueries;
 extern PFNGLDELETEQUERIESPROC                glDeleteQueries;

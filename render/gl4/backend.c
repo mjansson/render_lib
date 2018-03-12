@@ -1000,6 +1000,8 @@ _rb_gl_allocate_target(render_backend_t* backend, render_target_t* target) {
 	}
 	glBindTexture(GL_TEXTURE_2D, render_texture);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, (GLsizei)target->width, (GLsizei)target->height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	if (_rb_gl_check_error("Unable to create render target: Error setting texture storage dimensions and format"))
 		goto failure;
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -1279,12 +1281,16 @@ _rb_gl4_render(render_backend_gl4_t* backend, render_context_t* context,
 			glUniform1i(param->location, unit);
 			++unit;
 		}
-		else if (param->type == RENDERPARAMETER_FLOAT4)
+		else if (param->type == RENDERPARAMETER_FLOAT4) {
 			glUniform4fv((GLint)param->location, param->dim, data);
-		else if (param->type == RENDERPARAMETER_INT4)
+		}
+		else if (param->type == RENDERPARAMETER_INT4) {
 			glUniform4iv((GLint)param->location, param->dim, data);
-		else if (param->type == RENDERPARAMETER_MATRIX)
+		}
+		else if (param->type == RENDERPARAMETER_MATRIX) {
+			//Matrix math is row-major, must be transposed to match GL layout which is column major
 			glUniformMatrix4fv((GLint)param->location, param->dim, GL_TRUE, data);
+		}
 	}
 	_rb_gl_check_error("Error render primitives (bind uniforms)");
 

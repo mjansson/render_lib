@@ -559,12 +559,16 @@ _rb_gl2_render(render_backend_gl2_t* backend, render_context_t* context,
 			glUniform1i(param->location, unit);
 			++unit;
 		}
-		else if (param->type == RENDERPARAMETER_FLOAT4)
+		else if (param->type == RENDERPARAMETER_FLOAT4) {
 			glUniform4fv((GLint)param->location, param->dim, data);
-		else if (param->type == RENDERPARAMETER_INT4)
+		}
+		else if (param->type == RENDERPARAMETER_INT4) {
 			glUniform4iv((GLint)param->location, param->dim, data);
-		else if (param->type == RENDERPARAMETER_MATRIX)
+		}
+		else if (param->type == RENDERPARAMETER_MATRIX) {
+			//Matrix math is row-major, must be transposed to match GL layout which is column major
 			glUniformMatrix4fv((GLint)param->location, param->dim, GL_TRUE, data);
+		}
 	}
 
 	//TODO: Proper states

@@ -55,6 +55,7 @@ PFNGLCOMPRESSEDTEXSUBIMAGE3DPROC      glCompressedTexSubImage3D = 0;
 PFNGLCOMPRESSEDTEXSUBIMAGE2DPROC      glCompressedTexSubImage2D = 0;
 PFNGLCOMPRESSEDTEXSUBIMAGE1DPROC      glCompressedTexSubImage1D = 0;
 PFNGLGETCOMPRESSEDTEXIMAGEPROC        glGetCompressedTexImage = 0;
+PFNGLGENERATEMIPMAPPROC               glGenerateMipmap = 0;
 
 PFNGLGENQUERIESPROC                   glGenQueries = 0;
 PFNGLDELETEQUERIESPROC                glDeleteQueries = 0;
@@ -164,6 +165,7 @@ _rb_gl_get_texture_procs(void) {
 		log_error(HASH_RENDER, ERROR_UNSUPPORTED, STRING_CONST("Unable to get GL procs for textures"));
 		return false;
 	}
+	glGenerateMipmap = (PFNGLGENERATEMIPMAPPROC)_rb_gl_get_proc_address("glGenerateMipmap");
 #endif
 	return true;
 }
