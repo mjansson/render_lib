@@ -455,6 +455,15 @@ render_import(stream_t* stream, const uuid_t uuid_given) {
 		guess = IMPORTTYPE_SHADER;
 	else if (string_equal_nocase(STRING_ARGS(extension), STRING_CONST("program")))
 		guess = IMPORTTYPE_PROGRAM;
+	else if (string_equal_nocase(STRING_ARGS(extension), STRING_CONST("glsl"))) {
+		guess = IMPORTTYPE_SHADER;
+		string_const_t basename = path_base_file_name(STRING_ARGS(path));
+		string_const_t subextension = path_file_extension(STRING_ARGS(basename));
+		if (string_equal_nocase(STRING_ARGS(subextension), STRING_CONST("pixel")))
+			guess = IMPORTTYPE_GLSL_PIXELSHADER;
+		else if (string_equal_nocase(STRING_ARGS(subextension), STRING_CONST("vertex")))
+			guess = IMPORTTYPE_GLSL_VERTEXSHADER;
+	}
 
 	type = render_import_shader_guess_type(stream);
 
