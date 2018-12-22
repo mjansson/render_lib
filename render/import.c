@@ -349,6 +349,8 @@ render_import_program(stream_t* stream, const uuid_t uuid) {
 	platform = resource_platform(platformdecl);
 	timestamp = time_system();
 
+	resource_dependency_t* dependencies = nullptr;
+
 	while (!stream_eos(stream)) {
 		string_const_t type, ref;
 		string_const_t fullpath;
@@ -413,9 +415,11 @@ render_import_program(stream_t* stream, const uuid_t uuid) {
 			resource_dependency_t dep;
 			dep.uuid = shaderuuid;
 			dep.platform = platform;
-			resource_source_set_dependencies(uuid, platform, &dep, 1);
+			array_push(dependencies, dep);
 		}
 	}
+
+	resource_source_set_dependencies(uuid, platform, dependencies, array_size(dependencies));
 
 	resource_source_set(&source, timestamp, HASH_RESOURCE_TYPE,
 	                    0, STRING_CONST("program"));
@@ -435,6 +439,7 @@ render_import_program(stream_t* stream, const uuid_t uuid) {
 
 finalize:
 	resource_source_finalize(&source);
+	array_deallocate(dependencies);
 
 	return ret;
 }

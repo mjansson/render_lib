@@ -82,7 +82,7 @@ _rb_gl2_enable_thread(render_backend_t* backend) {
 		if (atomic_cas32(&backend_gl2->context_used, 1, 0, memory_order_release, memory_order_acquire))
 			thread_context = backend_gl2->context;
 		else
-			thread_context = _rb_gl_create_context(&backend->drawable, 2, 0, backend_gl2->context);
+			thread_context = _rb_gl_create_context(&backend->drawable, 2, 0, backend_gl2->context, backend->pixelformat, backend->colorspace);
 		_rb_gl_set_thread_context(thread_context);
 	}
 
@@ -136,7 +136,7 @@ _rb_gl2_set_drawable(render_backend_t* backend, const render_drawable_t* drawabl
 		return error_report(ERRORLEVEL_ERROR, ERROR_NOT_IMPLEMENTED);
 
 	atomic_store32(&backend_gl2->context_used, 1, memory_order_release);
-	backend_gl2->context = _rb_gl_create_context(drawable, 2, 0, 0);
+	backend_gl2->context = _rb_gl_create_context(drawable, 2, 0, 0, backend->pixelformat, backend->colorspace);
 	if (!backend_gl2->context) {
 		log_error(HASH_RENDER, ERROR_UNSUPPORTED, STRING_CONST("Unable to create OpenGL 2 context"));
 		atomic_store32(&backend_gl2->context_used, 0, memory_order_release);

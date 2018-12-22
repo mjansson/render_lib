@@ -139,7 +139,9 @@ _rb_gl_destroy_context(const render_drawable_t* drawable, void* context) {
 
 void*
 _rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, unsigned int minor,
-                      void* share_context) {
+                      void* share_context, const pixelformat_t pixelformat,
+                      const colorspace_t colorspace) {
+	FOUNDATION_UNUSED(pixelformat);
 #if FOUNDATION_PLATFORM_WINDOWS
 
 	HDC hdc = 0;
@@ -164,8 +166,8 @@ _rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, uns
 		return nullptr;
 	}
 
-	int pixelformat = ChoosePixelFormat(hdc, &pfd);
-	SetPixelFormat(hdc, pixelformat, &pfd);
+	int pformat = ChoosePixelFormat(hdc, &pfd);
+	SetPixelFormat(hdc, pformat, &pfd);
 	hglrc_default = wglCreateContext(hdc);
 	if (!hglrc_default) {
 		log_warn(HASH_RENDER, WARNING_INVALID_VALUE,
@@ -183,6 +185,10 @@ _rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, uns
 	array_push(attributes, 0); //WGL_CONTEXT_DEBUG_BIT_ARB
 	array_push(attributes, WGL_CONTEXT_PROFILE_MASK_ARB);
 	array_push(attributes, WGL_CONTEXT_CORE_PROFILE_BIT_ARB);
+	if (colorspace == COLORSPACE_sRGB) {
+		array_push(attributes, WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB);
+		array_push(attributes, GL_TRUE);
+	}
 	array_push(attributes, 0);
 
 	PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)
@@ -298,6 +304,10 @@ _rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, uns
 			array_push(attributes, GLX_CONTEXT_FLAGS_ARB); array_push(attributes, 0);
 			array_push(attributes, GLX_CONTEXT_PROFILE_MASK_ARB);
 			array_push(attributes, GLX_CONTEXT_CORE_PROFILE_BIT_ARB);
+			if (colorspace == COLORSPACE_sRGB) {
+				array_push(attributes, GLX_FRAMEBUFFER_SRGB_CAPABLE_ARB);
+				array_push(attributes, GL_TRUE);
+			}
 			array_push(attributes, 0); array_push(attributes, 0);
 
 			for (int ic = 0; ic < numconfig; ++ic) {
@@ -406,7 +416,7 @@ _rb_gl_check_context(unsigned int major, unsigned int minor) {
 	              10, 10, false);
 	render_drawable_t drawable;
 	render_drawable_initialize_window(&drawable, &window_check, 0);
-	context = _rb_gl_create_context(&drawable, major, minor, 0);
+	context = _rb_gl_create_context(&drawable, major, minor, 0, PIXELFORMAT_R8G8B8, COLORSPACE_LINEAR);
 	wglMakeCurrent(0, 0);
 	if (context)
 		wglDeleteContext((HGLRC)context);
@@ -415,7 +425,7 @@ _rb_gl_check_context(unsigned int major, unsigned int minor) {
 
 #elif FOUNDATION_PLATFORM_LINUX || FOUNDATION_PLATFORM_MACOS
 
-	context = _rb_gl_create_context(0, major, minor, 0);
+	context = _rb_gl_create_context(0, major, minor, 0, PIXELFORMAT_R8G8B8, COLORSPACE_LINEAR);
 
 #else
 #  error Not implemented
@@ -457,7 +467,8 @@ _rb_gl4_enable_thread(render_backend_t* backend) {
 		if (atomic_cas32(&backend_gl4->context_used, 1, 0, memory_order_release, memory_order_acquire))
 			thread_context = backend_gl4->context;
 		else
-			thread_context = _rb_gl_create_context(&backend->drawable, 4, 0, backend_gl4->context);
+			thread_context = _rb_gl_create_context(&backend->drawable, 4, 0, backend_gl4->context,
+			                                       backend->pixelformat, backend->colorspace);
 		_rb_gl_set_thread_context(thread_context);
 	}
 
@@ -521,7 +532,7 @@ _rb_gl4_set_drawable(render_backend_t* backend, const render_drawable_t* drawabl
 		return error_report(ERRORLEVEL_ERROR, ERROR_NOT_IMPLEMENTED);
 
 	atomic_store32(&backend_gl4->context_used, 1, memory_order_release);
-	backend_gl4->context = _rb_gl_create_context(drawable, 4, 0, 0);
+	backend_gl4->context = _rb_gl_create_context(drawable, 4, 0, 0, backend->pixelformat, backend->colorspace);
 	if (!backend_gl4->context) {
 		log_error(HASH_RENDER, ERROR_UNSUPPORTED, STRING_CONST("Unable to create OpenGL 4 context"));
 		atomic_store32(&backend_gl4->context_used, 0, memory_order_release);
@@ -999,9 +1010,17 @@ _rb_gl_allocate_target(render_backend_t* backend, render_target_t* target) {
 		goto failure;
 	}
 	glBindTexture(GL_TEXTURE_2D, render_texture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, (GLsizei)target->width, (GLsizei)target->height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	GLenum glformat = GL_RGB;
+	GLenum internalformat = (target->colorspace == COLORSPACE_sRGB) ? GL_SRGB_EXT : GL_RGB;
+	if (target->pixelformat == PIXELFORMAT_R8G8B8A8) {
+		glformat = GL_RGBA;
+		internalformat = (target->colorspace == COLORSPACE_sRGB) ? GL_SRGB8_ALPHA8_EXT : GL_RGBA;
+	}
+
+	glTexImage2D(GL_TEXTURE_2D, 0, internalformat, (GLsizei)target->width, (GLsizei)target->height, 0, glformat, GL_UNSIGNED_BYTE, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	if (_rb_gl_check_error("Unable to create render target: Error setting texture storage dimensions and format"))
 		goto failure;
 	glBindTexture(GL_TEXTURE_2D, 0);

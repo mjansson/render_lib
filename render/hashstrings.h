@@ -26,3 +26,4 @@
 #define HASH_TEXTURE static_hash_string("texture", 7, 0x4b61d4f340e798f6ULL)
 #define HASH_MVP static_hash_string("mvp", 3, 0x8b2f039c2c4efa26ULL)
 #define HASH_TEX static_hash_string("tex", 3, 0x35bf00462d0bc065ULL)
+#define HASH_PARAMETERS static_hash_string("parameters", 10, 0x5f1a2f492b495d26ULL)
