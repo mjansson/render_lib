@@ -95,6 +95,6 @@ render_drawable_finalize(render_drawable_t* drawable) {
 		if (drawable->native)
 			memory_deallocate(drawable->native);
 #endif
+		memset(drawable, 0, sizeof(render_drawable_t));
 	}
-	memset(drawable, 0, sizeof(render_drawable_t));
 }

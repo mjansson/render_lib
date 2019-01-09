@@ -26,7 +26,7 @@ render_vertexbuffer_allocate(render_backend_t* backend, render_usage_t usage, si
 	render_vertexbuffer_t* buffer = memory_allocate(HASH_RENDER, sizeof(render_vertexbuffer_t), 0,
 	                                                MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 	buffer->backend    = backend;
-	buffer->usage      = usage;
+	buffer->usage      = (uint8_t)usage;
 	buffer->buffertype = RENDERBUFFER_VERTEX;
 	buffer->policy     = RENDERBUFFER_UPLOAD_ONDISPATCH;
 	buffer->size       = decl->size;
@@ -165,7 +165,7 @@ render_vertex_decl_initialize(render_vertex_decl_t* decl, render_vertex_decl_ele
 		decl->attribute[i].format = VERTEXFORMAT_UNKNOWN;
 
 	for (i = 0; i < num_elements; ++i) {
-		decl->attribute[elements[i].attribute].format = elements[i].format;
+		decl->attribute[elements[i].attribute].format = (uint8_t)elements[i].format;
 		decl->attribute[elements[i].attribute].binding = 0;
 		decl->attribute[elements[i].attribute].offset = (uint16_t)offset;
 
@@ -200,7 +200,7 @@ render_vertex_decl_initialize_vlist(render_vertex_decl_t* decl, render_vertex_fo
 
 	while (format < VERTEXFORMAT_UNKNOWN) {
 		if (attribute < VERTEXATTRIBUTE_NUMATTRIBUTES) {
-			decl->attribute[attribute].format = format;
+			decl->attribute[attribute].format = (uint8_t)format;
 			decl->attribute[attribute].binding = 0;
 			decl->attribute[attribute].offset = (uint16_t)offset;
 			++decl->num_attributes;

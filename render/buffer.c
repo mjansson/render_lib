@@ -22,9 +22,11 @@
 
 void
 render_buffer_deallocate(render_buffer_t* buffer) {
-	buffer->backend->vtable.deallocate_buffer(buffer->backend, buffer, true, true);
-	semaphore_finalize(&buffer->lock);
-	memory_deallocate(buffer);
+	if (buffer) {
+		buffer->backend->vtable.deallocate_buffer(buffer->backend, buffer, true, true);
+		semaphore_finalize(&buffer->lock);
+		memory_deallocate(buffer);
+	}
 }
 
 void

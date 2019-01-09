@@ -27,7 +27,7 @@ render_indexbuffer_allocate(render_backend_t* backend, render_usage_t usage, siz
 	render_indexbuffer_t* buffer = memory_allocate(HASH_RENDER, sizeof(render_indexbuffer_t), 0,
 	                                               MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 	buffer->backend    = backend;
-	buffer->usage      = usage;
+	buffer->usage      = (uint8_t)usage;
 	buffer->buffertype = RENDERBUFFER_INDEX;
 	buffer->policy     = RENDERBUFFER_UPLOAD_ONDISPATCH;
 	buffer->size       = 2;

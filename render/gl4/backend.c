@@ -304,16 +304,18 @@ _rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, uns
 			array_push(attributes, GLX_CONTEXT_FLAGS_ARB); array_push(attributes, 0);
 			array_push(attributes, GLX_CONTEXT_PROFILE_MASK_ARB);
 			array_push(attributes, GLX_CONTEXT_CORE_PROFILE_BIT_ARB);
-			if (colorspace == COLORSPACE_sRGB) {
-				array_push(attributes, GLX_FRAMEBUFFER_SRGB_CAPABLE_ARB);
-				array_push(attributes, GL_TRUE);
-			}
+			FOUNDATION_UNUSED(colorspace);
 			array_push(attributes, 0); array_push(attributes, 0);
 
 			for (int ic = 0; ic < numconfig; ++ic) {
 				context = glXCreateContextAttribs(display, fbconfig[ic], share_context, 1, attributes);
-				if (context)
+				if (context) {
+					if (colorspace == COLORSPACE_sRGB) {
+						glEnable(GL_FRAMEBUFFER_SRGB);
+						_rb_gl_check_error("Unable to enable sRGB framebuffer");
+					}
 					break;
+				}
 			}
 
 			array_deallocate(attributes);
@@ -1012,7 +1014,7 @@ _rb_gl_allocate_target(render_backend_t* backend, render_target_t* target) {
 	glBindTexture(GL_TEXTURE_2D, render_texture);
 
 	GLenum glformat = GL_RGB;
-	GLenum internalformat = (target->colorspace == COLORSPACE_sRGB) ? GL_SRGB_EXT : GL_RGB;
+	GLint internalformat = (target->colorspace == COLORSPACE_sRGB) ? GL_SRGB_EXT : GL_RGB;
 	if (target->pixelformat == PIXELFORMAT_R8G8B8A8) {
 		glformat = GL_RGBA;
 		internalformat = (target->colorspace == COLORSPACE_sRGB) ? GL_SRGB8_ALPHA8_EXT : GL_RGBA;
@@ -1109,13 +1111,19 @@ _rb_gl_upload_texture(render_backend_t* backend, render_texture_t* texture,
 	}
 
 	glBindTexture(GL_TEXTURE_2D, texture_name);
-	glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_FALSE);
+
+	if (backend->api == RENDERAPI_OPENGL2)
+		glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_FALSE);
+
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	//glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, texture->levels > 1 ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	if (_rb_gl_check_error("Unable to initialize texture data"))
+		return false;
 
 	bool compressed = false;
 	GLenum internal_format = GL_RGBA;
@@ -1136,7 +1144,7 @@ _rb_gl_upload_texture(render_backend_t* backend, render_texture_t* texture,
 			log_error(HASH_RENDER, ERROR_INVALID_VALUE, STRING_CONST("Data size too small"));
 			return false;
 		}
-		if( !compressed )
+		if (!compressed)
 			glTexImage2D(GL_TEXTURE_2D, ilevel, (GLint)internal_format, (GLsizei)level_width, (GLsizei)level_height,
 			             0, data_format, data_type, data);
 		else
@@ -1289,7 +1297,7 @@ _rb_gl4_render(render_backend_gl4_t* backend, render_context_t* context,
 	_rb_gl_check_error("Error render primitives (bind program)");
 
 	// Bind the parameter blocks
-	GLint unit = 0;
+	GLuint unit = 0;
 	render_parameter_t* param = parameterbuffer->parameters;
 	for (unsigned int ip = 0; ip < parameterbuffer->num_parameters; ++ip, ++param) {
 		void* data = pointer_offset(parameterbuffer->store, param->offset);
@@ -1297,7 +1305,7 @@ _rb_gl4_render(render_backend_gl4_t* backend, render_context_t* context,
 			glActiveTexture(GL_TEXTURE0 + unit);
 			glEnable(GL_TEXTURE_2D);
 			glBindTexture(GL_TEXTURE_2D, *(GLuint*)data);
-			glUniform1i(param->location, unit);
+			glUniform1i((GLint)param->location, (GLint)unit);
 			++unit;
 		}
 		else if (param->type == RENDERPARAMETER_FLOAT4) {

@@ -548,7 +548,7 @@ _rb_gl2_render(render_backend_gl2_t* backend, render_context_t* context,
 	glUseProgram((GLuint)program->backend_data[0]);
 
 	// Bind the parameter blocks
-	GLint unit = 0;
+	GLuint unit = 0;
 	render_parameter_t* param = parameterbuffer->parameters;
 	for (unsigned int ip = 0; ip < parameterbuffer->num_parameters; ++ip, ++param) {
 		void* data = pointer_offset(parameterbuffer->store, param->offset);
@@ -556,7 +556,7 @@ _rb_gl2_render(render_backend_gl2_t* backend, render_context_t* context,
 			glActiveTexture(GL_TEXTURE0 + unit);
 			glEnable(GL_TEXTURE_2D);
 			glBindTexture(GL_TEXTURE_2D, *(GLuint*)data);
-			glUniform1i(param->location, unit);
+			glUniform1i((GLint)param->location, (GLint)unit);
 			++unit;
 		}
 		else if (param->type == RENDERPARAMETER_FLOAT4) {
