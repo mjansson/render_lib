@@ -185,7 +185,8 @@ _rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, uns
 	array_push(attributes, 0); //WGL_CONTEXT_DEBUG_BIT_ARB
 	array_push(attributes, WGL_CONTEXT_PROFILE_MASK_ARB);
 	array_push(attributes, WGL_CONTEXT_CORE_PROFILE_BIT_ARB);
-	if (colorspace == COLORSPACE_sRGB) {
+	FOUNDATION_UNUSED(colorspace);
+	if ((colorspace == COLORSPACE_sRGB) && (major < 4)) {
 		array_push(attributes, WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB);
 		array_push(attributes, GL_TRUE);
 	}
@@ -243,12 +244,19 @@ _rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, uns
 				hglrc = 0;
 			}
 		}
+
+		if (colorspace == COLORSPACE_sRGB) {
+			glEnable(GL_FRAMEBUFFER_SRGB);
+			_rb_gl_check_error("Unable to enable sRGB framebuffer");
+			log_info(HASH_RENDER, STRING_CONST("sRGB framebuffer"));
+		}
 	}
 	else {
 		if (major >= 3) {
 			int err = GetLastError();
-			log_infof(HASH_RENDER, STRING_CONST("Unable to create GL context for version %d.%d: %s (%08x)"),
-			          major, minor, system_error_message(err), err);
+			string_const_t errmsg = system_error_message(err);
+			log_infof(HASH_RENDER, STRING_CONST("Unable to create GL context for version %d.%d: %.*s (%08x)"),
+			          major, minor, STRING_FORMAT(errmsg), err);
 		}
 		wglMakeCurrent(0, 0);
 	}
@@ -1303,7 +1311,7 @@ _rb_gl4_render(render_backend_gl4_t* backend, render_context_t* context,
 		void* data = pointer_offset(parameterbuffer->store, param->offset);
 		if (param->type == RENDERPARAMETER_TEXTURE) {
 			glActiveTexture(GL_TEXTURE0 + unit);
-			glEnable(GL_TEXTURE_2D);
+			//glEnable(GL_TEXTURE_2D);
 			glBindTexture(GL_TEXTURE_2D, *(GLuint*)data);
 			glUniform1i((GLint)param->location, (GLint)unit);
 			++unit;
