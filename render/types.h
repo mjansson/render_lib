@@ -124,6 +124,13 @@ typedef enum render_vertex_format_t {
 	VERTEXFORMAT_UNKNOWN
 } render_vertex_format_t;
 
+typedef enum render_index_format_t {
+	INDEXFORMAT_UBYTE = 0,
+	INDEXFORMAT_USHORT,
+	INDEXFORMAT_UINT,
+	INDEXFORMAT_NUMTYPES
+} render_index_format_t;
+
 typedef enum render_vertex_attribute_id {
 	VERTEXATTRIBUTE_POSITION = 0,
 	VERTEXATTRIBUTE_WEIGHT,
@@ -230,7 +237,9 @@ typedef enum render_colorspace_t {
 } colorspace_t;
 
 typedef enum render_primitive_t {
-	RENDERPRIMITIVE_TRIANGLELIST = 0,
+	RENDERPRIMITIVE_INVALID = 0,
+
+	RENDERPRIMITIVE_TRIANGLELIST,
 	RENDERPRIMITIVE_LINELIST,
 
 	RENDERPRIMITIVE_NUMTYPES
@@ -519,6 +528,7 @@ struct render_vertexbuffer_t {
 
 struct render_indexbuffer_t {
 	RENDER_DECLARE_BUFFER;
+	render_index_format_t format;
 };
 
 struct render_parameterbuffer_t {

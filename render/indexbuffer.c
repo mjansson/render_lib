@@ -23,14 +23,17 @@
 
 render_indexbuffer_t*
 render_indexbuffer_allocate(render_backend_t* backend, render_usage_t usage, size_t indices,
-                            const uint16_t* data) {
+                            render_index_format_t format, const uint16_t* data) {
+	size_t format_size = format ? (format * 2) : 1;
+
 	render_indexbuffer_t* buffer = memory_allocate(HASH_RENDER, sizeof(render_indexbuffer_t), 0,
 	                                               MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 	buffer->backend    = backend;
 	buffer->usage      = (uint8_t)usage;
 	buffer->buffertype = RENDERBUFFER_INDEX;
 	buffer->policy     = RENDERBUFFER_UPLOAD_ONDISPATCH;
-	buffer->size       = 2;
+	buffer->size       = format_size;
+	buffer->format     = format;
 	semaphore_initialize(&buffer->lock, 1);
 
 	if (indices) {

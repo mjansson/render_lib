@@ -1249,9 +1249,11 @@ _rb_gl4_viewport(render_backend_gl4_t* backend, render_target_t* target,
 	_rb_gl_check_error("Error setting viewport");
 }
 
-static const GLenum       _rb_gl4_primitive_type[RENDERPRIMITIVE_NUMTYPES] = { GL_TRIANGLES, GL_LINES };
-static const unsigned int _rb_gl4_primitive_mult[RENDERPRIMITIVE_NUMTYPES] = { 3, 2 };
-static const unsigned int _rb_gl4_primitive_add[RENDERPRIMITIVE_NUMTYPES]  = { 0, 0 };
+static const GLenum       _rb_gl4_primitive_type[RENDERPRIMITIVE_NUMTYPES] = { GL_TRIANGLES, GL_TRIANGLES, GL_LINES };
+static const unsigned int _rb_gl4_primitive_mult[RENDERPRIMITIVE_NUMTYPES] = { 3, 3, 2 };
+static const unsigned int _rb_gl4_primitive_add[RENDERPRIMITIVE_NUMTYPES]  = { 0, 0, 0 };
+
+static const GLenum       _rb_gl4_index_format_type[INDEXFORMAT_NUMTYPES] = { GL_UNSIGNED_BYTE, GL_UNSIGNED_SHORT, GL_UNSIGNED_INT };
 
 //                                                 BLEND_ZERO, BLEND_ONE, BLEND_SRCCOLOR, BLEND_INVSRCCOLOR,      BLEND_DESTCOLOR, BLEND_INVDESTCOLOR,     BLEND_SRCALPHA, BLEND_INVSRCALPHA,      BLEND_DESTALPHA, BLEND_INVDESTALPHA,     BLEND_FACTOR,      BLEND_INVFACTOR,             BLEND_SRCALPHASAT
 //static const GLenum       _rb_gl4_blend_func[] = { GL_ZERO,    GL_ONE,    GL_SRC_COLOR,   GL_ONE_MINUS_SRC_COLOR, GL_DST_COLOR,    GL_ONE_MINUS_DST_COLOR, GL_SRC_ALPHA,   GL_ONE_MINUS_SRC_ALPHA, GL_DST_ALPHA,    GL_ONE_MINUS_DST_ALPHA, GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA, GL_SRC_ALPHA_SATURATE };
@@ -1351,7 +1353,7 @@ _rb_gl4_render(render_backend_gl4_t* backend, render_context_t* context,
 	unsigned int pnum = _rb_gl4_primitive_mult[primitive] * num + _rb_gl4_primitive_add[primitive];
 
 	glDrawElements(_rb_gl4_primitive_type[primitive], (GLsizei)pnum,
-	               (indexbuffer->size == 2) ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT, 0);
+	               _rb_gl4_index_format_type[indexbuffer->format], 0);
 
 	_rb_gl_check_error("Error render primitives");
 }

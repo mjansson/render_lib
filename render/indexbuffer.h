@@ -26,7 +26,7 @@
 
 RENDER_API render_indexbuffer_t*
 render_indexbuffer_allocate(render_backend_t* backend, render_usage_t type, size_t indices,
-                            const uint16_t* data);
+                            render_index_format_t format, const void* data);
 
 RENDER_API void
 render_indexbuffer_deallocate(render_indexbuffer_t* buffer);
