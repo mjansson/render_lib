@@ -272,6 +272,7 @@ typedef struct render_shader_ref_t render_shader_ref_t;
 typedef struct render_vertexshader_t render_vertexshader_t;
 typedef struct render_pixelshader_t render_pixelshader_t;
 typedef struct render_program_t render_program_t;
+typedef struct render_program_attribute_t render_program_attribute_t;
 typedef struct render_texture_t render_texture_t;
 typedef struct render_state_t render_state_t;
 typedef struct render_resolution_t render_resolution_t;
@@ -481,14 +482,18 @@ struct render_command_t {
 };
 
 struct render_vertex_attribute_t {
+	//! Data format of attribute
 	uint8_t  format;
+	//! Binding identifier (used by backend)
 	uint8_t  binding;
-	uint16_t offset;
+	//! Stride in bytes between consecutive elements of this attribute (0 means tightly packed)
+	uint16_t stride;
+	//! Offset from start of buffer to first element of this attribute
+	uint32_t offset;
 };
 
 struct render_vertex_decl_t {
-	unsigned int num_attributes;
-	unsigned int size;
+	//! Attribute definitions
 	render_vertex_attribute_t attribute[VERTEXATTRIBUTE_NUMATTRIBUTES];
 };
 
@@ -511,7 +516,7 @@ struct render_parameter_t {
 	uint32_t    locks; \
 	size_t      allocated; \
 	size_t      used; \
-	size_t      size; \
+	size_t      buffersize; \
 	void*       store; \
 	void*       access; \
 	uintptr_t   backend_data[4]; \
@@ -556,6 +561,15 @@ FOUNDATION_ALIGNED_STRUCT(render_shader_t, 8) {
 	RENDER_DECLARE_SHADER;
 };
 
+struct render_program_attribute_t {
+	//! Data format of attribute
+	uint8_t  format;
+	//! Binding identifier (used by backend)
+	uint8_t  binding;
+	//! Attribute name
+	hash_t name;
+};
+
 FOUNDATION_ALIGNED_STRUCT(render_program_t, 8) {
 	render_backend_t* backend; \
 	RENDER_32BIT_PADDING(backendptr) \
@@ -569,8 +583,8 @@ FOUNDATION_ALIGNED_STRUCT(render_program_t, 8) {
 	uint32_t num_parameters;
 	uint32_t unused;
 	uuid_t uuid;
-	render_vertex_decl_t attributes;
-	hash_t attribute_name[VERTEXATTRIBUTE_NUMATTRIBUTES];
+	uint32_t num_attributes;
+	render_program_attribute_t attribute[16];
 	render_parameter_t* parameters;
 	RENDER_32BIT_PADDING_ARR(paramsptr, 4)
 	render_parameter_t inline_parameters[FOUNDATION_FLEXIBLE_ARRAY];

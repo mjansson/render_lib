@@ -737,7 +737,7 @@ exit:
 static void*
 _rb_gl4_allocate_buffer(render_backend_t* backend, render_buffer_t* buffer) {
 	FOUNDATION_UNUSED(backend);
-	return memory_allocate(HASH_RENDER, buffer->size * buffer->allocated, 16, MEMORY_PERSISTENT);
+	return memory_allocate(HASH_RENDER, buffer->buffersize, 16, MEMORY_PERSISTENT);
 }
 
 static void
@@ -779,7 +779,7 @@ _rb_gl4_upload_buffer(render_backend_t* backend, render_buffer_t* buffer) {
 	}
 
 	glBindBuffer(GL_ARRAY_BUFFER, buffer_object);
-	glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)(buffer->size * buffer->allocated), buffer->store,
+	glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)buffer->buffersize, buffer->store,
 	             (buffer->usage == RENDERUSAGE_DYNAMIC) ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
 	if (_rb_gl_check_error("Unable to upload buffer object data"))
 		return false;
@@ -801,7 +801,7 @@ _rb_gl4_upload_buffer(render_backend_t* backend, render_buffer_t* buffer) {
 			if (format < VERTEXFORMAT_NUMTYPES) {
 				glVertexAttribPointer(attrib, _rb_gl4_vertex_format_size[format],
 				                      _rb_gl4_vertex_format_type[format], _rb_gl4_vertex_format_norm[format],
-				                      (GLsizei)vertexbuffer->size,
+				                      (GLsizei)decl->attribute[attrib].stride,
 				                      (const void*)(uintptr_t)decl->attribute[attrib].offset);
 				_rb_gl_check_error("Error creating vertex array (bind attribute)");
 				glEnableVertexAttribArray(attrib);
@@ -946,7 +946,7 @@ _rb_gl4_upload_program(render_backend_t* backend, render_program_t* program) {
 		glGetActiveAttrib(handle, (GLuint)ia, sizeof(name), &num_chars, &size, &type, name);
 
 		name_hash = hash(name, (size_t)num_chars);
-		for (size_t iattrib = 0; iattrib < program->attributes.num_attributes; ++iattrib) {
+		for (size_t iattrib = 0; iattrib < program->num_attributes; ++iattrib) {
 			if (program->attribute_name[iattrib] == name_hash) {
 				render_vertex_attribute_t* attribute = program->attributes.attribute + iattrib;
 				glBindAttribLocation(handle, attribute->binding, name);

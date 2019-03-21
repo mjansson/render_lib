@@ -25,8 +25,9 @@
 #include <render/types.h>
 
 RENDER_API render_indexbuffer_t*
-render_indexbuffer_allocate(render_backend_t* backend, render_usage_t type, size_t indices,
-                            render_index_format_t format, const void* data);
+render_indexbuffer_allocate(render_backend_t* backend, render_usage_t type, size_t num_indices,
+                            size_t buffer_size, render_index_format_t format,
+                            const void* data, size_t data_size);
 
 RENDER_API void
 render_indexbuffer_deallocate(render_indexbuffer_t* buffer);

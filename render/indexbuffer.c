@@ -22,8 +22,9 @@
 #include <render/internal.h>
 
 render_indexbuffer_t*
-render_indexbuffer_allocate(render_backend_t* backend, render_usage_t usage, size_t indices,
-                            render_index_format_t format, const uint16_t* data) {
+render_indexbuffer_allocate(render_backend_t* backend, render_usage_t usage, size_t num_indices,
+                            size_t buffer_size, render_index_format_t format,
+                            const void* data, size_t data_size) {
 	size_t format_size = format ? (format * 2) : 1;
 
 	render_indexbuffer_t* buffer = memory_allocate(HASH_RENDER, sizeof(render_indexbuffer_t), 0,
@@ -32,16 +33,19 @@ render_indexbuffer_allocate(render_backend_t* backend, render_usage_t usage, siz
 	buffer->usage      = (uint8_t)usage;
 	buffer->buffertype = RENDERBUFFER_INDEX;
 	buffer->policy     = RENDERBUFFER_UPLOAD_ONDISPATCH;
-	buffer->size       = format_size;
+	buffer->buffersize = buffer_size;
 	buffer->format     = format;
 	semaphore_initialize(&buffer->lock, 1);
 
-	if (indices) {
-		buffer->allocated = indices;
-		buffer->used = indices;
+	if (num_indices) {
+		size_t allocated = buffer_size / format_size;
+		buffer->allocated = allocated;
+		buffer->used = (allocated < num_indices) ? allocated : num_indices;
 		buffer->store = backend->vtable.allocate_buffer(backend, (render_buffer_t*)buffer);
 		if (data) {
-			memcpy(buffer->store, data, indices * buffer->size);
+			if (data_size > buffer->buffersize)
+				data_size = buffer->buffersize;
+			memcpy(buffer->store, data, data_size);
 			buffer->flags |= RENDERBUFFER_DIRTY;
 		}
 	}

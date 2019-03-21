@@ -61,7 +61,7 @@ render_program_reload(render_program_t* program, const uuid_t uuid);
 RENDER_API void
 render_program_unload(render_program_t* program);
 
-#define RENDER_PROGRAM_RESOURCE_VERSION 4
+#define RENDER_PROGRAM_RESOURCE_VERSION 6
 
 #if RESOURCE_ENABLE_LOCAL_SOURCE
 

@@ -25,7 +25,7 @@
 #include <resource/compile.h>
 
 //Size expectations for the program compiler and loader
-FOUNDATION_STATIC_ASSERT(sizeof(render_vertex_decl_t) == 72, "invalid vertex decl size");
+FOUNDATION_STATIC_ASSERT(sizeof(render_vertex_decl_t) == 128, "invalid vertex decl size");
 FOUNDATION_STATIC_ASSERT(sizeof(render_program_t) == 96 + sizeof(render_vertex_decl_t) +
                          (sizeof(hash_t) * VERTEXATTRIBUTE_NUMATTRIBUTES),
                          "invalid program size");

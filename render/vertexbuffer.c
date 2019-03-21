@@ -21,24 +21,27 @@
 #include <render/internal.h>
 
 render_vertexbuffer_t*
-render_vertexbuffer_allocate(render_backend_t* backend, render_usage_t usage, size_t vertices,
-                             const render_vertex_decl_t* decl, const void* data) {
+render_vertexbuffer_allocate(render_backend_t* backend, render_usage_t usage, size_t num_vertices,
+                             size_t buffer_size, const render_vertex_decl_t* decl,
+                             const void* data, size_t data_size) {
 	render_vertexbuffer_t* buffer = memory_allocate(HASH_RENDER, sizeof(render_vertexbuffer_t), 0,
 	                                                MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 	buffer->backend    = backend;
 	buffer->usage      = (uint8_t)usage;
 	buffer->buffertype = RENDERBUFFER_VERTEX;
 	buffer->policy     = RENDERBUFFER_UPLOAD_ONDISPATCH;
-	buffer->size       = decl->size;
+	buffer->buffersize = buffer_size;
 	semaphore_initialize(&buffer->lock, 1);
 	memcpy(&buffer->decl, decl, sizeof(render_vertex_decl_t));
 
-	if (vertices) {
-		buffer->allocated = vertices;
-		buffer->used = vertices;
+	if (num_vertices) {
+		buffer->allocated = num_vertices;
+		buffer->used = num_vertices;
 		buffer->store = backend->vtable.allocate_buffer(backend, (render_buffer_t*)buffer);
 		if (data) {
-			memcpy(buffer->store, data, vertices * buffer->size);
+			if (data_size > buffer->buffersize)
+				data_size = buffer->buffersize;
+			memcpy(buffer->store, data, data_size);
 			buffer->flags |= RENDERBUFFER_DIRTY;
 		}
 	}
@@ -113,7 +116,9 @@ render_vertex_attribute_size(render_vertex_format_t format) {
 size_t
 render_vertex_decl_calculate_size(const render_vertex_decl_t* decl) {
 	size_t size = 0;
-	for (unsigned int i = 0; i < decl->num_attributes; ++i) {
+	for (unsigned int i = 0; i < VERTEXATTRIBUTE_NUMATTRIBUTES; ++i) {
+		if (decl->attribute[i].format == VERTEXFORMAT_UNKNOWN)
+			continue;
 		FOUNDATION_ASSERT_MSGFORMAT(decl->attribute[i].format <= VERTEXFORMAT_UNKNOWN,
 		                            "Invalid vertex format type %d index %d", decl->attribute[i].format, i);
 		size_t end = decl->attribute[i].offset + _vertex_format_size[ decl->attribute[i].format ];
@@ -158,22 +163,22 @@ render_vertex_decl_initialize(render_vertex_decl_t* decl, render_vertex_decl_ele
 	size_t i;
 	unsigned int offset = 0;
 
-	if (num_elements > VERTEXATTRIBUTE_NUMATTRIBUTES)
-		num_elements = VERTEXATTRIBUTE_NUMATTRIBUTES;
-
 	for (i = 0; i < VERTEXATTRIBUTE_NUMATTRIBUTES; ++i)
 		decl->attribute[i].format = VERTEXFORMAT_UNKNOWN;
 
 	for (i = 0; i < num_elements; ++i) {
-		decl->attribute[elements[i].attribute].format = (uint8_t)elements[i].format;
-		decl->attribute[elements[i].attribute].binding = 0;
-		decl->attribute[elements[i].attribute].offset = (uint16_t)offset;
-
-		offset += _vertex_format_size[ elements[i].format ];
+		FOUNDATION_ASSERT_MSGFORMAT(elements[i].attribute < VERTEXATTRIBUTE_NUMATTRIBUTES,
+		                            "Invalid vertex attribute %d index %d", elements[i].attribute, i);
+		if (elements[i].attribute < VERTEXATTRIBUTE_NUMATTRIBUTES) {
+			decl->attribute[elements[i].attribute].format = (uint8_t)elements[i].format;
+			decl->attribute[elements[i].attribute].binding = 0;
+			decl->attribute[elements[i].attribute].offset = (uint16_t)offset;
+			offset += _vertex_format_size[elements[i].format];
+		}
 	}
 
-	decl->num_attributes = (unsigned int)num_elements;
-	decl->size = offset;
+	for (i = 0; i < VERTEXATTRIBUTE_NUMATTRIBUTES; ++i)
+		decl->attribute[i].stride = (uint16_t)offset;
 }
 
 void
@@ -190,8 +195,6 @@ render_vertex_decl_initialize_vlist(render_vertex_decl_t* decl, render_vertex_fo
                                     render_vertex_attribute_id attribute, va_list list) {
 	unsigned int offset = 0;
 
-	decl->num_attributes = 0;
-
 	for (size_t i = 0; i < VERTEXATTRIBUTE_NUMATTRIBUTES; ++i)
 		decl->attribute[i].format = VERTEXFORMAT_UNKNOWN;
 
@@ -203,7 +206,6 @@ render_vertex_decl_initialize_vlist(render_vertex_decl_t* decl, render_vertex_fo
 			decl->attribute[attribute].format = (uint8_t)format;
 			decl->attribute[attribute].binding = 0;
 			decl->attribute[attribute].offset = (uint16_t)offset;
-			++decl->num_attributes;
 
 			offset += _vertex_format_size[ format ];
 		}
@@ -215,7 +217,8 @@ render_vertex_decl_initialize_vlist(render_vertex_decl_t* decl, render_vertex_fo
 
 	va_end(clist);
 
-	decl->size = offset;
+	for (size_t i = 0; i < VERTEXATTRIBUTE_NUMATTRIBUTES; ++i)
+		decl->attribute[i].stride = (uint16_t)offset;
 }
 
 void

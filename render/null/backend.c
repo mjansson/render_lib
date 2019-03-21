@@ -79,7 +79,7 @@ _rb_null_flip(render_backend_t* backend) {
 static void*
 _rb_null_allocate_buffer(render_backend_t* backend, render_buffer_t* buffer) {
 	FOUNDATION_UNUSED(backend);
-	return memory_allocate(HASH_RENDER, buffer->size * buffer->allocated, 16, MEMORY_PERSISTENT);
+	return memory_allocate(HASH_RENDER, buffer->buffersize, 16, MEMORY_PERSISTENT);
 }
 
 static void

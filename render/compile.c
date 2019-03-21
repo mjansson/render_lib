@@ -473,22 +473,23 @@ render_program_compile_opengl(render_backend_t* backend, uuid_t vertexshader, uu
 	program = render_program_allocate((size_t)uniforms);
 	program->vertexshader = vshader;
 	program->pixelshader = pshader;
+	program->num_attributes = 0;
 
 	for (GLint ia = 0; (ia < attributes) && compiled; ++ia) {
 		GLsizei num_chars = 0;
 		GLint size = 0;
 		GLenum gltype = GL_NONE;
-		render_vertex_attribute_t* attribute = program->attributes.attribute + ia;
 
 		glGetActiveAttrib(handle, (GLuint)ia, sizeof(name), &num_chars, &size, &gltype, name);
 
 		//TODO: Implement something proper, and generalized, together with dx10 input layout
+		unsigned int attrib = 0;
 		if (string_equal(name, (size_t)num_chars, STRING_CONST("position")))
-			attribute->binding = VERTEXATTRIBUTE_POSITION;
+			attrib = VERTEXATTRIBUTE_POSITION;
 		else if (string_equal(name, (size_t)num_chars, STRING_CONST("color")))
-			attribute->binding = VERTEXATTRIBUTE_PRIMARYCOLOR;
+			attrib = VERTEXATTRIBUTE_PRIMARYCOLOR;
 		else if (string_equal(name, (size_t)num_chars, STRING_CONST("texcoord")))
-			attribute->binding = VERTEXATTRIBUTE_TEXCOORD0;
+			attrib = VERTEXATTRIBUTE_TEXCOORD0;
 		else {
 			log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL,
 			           STRING_CONST("Invalid/unknown attribute name: %.*s"),
@@ -497,32 +498,34 @@ render_program_compile_opengl(render_backend_t* backend, uuid_t vertexshader, uu
 			break;
 		}
 
-		program->attribute_name[ia] = hash(name, (size_t)num_chars);
+		render_program_attribute_t* program_attribute = program->attribute + program->num_attributes;
+		program_attribute->binding = attrib;
+		program_attribute->name = hash(name, (size_t)num_chars);
 
 		switch (gltype) {
 		case GL_FLOAT:
-			attribute->format = VERTEXFORMAT_FLOAT;
+			program_attribute->format = VERTEXFORMAT_FLOAT;
 			break;
 		case GL_FLOAT_VEC2:
-			attribute->format = VERTEXFORMAT_FLOAT2;
+			program_attribute->format = VERTEXFORMAT_FLOAT2;
 			break;
 		case GL_FLOAT_VEC3:
-			attribute->format = VERTEXFORMAT_FLOAT3;
+			program_attribute->format = VERTEXFORMAT_FLOAT3;
 			break;
 		case GL_FLOAT_VEC4:
-			attribute->format = VERTEXFORMAT_FLOAT4;
+			program_attribute->format = VERTEXFORMAT_FLOAT4;
 			break;
 		case GL_INT:
 		case GL_UNSIGNED_INT:
-			attribute->format = VERTEXFORMAT_INT;
+			program_attribute->format = VERTEXFORMAT_INT;
 			break;
 		case GL_INT_VEC2:
 		case 0x8DC6: //GL_UNSIGNED_INT_VEC2:
-			attribute->format = VERTEXFORMAT_INT2;
+			program_attribute->format = VERTEXFORMAT_INT2;
 			break;
 		case GL_INT_VEC4:
 		case 0x8DC8: //GL_UNSIGNED_INT_VEC4:
-			attribute->format = VERTEXFORMAT_INT4;
+			program_attribute->format = VERTEXFORMAT_INT4;
 			break;
 		default:
 			log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL,
@@ -532,34 +535,10 @@ render_program_compile_opengl(render_backend_t* backend, uuid_t vertexshader, uu
 			break;
 		}
 
-		++program->attributes.num_attributes;
+		++program->num_attributes;
 	}
 	if (!compiled)
 		goto exit;
-
-	//Sort and build attribute offsets
-	for (size_t iend = program->attributes.num_attributes; iend > 1; --iend) {
-		for (size_t ia = 0; ia < (iend - 1); ++ia) {
-			render_vertex_attribute_t* first_attribute = program->attributes.attribute + ia;
-			render_vertex_attribute_t* second_attribute = first_attribute + 1;
-			if ((second_attribute->binding < first_attribute->binding)) {
-				render_vertex_attribute_t tmp = *first_attribute;
-				*first_attribute = *second_attribute;
-				*second_attribute = tmp;
-
-				hash_t tmpname = program->attribute_name[ia];
-				program->attribute_name[ia] = program->attribute_name[ia + 1];
-				program->attribute_name[ia + 1] = tmpname;
-			}
-		}
-	}
-
-	offset = 0;
-	for (size_t ia = 0; ia < program->attributes.num_attributes; ++ia) {
-		program->attributes.attribute[ia].offset = offset;
-		offset += render_vertex_attribute_size(program->attributes.attribute[ia].format);
-	}
-	program->attributes.size = offset;
 
 	offset = 0;
 	for (GLint iu = 0; (iu < uniforms) && compiled; ++iu) {

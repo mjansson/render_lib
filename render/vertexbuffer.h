@@ -105,8 +105,9 @@ render_vertex_decl_calculate_size(const render_vertex_decl_t* decl);
 
 
 RENDER_API render_vertexbuffer_t*
-render_vertexbuffer_allocate(render_backend_t* backend, render_usage_t usage, size_t vertices,
-                             const render_vertex_decl_t* decl, const void* data);
+render_vertexbuffer_allocate(render_backend_t* backend, render_usage_t usage, size_t num_vertices,
+                             size_t buffer_size, const render_vertex_decl_t* decl,
+                             const void* data, size_t data_size);
 
 RENDER_API void
 render_vertexbuffer_deallocate(render_vertexbuffer_t* buffer);
