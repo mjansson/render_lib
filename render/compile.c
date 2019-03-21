@@ -499,8 +499,7 @@ render_program_compile_opengl(render_backend_t* backend, uuid_t vertexshader, uu
 		}
 
 		render_program_attribute_t* program_attribute = program->attribute + program->num_attributes;
-		program_attribute->binding = attrib;
-		program_attribute->name = hash(name, (size_t)num_chars);
+		program_attribute->binding = (uint16_t)attrib;
 
 		switch (gltype) {
 		case GL_FLOAT:
@@ -534,6 +533,7 @@ render_program_compile_opengl(render_backend_t* backend, uuid_t vertexshader, uu
 			compiled = false;
 			break;
 		}
+		program->attribute_name[program->num_attributes] = hash(name, (size_t)num_chars);
 
 		++program->num_attributes;
 	}

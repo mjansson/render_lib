@@ -86,7 +86,7 @@ render_vertexbuffer_restore(render_vertexbuffer_t* buffer) {
 	buffer->flags |= RENDERBUFFER_DIRTY;
 }
 
-static const uint16_t _vertex_format_size[ VERTEXFORMAT_UNKNOWN + 1 ] = {
+static const uint16_t _vertex_format_size[ VERTEXFORMAT_NUMTYPES + 1 ] = {
 
 	4,  //VERTEXFORMAT_FLOAT
 	8,  //VERTEXFORMAT_FLOAT2
@@ -104,7 +104,6 @@ static const uint16_t _vertex_format_size[ VERTEXFORMAT_UNKNOWN + 1 ] = {
 	8,  //VERTEXFORMAT_INT2
 	16, //VERTEXFORMAT_INT4
 
-	0,
 	0
 };
 
@@ -116,11 +115,9 @@ render_vertex_attribute_size(render_vertex_format_t format) {
 size_t
 render_vertex_decl_calculate_size(const render_vertex_decl_t* decl) {
 	size_t size = 0;
-	for (unsigned int i = 0; i < VERTEXATTRIBUTE_NUMATTRIBUTES; ++i) {
-		if (decl->attribute[i].format == VERTEXFORMAT_UNKNOWN)
+	for (unsigned int i = 0; i < RENDER_MAX_ATTRIBUTES; ++i) {
+		if (decl->attribute[i].format >= VERTEXFORMAT_NUMTYPES)
 			continue;
-		FOUNDATION_ASSERT_MSGFORMAT(decl->attribute[i].format <= VERTEXFORMAT_UNKNOWN,
-		                            "Invalid vertex format type %d index %d", decl->attribute[i].format, i);
 		size_t end = decl->attribute[i].offset + _vertex_format_size[ decl->attribute[i].format ];
 		if (end > size)
 			size = end;
@@ -163,13 +160,11 @@ render_vertex_decl_initialize(render_vertex_decl_t* decl, render_vertex_decl_ele
 	size_t i;
 	unsigned int offset = 0;
 
-	for (i = 0; i < VERTEXATTRIBUTE_NUMATTRIBUTES; ++i)
-		decl->attribute[i].format = VERTEXFORMAT_UNKNOWN;
+	for (i = 0; i < RENDER_MAX_ATTRIBUTES; ++i)
+		decl->attribute[i].format = VERTEXFORMAT_UNUSED;
 
 	for (i = 0; i < num_elements; ++i) {
-		FOUNDATION_ASSERT_MSGFORMAT(elements[i].attribute < VERTEXATTRIBUTE_NUMATTRIBUTES,
-		                            "Invalid vertex attribute %d index %d", elements[i].attribute, i);
-		if (elements[i].attribute < VERTEXATTRIBUTE_NUMATTRIBUTES) {
+		if (elements[i].attribute < RENDER_MAX_ATTRIBUTES) {
 			decl->attribute[elements[i].attribute].format = (uint8_t)elements[i].format;
 			decl->attribute[elements[i].attribute].binding = 0;
 			decl->attribute[elements[i].attribute].offset = (uint16_t)offset;
@@ -177,7 +172,7 @@ render_vertex_decl_initialize(render_vertex_decl_t* decl, render_vertex_decl_ele
 		}
 	}
 
-	for (i = 0; i < VERTEXATTRIBUTE_NUMATTRIBUTES; ++i)
+	for (i = 0; i < RENDER_MAX_ATTRIBUTES; ++i)
 		decl->attribute[i].stride = (uint16_t)offset;
 }
 
@@ -195,14 +190,14 @@ render_vertex_decl_initialize_vlist(render_vertex_decl_t* decl, render_vertex_fo
                                     render_vertex_attribute_id attribute, va_list list) {
 	unsigned int offset = 0;
 
-	for (size_t i = 0; i < VERTEXATTRIBUTE_NUMATTRIBUTES; ++i)
-		decl->attribute[i].format = VERTEXFORMAT_UNKNOWN;
+	for (size_t i = 0; i < RENDER_MAX_ATTRIBUTES; ++i)
+		decl->attribute[i].format = VERTEXFORMAT_UNUSED;
 
 	va_list clist;
 	va_copy(clist, list);
 
-	while (format < VERTEXFORMAT_UNKNOWN) {
-		if (attribute < VERTEXATTRIBUTE_NUMATTRIBUTES) {
+	while (format < VERTEXFORMAT_UNUSED) {
+		if (attribute < RENDER_MAX_ATTRIBUTES) {
 			decl->attribute[attribute].format = (uint8_t)format;
 			decl->attribute[attribute].binding = 0;
 			decl->attribute[attribute].offset = (uint16_t)offset;
@@ -211,13 +206,13 @@ render_vertex_decl_initialize_vlist(render_vertex_decl_t* decl, render_vertex_fo
 		}
 
 		format = va_arg(clist, render_vertex_format_t);
-		if (format <= VERTEXFORMAT_UNKNOWN)
+		if (format < VERTEXFORMAT_NUMTYPES)
 			attribute = va_arg(clist, render_vertex_attribute_id);
 	}
 
 	va_end(clist);
 
-	for (size_t i = 0; i < VERTEXATTRIBUTE_NUMATTRIBUTES; ++i)
+	for (size_t i = 0; i < RENDER_MAX_ATTRIBUTES; ++i)
 		decl->attribute[i].stride = (uint16_t)offset;
 }
 

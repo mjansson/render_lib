@@ -26,9 +26,7 @@
 
 //Size expectations for the program compiler and loader
 FOUNDATION_STATIC_ASSERT(sizeof(render_vertex_decl_t) == 128, "invalid vertex decl size");
-FOUNDATION_STATIC_ASSERT(sizeof(render_program_t) == 96 + sizeof(render_vertex_decl_t) +
-                         (sizeof(hash_t) * VERTEXATTRIBUTE_NUMATTRIBUTES),
-                         "invalid program size");
+FOUNDATION_STATIC_ASSERT(sizeof(render_program_t) <= 308, "invalid program size");
 
 render_program_t*
 render_program_allocate(size_t num_parameters) {
@@ -215,8 +213,8 @@ render_program_reload(render_program_t* program, const uuid_t uuid) {
 		       sizeof(render_parameter_t) * tmpprogram->num_parameters);
 		program->num_parameters = tmpprogram->num_parameters;
 
-		memcpy(&program->attributes, &tmpprogram->attributes, sizeof(program->attributes));
-		memcpy(program->attribute_name, tmpprogram->attribute_name, sizeof(program->attribute_name));
+		memcpy(&program->attribute, &tmpprogram->attribute, sizeof(program->attribute));
+		memcpy(&program->attribute_name, &tmpprogram->attribute_name, sizeof(program->attribute_name));
 
 		render_program_deallocate(tmpprogram);
 	}

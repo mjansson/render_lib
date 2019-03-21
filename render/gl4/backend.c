@@ -796,7 +796,7 @@ _rb_gl4_upload_buffer(render_backend_t* backend, render_buffer_t* buffer) {
 
 		render_vertexbuffer_t* vertexbuffer = (render_vertexbuffer_t*)buffer;
 		const render_vertex_decl_t* decl = &vertexbuffer->decl;
-		for (unsigned int attrib = 0; attrib < VERTEXATTRIBUTE_NUMATTRIBUTES; ++attrib) {
+		for (unsigned int attrib = 0; attrib < RENDER_MAX_ATTRIBUTES; ++attrib) {
 			const uint8_t format = decl->attribute[attrib].format;
 			if (format < VERTEXFORMAT_NUMTYPES) {
 				glVertexAttribPointer(attrib, _rb_gl4_vertex_format_size[format],
@@ -948,8 +948,7 @@ _rb_gl4_upload_program(render_backend_t* backend, render_program_t* program) {
 		name_hash = hash(name, (size_t)num_chars);
 		for (size_t iattrib = 0; iattrib < program->num_attributes; ++iattrib) {
 			if (program->attribute_name[iattrib] == name_hash) {
-				render_vertex_attribute_t* attribute = program->attributes.attribute + iattrib;
-				glBindAttribLocation(handle, attribute->binding, name);
+				glBindAttribLocation(handle, program->attribute[iattrib].binding, name);
 				break;
 			}
 		}

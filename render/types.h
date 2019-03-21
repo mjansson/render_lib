@@ -121,7 +121,7 @@ typedef enum render_vertex_format_t {
 	VERTEXFORMAT_INT4,
 
 	VERTEXFORMAT_NUMTYPES,
-	VERTEXFORMAT_UNKNOWN
+	VERTEXFORMAT_UNUSED = 255
 } render_vertex_format_t;
 
 typedef enum render_index_format_t {
@@ -131,25 +131,19 @@ typedef enum render_index_format_t {
 	INDEXFORMAT_NUMTYPES
 } render_index_format_t;
 
+#define RENDER_MAX_ATTRIBUTES 16
+
 typedef enum render_vertex_attribute_id {
 	VERTEXATTRIBUTE_POSITION = 0,
-	VERTEXATTRIBUTE_WEIGHT,
-	VERTEXATTRIBUTE_NORMAL,
-	VERTEXATTRIBUTE_PRIMARYCOLOR,
-	VERTEXATTRIBUTE_SECONDARYCOLOR,
-	VERTEXATTRIBUTE_UNNAMED_05,
-	VERTEXATTRIBUTE_UNNAMED_06,
-	VERTEXATTRIBUTE_INDEX,
-	VERTEXATTRIBUTE_TEXCOORD0,
-	VERTEXATTRIBUTE_TEXCOORD1,
-	VERTEXATTRIBUTE_TEXCOORD2,
-	VERTEXATTRIBUTE_TEXCOORD3,
-	VERTEXATTRIBUTE_TEXCOORD4,
-	VERTEXATTRIBUTE_TEXCOORD5,
-	VERTEXATTRIBUTE_TANGENT,
-	VERTEXATTRIBUTE_BINORMAL,
-
-	VERTEXATTRIBUTE_NUMATTRIBUTES
+	VERTEXATTRIBUTE_WEIGHT = 1,
+	VERTEXATTRIBUTE_NORMAL = 2,
+	VERTEXATTRIBUTE_PRIMARYCOLOR = 3,
+	VERTEXATTRIBUTE_SECONDARYCOLOR = 4,
+	VERTEXATTRIBUTE_INDEX = 7,
+	VERTEXATTRIBUTE_TEXCOORD0 = 8,
+	VERTEXATTRIBUTE_TEXCOORD1 = 9,
+	VERTEXATTRIBUTE_TANGENT = 14,
+	VERTEXATTRIBUTE_BINORMAL = 15
 } render_vertex_attribute_id;
 
 typedef enum render_shader_type_t {
@@ -494,7 +488,7 @@ struct render_vertex_attribute_t {
 
 struct render_vertex_decl_t {
 	//! Attribute definitions
-	render_vertex_attribute_t attribute[VERTEXATTRIBUTE_NUMATTRIBUTES];
+	render_vertex_attribute_t attribute[RENDER_MAX_ATTRIBUTES];
 };
 
 struct render_parameter_t {
@@ -563,19 +557,18 @@ FOUNDATION_ALIGNED_STRUCT(render_shader_t, 8) {
 
 struct render_program_attribute_t {
 	//! Data format of attribute
-	uint8_t  format;
+	uint16_t  format;
 	//! Binding identifier (used by backend)
-	uint8_t  binding;
-	//! Attribute name
-	hash_t name;
+	uint16_t  binding;
 };
 
 FOUNDATION_ALIGNED_STRUCT(render_program_t, 8) {
-	render_backend_t* backend; \
-	RENDER_32BIT_PADDING(backendptr) \
+	render_backend_t* backend;
+	RENDER_32BIT_PADDING(backendptr)
 	render_shader_t* vertexshader;
+	RENDER_32BIT_PADDING_ARR(vshaderptr)
 	render_shader_t* pixelshader;
-	RENDER_32BIT_PADDING_ARR(shaderptr, 2)
+	RENDER_32BIT_PADDING_ARR(pshaderptr)
 	uintptr_t backend_data[4];
 	RENDER_32BIT_PADDING_ARR(data, 4)
 	atomic32_t ref;
@@ -584,7 +577,8 @@ FOUNDATION_ALIGNED_STRUCT(render_program_t, 8) {
 	uint32_t unused;
 	uuid_t uuid;
 	uint32_t num_attributes;
-	render_program_attribute_t attribute[16];
+	render_program_attribute_t attribute[RENDER_MAX_ATTRIBUTES];
+	hash_t attribute_name[RENDER_MAX_ATTRIBUTES];
 	render_parameter_t* parameters;
 	RENDER_32BIT_PADDING_ARR(paramsptr, 4)
 	render_parameter_t inline_parameters[FOUNDATION_FLEXIBLE_ARRAY];
