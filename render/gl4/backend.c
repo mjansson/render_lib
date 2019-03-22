@@ -1248,9 +1248,9 @@ _rb_gl4_viewport(render_backend_gl4_t* backend, render_target_t* target,
 	_rb_gl_check_error("Error setting viewport");
 }
 
-static const GLenum       _rb_gl4_primitive_type[RENDERPRIMITIVE_NUMTYPES] = { GL_TRIANGLES, GL_TRIANGLES, GL_LINES };
-static const unsigned int _rb_gl4_primitive_mult[RENDERPRIMITIVE_NUMTYPES] = { 3, 3, 2 };
-static const unsigned int _rb_gl4_primitive_add[RENDERPRIMITIVE_NUMTYPES]  = { 0, 0, 0 };
+static const GLenum       _rb_gl4_primitive_type[] = { GL_TRIANGLES, GL_LINES };
+static const unsigned int _rb_gl4_primitive_mult[] = { 3, 2 };
+static const unsigned int _rb_gl4_primitive_add[]  = { 0, 0 };
 
 static const GLenum       _rb_gl4_index_format_type[INDEXFORMAT_NUMTYPES] = { GL_UNSIGNED_BYTE, GL_UNSIGNED_SHORT, GL_UNSIGNED_INT };
 

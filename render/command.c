@@ -59,7 +59,7 @@ render_command_render(render_command_t* command, render_primitive_t type, uint16
                       render_program_t* program, render_vertexbuffer_t* vertexbuffer,
                       render_indexbuffer_t* indexbuffer, render_parameterbuffer_t* parameterbuffer,
                       render_statebuffer_t* statebuffer) {
-	command->type                         = RENDERCOMMAND_RENDER_TRIANGLELIST + type;
+	command->type                         = RENDERCOMMAND_RENDER_TRIANGLELIST + (type - 1);
 	command->count                        = num;
 	command->data.render.program          = program;
 	command->data.render.vertexbuffer     = vertexbuffer;

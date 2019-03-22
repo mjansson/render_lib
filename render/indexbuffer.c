@@ -25,6 +25,7 @@ render_indexbuffer_t*
 render_indexbuffer_allocate(render_backend_t* backend, render_usage_t usage, size_t num_indices,
                             size_t buffer_size, render_index_format_t format,
                             const void* data, size_t data_size) {
+	FOUNDATION_ASSERT(format < INDEXFORMAT_NUMTYPES);
 	size_t format_size = format ? (format * 2) : 1;
 
 	render_indexbuffer_t* buffer = memory_allocate(HASH_RENDER, sizeof(render_indexbuffer_t), 0,
