@@ -55,12 +55,12 @@ render_command_viewport(render_command_t* command, unsigned int x, unsigned int 
 }
 
 void
-render_command_render(render_command_t* command, render_primitive_t type, uint16_t num,
+render_command_render(render_command_t* command, render_primitive_t type, size_t num,
                       render_program_t* program, render_vertexbuffer_t* vertexbuffer,
                       render_indexbuffer_t* indexbuffer, render_parameterbuffer_t* parameterbuffer,
                       render_statebuffer_t* statebuffer) {
 	command->type                         = RENDERCOMMAND_RENDER_TRIANGLELIST + (type - 1);
-	command->count                        = num;
+	command->count                        = (unsigned int)num;
 	command->data.render.program          = program;
 	command->data.render.vertexbuffer     = vertexbuffer;
 	command->data.render.indexbuffer      = indexbuffer;

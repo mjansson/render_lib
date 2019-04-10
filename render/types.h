@@ -464,9 +464,9 @@ struct render_command_render_t {
 };
 
 struct render_command_t {
-	unsigned int type: 8;
-	unsigned int reserved: 8;
-	unsigned int count: 16;
+	unsigned int type: 16;
+	unsigned int reserved: 16;
+	unsigned int count;
 
 	union {
 		render_command_clear_t    clear;

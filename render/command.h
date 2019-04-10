@@ -39,7 +39,7 @@ render_command_viewport(render_command_t* command, unsigned int x, unsigned int 
                         unsigned int width, unsigned int height, real min_z, real max_z);
 
 RENDER_API void
-render_command_render(render_command_t* command, render_primitive_t type, uint16_t num,
+render_command_render(render_command_t* command, render_primitive_t type, size_t num,
                       render_program_t* program, render_vertexbuffer_t* vertexbuffer,
                       render_indexbuffer_t* indexbuffer, render_parameterbuffer_t* parameterbuffer,
                       render_statebuffer_t* statebuffer);
