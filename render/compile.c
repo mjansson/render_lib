@@ -11,7 +11,8 @@
  *
  * https://github.com/rampantpixels
  *
- * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
+ * This library is put in the public domain; you can redistribute it and/or modify it without any
+ * restrictions.
  *
  */
 
@@ -43,7 +44,7 @@ resource_source_platform_reduce(resource_change_t* change, resource_change_t* be
 	size_t iplat, psize;
 	FOUNDATION_UNUSED(best);
 	if ((platform == RESOURCE_PLATFORM_ALL) ||
-	        resource_platform_is_equal_or_more_specific(change->platform, platform)) {
+	    resource_platform_is_equal_or_more_specific(change->platform, platform)) {
 		for (iplat = 1, psize = array_size(*subplatforms); iplat != psize; ++iplat) {
 			if ((*subplatforms)[iplat] == change->platform)
 				break;
@@ -61,13 +62,13 @@ resource_source_platform_super(resource_change_t* change, resource_change_t* bes
 	FOUNDATION_UNUSED(best);
 	if (platform == RESOURCE_PLATFORM_ALL) {
 		array_push(*subplatforms, platform);
-		return (void*)((uintptr_t) - 1);
+		return (void*)((uintptr_t)-1);
 	}
 	if (resource_platform_is_equal_or_more_specific(platform, change->platform)) {
 		if (array_size(*subplatforms) == 1) {
 			array_push(*subplatforms, change->platform);
-		}
-		else if (resource_platform_is_equal_or_more_specific(change->platform, (*subplatforms)[1])) {
+		} else if (resource_platform_is_equal_or_more_specific(change->platform,
+		                                                       (*subplatforms)[1])) {
 			(*subplatforms)[1] = change->platform;
 		}
 	}
@@ -80,7 +81,7 @@ render_shader_ref_compile(const uuid_t uuid, uint64_t platform, resource_source_
 	FOUNDATION_UNUSED(type);
 	FOUNDATION_UNUSED(type_length);
 
-	//Defer compilation to target shader and copy successful result
+	// Defer compilation to target shader and copy successful result
 	int result = -1;
 	bool recompile = false;
 	bool recompiled = false;
@@ -94,9 +95,8 @@ render_shader_ref_compile(const uuid_t uuid, uint64_t platform, resource_source_
 	log_debugf(HASH_RENDER, STRING_CONST("Compiling shader ref: %.*s platform 0x%" PRIx64),
 	           STRING_FORMAT(uuidstr), platform);
 	resource_change_t* shaderchange = resource_source_get(source, HASH_SHADER, platform);
-	uuid_t shaderuuid = shaderchange ?
-	                    string_to_uuid(STRING_ARGS(shaderchange->value.value)) :
-	                    uuid_null();
+	uuid_t shaderuuid =
+	    shaderchange ? string_to_uuid(STRING_ARGS(shaderchange->value.value)) : uuid_null();
 	if (uuid_is_null(shaderuuid))
 		return -1;
 	if (resource_compile_need_update(shaderuuid, platform)) {
@@ -116,10 +116,9 @@ retry:
 
 		resource_header_t header = resource_stream_read_header(ressource);
 		if (((header.type != HASH_VERTEXSHADER) && (header.type != HASH_PIXELSHADER)) ||
-		        (header.version != RENDER_SHADER_RESOURCE_VERSION)) {
+		    (header.version != RENDER_SHADER_RESOURCE_VERSION)) {
 			recompile = true;
-		}
-		else {
+		} else {
 			source_size -= stream_tell(ressource);
 
 			header.source_hash = source_hash;
@@ -146,13 +145,11 @@ retry:
 			if (stream_read(ressource, buffer, source_size) == source_size) {
 				if (stream_write(restarget, buffer, source_size) == source_size)
 					result = 0;
-			}
-			else {
+			} else {
 				recompile = true;
 			}
 			memory_deallocate(buffer);
-		}
-		else {
+		} else {
 			recompile = true;
 		}
 		stream_deallocate(restarget);
@@ -186,16 +183,14 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 	resource_type_hash = hash(type, type_length);
 
 	if ((resource_type_hash != HASH_VERTEXSHADER) && (resource_type_hash != HASH_PIXELSHADER) &&
-	        (resource_type_hash != HASH_SHADER))
+	    (resource_type_hash != HASH_SHADER))
 		return -1;
 
 	if (resource_type_hash == HASH_SHADER)
 		return render_shader_ref_compile(uuid, platform, source, source_hash, type, type_length);
 
-	error_context_declare_local(
-	    char uuidbuf[40];
-	    const string_t uuidstr = string_from_uuid(uuidbuf, sizeof(uuidbuf), uuid);
-	);
+	error_context_declare_local(char uuidbuf[40]; const string_t uuidstr = string_from_uuid(
+	                                                  uuidbuf, sizeof(uuidbuf), uuid););
 	error_context_push(STRING_CONST("compiling shader"), STRING_ARGS(uuidstr));
 
 	array_push(subplatforms, platform);
@@ -205,8 +200,8 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 	resource_source_map_reduce(source, map, &subplatforms, resource_source_platform_reduce);
 	resource_source_map_clear(map);
 	if (array_size(subplatforms) == 1) {
-		//The requested platform had no values, find most specialized platform
-		//which is a super of the requested platform
+		// The requested platform had no values, find most specialized platform
+		// which is a super of the requested platform
 		resource_source_map_all(source, map, false);
 		resource_source_map_reduce(source, map, &subplatforms, resource_source_platform_super);
 		resource_source_map_clear(map);
@@ -222,7 +217,7 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 		stream_t* stream;
 		uint64_t subplatform = subplatforms[iplat];
 		if (subplatform == 0)
-			continue; //Shaders are always platform specific
+			continue;  // Shaders are always platform specific
 
 		platform_decl = resource_platform_decompose(subplatform);
 		if (platform_decl.render_api <= RENDERAPI_DEFAULT) {
@@ -233,7 +228,7 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 			else if (platform_decl.render_api_group == RENDERAPIGROUP_GLES)
 				platform_decl.render_api = RENDERAPI_GLES;
 			else
-				continue; //Nonspecific render api
+				continue;  // Nonspecific render api
 		}
 
 		valid_platform = true;
@@ -246,7 +241,8 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 		}
 
 #if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_LINUX
-		window_create(&window, WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render compile"), 100, 100, false);
+		window_create(&window, WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render compile"), 100, 100,
+		              false);
 #else
 		window_initialize(&window, nullptr);
 #endif
@@ -254,17 +250,19 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 		render_drawable_t drawable;
 		render_drawable_initialize_window(&drawable, &window, 0);
 
-		render_backend_set_format(backend, PIXELFORMAT_R8G8B8X8, COLORSPACE_LINEAR);
+		render_backend_set_format(backend, PIXELFORMAT_R8G8B8, COLORSPACE_LINEAR);
 		render_backend_set_drawable(backend, &drawable);
 
 		if ((platform_decl.render_api >= RENDERAPI_OPENGL) &&
-		        (platform_decl.render_api <= RENDERAPI_OPENGL4)) {
+		    (platform_decl.render_api <= RENDERAPI_OPENGL4)) {
 			char* sourcebuffer = 0;
 			resource_change_t* sourcechange = resource_source_get(source, HASH_SOURCE, subplatform);
 			if (sourcechange && (sourcechange->flags & RESOURCE_SOURCEFLAG_BLOB)) {
-				sourcebuffer = memory_allocate(HASH_RESOURCE, sourcechange->value.blob.size, 0, MEMORY_PERSISTENT);
-				if (!resource_source_read_blob(uuid, HASH_SOURCE, subplatform, sourcechange->value.blob.checksum,
-				                               sourcebuffer, sourcechange->value.blob.size)) {
+				sourcebuffer = memory_allocate(HASH_RESOURCE, sourcechange->value.blob.size, 0,
+				                               MEMORY_PERSISTENT);
+				if (!resource_source_read_blob(uuid, HASH_SOURCE, subplatform,
+				                               sourcechange->value.blob.checksum, sourcebuffer,
+				                               sourcechange->value.blob.size)) {
 					log_error(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL,
 					          STRING_CONST("Failed to read full source blob"));
 					memory_deallocate(sourcebuffer);
@@ -272,34 +270,39 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 				}
 			}
 			if (sourcebuffer) {
-				GLuint handle = glCreateShader(string_equal(type, type_length, STRING_CONST("vertexshader"))
-				                               ? GL_VERTEX_SHADER_ARB : GL_FRAGMENT_SHADER_ARB);
+				GLuint handle =
+				    glCreateShader(string_equal(type, type_length, STRING_CONST("vertexshader")) ?
+				                       GL_VERTEX_SHADER_ARB :
+				                       GL_FRAGMENT_SHADER_ARB);
 				const GLchar* glsource = (GLchar*)sourcebuffer;
 				GLint source_size = (GLint)sourcechange->value.blob.size;
 				glShaderSource(handle, 1, &glsource, &source_size);
 				glCompileShader(handle);
 
 				GLsizei log_capacity = 2048;
-				GLchar* log_buffer = memory_allocate(HASH_RESOURCE, (size_t)log_capacity, 0, MEMORY_TEMPORARY);
+				GLchar* log_buffer =
+				    memory_allocate(HASH_RESOURCE, (size_t)log_capacity, 0, MEMORY_TEMPORARY);
 				GLint log_length = 0;
 				GLint compiled = 0;
 				glGetShaderiv(handle, GL_COMPILE_STATUS, &compiled);
 				glGetShaderInfoLog(handle, log_capacity, &log_length, log_buffer);
 				if (!compiled) {
-					log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("GLSL compiler failed: %.*s"),
-					           (int)log_length, log_buffer);
+					log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL,
+					           STRING_CONST("GLSL compiler failed: %.*s"), (int)log_length,
+					           log_buffer);
 					result = -1;
-				}
-				else {
+				} else {
 					if (log_length < 2) {
-						string_t nomsg = string_copy(log_buffer, (size_t)log_capacity, STRING_CONST("<no message>"));
+						string_t nomsg = string_copy(log_buffer, (size_t)log_capacity,
+						                             STRING_CONST("<no message>"));
 						log_length = (GLint)nomsg.length;
 					}
 					log_debugf(HASH_RESOURCE, STRING_CONST("Successfully compiled shader: %.*s"),
 					           (int)log_length, log_buffer);
 
 					compiled_size = sourcechange->value.blob.size;
-					compiled_blob = memory_allocate(HASH_RESOURCE, compiled_size, 0, MEMORY_PERSISTENT);
+					compiled_blob =
+					    memory_allocate(HASH_RESOURCE, compiled_size, 0, MEMORY_PERSISTENT);
 					memcpy(compiled_blob, sourcebuffer, compiled_size);
 				}
 				memory_deallocate(log_buffer);
@@ -321,10 +324,7 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 		if (stream) {
 			uint32_t version = RENDER_SHADER_RESOURCE_VERSION;
 			resource_header_t header = {
-				.type = resource_type_hash,
-				.version = version,
-				.source_hash = source_hash
-			};
+			    .type = resource_type_hash, .version = version, .source_hash = source_hash};
 			render_shader_t shader;
 			resource_stream_write_header(stream, header);
 			if (resource_type_hash == HASH_VERTEXSHADER)
@@ -343,15 +343,13 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 					stream_deallocate(stream);
 
 					result = 0;
-				}
-				else {
+				} else {
 					log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL,
 					           STRING_CONST("Unable to create dynamic resource stream"));
 					result = -1;
 				}
 			}
-		}
-		else {
+		} else {
 			log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL,
 			           STRING_CONST("Unable to create static resource stream"));
 			result = -1;
@@ -368,7 +366,7 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 	if (!valid_platform) {
 		result = -1;
 		log_error(HASH_RESOURCE, ERROR_INVALID_VALUE,
-		        STRING_CONST("Shader has no valid platforms set"));
+		          STRING_CONST("Shader has no valid platforms set"));
 	}
 
 	error_context_pop();
@@ -391,7 +389,8 @@ render_program_compile_opengl(render_backend_t* backend, uuid_t vertexshader, uu
 	vshader = render_shader_load(backend, vertexshader);
 	pshader = render_shader_load(backend, pixelshader);
 	if (!vshader || !(vshader->shadertype & SHADER_VERTEX)) {
-		log_errorf(HASH_RESOURCE, ERROR_INVALID_VALUE, STRING_CONST("Unable to load vertex shader"));
+		log_errorf(HASH_RESOURCE, ERROR_INVALID_VALUE,
+		           STRING_CONST("Unable to load vertex shader"));
 		goto exit;
 	}
 	if (!pshader || !(pshader->shadertype & SHADER_PIXEL)) {
@@ -406,7 +405,8 @@ render_program_compile_opengl(render_backend_t* backend, uuid_t vertexshader, uu
 
 	handle = glCreateProgram();
 	if (!handle) {
-		log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Unable to create program object"));
+		log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL,
+		           STRING_CONST("Unable to create program object"));
 		goto exit;
 	}
 
@@ -417,17 +417,17 @@ render_program_compile_opengl(render_backend_t* backend, uuid_t vertexshader, uu
 	glGetProgramInfoLog(handle, log_capacity, &log_length, log_buffer);
 
 	if (!compiled) {
-		log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Unable to link program: %.*s"),
-		           (int)log_length, log_buffer);
+		log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL,
+		           STRING_CONST("Unable to link program: %.*s"), (int)log_length, log_buffer);
 		goto exit;
-	}
-	else {
+	} else {
 		if (log_length < 2) {
-			string_t nomsg = string_copy(log_buffer, (size_t)log_capacity, STRING_CONST("<no message>"));
+			string_t nomsg =
+			    string_copy(log_buffer, (size_t)log_capacity, STRING_CONST("<no message>"));
 			log_length = (GLint)nomsg.length;
 		}
-		log_debugf(HASH_RESOURCE, STRING_CONST("Successfully linked program: %.*s"), (int)log_length,
-		           log_buffer);
+		log_debugf(HASH_RESOURCE, STRING_CONST("Successfully linked program: %.*s"),
+		           (int)log_length, log_buffer);
 	}
 
 	glGetProgramiv(handle, GL_ACTIVE_ATTRIBUTES, &attributes);
@@ -439,7 +439,7 @@ render_program_compile_opengl(render_backend_t* backend, uuid_t vertexshader, uu
 
 		if (num_chars) {
 			GLuint binding = 0;
-			//TODO: Implement something proper, and generalized, together with dx10 input layout
+			// TODO: Implement something proper, and generalized, together with dx10 input layout
 			if (string_equal(name, (size_t)num_chars, STRING_CONST("position")))
 				binding = VERTEXATTRIBUTE_POSITION;
 			else if (string_equal(name, (size_t)num_chars, STRING_CONST("color")))
@@ -455,17 +455,17 @@ render_program_compile_opengl(render_backend_t* backend, uuid_t vertexshader, uu
 	glGetProgramInfoLog(handle, log_length, &log_length, log_buffer);
 
 	if (!compiled) {
-		log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Unable to relink program: %.*s"),
-		           (int)log_length, log_buffer);
+		log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL,
+		           STRING_CONST("Unable to relink program: %.*s"), (int)log_length, log_buffer);
 		goto exit;
-	}
-	else {
+	} else {
 		if (log_length < 2) {
-			string_t nomsg = string_copy(log_buffer, (size_t)log_capacity, STRING_CONST("<no message>"));
+			string_t nomsg =
+			    string_copy(log_buffer, (size_t)log_capacity, STRING_CONST("<no message>"));
 			log_length = (GLint)nomsg.length;
 		}
-		log_debugf(HASH_RESOURCE, STRING_CONST("Successfully relinked program: %.*s"), (int)log_length,
-		           log_buffer);
+		log_debugf(HASH_RESOURCE, STRING_CONST("Successfully relinked program: %.*s"),
+		           (int)log_length, log_buffer);
 	}
 
 	glGetProgramiv(handle, GL_ACTIVE_UNIFORMS, &uniforms);
@@ -482,7 +482,7 @@ render_program_compile_opengl(render_backend_t* backend, uuid_t vertexshader, uu
 
 		glGetActiveAttrib(handle, (GLuint)ia, sizeof(name), &num_chars, &size, &gltype, name);
 
-		//TODO: Implement something proper, and generalized, together with dx10 input layout
+		// TODO: Implement something proper, and generalized, together with dx10 input layout
 		unsigned int attrib = 0;
 		if (string_equal(name, (size_t)num_chars, STRING_CONST("position")))
 			attrib = VERTEXATTRIBUTE_POSITION;
@@ -492,46 +492,46 @@ render_program_compile_opengl(render_backend_t* backend, uuid_t vertexshader, uu
 			attrib = VERTEXATTRIBUTE_TEXCOORD0;
 		else {
 			log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL,
-			           STRING_CONST("Invalid/unknown attribute name: %.*s"),
-			           (int)num_chars, name);
+			           STRING_CONST("Invalid/unknown attribute name: %.*s"), (int)num_chars, name);
 			compiled = false;
 			break;
 		}
 
-		render_program_attribute_t* program_attribute = program->attribute + program->num_attributes;
+		render_program_attribute_t* program_attribute =
+		    program->attribute + program->num_attributes;
 		program_attribute->binding = (uint16_t)attrib;
 
 		switch (gltype) {
-		case GL_FLOAT:
-			program_attribute->format = VERTEXFORMAT_FLOAT;
-			break;
-		case GL_FLOAT_VEC2:
-			program_attribute->format = VERTEXFORMAT_FLOAT2;
-			break;
-		case GL_FLOAT_VEC3:
-			program_attribute->format = VERTEXFORMAT_FLOAT3;
-			break;
-		case GL_FLOAT_VEC4:
-			program_attribute->format = VERTEXFORMAT_FLOAT4;
-			break;
-		case GL_INT:
-		case GL_UNSIGNED_INT:
-			program_attribute->format = VERTEXFORMAT_INT;
-			break;
-		case GL_INT_VEC2:
-		case 0x8DC6: //GL_UNSIGNED_INT_VEC2:
-			program_attribute->format = VERTEXFORMAT_INT2;
-			break;
-		case GL_INT_VEC4:
-		case 0x8DC8: //GL_UNSIGNED_INT_VEC4:
-			program_attribute->format = VERTEXFORMAT_INT4;
-			break;
-		default:
-			log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL,
-			           STRING_CONST("Invalid/unknown attribute type: %u"),
-			           (unsigned int)gltype);
-			compiled = false;
-			break;
+			case GL_FLOAT:
+				program_attribute->format = VERTEXFORMAT_FLOAT;
+				break;
+			case GL_FLOAT_VEC2:
+				program_attribute->format = VERTEXFORMAT_FLOAT2;
+				break;
+			case GL_FLOAT_VEC3:
+				program_attribute->format = VERTEXFORMAT_FLOAT3;
+				break;
+			case GL_FLOAT_VEC4:
+				program_attribute->format = VERTEXFORMAT_FLOAT4;
+				break;
+			case GL_INT:
+			case GL_UNSIGNED_INT:
+				program_attribute->format = VERTEXFORMAT_INT;
+				break;
+			case GL_INT_VEC2:
+			case 0x8DC6:  // GL_UNSIGNED_INT_VEC2:
+				program_attribute->format = VERTEXFORMAT_INT2;
+				break;
+			case GL_INT_VEC4:
+			case 0x8DC8:  // GL_UNSIGNED_INT_VEC4:
+				program_attribute->format = VERTEXFORMAT_INT4;
+				break;
+			default:
+				log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL,
+				           STRING_CONST("Invalid/unknown attribute type: %u"),
+				           (unsigned int)gltype);
+				compiled = false;
+				break;
 		}
 		program->attribute_name[program->num_attributes] = hash(name, (size_t)num_chars);
 
@@ -556,29 +556,28 @@ render_program_compile_opengl(render_backend_t* backend, uuid_t vertexshader, uu
 		parameter->stages = SHADER_VERTEX | SHADER_PIXEL;
 
 		switch (gltype) {
-		case GL_FLOAT_VEC4:
-			parameter->type = RENDERPARAMETER_FLOAT4;
-			offset += 16;
-			break;
-		case GL_INT_VEC4:
-		case 0x8DC8: //GL_UNSIGNED_INT_VEC4:
-			parameter->type = RENDERPARAMETER_INT4;
-			offset += 16;
-			break;
-		case GL_FLOAT_MAT4:
-			parameter->type = RENDERPARAMETER_MATRIX;
-			offset += 16 * 4;
-			break;
-		case GL_SAMPLER_2D:
-			parameter->type = RENDERPARAMETER_TEXTURE;
-			offset += sizeof(GLuint);
-			break;
-		default:
-			log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL,
-			           STRING_CONST("Invalid/unknown uniform type: %u"),
-			           (unsigned int)gltype);
-			compiled = false;
-			break;
+			case GL_FLOAT_VEC4:
+				parameter->type = RENDERPARAMETER_FLOAT4;
+				offset += 16;
+				break;
+			case GL_INT_VEC4:
+			case 0x8DC8:  // GL_UNSIGNED_INT_VEC4:
+				parameter->type = RENDERPARAMETER_INT4;
+				offset += 16;
+				break;
+			case GL_FLOAT_MAT4:
+				parameter->type = RENDERPARAMETER_MATRIX;
+				offset += 16 * 4;
+				break;
+			case GL_SAMPLER_2D:
+				parameter->type = RENDERPARAMETER_TEXTURE;
+				offset += sizeof(GLuint);
+				break;
+			default:
+				log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL,
+				           STRING_CONST("Invalid/unknown uniform type: %u"), (unsigned int)gltype);
+				compiled = false;
+				break;
 		}
 	}
 
@@ -589,8 +588,7 @@ exit:
 		if (program) {
 			render_program_deallocate(program);
 			program = 0;
-		}
-		else {
+		} else {
 			if (vshader)
 				render_shader_unload(vshader);
 			if (pshader)
@@ -627,10 +625,8 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 	if (resource_type_hash != HASH_PROGRAM)
 		return result;
 
-	error_context_declare_local(
-	    char uuidbuf[40];
-	    const string_t uuidstr = string_from_uuid(uuidbuf, sizeof(uuidbuf), uuid);
-	);
+	error_context_declare_local(char uuidbuf[40]; const string_t uuidstr = string_from_uuid(
+	                                                  uuidbuf, sizeof(uuidbuf), uuid););
 	error_context_push(STRING_CONST("compiling program"), STRING_ARGS(uuidstr));
 
 	array_push(subplatforms, platform);
@@ -640,16 +636,16 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 	resource_source_map_reduce(source, map, &subplatforms, resource_source_platform_reduce);
 	resource_source_map_clear(map);
 	if (array_size(subplatforms) == 1) {
-		//The requested platform had no values, find most specialized platform
-		//which is a super of the requested platform
+		// The requested platform had no values, find most specialized platform
+		// which is a super of the requested platform
 		superplatform = true;
 		resource_source_map_all(source, map, false);
 		resource_source_map_reduce(source, map, &subplatforms, resource_source_platform_super);
 		resource_source_map_clear(map);
 	}
 
-	//First make sure we catch specialized platforms from shaders since
-	//programs are the sum of the shaders
+	// First make sure we catch specialized platforms from shaders since
+	// programs are the sum of the shaders
 	for (iplat = 1, psize = array_size(subplatforms); iplat != psize; ++iplat) {
 		uuid_t vertexshader = uuid_null();
 		uuid_t pixelshader = uuid_null();
@@ -659,7 +655,8 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 		uint64_t* shaderplatforms = 0;
 		size_t ishaderplat, pshadersize;
 
-		resource_change_t* shaderchange = resource_source_get(source, HASH_VERTEXSHADER, subplatform);
+		resource_change_t* shaderchange =
+		    resource_source_get(source, HASH_VERTEXSHADER, subplatform);
 		if (shaderchange && (shaderchange->flags & RESOURCE_SOURCEFLAG_VALUE))
 			vertexshader = string_to_uuid(STRING_ARGS(shaderchange->value.value));
 		if (uuid_is_null(vertexshader)) {
@@ -679,11 +676,11 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 			continue;
 		}
 
-		//Get additional more specialized platform targets from shaders
+		// Get additional more specialized platform targets from shaders
 		array_push(shaderplatforms, subplatform);
 
 		if (resource_autoimport_need_update(vertexshader, subplatform) ||
-		        resource_autoimport_need_update(vertexshader, platform)) {
+		    resource_autoimport_need_update(vertexshader, platform)) {
 			string_const_t vsuuidstr = string_from_uuid_static(vertexshader);
 			log_debugf(HASH_RESOURCE, STRING_CONST("Reimporting vertex shader resource %.*s"),
 			           STRING_FORMAT(vsuuidstr));
@@ -691,7 +688,7 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 		}
 
 		if (resource_autoimport_need_update(pixelshader, subplatform) ||
-		        resource_autoimport_need_update(pixelshader, platform)) {
+		    resource_autoimport_need_update(pixelshader, platform)) {
 			string_const_t psuuidstr = string_from_uuid_static(pixelshader);
 			log_debugf(HASH_RESOURCE, STRING_CONST("Reimporting pixel shader resource %.*s"),
 			           STRING_FORMAT(psuuidstr));
@@ -701,7 +698,8 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 		resource_source_initialize(&shadersource);
 		if (resource_source_read(&shadersource, vertexshader)) {
 			resource_source_map_all(&shadersource, map, false);
-			resource_source_map_reduce(&shadersource, map, &shaderplatforms, resource_source_platform_reduce);
+			resource_source_map_reduce(&shadersource, map, &shaderplatforms,
+			                           resource_source_platform_reduce);
 			resource_source_map_clear(map);
 		}
 		resource_source_finalize(&shadersource);
@@ -709,20 +707,22 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 		resource_source_initialize(&shadersource);
 		if (resource_source_read(&shadersource, pixelshader)) {
 			resource_source_map_all(&shadersource, map, false);
-			resource_source_map_reduce(&shadersource, map, &shaderplatforms, resource_source_platform_reduce);
+			resource_source_map_reduce(&shadersource, map, &shaderplatforms,
+			                           resource_source_platform_reduce);
 			resource_source_map_clear(map);
 		}
 		resource_source_finalize(&shadersource);
 
 		for (ishaderplat = 1, pshadersize = array_size(shaderplatforms); ishaderplat != pshadersize;
-		        ++ishaderplat) {
+		     ++ishaderplat) {
 			uint64_t moreplatform = shaderplatforms[ishaderplat];
 			if ((moreplatform != subplatform) &&
-			        resource_platform_is_equal_or_more_specific(moreplatform, subplatform)) {
-				//If we're looking at a super platform of requested platform, make sure shader platform
-				//is also a super (not a different branch from the subplatform we're iterating)
+			    resource_platform_is_equal_or_more_specific(moreplatform, subplatform)) {
+				// If we're looking at a super platform of requested platform, make sure shader
+				// platform is also a super (not a different branch from the subplatform we're
+				// iterating)
 				if (superplatform &&
-				        !resource_platform_is_equal_or_more_specific(platform, moreplatform))
+				    !resource_platform_is_equal_or_more_specific(platform, moreplatform))
 					continue;
 				for (imore = 0, moresize = array_size(moreplatforms); imore != moresize; ++imore) {
 					if (moreplatforms[imore] == moreplatform)
@@ -736,10 +736,11 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 	}
 
 	if (superplatform)
-		array_resize(subplatforms, 1); //Clear out superplatforms
+		array_resize(subplatforms, 1);  // Clear out superplatforms
 
 	for (imore = 0, moresize = array_size(moreplatforms); imore != moresize; ++imore) {
-		for (iplat = 1, psize = array_size(subplatforms); (iplat != psize) && (result == 0); ++iplat) {
+		for (iplat = 1, psize = array_size(subplatforms); (iplat != psize) && (result == 0);
+		     ++iplat) {
 			if (moreplatforms[imore] == subplatforms[iplat])
 				break;
 		}
@@ -755,7 +756,7 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 		render_program_t* program = 0;
 		uint64_t subplatform = subplatforms[iplat];
 		if (subplatform == 0)
-			continue; //Programs are always platform specific
+			continue;  // Programs are always platform specific
 
 		platform_decl = resource_platform_decompose(subplatform);
 		if (platform_decl.render_api <= RENDERAPI_DEFAULT) {
@@ -766,7 +767,7 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 			else if (platform_decl.render_api_group == RENDERAPIGROUP_GLES)
 				platform_decl.render_api = RENDERAPI_GLES;
 			else
-				continue; //Nonspecific render api
+				continue;  // Nonspecific render api
 		}
 
 		backend = render_backend_allocate((render_api_t)platform_decl.render_api, true);
@@ -777,7 +778,8 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 		}
 
 #if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_LINUX
-		window_create(&window, WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render compile"), 100, 100, false);
+		window_create(&window, WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render compile"), 100, 100,
+		              false);
 #else
 		window_initialize(&window, nullptr);
 #endif
@@ -785,17 +787,18 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 		render_drawable_t drawable;
 		render_drawable_initialize_window(&drawable, &window, 0);
 
-		render_backend_set_format(backend, PIXELFORMAT_R8G8B8X8, COLORSPACE_LINEAR);
+		render_backend_set_format(backend, PIXELFORMAT_R8G8B8, COLORSPACE_LINEAR);
 		render_backend_set_drawable(backend, &drawable);
 
-		resource_change_t* shaderchange = resource_source_get(source, HASH_VERTEXSHADER, subplatform);
+		resource_change_t* shaderchange =
+		    resource_source_get(source, HASH_VERTEXSHADER, subplatform);
 		vertexshader = string_to_uuid(STRING_ARGS(shaderchange->value.value));
 
 		shaderchange = resource_source_get(source, HASH_PIXELSHADER, subplatform);
 		pixelshader = string_to_uuid(STRING_ARGS(shaderchange->value.value));
 
 		if ((platform_decl.render_api >= RENDERAPI_OPENGL) &&
-		        (platform_decl.render_api <= RENDERAPI_OPENGL4))
+		    (platform_decl.render_api <= RENDERAPI_OPENGL4))
 			program = render_program_compile_opengl(backend, vertexshader, pixelshader);
 
 		if (program) {
@@ -803,13 +806,10 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 			if (stream) {
 				uint32_t version = RENDER_PROGRAM_RESOURCE_VERSION;
 				resource_header_t header = {
-					.type = resource_type_hash,
-					.version = version,
-					.source_hash = source_hash
-				};
+				    .type = resource_type_hash, .version = version, .source_hash = source_hash};
 				size_t uuid_size = sizeof(uuid_t) * 2;
-				size_t program_size = sizeof(render_program_t) +
-				                      sizeof(render_parameter_t) * program->num_parameters;
+				size_t program_size =
+				    sizeof(render_program_t) + sizeof(render_parameter_t) * program->num_parameters;
 				resource_stream_write_header(stream, header);
 				stream_write_uint128(stream, vertexshader);
 				stream_write_uint128(stream, pixelshader);
@@ -820,8 +820,7 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 				stream_deallocate(stream);
 
 				result = 0;
-			}
-			else {
+			} else {
 				log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL,
 				           STRING_CONST("Unable to create static resource stream"));
 			}

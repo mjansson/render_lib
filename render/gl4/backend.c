@@ -35,7 +35,8 @@
 static void
 nvoglexpert_callback(unsigned int category, unsigned int id, unsigned int detail, int object,
                      const char* msg) {
-	log_warnf(HASH_RENDER, STRING_CONST("nVidia OpenGL Expert error: Category 0x%08x, Message 0x%08x : %s"),
+	log_warnf(HASH_RENDER,
+	          STRING_CONST("nVidia OpenGL Expert error: Category 0x%08x, Message 0x%08x : %s"),
 	          category, id, msg);
 }
 
@@ -138,7 +139,8 @@ _rb_gl_destroy_context(const render_drawable_t* drawable, void* context) {
 
 void*
 _rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, unsigned int minor,
-                      void* share_context, const pixelformat_t pixelformat, const colorspace_t colorspace) {
+                      void* share_context, const pixelformat_t pixelformat,
+                      const colorspace_t colorspace) {
 	FOUNDATION_UNUSED(pixelformat);
 #if FOUNDATION_PLATFORM_WINDOWS
 
@@ -210,8 +212,8 @@ _rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, uns
 			const char* version = (const char*)glGetString(GL_VERSION);
 			unsigned int have_major = 0, have_minor = 0, have_revision = 0;
 			string_const_t version_arr[3];
-			size_t arrsize =
-			    string_explode(version, string_length(version), STRING_CONST("."), version_arr, 3, false);
+			size_t arrsize = string_explode(version, string_length(version), STRING_CONST("."),
+			                                version_arr, 3, false);
 
 			have_major = (arrsize > 0) ? string_to_uint(STRING_ARGS(version_arr[0]), false) : 0;
 			have_minor = (arrsize > 1) ? string_to_uint(STRING_ARGS(version_arr[1]), false) : 0;
@@ -223,8 +225,8 @@ _rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, uns
 
 			if (!supported) {
 				log_warnf(HASH_RENDER, WARNING_UNSUPPORTED,
-				          STRING_CONST("GL version %d.%d not supported, got %d.%d (%s)"), major, minor,
-				          have_major, have_minor, version);
+				          STRING_CONST("GL version %d.%d not supported, got %d.%d (%s)"), major,
+				          minor, have_major, have_minor, version);
 				wglMakeCurrent(0, 0);
 				wglDeleteContext(hglrc);
 				hglrc = 0;
@@ -238,9 +240,10 @@ _rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, uns
 		if (major == 2) {
 			// We require GL_ARB_framebuffer_object extension
 			if (!_rb_gl_check_extension(STRING_CONST("GL_ARB_framebuffer_object"))) {
-				log_infof(HASH_RENDER,
-				          STRING_CONST("GL version %d.%d not supported, missing framebuffer extension"),
-				          major, minor);
+				log_infof(
+				    HASH_RENDER,
+				    STRING_CONST("GL version %d.%d not supported, missing framebuffer extension"),
+				    major, minor);
 				wglMakeCurrent(0, 0);
 				wglDeleteContext(hglrc);
 				hglrc = 0;
@@ -256,7 +259,8 @@ _rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, uns
 		if (major >= 3) {
 			int err = GetLastError();
 			string_const_t errmsg = system_error_message(err);
-			log_infof(HASH_RENDER, STRING_CONST("Unable to create GL context for version %d.%d: %.*s (%08x)"),
+			log_infof(HASH_RENDER,
+			          STRING_CONST("Unable to create GL context for version %d.%d: %.*s (%08x)"),
 			          major, minor, STRING_FORMAT(errmsg), err);
 		}
 		wglMakeCurrent(0, 0);
@@ -304,7 +308,8 @@ _rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, uns
 		log_debugf(HASH_RENDER, STRING_CONST("Got %d configs"), numconfig);
 	if (fbconfig && (numconfig > 0)) {
 		PFNGLXCREATECONTEXTATTRIBSARBPROC glXCreateContextAttribs =
-		    (PFNGLXCREATECONTEXTATTRIBSARBPROC)_rb_gl_get_proc_address("glXCreateContextAttribsARB");
+		    (PFNGLXCREATECONTEXTATTRIBSARBPROC)_rb_gl_get_proc_address(
+		        "glXCreateContextAttribsARB");
 		if (glXCreateContextAttribs) {
 			int* attributes = 0;
 			array_push(attributes, GLX_CONTEXT_MAJOR_VERSION_ARB);
@@ -320,7 +325,8 @@ _rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, uns
 			array_push(attributes, 0);
 
 			for (int ic = 0; ic < numconfig; ++ic) {
-				context = glXCreateContextAttribs(display, fbconfig[ic], share_context, 1, attributes);
+				context =
+				    glXCreateContextAttribs(display, fbconfig[ic], share_context, 1, attributes);
 				if (context) {
 					if (colorspace == COLORSPACE_sRGB) {
 						glEnable(GL_FRAMEBUFFER_SRGB);
@@ -341,8 +347,8 @@ _rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, uns
 		// We require GL_ARB_framebuffer_object extension
 		if (!_rb_gl_check_extension(STRING_CONST("GL_ARB_framebuffer_object"))) {
 			log_infof(HASH_RENDER,
-			          STRING_CONST("GL version %d.%d not supported, missing framebuffer extension"), major,
-			          minor);
+			          STRING_CONST("GL version %d.%d not supported, missing framebuffer extension"),
+			          major, minor);
 			glXDestroyContext(display, context);
 			context = nullptr;
 		}
@@ -369,23 +375,25 @@ failed:
 		// display = CGOpenGLDisplayMaskToDisplayID( _adapter._id );
 	}
 	unsigned int displaymask = CGDisplayIDToOpenGLDisplayMask(display);
-	void* context = _rb_gl_create_agl_context(view, displaymask, 32 /*color_depth*/, 24 /*_res._depth*/,
-	                                          8 /*_res._stencil*/, nullptr);
+	void* context = _rb_gl_create_agl_context(view, displaymask, 32 /*color_depth*/,
+	                                          24 /*_res._depth*/, 8 /*_res._stencil*/, nullptr);
 	if (!context) {
 		log_warn(HASH_RENDER, WARNING_UNSUPPORTED, STRING_CONST("Unable to create OpenGL context"));
 		goto failed;
 	}
 
 	if (share_context) {
-		log_error(HASH_RENDER, ERROR_NOT_IMPLEMENTED, STRING_CONST("Context sharing not implemented"));
+		log_error(HASH_RENDER, ERROR_NOT_IMPLEMENTED,
+		          STRING_CONST("Context sharing not implemented"));
 		goto failed;
 	}
 
 	const char* version = (const char*)glGetString(GL_VERSION);
 	unsigned int have_major = 0, have_minor = 0, have_revision = 0;
 	string_const_t version_arr[4];
-	size_t num_tokens = string_explode(version, string_length(version), STRING_CONST("."), version_arr,
-	                                   sizeof(version_arr) / sizeof(version_arr[0]), false);
+	size_t num_tokens =
+	    string_explode(version, string_length(version), STRING_CONST("."), version_arr,
+	                   sizeof(version_arr) / sizeof(version_arr[0]), false);
 
 	have_major = (num_tokens > 0) ? string_to_uint(STRING_ARGS(version_arr[0]), false) : 0;
 	have_minor = (num_tokens > 1) ? string_to_uint(STRING_ARGS(version_arr[1]), false) : 0;
@@ -396,15 +404,15 @@ failed:
 		supported = true;
 
 	if (!supported) {
-		log_infof(HASH_RENDER, STRING_CONST("GL version %d.%d not supported, got %d.%d (%s)"), major, minor,
-		          have_major, have_minor, version);
+		log_infof(HASH_RENDER, STRING_CONST("GL version %d.%d not supported, got %d.%d (%s)"),
+		          major, minor, have_major, have_minor, version);
 		goto failed;
 	} else if (major == 2) {
 		// We require GL_ARB_framebuffer_object extension
 		if (!_rb_gl_check_extension(STRING_CONST("GL_ARB_framebuffer_object"))) {
 			log_infof(HASH_RENDER,
-			          STRING_CONST("GL version %d.%d not supported, missing framebuffer extension"), major,
-			          minor);
+			          STRING_CONST("GL version %d.%d not supported, missing framebuffer extension"),
+			          major, minor);
 			supported = false;
 		}
 	}
@@ -428,10 +436,12 @@ _rb_gl_check_context(unsigned int major, unsigned int minor) {
 #if FOUNDATION_PLATFORM_WINDOWS
 
 	window_t window_check;
-	window_create(&window_check, WINDOW_ADAPTER_DEFAULT, STRING_CONST("__render_gl_check"), 10, 10, false);
+	window_create(&window_check, WINDOW_ADAPTER_DEFAULT, STRING_CONST("__render_gl_check"), 10, 10,
+	              false);
 	render_drawable_t drawable;
 	render_drawable_initialize_window(&drawable, &window_check, 0);
-	context = _rb_gl_create_context(&drawable, major, minor, 0, PIXELFORMAT_R8G8B8, COLORSPACE_LINEAR);
+	context =
+	    _rb_gl_create_context(&drawable, major, minor, 0, PIXELFORMAT_R8G8B8, COLORSPACE_LINEAR);
 	wglMakeCurrent(0, 0);
 	if (context)
 		wglDeleteContext((HGLRC)context);
@@ -479,7 +489,8 @@ _rb_gl4_enable_thread(render_backend_t* backend) {
 	if (!thread_context) {
 		if (!backend_gl4->context)
 			return;
-		if (atomic_cas32(&backend_gl4->context_used, 1, 0, memory_order_release, memory_order_acquire))
+		if (atomic_cas32(&backend_gl4->context_used, 1, 0, memory_order_release,
+		                 memory_order_acquire))
 			thread_context = backend_gl4->context;
 		else
 			thread_context = _rb_gl_create_context(&backend->drawable, 4, 0, backend_gl4->context,
@@ -491,12 +502,14 @@ _rb_gl4_enable_thread(render_backend_t* backend) {
 	if (!wglMakeCurrent((HDC)backend->drawable.hdc, (HGLRC)thread_context)) {
 		string_const_t errmsg = system_error_message(0);
 		log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
-		           STRING_CONST("Unable to enable thread for GL4 rendering: %.*s"), STRING_FORMAT(errmsg));
+		           STRING_CONST("Unable to enable thread for GL4 rendering: %.*s"),
+		           STRING_FORMAT(errmsg));
 	} else {
 		log_debug(HASH_RENDER, STRING_CONST("Enabled thread for GL4 rendering"));
 	}
 #elif FOUNDATION_PLATFORM_LINUX
-	glXMakeCurrent(backend->drawable.display, (GLXDrawable)backend->drawable.drawable, thread_context);
+	glXMakeCurrent(backend->drawable.display, (GLXDrawable)backend->drawable.drawable,
+	               thread_context);
 	_rb_gl_check_error("Unable to enable thread for GL4 rendering");
 #else
 	FOUNDATION_ASSERT_FAIL("Platform not implemented");
@@ -547,7 +560,8 @@ _rb_gl4_set_drawable(render_backend_t* backend, const render_drawable_t* drawabl
 	backend_gl4->context =
 	    _rb_gl_create_context(drawable, 4, 0, 0, backend->pixelformat, backend->colorspace);
 	if (!backend_gl4->context) {
-		log_error(HASH_RENDER, ERROR_UNSUPPORTED, STRING_CONST("Unable to create OpenGL 4 context"));
+		log_error(HASH_RENDER, ERROR_UNSUPPORTED,
+		          STRING_CONST("Unable to create OpenGL 4 context"));
 		atomic_store32(&backend_gl4->context_used, 0, memory_order_release);
 		return false;
 	}
@@ -587,8 +601,8 @@ _rb_gl4_set_drawable(render_backend_t* backend, const render_drawable_t* drawabl
 	const char* wglext = 0;
 	PFNWGLGETEXTENSIONSSTRINGARBPROC wglGetExtensionsStringARB = 0;
 	PFNWGLGETEXTENSIONSSTRINGEXTPROC wglGetExtensionsStringEXT = 0;
-	if ((wglGetExtensionsStringARB =
-	         (PFNWGLGETEXTENSIONSSTRINGARBPROC)_rb_gl_get_proc_address("wglGetExtensionsStringARB")) != 0)
+	if ((wglGetExtensionsStringARB = (PFNWGLGETEXTENSIONSSTRINGARBPROC)_rb_gl_get_proc_address(
+	         "wglGetExtensionsStringARB")) != 0)
 		wglext = wglGetExtensionsStringARB((HDC)drawable->hdc);
 	else if ((wglGetExtensionsStringEXT = (PFNWGLGETEXTENSIONSSTRINGEXTPROC)_rb_gl_get_proc_address(
 	              "wglGetExtensionsStringEXT")) != 0)
@@ -695,10 +709,11 @@ _rb_gl_enumerate_modes(render_backend_t* backend, unsigned int adapter, render_r
 		store[c].id = (unsigned int)c;
 
 	if (!count) {
-		log_warnf(HASH_RENDER, WARNING_SUSPICIOUS,
-		          STRING_CONST("Unable to enumerate resolutions for adapter %d, adding default fallback"),
-		          adapter);
-		render_resolution_t mode = {0, 800, 600, PIXELFORMAT_R8G8B8X8, COLORSPACE_LINEAR, 60};
+		log_warnf(
+		    HASH_RENDER, WARNING_SUSPICIOUS,
+		    STRING_CONST("Unable to enumerate resolutions for adapter %d, adding default fallback"),
+		    adapter);
+		render_resolution_t mode = {0, 800, 600, PIXELFORMAT_R8G8B8A8, COLORSPACE_LINEAR, 60};
 		if (capacity)
 			store[count++] = mode;
 	}
@@ -710,7 +725,7 @@ exit:
 #else
 	FOUNDATION_UNUSED(backend);
 	FOUNDATION_UNUSED(adapter);
-	render_resolution_t mode = {0, 800, 600, PIXELFORMAT_R8G8B8X8, COLORSPACE_LINEAR, 60};
+	render_resolution_t mode = {0, 800, 600, PIXELFORMAT_R8G8B8A8, COLORSPACE_LINEAR, 60};
 	if (capacity)
 		store[count++] = mode;
 #endif
@@ -744,7 +759,8 @@ _rb_gl4_deallocate_buffer(render_backend_t* backend, render_buffer_t* buffer, bo
 	}
 }
 
-static const GLint _rb_gl4_vertex_format_size[VERTEXFORMAT_NUMTYPES] = {1, 2, 3, 4, 4, 4, 1, 2, 4, 1, 2, 4};
+static const GLint _rb_gl4_vertex_format_size[VERTEXFORMAT_NUMTYPES] = {1, 2, 3, 4, 4, 4,
+                                                                        1, 2, 4, 1, 2, 4};
 static const GLenum _rb_gl4_vertex_format_type[VERTEXFORMAT_NUMTYPES] = {
     GL_FLOAT, GL_FLOAT, GL_FLOAT, GL_FLOAT, GL_UNSIGNED_BYTE, GL_BYTE,
     GL_SHORT, GL_SHORT, GL_SHORT, GL_INT,   GL_INT,           GL_INT};
@@ -755,7 +771,8 @@ static const GLboolean _rb_gl4_vertex_format_norm[VERTEXFORMAT_NUMTYPES] = {
 static bool
 _rb_gl4_upload_buffer(render_backend_t* backend, render_buffer_t* buffer) {
 	FOUNDATION_UNUSED(backend);
-	if ((buffer->buffertype == RENDERBUFFER_PARAMETER) || (buffer->buffertype == RENDERBUFFER_STATE))
+	if ((buffer->buffertype == RENDERBUFFER_PARAMETER) ||
+	    (buffer->buffertype == RENDERBUFFER_STATE))
 		return true;
 
 	GLuint buffer_object = (GLuint)buffer->backend_data[0];
@@ -787,10 +804,10 @@ _rb_gl4_upload_buffer(render_backend_t* backend, render_buffer_t* buffer) {
 		for (unsigned int attrib = 0; attrib < RENDER_MAX_ATTRIBUTES; ++attrib) {
 			const uint8_t format = decl->attribute[attrib].format;
 			if (format < VERTEXFORMAT_NUMTYPES) {
-				glVertexAttribPointer(attrib, _rb_gl4_vertex_format_size[format],
-				                      _rb_gl4_vertex_format_type[format], _rb_gl4_vertex_format_norm[format],
-				                      (GLsizei)decl->attribute[attrib].stride,
-				                      (const void*)(uintptr_t)decl->attribute[attrib].offset);
+				glVertexAttribPointer(
+				    attrib, _rb_gl4_vertex_format_size[format], _rb_gl4_vertex_format_type[format],
+				    _rb_gl4_vertex_format_norm[format], (GLsizei)decl->attribute[attrib].stride,
+				    (const void*)(uintptr_t)decl->attribute[attrib].offset);
 				_rb_gl_check_error("Error creating vertex array (bind attribute)");
 				glEnableVertexAttribArray(attrib);
 				_rb_gl_check_error("Error creating vertex array (enable attribute)");
@@ -814,7 +831,8 @@ _rb_gl4_link_buffer(render_backend_t* backend, render_buffer_t* buffer, render_p
 }
 
 static bool
-_rb_gl4_upload_shader(render_backend_t* backend, render_shader_t* shader, const void* buffer, size_t size) {
+_rb_gl4_upload_shader(render_backend_t* backend, render_shader_t* shader, const void* buffer,
+                      size_t size) {
 	bool ret = false;
 	// render_backend_gl4_t* backend_gl4 = (render_backend_gl4_t*)backend;
 	FOUNDATION_UNUSED(backend);
@@ -828,7 +846,8 @@ _rb_gl4_upload_shader(render_backend_t* backend, render_shader_t* shader, const 
 		case SHADER_PIXEL:
 		case SHADER_VERTEX: {
 			bool is_pixel_shader = (shader->shadertype == SHADER_PIXEL);
-			GLuint handle = glCreateShader(is_pixel_shader ? GL_FRAGMENT_SHADER_ARB : GL_VERTEX_SHADER_ARB);
+			GLuint handle =
+			    glCreateShader(is_pixel_shader ? GL_FRAGMENT_SHADER_ARB : GL_VERTEX_SHADER_ARB);
 			const GLchar* source = (const GLchar*)buffer;
 			GLint source_size = (GLint)size;
 			glShaderSource(handle, 1, &source, &source_size);
@@ -846,7 +865,8 @@ _rb_gl4_upload_shader(render_backend_t* backend, render_shader_t* shader, const 
 				glGetShaderiv(handle, GL_COMPILE_STATUS, &compiled);
 				glGetShaderInfoLog(handle, log_capacity, &log_length, log_buffer);
 				log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL,
-				           STRING_CONST("Unable to compile shader: %.*s"), (int)log_length, log_buffer);
+				           STRING_CONST("Unable to compile shader: %.*s"), (int)log_length,
+				           log_buffer);
 				memory_deallocate(log_buffer);
 #endif
 				glDeleteShader(handle);
@@ -884,8 +904,8 @@ _rb_gl4_check_program_link(GLuint handle) {
 		log = memory_allocate(HASH_RENDER, (size_t)buffer_size + 1, 0, MEMORY_TEMPORARY);
 		glGetProgramInfoLog(handle, buffer_size, &log_length, log);
 
-		log_errorf(ERRORLEVEL_ERROR, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Unable to compile program: %.*s"),
-		           (int)log_length, log);
+		log_errorf(ERRORLEVEL_ERROR, ERROR_SYSTEM_CALL_FAIL,
+		           STRING_CONST("Unable to compile program: %.*s"), (int)log_length, log);
 		memory_deallocate(log);
 
 		glDeleteProgram(handle);
@@ -988,7 +1008,8 @@ _rb_gl_allocate_target(render_backend_t* backend, render_target_t* target) {
 		if (!_rb_gl_check_error("Unable to create render target: Error creating frame buffer")) {
 			log_errorf(
 			    HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
-			    STRING_CONST("Unable to create render target: Error creating frame buffer (no error)"));
+			    STRING_CONST(
+			        "Unable to create render target: Error creating frame buffer (no error)"));
 			goto failure;
 		}
 	}
@@ -999,8 +1020,9 @@ _rb_gl_allocate_target(render_backend_t* backend, render_target_t* target) {
 	glGenTextures(1, &render_texture);
 	if (!render_texture) {
 		if (!_rb_gl_check_error("Unable to create render target: Error creating texture"))
-			log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
-			           STRING_CONST("Unable to create render target: Error creating texture (no error)"));
+			log_errorf(
+			    HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
+			    STRING_CONST("Unable to create render target: Error creating texture (no error)"));
 		goto failure;
 	}
 	glBindTexture(GL_TEXTURE_2D, render_texture);
@@ -1012,8 +1034,8 @@ _rb_gl_allocate_target(render_backend_t* backend, render_target_t* target) {
 		internalformat = (target->colorspace == COLORSPACE_sRGB) ? GL_SRGB8_ALPHA8_EXT : GL_RGBA;
 	}
 
-	glTexImage2D(GL_TEXTURE_2D, 0, internalformat, (GLsizei)target->width, (GLsizei)target->height, 0,
-	             glformat, GL_UNSIGNED_BYTE, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, internalformat, (GLsizei)target->width, (GLsizei)target->height,
+	             0, glformat, GL_UNSIGNED_BYTE, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	if (_rb_gl_check_error(
@@ -1026,13 +1048,15 @@ _rb_gl_allocate_target(render_backend_t* backend, render_target_t* target) {
 		if (!_rb_gl_check_error("Unable to create render target: Error creating depth buffer"))
 			log_errorf(
 			    HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
-			    STRING_CONST("Unable to create render target: Error creating depth buffer (no error)"));
+			    STRING_CONST(
+			        "Unable to create render target: Error creating depth buffer (no error)"));
 		goto failure;
 	}
 	glBindRenderbuffer(GL_RENDERBUFFER, depth_buffer);
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, (GLsizei)target->width,
 	                      (GLsizei)target->height);
-	if (_rb_gl_check_error("Unable to create render target: Error setting depth buffer storage dimensions"))
+	if (_rb_gl_check_error(
+	        "Unable to create render target: Error setting depth buffer storage dimensions"))
 		goto failure;
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
@@ -1091,7 +1115,8 @@ _rb_gl_activate_target(render_backend_t* backend, render_target_t* target) {
 }
 
 bool
-_rb_gl_upload_texture(render_backend_t* backend, render_texture_t* texture, const void* buffer, size_t size) {
+_rb_gl_upload_texture(render_backend_t* backend, render_texture_t* texture, const void* buffer,
+                      size_t size) {
 	FOUNDATION_UNUSED(backend);
 	FOUNDATION_UNUSED(size);
 
@@ -1126,18 +1151,71 @@ _rb_gl_upload_texture(render_backend_t* backend, render_texture_t* texture, cons
 	GLenum internal_format = GL_RGBA;
 	GLenum data_format = GL_RGBA;
 	GLenum data_type = GL_UNSIGNED_BYTE;
+	unsigned int bits_per_pixel = 0;
 
-	if (texture->pixelformat == PIXELFORMAT_A8) {
-		internal_format = GL_ALPHA;
-		data_format = GL_ALPHA;
+	switch (texture->pixelformat) {
+		case PIXELFORMAT_R8G8B8:
+			internal_format = GL_RGB;
+			data_format = GL_RGB;
+			data_type = GL_UNSIGNED_BYTE;
+			bits_per_pixel = 24;
+			if (texture->colorspace == COLORSPACE_sRGB)
+				internal_format = GL_SRGB;
+			break;
+		case PIXELFORMAT_R8G8B8A8:
+			internal_format = GL_RGBA;
+			data_format = GL_RGBA;
+			data_type = GL_UNSIGNED_BYTE;
+			bits_per_pixel = 32;
+			if (texture->colorspace == COLORSPACE_sRGB)
+				internal_format = GL_SRGB_ALPHA;
+			break;
+
+		case PIXELFORMAT_R16G16B16:
+			internal_format = GL_RGB;
+			data_format = GL_RGB;
+			data_type = GL_UNSIGNED_SHORT;
+			bits_per_pixel = 48;
+			if (texture->colorspace == COLORSPACE_sRGB)
+				internal_format = GL_SRGB;
+			break;
+		case PIXELFORMAT_R16G16B16A16:
+			internal_format = GL_RGBA;
+			data_format = GL_RGBA;
+			data_type = GL_UNSIGNED_SHORT;
+			bits_per_pixel = 64;
+			if (texture->colorspace == COLORSPACE_sRGB)
+				internal_format = GL_SRGB_ALPHA;
+			break;
+
+		case PIXELFORMAT_R32G32B32F:
+			internal_format = GL_RGB;
+			data_format = GL_RGB;
+			data_type = GL_FLOAT;
+			bits_per_pixel = 96;
+			break;
+		case PIXELFORMAT_R32G32B32A32F:
+			internal_format = GL_RGBA;
+			data_format = GL_RGBA;
+			data_type = GL_FLOAT;
+			bits_per_pixel = 128;
+			break;
+
+		case PIXELFORMAT_A8:
+			internal_format = GL_ALPHA;
+			data_format = GL_ALPHA;
+			data_type = GL_UNSIGNED_BYTE;
+			break;
+
+		case PIXELFORMAT_PVRTC_2:
+		case PIXELFORMAT_PVRTC_4:
+			break;
 	}
-
 	const void* data = buffer;
 	unsigned int level_width = texture->width;
 	unsigned int level_height = texture->height;
 	for (GLint ilevel = 0; ilevel < (GLint)texture->levels; ++ilevel) {
-		unsigned int data_length =
-		    0;  // image_raw_buffer_size(texture->pixelformat, level_width, level_height, 1, 1);
+		unsigned int data_length = level_width * level_height * (bits_per_pixel / 8);
 		if (data_length > size) {
 			log_error(HASH_RENDER, ERROR_INVALID_VALUE, STRING_CONST("Data size too small"));
 			return false;
@@ -1190,13 +1268,16 @@ _rb_gl4_clear(render_backend_gl4_t* backend, render_context_t* context, render_c
 	if (buffer_mask & RENDERBUFFER_COLOR) {
 		unsigned int color_mask = command->data.clear.color_mask;
 		uint32_t color = command->data.clear.color;
-		glColorMask((color_mask & 0x01) ? GL_TRUE : GL_FALSE, (color_mask & 0x02) ? GL_TRUE : GL_FALSE,
-		            (color_mask & 0x04) ? GL_TRUE : GL_FALSE, (color_mask & 0x08) ? GL_TRUE : GL_FALSE);
+		glColorMask(
+		    (color_mask & 0x01) ? GL_TRUE : GL_FALSE, (color_mask & 0x02) ? GL_TRUE : GL_FALSE,
+		    (color_mask & 0x04) ? GL_TRUE : GL_FALSE, (color_mask & 0x08) ? GL_TRUE : GL_FALSE);
 		bits |= GL_COLOR_BUFFER_BIT;
 		// color_linear_t color = uint32_to_color( command->data.clear.color );
-		// glClearColor( vector_x( color ), vector_y( color ), vector_z( color ), vector_w( color ) );
+		// glClearColor( vector_x( color ), vector_y( color ), vector_z( color ), vector_w( color )
+		// );
 		glClearColor((float)(color & 0xFF) / 255.0f, (float)((color >> 8) & 0xFF) / 255.0f,
-		             (float)((color >> 16) & 0xFF) / 255.0f, (float)((color >> 24) & 0xFF) / 255.0f);
+		             (float)((color >> 16) & 0xFF) / 255.0f,
+		             (float)((color >> 24) & 0xFF) / 255.0f);
 	}
 
 	if (buffer_mask & RENDERBUFFER_DEPTH) {
@@ -1234,7 +1315,8 @@ _rb_gl4_viewport(render_backend_gl4_t* backend, render_target_t* target, render_
 	glViewport(x, y, w, h);
 	glScissor(x, y, w, h);
 
-	backend->use_clear_scissor = (x || y || (w != (GLsizei)target->width) || (h != (GLsizei)target->height));
+	backend->use_clear_scissor =
+	    (x || y || (w != (GLsizei)target->width) || (h != (GLsizei)target->height));
 
 	_rb_gl_check_error("Error setting viewport");
 }
@@ -1243,18 +1325,19 @@ static const GLenum _rb_gl4_primitive_type[] = {GL_TRIANGLES, GL_LINES};
 static const unsigned int _rb_gl4_primitive_mult[] = {3, 2};
 static const unsigned int _rb_gl4_primitive_add[] = {0, 0};
 
-static const GLenum _rb_gl4_index_format_type[INDEXFORMAT_NUMTYPES] = {GL_UNSIGNED_BYTE, GL_UNSIGNED_SHORT,
-                                                                       GL_UNSIGNED_INT};
+static const GLenum _rb_gl4_index_format_type[INDEXFORMAT_NUMTYPES] = {
+    GL_UNSIGNED_BYTE, GL_UNSIGNED_SHORT, GL_UNSIGNED_INT};
 
-//                                                 BLEND_ZERO, BLEND_ONE, BLEND_SRCCOLOR, BLEND_INVSRCCOLOR,
-//                                                 BLEND_DESTCOLOR, BLEND_INVDESTCOLOR,     BLEND_SRCALPHA,
+//                                                 BLEND_ZERO, BLEND_ONE, BLEND_SRCCOLOR,
+//                                                 BLEND_INVSRCCOLOR, BLEND_DESTCOLOR,
+//                                                 BLEND_INVDESTCOLOR,     BLEND_SRCALPHA,
 //                                                 BLEND_INVSRCALPHA,      BLEND_DESTALPHA,
-//                                                 BLEND_INVDESTALPHA,     BLEND_FACTOR,      BLEND_INVFACTOR,
-//                                                 BLEND_SRCALPHASAT
+//                                                 BLEND_INVDESTALPHA,     BLEND_FACTOR,
+//                                                 BLEND_INVFACTOR, BLEND_SRCALPHASAT
 // static const GLenum       _rb_gl4_blend_func[] = { GL_ZERO,    GL_ONE,    GL_SRC_COLOR,
-// GL_ONE_MINUS_SRC_COLOR, GL_DST_COLOR,    GL_ONE_MINUS_DST_COLOR, GL_SRC_ALPHA,   GL_ONE_MINUS_SRC_ALPHA,
-// GL_DST_ALPHA,    GL_ONE_MINUS_DST_ALPHA, GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA,
-// GL_SRC_ALPHA_SATURATE };
+// GL_ONE_MINUS_SRC_COLOR, GL_DST_COLOR,    GL_ONE_MINUS_DST_COLOR, GL_SRC_ALPHA,
+// GL_ONE_MINUS_SRC_ALPHA, GL_DST_ALPHA,    GL_ONE_MINUS_DST_ALPHA, GL_CONSTANT_ALPHA,
+// GL_ONE_MINUS_CONSTANT_ALPHA, GL_SRC_ALPHA_SATURATE };
 
 static void
 _rb_gl4_set_default_state(void) {
@@ -1273,7 +1356,8 @@ _rb_gl4_set_state(render_state_t* state) {
 }
 
 static void
-_rb_gl4_render(render_backend_gl4_t* backend, render_context_t* context, render_command_t* command) {
+_rb_gl4_render(render_backend_gl4_t* backend, render_context_t* context,
+               render_command_t* command) {
 	render_vertexbuffer_t* vertexbuffer = command->data.render.vertexbuffer;
 	render_indexbuffer_t* indexbuffer = command->data.render.indexbuffer;
 	render_parameterbuffer_t* parameterbuffer = command->data.render.parameterbuffer;
@@ -1330,9 +1414,10 @@ _rb_gl4_render(render_backend_gl4_t* backend, render_context_t* context, render_
 	/*ID3D10Device_RSSetState( device, backend_dx10->rasterizer_state[0].state );
 
 	FLOAT blend_factors[] = { 0.7f, 0.7f, 0.7f, 0.7f, 0.7f, 0.7f, 0.7f, 0.7f };
-	ID3D10Device_OMSetBlendState( device, backend_dx10->blend_state[ ( command->data.render.blend_state >>
-	48ULL ) & 0xFFFFULL ].state, blend_factors, 0xFFFFFFFF ); ID3D10Device_OMSetDepthStencilState( device,
-	backend_dx10->depthstencil_state[0].state, 0xFFFFFFFF );*/
+	ID3D10Device_OMSetBlendState( device, backend_dx10->blend_state[ (
+	command->data.render.blend_state >> 48ULL ) & 0xFFFFULL ].state, blend_factors, 0xFFFFFFFF );
+	ID3D10Device_OMSetDepthStencilState( device, backend_dx10->depthstencil_state[0].state,
+	0xFFFFFFFF );*/
 
 	if (command->data.render.statebuffer) {
 		// Set state from buffer
@@ -1397,8 +1482,8 @@ _rb_gl4_flip(render_backend_t* backend) {
 	if (backend_gl4->drawable.hdc) {
 		if (!SwapBuffers(backend_gl4->drawable.hdc)) {
 			string_const_t errmsg = system_error_message(0);
-			log_warnf(HASH_RENDER, WARNING_SYSTEM_CALL_FAIL, STRING_CONST("SwapBuffers failed: %.*s"),
-			          STRING_FORMAT(errmsg));
+			log_warnf(HASH_RENDER, WARNING_SYSTEM_CALL_FAIL,
+			          STRING_CONST("SwapBuffers failed: %.*s"), STRING_FORMAT(errmsg));
 		}
 	}
 

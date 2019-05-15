@@ -207,10 +207,13 @@ typedef enum render_compare_func_t {
 typedef enum pixelformat_t {
 	PIXELFORMAT_INVALID = 0,
 
-	PIXELFORMAT_R8G8B8X8,
-	PIXELFORMAT_R8G8B8A8,
 	PIXELFORMAT_R8G8B8,
+	PIXELFORMAT_R8G8B8A8,
 
+	PIXELFORMAT_R16G16B16,
+	PIXELFORMAT_R16G16B16A16,
+
+	PIXELFORMAT_R32G32B32F,
 	PIXELFORMAT_R32G32B32A32F,
 
 	PIXELFORMAT_A8,
@@ -281,29 +284,35 @@ typedef struct render_config_t render_config_t;
 typedef bool (*render_backend_construct_fn)(render_backend_t*);
 typedef void (*render_backend_destruct_fn)(render_backend_t*);
 typedef size_t (*render_backend_enumerate_adapters_fn)(render_backend_t*, unsigned int*, size_t);
-typedef size_t (*render_backend_enumerate_modes_fn)(render_backend_t*, unsigned int, render_resolution_t*,
-                                                    size_t);
+typedef size_t (*render_backend_enumerate_modes_fn)(render_backend_t*, unsigned int,
+                                                    render_resolution_t*, size_t);
 typedef void (*render_backend_enable_thread_fn)(render_backend_t*);
 typedef void (*render_backend_disable_thread_fn)(render_backend_t*);
 typedef bool (*render_backend_set_drawable_fn)(render_backend_t*, const render_drawable_t*);
-typedef void (*render_backend_dispatch_fn)(render_backend_t*, render_target_t*, render_context_t**, size_t);
+typedef void (*render_backend_dispatch_fn)(render_backend_t*, render_target_t*, render_context_t**,
+                                           size_t);
 typedef void (*render_backend_flip_fn)(render_backend_t*);
 typedef void* (*render_backend_allocate_buffer_fn)(render_backend_t*, render_buffer_t*);
-typedef void (*render_backend_deallocate_buffer_fn)(render_backend_t*, render_buffer_t*, bool, bool);
+typedef void (*render_backend_deallocate_buffer_fn)(render_backend_t*, render_buffer_t*, bool,
+                                                    bool);
 typedef bool (*render_backend_upload_buffer_fn)(render_backend_t*, render_buffer_t*);
-typedef bool (*render_backend_upload_shader_fn)(render_backend_t*, render_shader_t*, const void*, size_t);
+typedef bool (*render_backend_upload_shader_fn)(render_backend_t*, render_shader_t*, const void*,
+                                                size_t);
 typedef bool (*render_backend_upload_program_fn)(render_backend_t*, render_program_t*);
-typedef bool (*render_backend_upload_texture_fn)(render_backend_t*, render_texture_t*, const void*, size_t);
-typedef void (*render_backend_parameter_bind_texture_fn)(render_backend_t*, void*, render_texture_t*);
+typedef bool (*render_backend_upload_texture_fn)(render_backend_t*, render_texture_t*, const void*,
+                                                 size_t);
+typedef void (*render_backend_parameter_bind_texture_fn)(render_backend_t*, void*,
+                                                         render_texture_t*);
 typedef void (*render_backend_parameter_bind_target_fn)(render_backend_t*, void*, render_target_t*);
 typedef void (*render_backend_deallocate_shader_fn)(render_backend_t*, render_shader_t*);
 typedef void (*render_backend_deallocate_program_fn)(render_backend_t*, render_program_t*);
 typedef void (*render_backend_deallocate_texture_fn)(render_backend_t*, render_texture_t*);
-typedef void (*render_backend_link_buffer_fn)(render_backend_t*, render_buffer_t*, render_program_t* program);
+typedef void (*render_backend_link_buffer_fn)(render_backend_t*, render_buffer_t*,
+                                              render_program_t* program);
 typedef bool (*render_backend_allocate_target_fn)(render_backend_t*, render_target_t*);
 typedef void (*render_backend_deallocate_target_fn)(render_backend_t*, render_target_t*);
-typedef void (*render_pipeline_execute_fn)(render_backend_t*, render_target_t* target, render_context_t**,
-                                           size_t);
+typedef void (*render_pipeline_execute_fn)(render_backend_t*, render_target_t* target,
+                                           render_context_t**, size_t);
 
 struct render_config_t {
 	/*! Maximum number of concurrently allocated render targets */
