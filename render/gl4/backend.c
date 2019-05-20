@@ -1133,15 +1133,17 @@ _rb_gl_upload_texture(render_backend_t* backend, render_texture_t* texture, cons
 
 	glBindTexture(GL_TEXTURE_2D, texture_name);
 
+	bool generate_mipmaps = !!(texture->textureflags & RENDERTEXTURE_FLAG_AUTOGENERATE_MIPMAPS);
+	bool has_mipmaps = (texture->levels > 1) || generate_mipmaps;
 	if (backend->api == RENDERAPI_OPENGL2)
-		glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_FALSE);
+		glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, generate_mipmaps ? GL_TRUE : GL_FALSE);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	// glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-	                texture->levels > 1 ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
+	                has_mipmaps ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	if (_rb_gl_check_error("Unable to initialize texture data"))
@@ -1232,6 +1234,9 @@ _rb_gl_upload_texture(render_backend_t* backend, render_texture_t* texture, cons
 		level_width = math_max(level_width >> 1, 1);
 		level_height = math_max(level_height >> 1, 1);
 	}
+
+	if (generate_mipmaps && (backend->api != RENDERAPI_OPENGL2))
+		glGenerateMipmap(GL_TEXTURE_2D);
 
 	if (_rb_gl_check_error("Unable to upload texture data"))
 		return false;

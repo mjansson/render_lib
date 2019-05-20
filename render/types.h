@@ -169,6 +169,10 @@ typedef enum render_texture_type_t {
 	RENDERTEXTURE_CUBE
 } render_texture_type_t;
 
+typedef enum render_texture_flag_t {
+	RENDERTEXTURE_FLAG_AUTOGENERATE_MIPMAPS = 1
+} render_texture_flag_t;
+
 typedef enum render_blend_factor_t {
 	BLEND_ZERO = 0,
 	BLEND_ONE,
@@ -596,7 +600,7 @@ FOUNDATION_ALIGNED_STRUCT(render_program_t, 8) {
 	RENDER_32BIT_PADDING(backendptr)          \
 	unsigned int texturetype : 8;             \
 	unsigned int usage : 8;                   \
-	unsigned int unused : 16;                 \
+	unsigned int textureflags : 16;           \
 	atomic32_t ref;                           \
 	pixelformat_t pixelformat;                \
 	colorspace_t colorspace;                  \
