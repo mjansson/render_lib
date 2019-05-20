@@ -11,7 +11,8 @@
  *
  * https://github.com/rampantpixels
  *
- * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
+ * This library is put in the public domain; you can redistribute it and/or modify it without any
+ * restrictions.
  *
  */
 
@@ -25,19 +26,19 @@ render_projection_perspective(real near, real far, real fov, real aspect) {
 	memset(matrix, 0, sizeof(float32_t) * 16);
 
 	real height = 2.0f * (near * math_tan(fov * 0.5f));
-	real width  = height * aspect;
+	real width = height * aspect;
 
 	matrix[0][0] = 2.0f * near / width;
 	matrix[1][1] = 2.0f * near / height;
-	
-	//Equals zero
-	//matrix[2][0] = (left + right) / (left - right);
-	//matrix[2][1] = (top + bottom) / (top  - bottom);
 
-	matrix[2][2] =  -(far + near ) / (far - near);
-	matrix[2][3] =  -1.0f;
-	matrix[3][2] =  -2.0f * near * far / (far - near);
-	matrix[3][3] =   0.0f;
+	// Equals zero
+	// matrix[2][0] = (left + right) / (left - right);
+	// matrix[2][1] = (top + bottom) / (top  - bottom);
+
+	matrix[2][2] = -(far + near) / (far - near);
+	matrix[2][3] = -1.0f;
+	matrix[3][2] = -(2.0f * near * far) / (far - near);
+	matrix[3][3] = 0.0f;
 
 	return matrix_aligned((float32_t*)matrix);
 }
@@ -48,14 +49,15 @@ render_projection_orthographic(real near, real far, real left, real top, real ri
 	memset(matrix, 0, sizeof(float32_t) * 16);
 
 	matrix[0][0] = 2.0f / (right - left);
-	matrix[1][1] = 2.0f / (top   - bottom);
+	matrix[1][1] = 2.0f / (top - bottom);
+
+	matrix[3][0] = (left + right) / (left - right);
+	matrix[3][1] = (bottom + top) / (bottom - top);
 
 	matrix[2][2] = 2.0f / (far - near);
+	matrix[3][2] = -(far + near) / (far - near);
 
-	matrix[3][0] =  (left   + right) / (left   - right);
-	matrix[3][1] =  (bottom + top)   / (bottom - top);
-	matrix[3][2] = -(far    + near)  / (far    - near);
-	matrix[3][3] =  1.0f;
+	matrix[3][3] = 1.0f;
 
 	return matrix_aligned((float32_t*)matrix);
 }
