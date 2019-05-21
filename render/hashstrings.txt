@@ -22,3 +22,6 @@ HASH_TEXTURE                               texture
 HASH_MVP                                   mvp
 HASH_TEX                                   tex
 HASH_PARAMETERS                            parameters
+
+HASH_ALBEDO                                albedo
+HASH_OCCLUSION                             occlusion

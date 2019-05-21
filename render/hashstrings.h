@@ -27,3 +27,5 @@
 #define HASH_MVP static_hash_string("mvp", 3, 0x8b2f039c2c4efa26ULL)
 #define HASH_TEX static_hash_string("tex", 3, 0x35bf00462d0bc065ULL)
 #define HASH_PARAMETERS static_hash_string("parameters", 10, 0x5f1a2f492b495d26ULL)
+#define HASH_ALBEDO static_hash_string("albedo", 6, 0x6b280d23c5140b85ULL)
+#define HASH_OCCLUSION static_hash_string("occlusion", 9, 0xa6db7755a05f91f6ULL)
