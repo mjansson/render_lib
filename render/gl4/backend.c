@@ -1213,6 +1213,12 @@ _rb_gl_upload_texture(render_backend_t* backend, render_texture_t* texture, cons
 
 		case PIXELFORMAT_PVRTC_2:
 		case PIXELFORMAT_PVRTC_4:
+			//TODO: Implement
+			break;
+
+		case PIXELFORMAT_INVALID:
+		case PIXELFORMAT_NUMFORMATS:
+		default:
 			break;
 	}
 	const void* data = buffer;
