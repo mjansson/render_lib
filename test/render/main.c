@@ -11,7 +11,8 @@
  *
  * https://github.com/rampantpixels/foundation_lib
  *
- * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
+ * This library is put in the public domain; you can redistribute it and/or modify it without any
+ * restrictions.
  *
  */
 
@@ -47,13 +48,12 @@ test_render_config(void) {
 	return config;
 }
 
-static void test_parse_config(const char* path, size_t path_size,
-                              const char* buffer, size_t size,
-                              const json_token_t* tokens, size_t num_tokens) {
+static void
+test_parse_config(const char* path, size_t path_size, const char* buffer, size_t size,
+                  const json_token_t* tokens, size_t num_tokens) {
 	resource_module_parse_config(path, path_size, buffer, size, tokens, num_tokens);
 	render_module_parse_config(path, path_size, buffer, size, tokens, num_tokens);
 }
-
 
 static int
 test_render_initialize(void) {
@@ -105,7 +105,7 @@ test_render_finalize(void) {
 DECLARE_TEST(render, initialize) {
 	render_config_t config;
 	render_backend_t* backend;
-	window_t* window;
+	window_t window;
 
 	EXPECT_TRUE(render_module_is_initialized());
 
@@ -117,15 +117,13 @@ DECLARE_TEST(render, initialize) {
 	render_module_initialize(config);
 
 #if FOUNDATION_PLATFORM_MACOS || FOUNDATION_PLATFORM_IOS
-	window = window_allocate(delegate_window());
+	window_initialize(&window, delegate_window());
 #elif FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_LINUX
-	window = window_create(WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render test"), 800, 600, true);
+	window_create(&window, WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render test"), 800, 600, 0);
 #else
-#  error Not implemented
+#error Not implemented
 #endif
-
-	EXPECT_NE(window, 0);
-	EXPECT_TRUE(window_is_open(window));
+	EXPECT_TRUE(window_is_open(&window));
 
 	backend = render_backend_allocate(RENDERAPI_DEFAULT, true);
 
@@ -133,10 +131,9 @@ DECLARE_TEST(render, initialize) {
 
 	render_backend_deallocate(backend);
 
-	window_deallocate(window);
-	window = 0;
+	window_finalize(&window);
 
-	EXPECT_FALSE(window_is_open(window));
+	EXPECT_FALSE(window_is_open(&window));
 
 	return 0;
 }
@@ -150,17 +147,15 @@ _test_render_api(render_api_t api) {
 
 	EXPECT_TRUE(render_module_is_initialized());
 
-	window_t* window = 0;
+	window_t window;
 #if FOUNDATION_PLATFORM_MACOS || FOUNDATION_PLATFORM_IOS
-	window = window_allocate(delegate_window());
+	window_initialize(&window, delegate_window());
 #elif FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_LINUX
-	window = window_create(WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render test"), 800, 600, true);
+	window_create(&window, WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render test"), 800, 600, 0);
 #else
-#  error Not implemented
+#error Not implemented
 #endif
-
-	EXPECT_NE(window, 0);
-	EXPECT_TRUE(window_is_open(window));
+	EXPECT_TRUE(window_is_open(&window));
 
 	backend = render_backend_allocate(api, false);
 
@@ -203,28 +198,27 @@ ignore_test:
 	render_backend_deallocate(backend);
 	render_drawable_deallocate(drawable);
 
-	window_deallocate(window);
-	window = 0;
+	window_finalize(&window);
 
-	EXPECT_FALSE(window_is_open(window));
+	EXPECT_FALSE(window_is_open(&window));
 
 	return 0;
 }
 
-
-static void* _test_render_clear(render_api_t api) {
+static void*
+_test_render_clear(render_api_t api) {
 	render_backend_t* backend = 0;
-	window_t* window = 0;
+	window_t window;
 	render_drawable_t* drawable = 0;
 	object_t framebuffer = 0;
 	render_context_t* context = 0;
 
 #if FOUNDATION_PLATFORM_MACOS || FOUNDATION_PLATFORM_IOS
-	window = window_allocate(delegate_window());
+	window_initialize(&window, delegate_window());
 #elif FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_LINUX
-	window = window_create(WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render test"), 800, 600, true);
+	window_create(&window, WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render test"), 800, 600, 0);
 #else
-#  error Not implemented
+#error Not implemented
 #endif
 
 	backend = render_backend_allocate(api, false);
@@ -245,39 +239,49 @@ static void* _test_render_clear(render_api_t api) {
 	render_context_set_target(context, framebuffer);
 	render_sort_reset(context);
 
-	render_command_viewport(render_context_reserve(context, render_sort_sequential_key(context)), 0, 0,
-	                        render_target_width(framebuffer), render_target_height(framebuffer), 0, 1);
+	render_command_viewport(render_context_reserve(context, render_sort_sequential_key(context)), 0,
+	                        0, render_target_width(framebuffer), render_target_height(framebuffer),
+	                        0, 1);
 	render_command_clear(render_context_reserve(context, render_sort_sequential_key(context)),
-	                     RENDERBUFFER_COLOR | RENDERBUFFER_DEPTH | RENDERBUFFER_STENCIL, 0x00000000, 0xF, 1, 0);
-
-	render_command_viewport(render_context_reserve(context, render_sort_sequential_key(context)), 0, 0,
-	                        render_target_width(framebuffer) / 2, render_target_height(framebuffer) / 2, 0, 1);
-	render_command_clear(render_context_reserve(context, render_sort_sequential_key(context)),
-	                     RENDERBUFFER_COLOR | RENDERBUFFER_DEPTH | RENDERBUFFER_STENCIL, 0xFFFFFFFF, 0x1, 1, 0);
-
-	render_command_viewport(render_context_reserve(context, render_sort_sequential_key(context)),
-	                        render_target_width(framebuffer) / 2, 0, render_target_width(framebuffer) / 2,
-	                        render_target_height(framebuffer) / 2, 0, 1);
-	render_command_clear(render_context_reserve(context, render_sort_sequential_key(context)),
-	                     RENDERBUFFER_COLOR | RENDERBUFFER_DEPTH | RENDERBUFFER_STENCIL, 0xFFFFFFFF, 0x2, 1, 0);
+	                     RENDERBUFFER_COLOR | RENDERBUFFER_DEPTH | RENDERBUFFER_STENCIL, 0x00000000,
+	                     0xF, 1, 0);
 
 	render_command_viewport(render_context_reserve(context, render_sort_sequential_key(context)), 0,
-	                        render_target_height(framebuffer) / 2, render_target_width(framebuffer) / 2,
+	                        0, render_target_width(framebuffer) / 2,
 	                        render_target_height(framebuffer) / 2, 0, 1);
 	render_command_clear(render_context_reserve(context, render_sort_sequential_key(context)),
-	                     RENDERBUFFER_COLOR | RENDERBUFFER_DEPTH | RENDERBUFFER_STENCIL, 0xFFFFFFFF, 0x4, 1, 0);
+	                     RENDERBUFFER_COLOR | RENDERBUFFER_DEPTH | RENDERBUFFER_STENCIL, 0xFFFFFFFF,
+	                     0x1, 1, 0);
 
 	render_command_viewport(render_context_reserve(context, render_sort_sequential_key(context)),
-	                        render_target_width(framebuffer) / 2, render_target_height(framebuffer) / 2,
-	                        render_target_width(framebuffer) / 2, render_target_height(framebuffer) / 2, 0, 1);
+	                        render_target_width(framebuffer) / 2, 0,
+	                        render_target_width(framebuffer) / 2,
+	                        render_target_height(framebuffer) / 2, 0, 1);
 	render_command_clear(render_context_reserve(context, render_sort_sequential_key(context)),
-	                     RENDERBUFFER_COLOR | RENDERBUFFER_DEPTH | RENDERBUFFER_STENCIL, 0xFFFFFFFF, 0xF, 1, 0);
+	                     RENDERBUFFER_COLOR | RENDERBUFFER_DEPTH | RENDERBUFFER_STENCIL, 0xFFFFFFFF,
+	                     0x2, 1, 0);
+
+	render_command_viewport(render_context_reserve(context, render_sort_sequential_key(context)), 0,
+	                        render_target_height(framebuffer) / 2,
+	                        render_target_width(framebuffer) / 2,
+	                        render_target_height(framebuffer) / 2, 0, 1);
+	render_command_clear(render_context_reserve(context, render_sort_sequential_key(context)),
+	                     RENDERBUFFER_COLOR | RENDERBUFFER_DEPTH | RENDERBUFFER_STENCIL, 0xFFFFFFFF,
+	                     0x4, 1, 0);
+
+	render_command_viewport(
+	    render_context_reserve(context, render_sort_sequential_key(context)),
+	    render_target_width(framebuffer) / 2, render_target_height(framebuffer) / 2,
+	    render_target_width(framebuffer) / 2, render_target_height(framebuffer) / 2, 0, 1);
+	render_command_clear(render_context_reserve(context, render_sort_sequential_key(context)),
+	                     RENDERBUFFER_COLOR | RENDERBUFFER_DEPTH | RENDERBUFFER_STENCIL, 0xFFFFFFFF,
+	                     0xF, 1, 0);
 
 	render_sort_merge(&context, 1);
 	render_backend_dispatch(backend, &context, 1);
 	render_backend_flip(backend);
 
-	//TODO: Verify framebuffer
+	// TODO: Verify framebuffer
 	thread_sleep(2000);
 
 ignore_test:
@@ -286,17 +290,15 @@ ignore_test:
 	render_backend_deallocate(backend);
 	render_drawable_deallocate(drawable);
 
-	window_deallocate(window);
-	window = 0;
-
-	EXPECT_FALSE(window_is_open(window));
+	window_finalize(&window);
 
 	return 0;
 }
 
-static void* _test_render_box(render_api_t api) {
+static void*
+_test_render_box(render_api_t api) {
 	render_backend_t* backend = 0;
-	window_t* window = 0;
+	window_t window;
 	render_drawable_t* drawable = 0;
 	object_t framebuffer = 0;
 	object_t parameterbuffer = 0;
@@ -309,32 +311,21 @@ static void* _test_render_box(render_api_t api) {
 	matrix_t mvp;
 
 	float32_t vertexdata[8 * 7] = {
-		-0.5f,  0.5f,  0.5f,   1, 1, 1, 1,
-		-0.5f, -0.5f,  0.5f,   0, 1, 0, 1,
-		0.5f, -0.5f,  0.5f,   0, 0, 1, 1,
-		0.5f,  0.5f,  0.5f,   1, 0, 0, 1,
+	    -0.5f, 0.5f,  0.5f,  1, 1, 1, 1, -0.5f, -0.5f, 0.5f,  0, 1, 0, 1,
+	    0.5f,  -0.5f, 0.5f,  0, 0, 1, 1, 0.5f,  0.5f,  0.5f,  1, 0, 0, 1,
 
-		-0.5f,  0.5f, -0.5f,   1, 1, 0, 1,
-		-0.5f, -0.5f, -0.5f,   1, 0, 1, 1,
-		0.5f, -0.5f, -0.5f,   0, 1, 1, 1,
-		0.5f,  0.5f, -0.5f,   0, 0, 0, 1
-	};
+	    -0.5f, 0.5f,  -0.5f, 1, 1, 0, 1, -0.5f, -0.5f, -0.5f, 1, 0, 1, 1,
+	    0.5f,  -0.5f, -0.5f, 0, 1, 1, 1, 0.5f,  0.5f,  -0.5f, 0, 0, 0, 1};
 
-	uint16_t indexdata[6 * 6] = {
-		0, 1, 2,  0, 2, 3,
-		1, 5, 6,  1, 6, 2,
-		3, 2, 6,  3, 6, 7,
-		7, 6, 5,  7, 5, 4,
-		4, 3, 1,  4, 1, 0,
-		4, 0, 3,  4, 3, 7
-	};
+	uint16_t indexdata[6 * 6] = {0, 1, 2, 0, 2, 3, 1, 5, 6, 1, 6, 2, 3, 2, 6, 3, 6, 7,
+	                             7, 6, 5, 7, 5, 4, 4, 3, 1, 4, 1, 0, 4, 0, 3, 4, 3, 7};
 
 #if FOUNDATION_PLATFORM_MACOS || FOUNDATION_PLATFORM_IOS
-	window = window_allocate(delegate_window());
+	window_initialize(&window, delegate_window());
 #elif FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_LINUX
-	window = window_create(WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render test"), 800, 600, true);
+	window_create(&window, WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render test"), 800, 600, 0);
 #else
-#  error Not implemented
+#error Not implemented
 #endif
 
 	backend = (api != RENDERAPI_NULL) ? render_backend_allocate(api, false) : nullptr;
@@ -355,16 +346,18 @@ static void* _test_render_box(render_api_t api) {
 	render_context_set_target(context, framebuffer);
 	render_sort_reset(context);
 
-	render_command_viewport(render_context_reserve(context, render_sort_sequential_key(context)), 0, 0,
-	                        render_target_width(framebuffer), render_target_height(framebuffer), 0, 1);
+	render_command_viewport(render_context_reserve(context, render_sort_sequential_key(context)), 0,
+	                        0, render_target_width(framebuffer), render_target_height(framebuffer),
+	                        0, 1);
 	render_command_clear(render_context_reserve(context, render_sort_sequential_key(context)),
-	                     RENDERBUFFER_COLOR | RENDERBUFFER_DEPTH | RENDERBUFFER_STENCIL, 0x00000000, 0xFFFFFFFF, 1, 0);
+	                     RENDERBUFFER_COLOR | RENDERBUFFER_DEPTH | RENDERBUFFER_STENCIL, 0x00000000,
+	                     0xFFFFFFFF, 1, 0);
 
 	render_sort_merge(&context, 1);
 	render_backend_dispatch(backend, &context, 1);
 	render_backend_flip(backend);
 
-	//color.program : 1ab9bba8-3f2f-4649-86bb-8b8b07e99af2
+	// color.program : 1ab9bba8-3f2f-4649-86bb-8b8b07e99af2
 	uuid_t program_uuid = uuid_make(0x46493f2f1ab9bba8, 0xf29ae9078b8bbb86);
 	programobj = render_backend_program_load(backend, program_uuid);
 	program = render_backend_program_raw(backend, programobj);
@@ -373,18 +366,19 @@ static void* _test_render_box(render_api_t api) {
 
 	mvp = matrix_identity();
 
-	parameterbuffer = render_parameterbuffer_create(backend, RENDERUSAGE_DYNAMIC,
-	                                                program->parameters, program->num_parameters,
-	                                                &mvp, sizeof(mvp));
+	parameterbuffer =
+	    render_parameterbuffer_create(backend, RENDERUSAGE_DYNAMIC, program->parameters,
+	                                  program->num_parameters, &mvp, sizeof(mvp));
 	EXPECT_TYPENE(parameterbuffer, 0, object_t, PRIx32);
 
 	render_parameterbuffer_link(parameterbuffer, program);
 
-	vertex_decl = render_vertex_decl_allocate_varg(VERTEXFORMAT_FLOAT3, VERTEXATTRIBUTE_POSITION,
-	                                               VERTEXFORMAT_FLOAT4, VERTEXATTRIBUTE_PRIMARYCOLOR,
-	                                               VERTEXFORMAT_UNKNOWN);
+	vertex_decl = render_vertex_decl_allocate_varg(
+	    VERTEXFORMAT_FLOAT3, VERTEXATTRIBUTE_POSITION, VERTEXFORMAT_FLOAT4,
+	    VERTEXATTRIBUTE_PRIMARYCOLOR, VERTEXFORMAT_UNKNOWN);
 
-	vertexbuffer = render_vertexbuffer_create(backend, RENDERUSAGE_STATIC, 8, vertex_decl, vertexdata);
+	vertexbuffer =
+	    render_vertexbuffer_create(backend, RENDERUSAGE_STATIC, 8, vertex_decl, vertexdata);
 	EXPECT_TYPENE(vertexbuffer, 0, object_t, PRIx32);
 
 	indexbuffer = render_indexbuffer_create(backend, RENDERUSAGE_STATIC, 36, indexdata);
@@ -392,19 +386,21 @@ static void* _test_render_box(render_api_t api) {
 
 	render_sort_reset(context);
 
-	render_command_viewport(render_context_reserve(context, render_sort_sequential_key(context)), 0, 0,
-	                        render_target_width(framebuffer), render_target_height(framebuffer), 0, 1);
+	render_command_viewport(render_context_reserve(context, render_sort_sequential_key(context)), 0,
+	                        0, render_target_width(framebuffer), render_target_height(framebuffer),
+	                        0, 1);
 	render_command_clear(render_context_reserve(context, render_sort_sequential_key(context)),
-	                     RENDERBUFFER_COLOR | RENDERBUFFER_DEPTH | RENDERBUFFER_STENCIL, 0x00000000, 0xFFFFFFFF, 1, 0);
+	                     RENDERBUFFER_COLOR | RENDERBUFFER_DEPTH | RENDERBUFFER_STENCIL, 0x00000000,
+	                     0xFFFFFFFF, 1, 0);
 	render_command_render(render_context_reserve(context, render_sort_sequential_key(context)),
-	                      RENDERPRIMITIVE_TRIANGLELIST, 12,
-	                      program, vertexbuffer, indexbuffer, parameterbuffer, 0);
+	                      RENDERPRIMITIVE_TRIANGLELIST, 12, program, vertexbuffer, indexbuffer,
+	                      parameterbuffer, 0);
 
 	render_sort_merge(&context, 1);
 	render_backend_dispatch(backend, &context, 1);
 	render_backend_flip(backend);
 
-	//TODO: Verify framebuffer
+	// TODO: Verify framebuffer
 
 	thread_sleep(2000);
 
@@ -420,10 +416,7 @@ ignore_test:
 	render_backend_deallocate(backend);
 	render_drawable_deallocate(drawable);
 
-	window_deallocate(window);
-	window = 0;
-
-	EXPECT_FALSE(window_is_open(window));
+	window_finalize(&window);
 
 	return 0;
 }
@@ -440,7 +433,8 @@ DECLARE_TEST(render, null_box) {
 	return _test_render_box(RENDERAPI_NULL);
 }
 
-#if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_MACOS || ( FOUNDATION_PLATFORM_LINUX && !FOUNDATION_PLATFORM_LINUX_RASPBERRYPI )
+#if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_MACOS || \
+    (FOUNDATION_PLATFORM_LINUX && !FOUNDATION_PLATFORM_LINUX_RASPBERRYPI)
 
 DECLARE_TEST(render, gl4) {
 	return _test_render_api(RENDERAPI_OPENGL4);
@@ -505,16 +499,13 @@ test_render_declare(void) {
 #endif
 }
 
-static test_suite_t test_render_suite = {
-	test_render_application,
-	test_render_memory_system,
-	test_render_config,
-	test_render_declare,
-	test_render_initialize,
-	test_render_finalize,
-	0
-};
-
+static test_suite_t test_render_suite = {test_render_application,
+                                         test_render_memory_system,
+                                         test_render_config,
+                                         test_render_declare,
+                                         test_render_initialize,
+                                         test_render_finalize,
+                                         0};
 
 #if BUILD_MONOLITHIC
 
@@ -538,5 +529,3 @@ test_suite_define(void) {
 }
 
 #endif
-
-

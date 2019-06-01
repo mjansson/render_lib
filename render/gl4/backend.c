@@ -437,7 +437,7 @@ _rb_gl_check_context(unsigned int major, unsigned int minor) {
 
 	window_t window_check;
 	window_create(&window_check, WINDOW_ADAPTER_DEFAULT, STRING_CONST("__render_gl_check"), 10, 10,
-	              false);
+	              WINDOW_FLAG_NOSHOW);
 	render_drawable_t drawable;
 	render_drawable_initialize_window(&drawable, &window_check, 0);
 	context =
@@ -1213,7 +1213,7 @@ _rb_gl_upload_texture(render_backend_t* backend, render_texture_t* texture, cons
 
 		case PIXELFORMAT_PVRTC_2:
 		case PIXELFORMAT_PVRTC_4:
-			//TODO: Implement
+			// TODO: Implement
 			break;
 
 		case PIXELFORMAT_INVALID:

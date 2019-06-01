@@ -11,7 +11,8 @@
  *
  * https://github.com/rampantpixels
  *
- * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
+ * This library is put in the public domain; you can redistribute it and/or modify it without any
+ * restrictions.
  *
  */
 
@@ -23,15 +24,15 @@
 render_target_t*
 render_target_allocate(render_backend_t* backend, unsigned int width, unsigned int height,
                        pixelformat_t pixelformat, colorspace_t colorspace) {
-	render_target_t* target = memory_allocate(HASH_RENDER, sizeof(render_target_t), 0, MEMORY_PERSISTENT);
+	render_target_t* target =
+	    memory_allocate(HASH_RENDER, sizeof(render_target_t), 0, MEMORY_PERSISTENT);
 	render_target_initialize(target, backend, width, height, pixelformat, colorspace);
 	return target;
 }
 
 void
-render_target_initialize(render_target_t* target, render_backend_t* backend,
-                         unsigned int width, unsigned int height,
-                         pixelformat_t pixelformat, colorspace_t colorspace) {
+render_target_initialize(render_target_t* target, render_backend_t* backend, unsigned int width,
+                         unsigned int height, pixelformat_t pixelformat, colorspace_t colorspace) {
 	target->width = width;
 	target->height = height;
 	target->pixelformat = pixelformat;
@@ -62,4 +63,9 @@ render_target_initialize_framebuffer(render_target_t* target, render_backend_t* 
 	target->height = 0;
 	target->pixelformat = PIXELFORMAT_R8G8B8;
 	target->colorspace = COLORSPACE_LINEAR;
+}
+
+bool
+render_target_resize(render_target_t* target, unsigned int width, unsigned int height) {
+	return target->backend->vtable.resize_target(target->backend, target, width, height);
 }

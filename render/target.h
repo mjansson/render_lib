@@ -11,7 +11,8 @@
  *
  * https://github.com/rampantpixels
  *
- * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
+ * This library is put in the public domain; you can redistribute it and/or modify it without any
+ * restrictions.
  *
  */
 
@@ -29,12 +30,14 @@ render_target_allocate(render_backend_t* backend, unsigned int width, unsigned i
                        pixelformat_t pixelformat, colorspace_t colorspace);
 
 RENDER_API void
-render_target_initialize(render_target_t* target, render_backend_t* backend,
-                         unsigned int width, unsigned int height,
-                         pixelformat_t pixelformat, colorspace_t colorspace);
+render_target_initialize(render_target_t* target, render_backend_t* backend, unsigned int width,
+                         unsigned int height, pixelformat_t pixelformat, colorspace_t colorspace);
 
 RENDER_API void
 render_target_finalize(render_target_t* target);
 
 RENDER_API void
 render_target_deallocate(render_target_t* target);
+
+RENDER_API bool
+render_target_resize(render_target_t* target, unsigned int width, unsigned int height);

@@ -314,6 +314,8 @@ typedef void (*render_backend_deallocate_texture_fn)(render_backend_t*, render_t
 typedef void (*render_backend_link_buffer_fn)(render_backend_t*, render_buffer_t*,
                                               render_program_t* program);
 typedef bool (*render_backend_allocate_target_fn)(render_backend_t*, render_target_t*);
+typedef bool (*render_backend_resize_target_fn)(render_backend_t*, render_target_t*, unsigned int,
+                                                unsigned int);
 typedef void (*render_backend_deallocate_target_fn)(render_backend_t*, render_target_t*);
 typedef void (*render_pipeline_execute_fn)(render_backend_t*, render_target_t* target,
                                            render_context_t**, size_t);
@@ -350,6 +352,7 @@ struct render_backend_vtable_t {
 	render_backend_deallocate_program_fn deallocate_program;
 	render_backend_deallocate_texture_fn deallocate_texture;
 	render_backend_allocate_target_fn allocate_target;
+	render_backend_resize_target_fn resize_target;
 	render_backend_deallocate_target_fn deallocate_target;
 };
 
