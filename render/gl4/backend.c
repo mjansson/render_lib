@@ -152,11 +152,14 @@ _rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, uns
 	memset(&pfd, 0, sizeof(PIXELFORMATDESCRIPTOR));
 	pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
 	pfd.nVersion = 1;
-	pfd.dwFlags = PFD_SUPPORT_OPENGL | PFD_DRAW_TO_WINDOW | PFD_DOUBLEBUFFER;
 	pfd.iPixelType = PFD_TYPE_RGBA;
-	pfd.cColorBits = 32;
-	pfd.cDepthBits = 24;
-	pfd.cStencilBits = 0;
+	if (!share_context) {
+		pfd.dwFlags = PFD_SUPPORT_OPENGL | PFD_DRAW_TO_WINDOW | PFD_DOUBLEBUFFER;
+		pfd.cColorBits = 32;
+		pfd.cDepthBits = 32;
+	} else {
+		pfd.dwFlags = PFD_SUPPORT_OPENGL;
+	}
 	pfd.iLayerType = PFD_MAIN_PLANE;
 
 	hdc = (HDC)drawable->hdc;
@@ -175,7 +178,12 @@ _rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, uns
 		return nullptr;
 	}
 
-	wglMakeCurrent(hdc, hglrc_default);
+	if (!wglMakeCurrent(hdc, hglrc_default)) {
+		log_warn(
+		    HASH_RENDER, WARNING_INVALID_VALUE,
+		    STRING_CONST("Unable to create context, unable to make default GL context current"));
+		return nullptr;
+	}
 
 	// Create real context
 	int* attributes = 0;
@@ -200,37 +208,37 @@ _rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, uns
 		hglrc = wglCreateContextAttribsARB(hdc, (HGLRC)share_context, attributes);
 
 	if (!hglrc && (major < 3)) {
-		hglrc = wglCreateContext(hdc);
-		if (hglrc) {
-			if (share_context) {
-				wglShareLists(hglrc, (HGLRC)share_context);
-				_rb_gl_check_error("Unable to share GL render contexts");
-			}
+		hglrc = hglrc_default;
+		hglrc_default = 0;
 
+		if (share_context) {
+			wglMakeCurrent(hdc, 0);
+			wglShareLists(hglrc, (HGLRC)share_context);
 			wglMakeCurrent(hdc, hglrc);
+			_rb_gl_check_error("Unable to share GL render contexts");
+		}
 
-			const char* version = (const char*)glGetString(GL_VERSION);
-			unsigned int have_major = 0, have_minor = 0, have_revision = 0;
-			string_const_t version_arr[3];
-			size_t arrsize = string_explode(version, string_length(version), STRING_CONST("."),
-			                                version_arr, 3, false);
+		const char* version = (const char*)glGetString(GL_VERSION);
+		unsigned int have_major = 0, have_minor = 0, have_revision = 0;
+		string_const_t version_arr[3];
+		size_t arrsize = string_explode(version, string_length(version), STRING_CONST("."),
+		                                version_arr, 3, false);
 
-			have_major = (arrsize > 0) ? string_to_uint(STRING_ARGS(version_arr[0]), false) : 0;
-			have_minor = (arrsize > 1) ? string_to_uint(STRING_ARGS(version_arr[1]), false) : 0;
-			have_revision = (arrsize > 2) ? string_to_uint(STRING_ARGS(version_arr[2]), false) : 0;
+		have_major = (arrsize > 0) ? string_to_uint(STRING_ARGS(version_arr[0]), false) : 0;
+		have_minor = (arrsize > 1) ? string_to_uint(STRING_ARGS(version_arr[1]), false) : 0;
+		have_revision = (arrsize > 2) ? string_to_uint(STRING_ARGS(version_arr[2]), false) : 0;
 
-			bool supported = (have_major > major);
-			if (!supported && ((have_major == major) && (have_minor >= minor)))
-				supported = true;
+		bool supported = (have_major > major);
+		if (!supported && ((have_major == major) && (have_minor >= minor)))
+			supported = true;
 
-			if (!supported) {
-				log_warnf(HASH_RENDER, WARNING_UNSUPPORTED,
-				          STRING_CONST("GL version %d.%d not supported, got %d.%d (%s)"), major,
-				          minor, have_major, have_minor, version);
-				wglMakeCurrent(0, 0);
-				wglDeleteContext(hglrc);
-				hglrc = 0;
-			}
+		if (!supported) {
+			log_warnf(HASH_RENDER, WARNING_UNSUPPORTED,
+			          STRING_CONST("GL version %d.%d not supported, got %d.%d (%s)"), major, minor,
+			          have_major, have_minor, version);
+			wglMakeCurrent(0, 0);
+			wglDeleteContext(hglrc);
+			hglrc = 0;
 		}
 	}
 
@@ -265,7 +273,9 @@ _rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, uns
 		}
 		wglMakeCurrent(0, 0);
 	}
-	wglDeleteContext(hglrc_default);
+
+	if (hglrc_default)
+		wglDeleteContext(hglrc_default);
 
 	array_deallocate(attributes);
 
