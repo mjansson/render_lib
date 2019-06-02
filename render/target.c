@@ -67,5 +67,10 @@ render_target_initialize_framebuffer(render_target_t* target, render_backend_t* 
 
 bool
 render_target_resize(render_target_t* target, unsigned int width, unsigned int height) {
-	return target->backend->vtable.resize_target(target->backend, target, width, height);
+	bool success = target->backend->vtable.resize_target(target->backend, target, width, height);
+	if (success) {
+		target->width = width;
+		target->height = height;
+	}
+	return success;
 }

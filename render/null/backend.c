@@ -173,6 +173,16 @@ _rb_null_allocate_target(render_backend_t* backend, render_target_t* target) {
 	return true;
 }
 
+static bool
+_rb_null_resize_target(render_backend_t* backend, render_target_t* target, unsigned int width,
+                       unsigned int height) {
+	FOUNDATION_UNUSED(backend);
+	FOUNDATION_UNUSED(target);
+	FOUNDATION_UNUSED(width);
+	FOUNDATION_UNUSED(height);
+	return true;
+}
+
 static void
 _rb_null_deallocate_target(render_backend_t* backend, render_target_t* target) {
 	FOUNDATION_UNUSED(backend);
@@ -200,6 +210,7 @@ static render_backend_vtable_t _render_backend_vtable_null = {
     .deallocate_program = _rb_null_deallocate_program,
     .deallocate_texture = _rb_null_deallocate_texture,
     .allocate_target = _rb_null_allocate_target,
+    .resize_target = _rb_null_resize_target,
     .deallocate_target = _rb_null_deallocate_target};
 
 render_backend_t*

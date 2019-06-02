@@ -11,7 +11,8 @@
  *
  * https://github.com/rampantpixels
  *
- * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
+ * This library is put in the public domain; you can redistribute it and/or modify it without any
+ * restrictions.
  *
  */
 
@@ -19,100 +20,100 @@
 
 #ifndef GL_GLEXT_PROTOTYPES
 
-extern PFNGLACTIVETEXTUREPROC                glActiveTexture;
-extern PFNGLSAMPLECOVERAGEPROC               glSampleCoverage;
-extern PFNGLCOMPRESSEDTEXIMAGE3DPROC         glCompressedTexImage3D;
-extern PFNGLCOMPRESSEDTEXIMAGE2DPROC         glCompressedTexImage2D;
-extern PFNGLCOMPRESSEDTEXIMAGE1DPROC         glCompressedTexImage1D;
-extern PFNGLCOMPRESSEDTEXSUBIMAGE3DPROC      glCompressedTexSubImage3D;
-extern PFNGLCOMPRESSEDTEXSUBIMAGE2DPROC      glCompressedTexSubImage2D;
-extern PFNGLCOMPRESSEDTEXSUBIMAGE1DPROC      glCompressedTexSubImage1D;
-extern PFNGLGETCOMPRESSEDTEXIMAGEPROC        glGetCompressedTexImage;
-extern PFNGLGENERATEMIPMAPPROC               glGenerateMipmap;
+extern PFNGLACTIVETEXTUREPROC glActiveTexture;
+extern PFNGLSAMPLECOVERAGEPROC glSampleCoverage;
+extern PFNGLCOMPRESSEDTEXIMAGE3DPROC glCompressedTexImage3D;
+extern PFNGLCOMPRESSEDTEXIMAGE2DPROC glCompressedTexImage2D;
+extern PFNGLCOMPRESSEDTEXIMAGE1DPROC glCompressedTexImage1D;
+extern PFNGLCOMPRESSEDTEXSUBIMAGE3DPROC glCompressedTexSubImage3D;
+extern PFNGLCOMPRESSEDTEXSUBIMAGE2DPROC glCompressedTexSubImage2D;
+extern PFNGLCOMPRESSEDTEXSUBIMAGE1DPROC glCompressedTexSubImage1D;
+extern PFNGLGETCOMPRESSEDTEXIMAGEPROC glGetCompressedTexImage;
+extern PFNGLGENERATEMIPMAPPROC glGenerateMipmap;
 
-extern PFNGLGENQUERIESPROC                   glGenQueries;
-extern PFNGLDELETEQUERIESPROC                glDeleteQueries;
-extern PFNGLISQUERYPROC                      glIsQuery;
-extern PFNGLBEGINQUERYPROC                   glBeginQuery;
-extern PFNGLENDQUERYPROC                     glEndQuery;
-extern PFNGLGETQUERYIVPROC                   glGetQueryiv;
-extern PFNGLGETQUERYOBJECTIVPROC             glGetQueryObjectiv;
-extern PFNGLGETQUERYOBJECTUIVPROC            glGetQueryObjectuiv;
+extern PFNGLGENQUERIESPROC glGenQueries;
+extern PFNGLDELETEQUERIESPROC glDeleteQueries;
+extern PFNGLISQUERYPROC glIsQuery;
+extern PFNGLBEGINQUERYPROC glBeginQuery;
+extern PFNGLENDQUERYPROC glEndQuery;
+extern PFNGLGETQUERYIVPROC glGetQueryiv;
+extern PFNGLGETQUERYOBJECTIVPROC glGetQueryObjectiv;
+extern PFNGLGETQUERYOBJECTUIVPROC glGetQueryObjectuiv;
 
-extern PFNGLBINDBUFFERPROC                   glBindBuffer;
-extern PFNGLDELETEBUFFERSPROC                glDeleteBuffers;
-extern PFNGLGENBUFFERSPROC                   glGenBuffers;
-extern PFNGLISBUFFERPROC                     glIsBuffer;
-extern PFNGLBUFFERDATAPROC                   glBufferData;
-extern PFNGLBUFFERSUBDATAPROC                glBufferSubData;
-extern PFNGLGETBUFFERSUBDATAPROC             glGetBufferSubData;
-extern PFNGLMAPBUFFERPROC                    glMapBuffer;
-extern PFNGLUNMAPBUFFERPROC                  glUnmapBuffer;
-extern PFNGLGETBUFFERPARAMETERIVPROC         glGetBufferParameteriv;
-extern PFNGLGETBUFFERPOINTERVPROC            glGetBufferPointerv;
+extern PFNGLBINDBUFFERPROC glBindBuffer;
+extern PFNGLDELETEBUFFERSPROC glDeleteBuffers;
+extern PFNGLGENBUFFERSPROC glGenBuffers;
+extern PFNGLISBUFFERPROC glIsBuffer;
+extern PFNGLBUFFERDATAPROC glBufferData;
+extern PFNGLBUFFERSUBDATAPROC glBufferSubData;
+extern PFNGLGETBUFFERSUBDATAPROC glGetBufferSubData;
+extern PFNGLMAPBUFFERPROC glMapBuffer;
+extern PFNGLUNMAPBUFFERPROC glUnmapBuffer;
+extern PFNGLGETBUFFERPARAMETERIVPROC glGetBufferParameteriv;
+extern PFNGLGETBUFFERPOINTERVPROC glGetBufferPointerv;
 
-extern PFNGLBLENDEQUATIONSEPARATEPROC        glBlendEquationSeparate;
-extern PFNGLSTENCILOPSEPARATEPROC            glStencilOpSeparate;
-extern PFNGLSTENCILFUNCSEPARATEPROC          glStencilFuncSeparate;
-extern PFNGLSTENCILMASKSEPARATEPROC          glStencilMaskSeparate;
-extern PFNGLDRAWBUFFERSPROC                  glDrawBuffers;
+extern PFNGLBLENDEQUATIONSEPARATEPROC glBlendEquationSeparate;
+extern PFNGLSTENCILOPSEPARATEPROC glStencilOpSeparate;
+extern PFNGLSTENCILFUNCSEPARATEPROC glStencilFuncSeparate;
+extern PFNGLSTENCILMASKSEPARATEPROC glStencilMaskSeparate;
+extern PFNGLDRAWBUFFERSPROC glDrawBuffers;
 
-extern PFNGLATTACHSHADERPROC                 glAttachShader;
-extern PFNGLCOMPILESHADERPROC                glCompileShader;
-extern PFNGLCREATEPROGRAMPROC                glCreateProgram;
-extern PFNGLCREATESHADERPROC                 glCreateShader;
-extern PFNGLDELETEPROGRAMPROC                glDeleteProgram;
-extern PFNGLDELETESHADERPROC                 glDeleteShader;
-extern PFNGLDETACHSHADERPROC                 glDetachShader;
-extern PFNGLGETATTACHEDSHADERSPROC           glGetAttachedShaders;
+extern PFNGLATTACHSHADERPROC glAttachShader;
+extern PFNGLCOMPILESHADERPROC glCompileShader;
+extern PFNGLCREATEPROGRAMPROC glCreateProgram;
+extern PFNGLCREATESHADERPROC glCreateShader;
+extern PFNGLDELETEPROGRAMPROC glDeleteProgram;
+extern PFNGLDELETESHADERPROC glDeleteShader;
+extern PFNGLDETACHSHADERPROC glDetachShader;
+extern PFNGLGETATTACHEDSHADERSPROC glGetAttachedShaders;
 
-extern PFNGLGETPROGRAMIVPROC                 glGetProgramiv;
-extern PFNGLGETPROGRAMINFOLOGPROC            glGetProgramInfoLog;
-extern PFNGLGETSHADERIVPROC                  glGetShaderiv;
-extern PFNGLGETSHADERINFOLOGPROC             glGetShaderInfoLog;
-extern PFNGLGETSHADERSOURCEPROC              glGetShaderSource;
-extern PFNGLISPROGRAMPROC                    glIsProgram;
-extern PFNGLISSHADERPROC                     glIsShader;
-extern PFNGLLINKPROGRAMPROC                  glLinkProgram;
-extern PFNGLSHADERSOURCEPROC                 glShaderSource;
-extern PFNGLUSEPROGRAMPROC                   glUseProgram;
-extern PFNGLVALIDATEPROGRAMPROC              glValidateProgram;
+extern PFNGLGETPROGRAMIVPROC glGetProgramiv;
+extern PFNGLGETPROGRAMINFOLOGPROC glGetProgramInfoLog;
+extern PFNGLGETSHADERIVPROC glGetShaderiv;
+extern PFNGLGETSHADERINFOLOGPROC glGetShaderInfoLog;
+extern PFNGLGETSHADERSOURCEPROC glGetShaderSource;
+extern PFNGLISPROGRAMPROC glIsProgram;
+extern PFNGLISSHADERPROC glIsShader;
+extern PFNGLLINKPROGRAMPROC glLinkProgram;
+extern PFNGLSHADERSOURCEPROC glShaderSource;
+extern PFNGLUSEPROGRAMPROC glUseProgram;
+extern PFNGLVALIDATEPROGRAMPROC glValidateProgram;
 
-extern PFNGLUNIFORM1IPROC                    glUniform1i;
-extern PFNGLUNIFORM4FVPROC                   glUniform4fv;
-extern PFNGLUNIFORM4IVPROC                   glUniform4iv;
-extern PFNGLUNIFORMMATRIX4FVPROC             glUniformMatrix4fv;
-extern PFNGLGETACTIVEUNIFORMPROC             glGetActiveUniform;
-extern PFNGLGETUNIFORMLOCATIONPROC           glGetUniformLocation;
-extern PFNGLGETUNIFORMFVPROC                 glGetUniformfv;
-extern PFNGLGETUNIFORMIVPROC                 glGetUniformiv;
+extern PFNGLUNIFORM1IPROC glUniform1i;
+extern PFNGLUNIFORM4FVPROC glUniform4fv;
+extern PFNGLUNIFORM4IVPROC glUniform4iv;
+extern PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv;
+extern PFNGLGETACTIVEUNIFORMPROC glGetActiveUniform;
+extern PFNGLGETUNIFORMLOCATIONPROC glGetUniformLocation;
+extern PFNGLGETUNIFORMFVPROC glGetUniformfv;
+extern PFNGLGETUNIFORMIVPROC glGetUniformiv;
 
-extern PFNGLBINDATTRIBLOCATIONPROC           glBindAttribLocation;
-extern PFNGLGETACTIVEATTRIBPROC              glGetActiveAttrib;
-extern PFNGLGETATTRIBLOCATIONPROC            glGetAttribLocation;
+extern PFNGLBINDATTRIBLOCATIONPROC glBindAttribLocation;
+extern PFNGLGETACTIVEATTRIBPROC glGetActiveAttrib;
+extern PFNGLGETATTRIBLOCATIONPROC glGetAttribLocation;
 
-extern PFNGLDISABLEVERTEXATTRIBARRAYPROC     glDisableVertexAttribArray;
-extern PFNGLENABLEVERTEXATTRIBARRAYPROC      glEnableVertexAttribArray;
-extern PFNGLGETVERTEXATTRIBDVPROC            glGetVertexAttribdv;
-extern PFNGLGETVERTEXATTRIBFVPROC            glGetVertexAttribfv;
-extern PFNGLGETVERTEXATTRIBIVPROC            glGetVertexAttribiv;
-extern PFNGLGETVERTEXATTRIBPOINTERVPROC      glGetVertexAttribPointerv;
-extern PFNGLVERTEXATTRIBPOINTERPROC          glVertexAttribPointer;
+extern PFNGLDISABLEVERTEXATTRIBARRAYPROC glDisableVertexAttribArray;
+extern PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray;
+extern PFNGLGETVERTEXATTRIBDVPROC glGetVertexAttribdv;
+extern PFNGLGETVERTEXATTRIBFVPROC glGetVertexAttribfv;
+extern PFNGLGETVERTEXATTRIBIVPROC glGetVertexAttribiv;
+extern PFNGLGETVERTEXATTRIBPOINTERVPROC glGetVertexAttribPointerv;
+extern PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer;
 
-extern PFNGLBINDFRAMEBUFFERPROC              glBindFramebuffer;
-extern PFNGLDELETEFRAMEBUFFERSPROC           glDeleteFramebuffers;
-extern PFNGLGENFRAMEBUFFERSPROC              glGenFramebuffers;
-extern PFNGLCHECKFRAMEBUFFERSTATUSPROC       glCheckFramebufferStatus;
-extern PFNGLBINDRENDERBUFFERPROC             glBindRenderbuffer;
-extern PFNGLDELETERENDERBUFFERSPROC          glDeleteRenderbuffers;
-extern PFNGLGENRENDERBUFFERSPROC             glGenRenderbuffers;
-extern PFNGLRENDERBUFFERSTORAGEPROC          glRenderbufferStorage;
-extern PFNGLFRAMEBUFFERTEXTUREPROC           glFramebufferTexture;
-extern PFNGLFRAMEBUFFERRENDERBUFFERPROC      glFramebufferRenderbuffer;
+extern PFNGLBINDFRAMEBUFFERPROC glBindFramebuffer;
+extern PFNGLDELETEFRAMEBUFFERSPROC glDeleteFramebuffers;
+extern PFNGLGENFRAMEBUFFERSPROC glGenFramebuffers;
+extern PFNGLCHECKFRAMEBUFFERSTATUSPROC glCheckFramebufferStatus;
+extern PFNGLBINDRENDERBUFFERPROC glBindRenderbuffer;
+extern PFNGLDELETERENDERBUFFERSPROC glDeleteRenderbuffers;
+extern PFNGLGENRENDERBUFFERSPROC glGenRenderbuffers;
+extern PFNGLRENDERBUFFERSTORAGEPROC glRenderbufferStorage;
+extern PFNGLFRAMEBUFFERTEXTUREPROC glFramebufferTexture;
+extern PFNGLFRAMEBUFFERRENDERBUFFERPROC glFramebufferRenderbuffer;
 
-extern PFNGLBINDVERTEXARRAYPROC              glBindVertexArray;
-extern PFNGLDELETEVERTEXARRAYSPROC           glDeleteVertexArrays;
-extern PFNGLGENVERTEXARRAYSPROC              glGenVertexArrays;
+extern PFNGLBINDVERTEXARRAYPROC glBindVertexArray;
+extern PFNGLDELETEVERTEXARRAYSPROC glDeleteVertexArrays;
+extern PFNGLGENVERTEXARRAYSPROC glGenVertexArrays;
 
 #endif
 
@@ -152,7 +153,9 @@ RENDER_EXTERN bool
 _rb_gl_check_extension(const char* name, size_t length);
 
 RENDER_EXTERN void*
-_rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, unsigned int minor, void* share_context, const pixelformat_t pixelformat, const colorspace_t colorspace);
+_rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, unsigned int minor,
+                      void* share_context, const pixelformat_t pixelformat,
+                      const colorspace_t colorspace);
 
 RENDER_EXTERN void
 _rb_gl_destroy_context(const render_drawable_t* drawable, void* context);
@@ -164,11 +167,15 @@ RENDER_EXTERN size_t
 _rb_gl_enumerate_adapters(render_backend_t* backend, unsigned int* store, size_t capacity);
 
 RENDER_EXTERN size_t
-_rb_gl_enumerate_modes(render_backend_t* backend, unsigned int adapter,
-                       render_resolution_t* store, size_t capacity);
+_rb_gl_enumerate_modes(render_backend_t* backend, unsigned int adapter, render_resolution_t* store,
+                       size_t capacity);
 
 RENDER_EXTERN bool
 _rb_gl_allocate_target(render_backend_t* backend, render_target_t* target);
+
+RENDER_EXTERN bool
+_rb_gl_resize_target(render_backend_t* backend, render_target_t* target, unsigned int width,
+                     unsigned int height);
 
 RENDER_EXTERN void
 _rb_gl_deallocate_target(render_backend_t* backend, render_target_t* target);
@@ -177,8 +184,8 @@ RENDER_EXTERN bool
 _rb_gl_activate_target(render_backend_t* backend, render_target_t* target);
 
 RENDER_EXTERN bool
-_rb_gl_upload_texture(render_backend_t* backend, render_texture_t* texture,
-                      const void* buffer, size_t size);
+_rb_gl_upload_texture(render_backend_t* backend, render_texture_t* texture, const void* buffer,
+                      size_t size);
 
 RENDER_EXTERN void
 _rb_gl_deallocate_texture(render_backend_t* backend, render_texture_t* texture);

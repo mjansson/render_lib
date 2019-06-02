@@ -1095,6 +1095,76 @@ failure:
 	return false;
 }
 
+bool
+_rb_gl_resize_target(render_backend_t* backend, render_target_t* target, unsigned int width,
+                     unsigned int height) {
+	FOUNDATION_UNUSED(backend);
+	if (!target->backend_data[0])
+		return true;
+
+	GLuint frame_buffer = (GLuint)target->backend_data[0];
+	GLuint depth_buffer = (GLuint)target->backend_data[1];
+	GLuint render_texture = (GLuint)target->backend_data[2];
+	GLenum draw_buffers = GL_COLOR_ATTACHMENT0;
+	GLenum status;
+
+	glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer);
+	if (_rb_gl_check_error("Unable to resize render target: Error binding framebuffer")) {
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		return false;
+	}
+
+	glBindTexture(GL_TEXTURE_2D, render_texture);
+
+	GLenum glformat = GL_RGB;
+	GLint internalformat = (target->colorspace == COLORSPACE_sRGB) ? GL_SRGB_EXT : GL_RGB;
+	if (target->pixelformat == PIXELFORMAT_R8G8B8A8) {
+		glformat = GL_RGBA;
+		internalformat = (target->colorspace == COLORSPACE_sRGB) ? GL_SRGB8_ALPHA8_EXT : GL_RGBA;
+	}
+
+	glTexImage2D(GL_TEXTURE_2D, 0, internalformat, (GLsizei)width, (GLsizei)height, 0, glformat,
+	             GL_UNSIGNED_BYTE, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	if (_rb_gl_check_error("Unable to resize render target: Error setting texture storage "
+	                       "dimensions and format")) {
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		return false;
+	}
+
+	glBindRenderbuffer(GL_RENDERBUFFER, depth_buffer);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, (GLsizei)width, (GLsizei)height);
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+	if (_rb_gl_check_error(
+	        "Unable to resize render target: Error setting depth buffer storage dimensions")) {
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		return false;
+	}
+
+	glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, render_texture, 0);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_buffer);
+	if (_rb_gl_check_error("Unable to resize render target: Error setting target attachments")) {
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		return false;
+	}
+
+	glDrawBuffers(1, &draw_buffers);
+
+	status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if (status != GL_FRAMEBUFFER_COMPLETE) {
+		log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
+		           STRING_CONST("Unable to create render target: Frame buffer not complete (%d)"),
+		           (int)status);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		return false;
+	}
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	return true;
+}
+
 void
 _rb_gl_deallocate_target(render_backend_t* backend, render_target_t* target) {
 	FOUNDATION_UNUSED(backend);
@@ -1542,6 +1612,7 @@ static render_backend_vtable_t _render_backend_vtable_gl4 = {
     .deallocate_program = _rb_gl4_deallocate_program,
     .deallocate_texture = _rb_gl_deallocate_texture,
     .allocate_target = _rb_gl_allocate_target,
+    .resize_target = _rb_gl_resize_target,
     .deallocate_target = _rb_gl_deallocate_target,
     .dispatch = _rb_gl4_dispatch,
     .flip = _rb_gl4_flip};
