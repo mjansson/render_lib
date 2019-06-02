@@ -719,6 +719,7 @@ static render_backend_vtable_t _render_backend_vtable_gl2 = {
 
 render_backend_t*
 render_backend_gl2_allocate(void) {
+	_rb_gl_init_gl_extensions();
 	if (!_rb_gl_check_context(2, 0))
 		return 0;
 

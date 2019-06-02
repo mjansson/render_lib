@@ -32,6 +32,9 @@
 #  include "gl/glext.h"
 #  include "gl/wglext.h"
 
+RENDER_EXTERN void
+_rb_gl_init_gl_extensions(void);
+
 #elif FOUNDATION_PLATFORM_MACOS
 
 #  define GL_GLEXT_PROTOTYPES

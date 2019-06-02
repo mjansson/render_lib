@@ -137,109 +137,201 @@ _rb_gl_destroy_context(const render_drawable_t* drawable, void* context) {
 #endif
 }
 
-void*
-_rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, unsigned int minor,
-                      void* share_context, const pixelformat_t pixelformat,
-                      const colorspace_t colorspace) {
-	FOUNDATION_UNUSED(pixelformat);
 #if FOUNDATION_PLATFORM_WINDOWS
 
-	HDC hdc = 0;
-	HGLRC hglrc_default = 0;
-	HGLRC hglrc = 0;
+static bool wgl_initialized;
+static PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB;
+static PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB;
+
+RENDER_EXTERN void
+_rb_gl_init_gl_extensions(void) {
+	if (wgl_initialized)
+		return;
+	wgl_initialized = true;
+
+	window_t window_dummy;
+	window_create(&window_dummy, WINDOW_ADAPTER_DEFAULT, STRING_CONST("__render_gl_init"), 10, 10,
+	              WINDOW_FLAG_NOSHOW);
+	render_drawable_t drawable;
+	render_drawable_initialize_window(&drawable, &window_dummy, 0);
 
 	PIXELFORMATDESCRIPTOR pfd;
 	memset(&pfd, 0, sizeof(PIXELFORMATDESCRIPTOR));
 	pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
 	pfd.nVersion = 1;
 	pfd.iPixelType = PFD_TYPE_RGBA;
-	if (!share_context) {
-		pfd.dwFlags = PFD_SUPPORT_OPENGL | PFD_DRAW_TO_WINDOW | PFD_DOUBLEBUFFER;
-		pfd.cColorBits = 32;
-		pfd.cDepthBits = 32;
-	} else {
-		pfd.dwFlags = PFD_SUPPORT_OPENGL;
-	}
+	pfd.dwFlags = PFD_SUPPORT_OPENGL | PFD_DRAW_TO_WINDOW | PFD_DOUBLEBUFFER;
+	pfd.cColorBits = 24;
+	pfd.cDepthBits = 24;
 	pfd.iLayerType = PFD_MAIN_PLANE;
 
-	hdc = (HDC)drawable->hdc;
-	if (!hdc) {
-		log_warn(HASH_RENDER, WARNING_INVALID_VALUE,
-		         STRING_CONST("Unable to create context, window has no device context"));
-		return nullptr;
-	}
-
+	HDC hdc = (HDC)drawable.hdc;
 	int pformat = ChoosePixelFormat(hdc, &pfd);
 	SetPixelFormat(hdc, pformat, &pfd);
-	hglrc_default = wglCreateContext(hdc);
-	if (!hglrc_default) {
+	HGLRC hglrc = wglCreateContext(hdc);
+	if (!hglrc) {
 		log_warn(HASH_RENDER, WARNING_INVALID_VALUE,
-		         STRING_CONST("Unable to create context, unable to create default GL context"));
-		return nullptr;
-	}
-
-	if (!wglMakeCurrent(hdc, hglrc_default)) {
+		         STRING_CONST(
+		             "Unable to initialize WGL extensions, unable to create default GL context"));
+	} else if (!wglMakeCurrent(hdc, hglrc)) {
 		log_warn(
 		    HASH_RENDER, WARNING_INVALID_VALUE,
-		    STRING_CONST("Unable to create context, unable to make default GL context current"));
+		    STRING_CONST(
+		        "Unable to initialize WGL extensions, unable to make default GL context current"));
+	} else {
+		wglChoosePixelFormatARB =
+		    (PFNWGLCHOOSEPIXELFORMATARBPROC)_rb_gl_get_proc_address("wglChoosePixelFormatARB");
+		wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)_rb_gl_get_proc_address(
+		    "wglCreateContextAttribsARB");
+	}
+
+	wglMakeCurrent(0, 0);
+	if (hglrc)
+		wglDeleteContext(hglrc);
+	window_finalize(&window_dummy);
+	render_drawable_finalize(&drawable);
+}
+
+#endif
+
+void*
+_rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, unsigned int minor,
+                      void* share_context, const pixelformat_t pixelformat,
+                      const colorspace_t colorspace) {
+	FOUNDATION_UNUSED(pixelformat);
+#if FOUNDATION_PLATFORM_WINDOWS
+	HDC hdc = (HDC)drawable->hdc;
+
+	// First set pixel format
+	if (wglChoosePixelFormatARB) {
+		int pixel_format_attribs[] = {WGL_DRAW_TO_WINDOW_ARB,
+		                              GL_TRUE,
+		                              WGL_SUPPORT_OPENGL_ARB,
+		                              GL_TRUE,
+		                              WGL_DOUBLE_BUFFER_ARB,
+		                              GL_TRUE,
+		                              WGL_ACCELERATION_ARB,
+		                              WGL_FULL_ACCELERATION_ARB,
+		                              WGL_PIXEL_TYPE_ARB,
+		                              WGL_TYPE_RGBA_ARB,
+		                              WGL_COLOR_BITS_ARB,
+		                              32,
+		                              WGL_DEPTH_BITS_ARB,
+		                              32,
+		                              WGL_STENCIL_BITS_ARB,
+		                              0,
+		                              0};
+
+		int pixel_format;
+		UINT num_formats;
+		wglChoosePixelFormatARB(hdc, pixel_format_attribs, 0, 1, &pixel_format, &num_formats);
+		if (!num_formats) {
+			log_warn(HASH_RENDER, WARNING_INVALID_VALUE,
+			         STRING_CONST("Unable to create context, unable to choose pixel format"));
+			return nullptr;
+		}
+
+		PIXELFORMATDESCRIPTOR pfd;
+		memset(&pfd, 0, sizeof(PIXELFORMATDESCRIPTOR));
+		pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
+		DescribePixelFormat(hdc, pixel_format, sizeof(pfd), &pfd);
+		if (!SetPixelFormat(hdc, pixel_format, &pfd)) {
+			log_warn(HASH_RENDER, WARNING_INVALID_VALUE,
+			         STRING_CONST("Unable to create context, unable to set pixel format"));
+			return nullptr;
+		}
+	} else {
+		PIXELFORMATDESCRIPTOR pfd;
+		memset(&pfd, 0, sizeof(PIXELFORMATDESCRIPTOR));
+		pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
+		pfd.nVersion = 1;
+		pfd.iPixelType = PFD_TYPE_RGBA;
+		if (!share_context) {
+			pfd.dwFlags = PFD_SUPPORT_OPENGL | PFD_DRAW_TO_WINDOW | PFD_DOUBLEBUFFER;
+			pfd.cColorBits = 32;
+			if (pixelformat == PIXELFORMAT_R8G8B8A8)
+				pfd.cAlphaBits = 8;
+			pfd.cDepthBits = 32;
+		} else {
+			pfd.dwFlags = PFD_SUPPORT_OPENGL;
+		}
+		pfd.iLayerType = PFD_MAIN_PLANE;
+
+		int pixel_format = ChoosePixelFormat(hdc, &pfd);
+		if (!pixel_format) {
+			log_warn(HASH_RENDER, WARNING_INVALID_VALUE,
+			         STRING_CONST("Unable to create context, unable to choose pixel format"));
+			return nullptr;
+		}
+
+		if (!SetPixelFormat(hdc, pixel_format, &pfd)) {
+			log_warn(HASH_RENDER, WARNING_INVALID_VALUE,
+			         STRING_CONST("Unable to create context, unable to set pixel format"));
+			return nullptr;
+		}
+	}
+
+	// Now create context
+	HGLRC hglrc = 0;
+	if (wglCreateContextAttribsARB) {
+		int* attributes = 0;
+		array_push(attributes, WGL_CONTEXT_MAJOR_VERSION_ARB);
+		array_push(attributes, major);
+		array_push(attributes, WGL_CONTEXT_MINOR_VERSION_ARB);
+		array_push(attributes, minor);
+		array_push(attributes, WGL_CONTEXT_FLAGS_ARB);
+		array_push(attributes, 0);  // WGL_CONTEXT_DEBUG_BIT_ARB
+		array_push(attributes, WGL_CONTEXT_PROFILE_MASK_ARB);
+		array_push(attributes, WGL_CONTEXT_CORE_PROFILE_BIT_ARB);
+		FOUNDATION_UNUSED(colorspace);
+		if ((colorspace == COLORSPACE_sRGB) && (major < 4)) {
+			array_push(attributes, WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB);
+			array_push(attributes, GL_TRUE);
+		}
+		array_push(attributes, 0);
+
+		hglrc = wglCreateContextAttribsARB(hdc, (HGLRC)share_context, attributes);
+		array_deallocate(attributes);
+	} else {
+		hglrc = wglCreateContext(hdc);
+		wglShareLists(hglrc, (HGLRC)share_context);
+		_rb_gl_check_error("Unable to share GL render contexts");
+	}
+
+	if (!hglrc) {
+		int err = GetLastError();
+		string_const_t errmsg = system_error_message(err);
+		log_infof(HASH_RENDER,
+		          STRING_CONST("Unable to create GL context for version %d.%d: %.*s (%08x)"), major,
+		          minor, STRING_FORMAT(errmsg), err);
+		return nullptr;
+	} else if (!wglMakeCurrent(hdc, hglrc)) {
+		log_warn(HASH_RENDER, WARNING_INVALID_VALUE,
+		         STRING_CONST("Unable to create context, unable to make GL context current"));
 		return nullptr;
 	}
 
-	// Create real context
-	int* attributes = 0;
-	array_push(attributes, WGL_CONTEXT_MAJOR_VERSION_ARB);
-	array_push(attributes, major);
-	array_push(attributes, WGL_CONTEXT_MINOR_VERSION_ARB);
-	array_push(attributes, minor);
-	array_push(attributes, WGL_CONTEXT_FLAGS_ARB);
-	array_push(attributes, 0);  // WGL_CONTEXT_DEBUG_BIT_ARB
-	array_push(attributes, WGL_CONTEXT_PROFILE_MASK_ARB);
-	array_push(attributes, WGL_CONTEXT_CORE_PROFILE_BIT_ARB);
-	FOUNDATION_UNUSED(colorspace);
-	if ((colorspace == COLORSPACE_sRGB) && (major < 4)) {
-		array_push(attributes, WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB);
-		array_push(attributes, GL_TRUE);
-	}
-	array_push(attributes, 0);
+	const char* version = (const char*)glGetString(GL_VERSION);
+	unsigned int have_major = 0, have_minor = 0, have_revision = 0;
+	string_const_t version_arr[3];
+	size_t arrsize =
+	    string_explode(version, string_length(version), STRING_CONST("."), version_arr, 3, false);
 
-	PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB =
-	    (PFNWGLCREATECONTEXTATTRIBSARBPROC)_rb_gl_get_proc_address("wglCreateContextAttribsARB");
-	if (wglCreateContextAttribsARB)
-		hglrc = wglCreateContextAttribsARB(hdc, (HGLRC)share_context, attributes);
+	have_major = (arrsize > 0) ? string_to_uint(STRING_ARGS(version_arr[0]), false) : 0;
+	have_minor = (arrsize > 1) ? string_to_uint(STRING_ARGS(version_arr[1]), false) : 0;
+	have_revision = (arrsize > 2) ? string_to_uint(STRING_ARGS(version_arr[2]), false) : 0;
 
-	if (!hglrc && (major < 3)) {
-		hglrc = hglrc_default;
-		hglrc_default = 0;
+	bool supported = (have_major > major);
+	if (!supported && ((have_major == major) && (have_minor >= minor)))
+		supported = true;
 
-		if (share_context) {
-			wglMakeCurrent(hdc, 0);
-			wglShareLists(hglrc, (HGLRC)share_context);
-			wglMakeCurrent(hdc, hglrc);
-			_rb_gl_check_error("Unable to share GL render contexts");
-		}
-
-		const char* version = (const char*)glGetString(GL_VERSION);
-		unsigned int have_major = 0, have_minor = 0, have_revision = 0;
-		string_const_t version_arr[3];
-		size_t arrsize = string_explode(version, string_length(version), STRING_CONST("."),
-		                                version_arr, 3, false);
-
-		have_major = (arrsize > 0) ? string_to_uint(STRING_ARGS(version_arr[0]), false) : 0;
-		have_minor = (arrsize > 1) ? string_to_uint(STRING_ARGS(version_arr[1]), false) : 0;
-		have_revision = (arrsize > 2) ? string_to_uint(STRING_ARGS(version_arr[2]), false) : 0;
-
-		bool supported = (have_major > major);
-		if (!supported && ((have_major == major) && (have_minor >= minor)))
-			supported = true;
-
-		if (!supported) {
-			log_warnf(HASH_RENDER, WARNING_UNSUPPORTED,
-			          STRING_CONST("GL version %d.%d not supported, got %d.%d (%s)"), major, minor,
-			          have_major, have_minor, version);
-			wglMakeCurrent(0, 0);
-			wglDeleteContext(hglrc);
-			hglrc = 0;
-		}
+	if (!supported) {
+		log_warnf(HASH_RENDER, WARNING_UNSUPPORTED,
+		          STRING_CONST("GL version %d.%d not supported, got %d.%d (%s)"), major, minor,
+		          have_major, have_minor, version);
+		wglMakeCurrent(0, 0);
+		wglDeleteContext(hglrc);
+		hglrc = 0;
 	}
 
 	if (hglrc) {
@@ -264,20 +356,8 @@ _rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, uns
 			log_info(HASH_RENDER, STRING_CONST("sRGB framebuffer"));
 		}
 	} else {
-		if (major >= 3) {
-			int err = GetLastError();
-			string_const_t errmsg = system_error_message(err);
-			log_infof(HASH_RENDER,
-			          STRING_CONST("Unable to create GL context for version %d.%d: %.*s (%08x)"),
-			          major, minor, STRING_FORMAT(errmsg), err);
-		}
 		wglMakeCurrent(0, 0);
 	}
-
-	if (hglrc_default)
-		wglDeleteContext(hglrc_default);
-
-	array_deallocate(attributes);
 
 	return hglrc;
 
@@ -460,7 +540,8 @@ _rb_gl_check_context(unsigned int major, unsigned int minor) {
 
 #elif FOUNDATION_PLATFORM_LINUX || FOUNDATION_PLATFORM_MACOS
 
-	context = _rb_gl_create_context(0, major, minor, 0, PIXELFORMAT_R8G8B8, COLORSPACE_LINEAR);
+	context =
+	    _rb_gl_create_context(backend, 0, major, minor, 0, PIXELFORMAT_R8G8B8, COLORSPACE_LINEAR);
 
 #else
 #error Not implemented
@@ -1634,6 +1715,7 @@ static render_backend_vtable_t _render_backend_vtable_gl4 = {
 
 render_backend_t*
 render_backend_gl4_allocate(void) {
+	_rb_gl_init_gl_extensions();
 	if (!_rb_gl_check_context(4, 0))
 		return 0;
 
