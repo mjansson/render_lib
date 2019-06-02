@@ -177,9 +177,10 @@ static bool
 _rb_null_resize_target(render_backend_t* backend, render_target_t* target, unsigned int width,
                        unsigned int height) {
 	FOUNDATION_UNUSED(backend);
-	FOUNDATION_UNUSED(target);
-	FOUNDATION_UNUSED(width);
-	FOUNDATION_UNUSED(height);
+	if (target) {
+		target->width = width;
+		target->height = height;
+	}
 	return true;
 }
 
