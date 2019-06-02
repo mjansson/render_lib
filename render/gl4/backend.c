@@ -1098,9 +1098,14 @@ failure:
 bool
 _rb_gl_resize_target(render_backend_t* backend, render_target_t* target, unsigned int width,
                      unsigned int height) {
-	FOUNDATION_UNUSED(backend);
-	if (!target->backend_data[0])
+	if (!target->backend_data[0]) {
+		// If the frame buffer was resized, update the drawable info as well
+		backend->drawable.width = width;
+		backend->drawable.height = height;
+		backend->framebuffer.width = width;
+		backend->framebuffer.height = height;
 		return true;
+	}
 
 	GLuint frame_buffer = (GLuint)target->backend_data[0];
 	GLuint depth_buffer = (GLuint)target->backend_data[1];
