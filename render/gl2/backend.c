@@ -50,6 +50,9 @@ typedef struct render_backend_gl2_t {
 	void* context;
 	atomic32_t context_used;
 
+	void** concurrent_context;
+	atomic32_t* concurrent_used;
+
 	render_resolution_t resolution;
 
 	bool use_clear_scissor;
@@ -64,10 +67,19 @@ _rb_gl2_disable_thread(render_backend_t* backend) {
 
 	void* thread_context = _rb_gl_get_thread_context();
 	if (thread_context) {
-		if (thread_context == backend_gl2->context)
+		if (thread_context == backend_gl2->context) {
 			atomic_store32(&backend_gl2->context_used, 0, memory_order_release);
-		else
-			_rb_gl_destroy_context(&backend_gl2->drawable, thread_context);
+		} else {
+			for (uint64_t icontext = 0; icontext < backend->concurrency; ++icontext) {
+				if (backend_gl2->concurrent_context[icontext] == thread_context) {
+					if (wglGetCurrentContext() == thread_context)
+						wglMakeCurrent(0, 0);
+					atomic_store32(&backend_gl2->concurrent_used[icontext], 0,
+					               memory_order_release);
+					break;
+				}
+			}
+		}
 		log_debug(HASH_RENDER, STRING_CONST("Disabled thread for GL2 rendering"));
 	}
 	_rb_gl_set_thread_context(0);
@@ -82,11 +94,24 @@ _rb_gl2_enable_thread(render_backend_t* backend) {
 		if (!backend_gl2->context)
 			return;
 		if (atomic_cas32(&backend_gl2->context_used, 1, 0, memory_order_release,
-		                 memory_order_acquire))
+		                 memory_order_acquire)) {
 			thread_context = backend_gl2->context;
-		else
-			thread_context = _rb_gl_create_context(&backend->drawable, 2, 0, backend_gl2->context,
-			                                       backend->pixelformat, backend->colorspace);
+		} else {
+			for (uint64_t icontext = 0; icontext < backend->concurrency; ++icontext) {
+				if (atomic_cas32(&backend_gl2->concurrent_used[icontext], 1, 0,
+				                 memory_order_release, memory_order_acquire)) {
+					thread_context = backend_gl2->concurrent_context[icontext];
+					break;
+				}
+			}
+			if (!thread_context) {
+				log_warn(
+				    HASH_RENDER, WARNING_INVALID_VALUE,
+				    STRING_CONST(
+				        "Unable to enable thread for GL2 rendering, no free concurrent context"));
+				return;
+			}
+		}
 		_rb_gl_set_thread_context(thread_context);
 	}
 
@@ -123,6 +148,11 @@ static void
 _rb_gl2_destruct(render_backend_t* backend) {
 	render_backend_gl2_t* backend_gl2 = (render_backend_gl2_t*)backend;
 
+	for (uint64_t icontext = 0; icontext < backend->concurrency; ++icontext)
+		_rb_gl_destroy_context(&backend_gl2->drawable, backend_gl2->concurrent_context[icontext]);
+	memory_deallocate(backend_gl2->concurrent_context);
+	memory_deallocate(backend_gl2->concurrent_used);
+
 	_rb_gl2_disable_thread(backend);
 	if (backend_gl2->context)
 		_rb_gl_destroy_context(&backend_gl2->drawable, backend_gl2->context);
@@ -138,9 +168,19 @@ _rb_gl2_set_drawable(render_backend_t* backend, const render_drawable_t* drawabl
 	if (!FOUNDATION_VALIDATE_MSG(!backend_gl2->context, "Drawable switching not supported yet"))
 		return error_report(ERRORLEVEL_ERROR, ERROR_NOT_IMPLEMENTED);
 
+	if (backend_gl2->concurrency) {
+		backend_gl2->concurrent_context =
+		    memory_allocate(HASH_RENDER, sizeof(void*) * backend_gl2->concurrency, 0,
+		                    MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+		backend_gl2->concurrent_used =
+		    memory_allocate(HASH_RENDER, sizeof(atomic32_t) * backend_gl2->concurrency, 0,
+		                    MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	}
+
 	atomic_store32(&backend_gl2->context_used, 1, memory_order_release);
 	backend_gl2->context =
-	    _rb_gl_create_context(drawable, 2, 0, 0, backend->pixelformat, backend->colorspace);
+	    _rb_gl_create_context(drawable, 2, 0, backend->pixelformat, backend->colorspace,
+	                          backend_gl2->concurrent_context, (size_t)backend_gl2->concurrency);
 	if (!backend_gl2->context) {
 		log_error(HASH_RENDER, ERROR_UNSUPPORTED,
 		          STRING_CONST("Unable to create OpenGL 2 context"));
@@ -149,6 +189,13 @@ _rb_gl2_set_drawable(render_backend_t* backend, const render_drawable_t* drawabl
 	}
 
 	_rb_gl_set_thread_context(backend_gl2->context);
+
+	for (uint64_t icontext = 0; icontext < backend->concurrency; ++icontext) {
+		if (!backend_gl2->concurrent_context[icontext]) {
+			backend_gl2->concurrency = icontext;
+			break;
+		}
+	}
 
 #if FOUNDATION_PLATFORM_LINUX
 	glXMakeCurrent(drawable->display, (GLXDrawable)drawable->drawable, backend_gl2->context);

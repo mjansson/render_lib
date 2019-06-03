@@ -11,7 +11,8 @@
  *
  * https://github.com/rampantpixels
  *
- * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
+ * This library is put in the public domain; you can redistribute it and/or modify it without any
+ * restrictions.
  *
  */
 
@@ -44,6 +45,11 @@ RENDER_API void
 render_backend_set_format(render_backend_t* backend, const pixelformat_t format,
                           const colorspace_t space);
 
+//! Set maximum number of extra threads that can call render backend functions beyond the
+//  main thread. Must be called prior to render_backend_set_drawable call.
+RENDER_API void
+render_backend_set_max_concurrency(render_backend_t* backend, size_t num_threads);
+
 RENDER_API bool
 render_backend_set_drawable(render_backend_t* backend, const render_drawable_t* drawable);
 
@@ -69,6 +75,9 @@ render_backend_enable_thread(render_backend_t* backend);
 RENDER_API void
 render_backend_disable_thread(render_backend_t* backend);
 
+RENDER_API size_t
+render_backend_max_concurrency(render_backend_t* backend);
+
 RENDER_API render_backend_t*
 render_backend_thread(void);
 
@@ -79,8 +88,8 @@ RENDER_API void
 render_backend_set_resource_platform(render_backend_t* backend, uint64_t platform);
 
 RENDER_API bool
-render_backend_shader_upload(render_backend_t* backend, render_shader_t* shader,
-                             const void* buffer, size_t size);
+render_backend_shader_upload(render_backend_t* backend, render_shader_t* shader, const void* buffer,
+                             size_t size);
 
 RENDER_API uuidmap_t*
 render_backend_shader_table(render_backend_t* backend);

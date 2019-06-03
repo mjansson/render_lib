@@ -11,7 +11,8 @@
  *
  * https://github.com/rampantpixels
  *
- * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
+ * This library is put in the public domain; you can redistribute it and/or modify it without any
+ * restrictions.
  *
  */
 
@@ -32,41 +33,56 @@ FOUNDATION_DECLARE_THREAD_LOCAL(render_backend_t*, backend, nullptr)
 static render_api_t
 render_api_fallback(render_api_t api) {
 	switch (api) {
-	case RENDERAPI_UNKNOWN:    return RENDERAPI_UNKNOWN;
+		case RENDERAPI_UNKNOWN:
+			return RENDERAPI_UNKNOWN;
 
-	case RENDERAPI_DEFAULT:
+		case RENDERAPI_DEFAULT:
 #if FOUNDATION_PLATFORM_WINDOWS
-		return RENDERAPI_DIRECTX;
-#elif FOUNDATION_PLATFORM_IOS || FOUNDATION_PLATFORM_ANDROID || FOUNDATION_PLATFORM_LINUX_RASPBERRYPI
-		return RENDERAPI_GLES;
+			return RENDERAPI_DIRECTX;
+#elif FOUNDATION_PLATFORM_IOS || FOUNDATION_PLATFORM_ANDROID || \
+    FOUNDATION_PLATFORM_LINUX_RASPBERRYPI
+			return RENDERAPI_GLES;
 #else
-		return RENDERAPI_OPENGL;
+			return RENDERAPI_OPENGL;
 #endif
 
-	case RENDERAPI_NULL:      return RENDERAPI_UNKNOWN;
+		case RENDERAPI_NULL:
+			return RENDERAPI_UNKNOWN;
 
-	case RENDERAPI_OPENGL:    return RENDERAPI_OPENGL4;
-	case RENDERAPI_DIRECTX:   return RENDERAPI_DIRECTX11;
-	case RENDERAPI_GLES:      return RENDERAPI_GLES3;
+		case RENDERAPI_OPENGL:
+			return RENDERAPI_OPENGL4;
+		case RENDERAPI_DIRECTX:
+			return RENDERAPI_DIRECTX11;
+		case RENDERAPI_GLES:
+			return RENDERAPI_GLES3;
 
 #if FOUNDATION_PLATFORM_WINDOWS
-	case RENDERAPI_OPENGL4:   return RENDERAPI_DIRECTX10;
+		case RENDERAPI_OPENGL4:
+			return RENDERAPI_DIRECTX10;
 #else
-	case RENDERAPI_OPENGL4:   return RENDERAPI_OPENGL2;
+		case RENDERAPI_OPENGL4:
+			return RENDERAPI_OPENGL2;
 #endif
-	case RENDERAPI_DIRECTX10: return RENDERAPI_OPENGL2;
-	case RENDERAPI_DIRECTX11: return RENDERAPI_OPENGL4;
-	case RENDERAPI_GLES3:     return RENDERAPI_GLES2;
-	case RENDERAPI_GLES2:     return RENDERAPI_NULL;
-	case RENDERAPI_OPENGL2:   return RENDERAPI_NULL;
+		case RENDERAPI_DIRECTX10:
+			return RENDERAPI_OPENGL2;
+		case RENDERAPI_DIRECTX11:
+			return RENDERAPI_OPENGL4;
+		case RENDERAPI_GLES3:
+			return RENDERAPI_GLES2;
+		case RENDERAPI_GLES2:
+			return RENDERAPI_NULL;
+		case RENDERAPI_OPENGL2:
+			return RENDERAPI_NULL;
 
-	case RENDERAPI_PS3:
-	case RENDERAPI_PS4:
-	case RENDERAPI_XBOX360:
-	case RENDERAPI_XBOXONE:
-	case RENDERAPI_NUM:       return RENDERAPI_NULL;
+		case RENDERAPI_PS3:
+		case RENDERAPI_PS4:
+		case RENDERAPI_XBOX360:
+		case RENDERAPI_XBOXONE:
+		case RENDERAPI_NUM:
+			return RENDERAPI_NULL;
 
-	default:                  break;
+		default:
+			break;
 	}
 	return RENDERAPI_UNKNOWN;
 }
@@ -78,101 +94,109 @@ render_backends(void) {
 
 render_backend_t*
 render_backend_allocate(render_api_t api, bool allow_fallback) {
-	//First find best matching supported backend
+	// First find best matching supported backend
 	render_backend_t* backend = 0;
 
 	memory_context_push(HASH_RENDER);
 
 	while (!backend) {
-		while (_render_api_disabled[api]) api = render_api_fallback(api);
+		while (_render_api_disabled[api])
+			api = render_api_fallback(api);
 		switch (api) {
-		case RENDERAPI_GLES2:
-			backend = render_backend_gles2_allocate();
-			if (!backend || !backend->vtable.construct(backend)) {
-				log_info(HASH_RENDER, STRING_CONST("Failed to initialize OpenGL ES 2 render backend"));
-				render_backend_deallocate(backend);
-				backend = nullptr;
-			}
-			break;
+			case RENDERAPI_GLES2:
+				backend = render_backend_gles2_allocate();
+				if (!backend || !backend->vtable.construct(backend)) {
+					log_info(HASH_RENDER,
+					         STRING_CONST("Failed to initialize OpenGL ES 2 render backend"));
+					render_backend_deallocate(backend);
+					backend = nullptr;
+				}
+				break;
 
-		case RENDERAPI_GLES3:
-			/*backend = render_backend_gles3_allocate();
-			if (!backend || !backend->vtable.construct(backend)) {
-				log_info(HASH_RENDER, STRING_CONST("Failed to initialize OpenGL ES 3 render backend"));
-				render_backend_deallocate(backend), backend = 0;
-			}*/
-			break;
+			case RENDERAPI_GLES3:
+				/*backend = render_backend_gles3_allocate();
+				if (!backend || !backend->vtable.construct(backend)) {
+				    log_info(HASH_RENDER, STRING_CONST("Failed to initialize OpenGL ES 3 render
+				backend")); render_backend_deallocate(backend), backend = 0;
+				}*/
+				break;
 
-		case RENDERAPI_OPENGL2:
-			backend = render_backend_gl2_allocate();
-			if (!backend || !backend->vtable.construct(backend)) {
-				log_info(HASH_RENDER, STRING_CONST("Failed to initialize OpenGL 2 render backend"));
-				render_backend_deallocate(backend);
-				backend = nullptr;
-			}
-			break;
+			case RENDERAPI_OPENGL2:
+				backend = render_backend_gl2_allocate();
+				if (!backend || !backend->vtable.construct(backend)) {
+					log_info(HASH_RENDER,
+					         STRING_CONST("Failed to initialize OpenGL 2 render backend"));
+					render_backend_deallocate(backend);
+					backend = nullptr;
+				}
+				break;
 
-		case RENDERAPI_OPENGL4:
-			backend = render_backend_gl4_allocate();
-			if (!backend || !backend->vtable.construct(backend)) {
-				log_info(HASH_RENDER, STRING_CONST("Failed to initialize OpenGL 4 render backend"));
-				render_backend_deallocate(backend);
-				backend = nullptr;
-			}
-			break;
+			case RENDERAPI_OPENGL4:
+				backend = render_backend_gl4_allocate();
+				if (!backend || !backend->vtable.construct(backend)) {
+					log_info(HASH_RENDER,
+					         STRING_CONST("Failed to initialize OpenGL 4 render backend"));
+					render_backend_deallocate(backend);
+					backend = nullptr;
+				}
+				break;
 
-		case RENDERAPI_DIRECTX10:
-			/*backend = render_dx10_allocate();
-			if( !backend || !backend->vtable.construct( backend ) )
-			{
-				log_info( HASH_RENDER, "Failed to initialize DirectX 10 render backend" );
-				render_deallocate( backend ), backend = 0;
-			}*/
-			break;
+			case RENDERAPI_DIRECTX10:
+				/*backend = render_dx10_allocate();
+				if( !backend || !backend->vtable.construct( backend ) )
+				{
+				    log_info( HASH_RENDER, "Failed to initialize DirectX 10 render backend" );
+				    render_deallocate( backend ), backend = 0;
+				}*/
+				break;
 
-		case RENDERAPI_DIRECTX11:
-			/*backend = render_dx11_allocate();
-			if( !backend || !backend->vtable.construct( backend ) )
-			{
-				log_info( HASH_RENDER, "Failed to initialize DirectX 11 render backend" );
-				render_deallocate( backend ), backend = 0;
-			}*/
-			break;
+			case RENDERAPI_DIRECTX11:
+				/*backend = render_dx11_allocate();
+				if( !backend || !backend->vtable.construct( backend ) )
+				{
+				    log_info( HASH_RENDER, "Failed to initialize DirectX 11 render backend" );
+				    render_deallocate( backend ), backend = 0;
+				}*/
+				break;
 
-		case RENDERAPI_NULL:
-			backend = render_backend_null_allocate();
-			backend->vtable.construct(backend);
-			break;
+			case RENDERAPI_NULL:
+				backend = render_backend_null_allocate();
+				backend->vtable.construct(backend);
+				break;
 
-		case RENDERAPI_UNKNOWN:
-			log_warn(HASH_RENDER, WARNING_SUSPICIOUS,
-			         STRING_CONST("No supported and enabled render api found, giving up"));
-			return 0;
+			case RENDERAPI_UNKNOWN:
+				log_warn(HASH_RENDER, WARNING_SUSPICIOUS,
+				         STRING_CONST("No supported and enabled render api found, giving up"));
+				return 0;
 
-		case RENDERAPI_PS3:
-		case RENDERAPI_PS4:
-		case RENDERAPI_XBOX360:
-		case RENDERAPI_XBOXONE:
-			//Try loading dynamic library
-			log_warnf(HASH_RENDER, WARNING_SUSPICIOUS,
-			          STRING_CONST("Render API not yet implemented (%u)"), api);
-			break;
+			case RENDERAPI_PS3:
+			case RENDERAPI_PS4:
+			case RENDERAPI_XBOX360:
+			case RENDERAPI_XBOXONE:
+				// Try loading dynamic library
+				log_warnf(HASH_RENDER, WARNING_SUSPICIOUS,
+				          STRING_CONST("Render API not yet implemented (%u)"), api);
+				break;
 
-		case RENDERAPI_NUM:
-		case RENDERAPI_DEFAULT:
-		case RENDERAPI_OPENGL:
-		case RENDERAPI_DIRECTX:
-		case RENDERAPI_GLES:
-		default:
-			//Try loading dynamic library
-			log_warnf(HASH_RENDER, WARNING_SUSPICIOUS,
-			          STRING_CONST("Unknown render API (%u), dynamic library loading not implemented yet"), api);
-			break;
+			case RENDERAPI_NUM:
+			case RENDERAPI_DEFAULT:
+			case RENDERAPI_OPENGL:
+			case RENDERAPI_DIRECTX:
+			case RENDERAPI_GLES:
+			default:
+				// Try loading dynamic library
+				log_warnf(
+				    HASH_RENDER, WARNING_SUSPICIOUS,
+				    STRING_CONST(
+				        "Unknown render API (%u), dynamic library loading not implemented yet"),
+				    api);
+				break;
 		}
 
 		if (!backend) {
 			if (!allow_fallback) {
-				log_warn(HASH_RENDER, WARNING_UNSUPPORTED, STRING_CONST("Requested render api not supported"));
+				log_warn(HASH_RENDER, WARNING_UNSUPPORTED,
+				         STRING_CONST("Requested render api not supported"));
 				return 0;
 			}
 
@@ -184,11 +208,14 @@ render_backend_allocate(render_api_t api, bool allow_fallback) {
 	backend->framecount = 1;
 
 	uuidmap_initialize((uuidmap_t*)&backend->shadertable,
-	                   sizeof(backend->shadertable.bucket) / sizeof(backend->shadertable.bucket[0]), 0);
-	uuidmap_initialize((uuidmap_t*)&backend->programtable,
-	                   sizeof(backend->programtable.bucket) / sizeof(backend->programtable.bucket[0]), 0);
-	uuidmap_initialize((uuidmap_t*)&backend->texturetable,
-	                   sizeof(backend->texturetable.bucket) / sizeof(backend->texturetable.bucket[0]), 0);
+	                   sizeof(backend->shadertable.bucket) / sizeof(backend->shadertable.bucket[0]),
+	                   0);
+	uuidmap_initialize(
+	    (uuidmap_t*)&backend->programtable,
+	    sizeof(backend->programtable.bucket) / sizeof(backend->programtable.bucket[0]), 0);
+	uuidmap_initialize(
+	    (uuidmap_t*)&backend->texturetable,
+	    sizeof(backend->texturetable.bucket) / sizeof(backend->texturetable.bucket[0]), 0);
 
 	render_backend_set_resource_platform(backend, 0);
 
@@ -247,7 +274,7 @@ render_backend_set_format(render_backend_t* backend, const pixelformat_t format,
 	                             "Unable to change format when drawable is already set"))
 		return;
 	backend->pixelformat = format;
-	backend->colorspace  = space;
+	backend->colorspace = space;
 }
 
 bool
@@ -263,8 +290,8 @@ render_backend_set_drawable(render_backend_t* backend, const render_drawable_t* 
 	if (drawable->type == RENDERDRAWABLE_WINDOW)
 		render_drawable_initialize_window(&backend->drawable, drawable->window, drawable->tag);
 	else if (drawable->type == RENDERDRAWABLE_FULLSCREEN)
-		render_drawable_initialize_fullscreen(&backend->drawable, drawable->adapter, drawable->width,
-		                                      drawable->height, drawable->refresh);
+		render_drawable_initialize_fullscreen(&backend->drawable, drawable->adapter,
+		                                      drawable->width, drawable->height, drawable->refresh);
 
 	backend->framebuffer.width = backend->drawable.width;
 	backend->framebuffer.height = backend->drawable.height;
@@ -287,8 +314,8 @@ render_backend_target_framebuffer(render_backend_t* backend) {
 }
 
 void
-render_backend_dispatch(render_backend_t* backend, render_target_t* target, render_context_t** contexts,
-                        size_t num_contexts) {
+render_backend_dispatch(render_backend_t* backend, render_target_t* target,
+                        render_context_t** contexts, size_t num_contexts) {
 	backend->vtable.dispatch(backend, target, contexts, num_contexts);
 
 	for (size_t i = 0; i < num_contexts; ++i)
@@ -320,6 +347,18 @@ render_backend_disable_thread(render_backend_t* backend) {
 	backend->vtable.disable_thread(backend);
 	if (prev_backend == backend)
 		set_thread_backend(nullptr);
+}
+
+void
+render_backend_set_max_concurrency(render_backend_t* backend, size_t num_threads) {
+	if (backend->concurrency || backend->drawable.width)
+		return;
+	backend->concurrency = (uint64_t)num_threads;
+}
+
+size_t
+render_backend_max_concurrency(render_backend_t* backend) {
+	return (size_t)backend->concurrency;
 }
 
 render_backend_t*
@@ -356,8 +395,8 @@ render_backend_texture_table(render_backend_t* backend) {
 }
 
 bool
-render_backend_shader_upload(render_backend_t* backend, render_shader_t* shader,
-                             const void* buffer, size_t size) {
+render_backend_shader_upload(render_backend_t* backend, render_shader_t* shader, const void* buffer,
+                             size_t size) {
 	if (shader->backend && (shader->backend != backend))
 		shader->backend->vtable.deallocate_shader(shader->backend, shader);
 	shader->backend = nullptr;

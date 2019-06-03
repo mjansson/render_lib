@@ -49,6 +49,10 @@ typedef struct render_backend_gl4_t {
 
 	void* context;
 	atomic32_t context_used;
+
+	void** concurrent_context;
+	atomic32_t* concurrent_used;
+
 	render_resolution_t resolution;
 
 	bool use_clear_scissor;
@@ -166,8 +170,9 @@ _rb_gl_init_gl_extensions(void) {
 	pfd.iLayerType = PFD_MAIN_PLANE;
 
 	HDC hdc = (HDC)drawable.hdc;
-	int pformat = ChoosePixelFormat(hdc, &pfd);
-	SetPixelFormat(hdc, pformat, &pfd);
+	int pixel_format = ChoosePixelFormat(hdc, &pfd);
+	SetPixelFormat(hdc, pixel_format, &pfd);
+	DescribePixelFormat(hdc, pixel_format, sizeof(pfd), &pfd);
 	HGLRC hglrc = wglCreateContext(hdc);
 	if (!hglrc) {
 		log_warn(HASH_RENDER, WARNING_INVALID_VALUE,
@@ -196,35 +201,46 @@ _rb_gl_init_gl_extensions(void) {
 
 void*
 _rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, unsigned int minor,
-                      void* share_context, const pixelformat_t pixelformat,
-                      const colorspace_t colorspace) {
+                      const pixelformat_t pixelformat, const colorspace_t colorspace,
+                      void** concurrent_contexts, size_t concurrent_count) {
 	FOUNDATION_UNUSED(pixelformat);
 #if FOUNDATION_PLATFORM_WINDOWS
 	HDC hdc = (HDC)drawable->hdc;
 
 	// First set pixel format
 	if (wglChoosePixelFormatARB) {
-		int pixel_format_attribs[] = {WGL_DRAW_TO_WINDOW_ARB,
-		                              GL_TRUE,
-		                              WGL_SUPPORT_OPENGL_ARB,
-		                              GL_TRUE,
-		                              WGL_DOUBLE_BUFFER_ARB,
-		                              GL_TRUE,
-		                              WGL_ACCELERATION_ARB,
-		                              WGL_FULL_ACCELERATION_ARB,
-		                              WGL_PIXEL_TYPE_ARB,
-		                              WGL_TYPE_RGBA_ARB,
-		                              WGL_COLOR_BITS_ARB,
-		                              32,
-		                              WGL_DEPTH_BITS_ARB,
-		                              32,
-		                              WGL_STENCIL_BITS_ARB,
-		                              0,
-		                              0};
+		int attributes[] = {WGL_DRAW_TO_WINDOW_ARB,
+		                    GL_TRUE,
+		                    WGL_SUPPORT_OPENGL_ARB,
+		                    GL_TRUE,
+		                    WGL_DOUBLE_BUFFER_ARB,
+		                    GL_TRUE,
+		                    WGL_PIXEL_TYPE_ARB,
+		                    WGL_TYPE_RGBA_ARB,
+		                    WGL_COLOR_BITS_ARB,
+		                    (pixelformat == PIXELFORMAT_R8G8B8A8) ? 32 : 24,
+		                    WGL_ALPHA_BITS_ARB,
+		                    (pixelformat == PIXELFORMAT_R8G8B8A8) ? 8 : 0,
+		                    WGL_DEPTH_BITS_ARB,
+		                    32,
+		                    WGL_ACCELERATION_ARB,
+		                    WGL_FULL_ACCELERATION_ARB,
+		                    0};
+		size_t num_attribs = sizeof(attributes) / sizeof(attributes[0]);
 
 		int pixel_format;
 		UINT num_formats;
-		wglChoosePixelFormatARB(hdc, pixel_format_attribs, 0, 1, &pixel_format, &num_formats);
+		wglChoosePixelFormatARB(hdc, attributes, 0, 1, &pixel_format, &num_formats);
+		if (!num_formats) {
+			// Try reducing depth bits to 24
+			attributes[num_attribs - 4] = 24;
+			wglChoosePixelFormatARB(hdc, attributes, 0, 1, &pixel_format, &num_formats);
+		}
+		if (!num_formats) {
+			// Try skipping acceleration specifier
+			attributes[num_attribs - 3] = 0;
+			wglChoosePixelFormatARB(hdc, attributes, 0, 1, &pixel_format, &num_formats);
+		}
 		if (!num_formats) {
 			log_warn(HASH_RENDER, WARNING_INVALID_VALUE,
 			         STRING_CONST("Unable to create context, unable to choose pixel format"));
@@ -246,15 +262,14 @@ _rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, uns
 		pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
 		pfd.nVersion = 1;
 		pfd.iPixelType = PFD_TYPE_RGBA;
-		if (!share_context) {
-			pfd.dwFlags = PFD_SUPPORT_OPENGL | PFD_DRAW_TO_WINDOW | PFD_DOUBLEBUFFER;
+		pfd.dwFlags = PFD_SUPPORT_OPENGL | PFD_DRAW_TO_WINDOW | PFD_DOUBLEBUFFER;
+		if (pixelformat == PIXELFORMAT_R8G8B8A8) {
 			pfd.cColorBits = 32;
-			if (pixelformat == PIXELFORMAT_R8G8B8A8)
-				pfd.cAlphaBits = 8;
-			pfd.cDepthBits = 32;
+			pfd.cAlphaBits = 8;
 		} else {
-			pfd.dwFlags = PFD_SUPPORT_OPENGL;
+			pfd.cColorBits = 24;
 		}
+		pfd.cDepthBits = 24;
 		pfd.iLayerType = PFD_MAIN_PLANE;
 
 		int pixel_format = ChoosePixelFormat(hdc, &pfd);
@@ -274,40 +289,71 @@ _rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, uns
 	// Now create context
 	HGLRC hglrc = 0;
 	if (wglCreateContextAttribsARB) {
-		int* attributes = 0;
-		array_push(attributes, WGL_CONTEXT_MAJOR_VERSION_ARB);
-		array_push(attributes, major);
-		array_push(attributes, WGL_CONTEXT_MINOR_VERSION_ARB);
-		array_push(attributes, minor);
-		array_push(attributes, WGL_CONTEXT_FLAGS_ARB);
-		array_push(attributes, 0);  // WGL_CONTEXT_DEBUG_BIT_ARB
-		array_push(attributes, WGL_CONTEXT_PROFILE_MASK_ARB);
-		array_push(attributes, WGL_CONTEXT_CORE_PROFILE_BIT_ARB);
-		FOUNDATION_UNUSED(colorspace);
+		int attributes[] = {WGL_CONTEXT_MAJOR_VERSION_ARB,
+		                    major,
+		                    WGL_CONTEXT_MINOR_VERSION_ARB,
+		                    minor,
+		                    WGL_CONTEXT_FLAGS_ARB,
+		                    0,
+		                    WGL_CONTEXT_PROFILE_MASK_ARB,
+		                    WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+		                    0,
+		                    0,
+		                    0};
+		size_t num_attribs = sizeof(attributes) / sizeof(attributes[0]);
 		if ((colorspace == COLORSPACE_sRGB) && (major < 4)) {
-			array_push(attributes, WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB);
-			array_push(attributes, GL_TRUE);
+			attributes[num_attribs - 3] = WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB;
+			attributes[num_attribs - 2] = GL_TRUE;
 		}
-		array_push(attributes, 0);
 
-		hglrc = wglCreateContextAttribsARB(hdc, (HGLRC)share_context, attributes);
-		array_deallocate(attributes);
+		hglrc = wglCreateContextAttribsARB(hdc, 0, attributes);
+		if (hglrc && wglMakeCurrent(hdc, hglrc)) {
+			for (size_t icontext = 0; icontext < concurrent_count; ++icontext) {
+				concurrent_contexts[icontext] = wglCreateContextAttribsARB(hdc, hglrc, attributes);
+				if (!concurrent_contexts[icontext]) {
+					int err = GetLastError();
+					string_const_t errmsg = system_error_message(err);
+					log_errorf(
+					    HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
+					    STRING_CONST("Unable to create GL context for concurrency: %.*s (%08x)"),
+					    STRING_FORMAT(errmsg), err);
+					break;
+				}
+			}
+		}
 	} else {
 		hglrc = wglCreateContext(hdc);
-		wglShareLists(hglrc, (HGLRC)share_context);
-		_rb_gl_check_error("Unable to share GL render contexts");
+		if (hglrc && wglMakeCurrent(hdc, hglrc)) {
+			for (size_t icontext = 0; icontext < concurrent_count; ++icontext) {
+				concurrent_contexts[icontext] = wglCreateContext(hdc);
+				if (!concurrent_contexts[icontext]) {
+					int err = GetLastError();
+					string_const_t errmsg = system_error_message(err);
+					log_errorf(
+					    HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
+					    STRING_CONST("Unable to create GL context for concurrency: %.*s (%08x)"),
+					    STRING_FORMAT(errmsg), err);
+					break;
+				}
+				if (!wglShareLists(concurrent_contexts[icontext], hglrc)) {
+					int err = GetLastError();
+					string_const_t errmsg = system_error_message(err);
+					log_errorf(
+					    HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
+					    STRING_CONST("Unable to share GL context for concurrency: %.*s (%08x)"),
+					    STRING_FORMAT(errmsg), err);
+					break;
+				}
+			}
+		}
 	}
 
 	if (!hglrc) {
 		int err = GetLastError();
 		string_const_t errmsg = system_error_message(err);
-		log_infof(HASH_RENDER,
-		          STRING_CONST("Unable to create GL context for version %d.%d: %.*s (%08x)"), major,
-		          minor, STRING_FORMAT(errmsg), err);
-		return nullptr;
-	} else if (!wglMakeCurrent(hdc, hglrc)) {
-		log_warn(HASH_RENDER, WARNING_INVALID_VALUE,
-		         STRING_CONST("Unable to create context, unable to make GL context current"));
+		log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
+		           STRING_CONST("Unable to create GL context for version %d.%d: %.*s (%08x)"),
+		           major, minor, STRING_FORMAT(errmsg), err);
 		return nullptr;
 	}
 
@@ -334,30 +380,26 @@ _rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, uns
 		hglrc = 0;
 	}
 
-	if (hglrc) {
-		wglMakeCurrent(hdc, hglrc);
-
-		if (major == 2) {
-			// We require GL_ARB_framebuffer_object extension
-			if (!_rb_gl_check_extension(STRING_CONST("GL_ARB_framebuffer_object"))) {
-				log_infof(
-				    HASH_RENDER,
-				    STRING_CONST("GL version %d.%d not supported, missing framebuffer extension"),
-				    major, minor);
-				wglMakeCurrent(0, 0);
-				wglDeleteContext(hglrc);
-				hglrc = 0;
-			}
+	if (hglrc && (major == 2)) {
+		// We require GL_ARB_framebuffer_object extension
+		if (!_rb_gl_check_extension(STRING_CONST("GL_ARB_framebuffer_object"))) {
+			log_infof(HASH_RENDER,
+			          STRING_CONST("GL version %d.%d not supported, missing framebuffer extension"),
+			          major, minor);
+			wglMakeCurrent(0, 0);
+			wglDeleteContext(hglrc);
+			hglrc = 0;
 		}
-
-		if (colorspace == COLORSPACE_sRGB) {
-			glEnable(GL_FRAMEBUFFER_SRGB);
-			_rb_gl_check_error("Unable to enable sRGB framebuffer");
-			log_info(HASH_RENDER, STRING_CONST("sRGB framebuffer"));
-		}
-	} else {
-		wglMakeCurrent(0, 0);
 	}
+
+	if (hglrc && (colorspace == COLORSPACE_sRGB)) {
+		glEnable(GL_FRAMEBUFFER_SRGB);
+		_rb_gl_check_error("Unable to enable sRGB framebuffer");
+		log_info(HASH_RENDER, STRING_CONST("sRGB framebuffer"));
+	}
+
+	if (!hglrc)
+		wglMakeCurrent(0, 0);
 
 	return hglrc;
 
@@ -531,7 +573,7 @@ _rb_gl_check_context(unsigned int major, unsigned int minor) {
 	render_drawable_t drawable;
 	render_drawable_initialize_window(&drawable, &window_check, 0);
 	context =
-	    _rb_gl_create_context(&drawable, major, minor, 0, PIXELFORMAT_R8G8B8, COLORSPACE_LINEAR);
+	    _rb_gl_create_context(&drawable, major, minor, PIXELFORMAT_R8G8B8, COLORSPACE_LINEAR, 0, 0);
 	wglMakeCurrent(0, 0);
 	if (context)
 		wglDeleteContext((HGLRC)context);
@@ -563,10 +605,19 @@ _rb_gl4_disable_thread(render_backend_t* backend) {
 
 	void* thread_context = _rb_gl_get_thread_context();
 	if (thread_context) {
-		if (thread_context == backend_gl4->context)
+		if (thread_context == backend_gl4->context) {
 			atomic_store32(&backend_gl4->context_used, 0, memory_order_release);
-		else
-			_rb_gl_destroy_context(&backend_gl4->drawable, thread_context);
+		} else {
+			for (uint64_t icontext = 0; icontext < backend->concurrency; ++icontext) {
+				if (backend_gl4->concurrent_context[icontext] == thread_context) {
+					if (wglGetCurrentContext() == thread_context)
+						wglMakeCurrent(0, 0);
+					atomic_store32(&backend_gl4->concurrent_used[icontext], 0,
+					               memory_order_release);
+					break;
+				}
+			}
+		}
 		log_debug(HASH_RENDER, STRING_CONST("Disabled thread for GL4 rendering"));
 	}
 	_rb_gl_set_thread_context(0);
@@ -581,11 +632,24 @@ _rb_gl4_enable_thread(render_backend_t* backend) {
 		if (!backend_gl4->context)
 			return;
 		if (atomic_cas32(&backend_gl4->context_used, 1, 0, memory_order_release,
-		                 memory_order_acquire))
+		                 memory_order_acquire)) {
 			thread_context = backend_gl4->context;
-		else
-			thread_context = _rb_gl_create_context(&backend->drawable, 4, 0, backend_gl4->context,
-			                                       backend->pixelformat, backend->colorspace);
+		} else {
+			for (uint64_t icontext = 0; icontext < backend->concurrency; ++icontext) {
+				if (atomic_cas32(&backend_gl4->concurrent_used[icontext], 1, 0,
+				                 memory_order_release, memory_order_acquire)) {
+					thread_context = backend_gl4->concurrent_context[icontext];
+					break;
+				}
+			}
+			if (!thread_context) {
+				log_warn(
+				    HASH_RENDER, WARNING_INVALID_VALUE,
+				    STRING_CONST(
+				        "Unable to enable thread for GL4 rendering, no free concurrent context"));
+				return;
+			}
+		}
 		_rb_gl_set_thread_context(thread_context);
 	}
 
@@ -624,6 +688,11 @@ static void
 _rb_gl4_destruct(render_backend_t* backend) {
 	render_backend_gl4_t* backend_gl4 = (render_backend_gl4_t*)backend;
 
+	for (uint64_t icontext = 0; icontext < backend->concurrency; ++icontext)
+		_rb_gl_destroy_context(&backend_gl4->drawable, backend_gl4->concurrent_context[icontext]);
+	memory_deallocate(backend_gl4->concurrent_context);
+	memory_deallocate(backend_gl4->concurrent_used);
+
 	_rb_gl4_disable_thread(backend);
 	if (backend_gl4->context)
 		_rb_gl_destroy_context(&backend_gl4->drawable, backend_gl4->context);
@@ -647,9 +716,19 @@ _rb_gl4_set_drawable(render_backend_t* backend, const render_drawable_t* drawabl
 	if (!FOUNDATION_VALIDATE_MSG(!backend_gl4->context, "Drawable switching not supported yet"))
 		return error_report(ERRORLEVEL_ERROR, ERROR_NOT_IMPLEMENTED);
 
+	if (backend_gl4->concurrency) {
+		backend_gl4->concurrent_context =
+		    memory_allocate(HASH_RENDER, sizeof(void*) * backend_gl4->concurrency, 0,
+		                    MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+		backend_gl4->concurrent_used =
+		    memory_allocate(HASH_RENDER, sizeof(atomic32_t) * backend_gl4->concurrency, 0,
+		                    MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	}
+
 	atomic_store32(&backend_gl4->context_used, 1, memory_order_release);
 	backend_gl4->context =
-	    _rb_gl_create_context(drawable, 4, 0, 0, backend->pixelformat, backend->colorspace);
+	    _rb_gl_create_context(drawable, 4, 0, backend->pixelformat, backend->colorspace,
+	                          backend_gl4->concurrent_context, backend_gl4->concurrency);
 	if (!backend_gl4->context) {
 		log_error(HASH_RENDER, ERROR_UNSUPPORTED,
 		          STRING_CONST("Unable to create OpenGL 4 context"));
@@ -658,6 +737,13 @@ _rb_gl4_set_drawable(render_backend_t* backend, const render_drawable_t* drawabl
 	}
 
 	_rb_gl_set_thread_context(backend_gl4->context);
+
+	for (uint64_t icontext = 0; icontext < backend->concurrency; ++icontext) {
+		if (!backend_gl4->concurrent_context[icontext]) {
+			backend_gl4->concurrency = icontext;
+			break;
+		}
+	}
 
 #if FOUNDATION_PLATFORM_LINUX
 

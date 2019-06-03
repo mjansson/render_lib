@@ -413,6 +413,7 @@ struct render_target_t {
 	pixelformat_t pixelformat;      \
 	colorspace_t colorspace;        \
 	render_target_t framebuffer;    \
+	uint64_t concurrency;           \
 	uint64_t framecount;            \
 	uint64_t platform;              \
 	uuidmap_fixed_t shadertable;    \

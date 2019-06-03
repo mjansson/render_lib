@@ -190,12 +190,24 @@ _rb_null_deallocate_target(render_backend_t* backend, render_target_t* target) {
 	FOUNDATION_UNUSED(target);
 }
 
+static void
+_rb_null_enable_thread(render_backend_t* backend) {
+	FOUNDATION_UNUSED(backend);
+}
+
+static void
+_rb_null_disable_thread(render_backend_t* backend) {
+	FOUNDATION_UNUSED(backend);
+}
+
 static render_backend_vtable_t _render_backend_vtable_null = {
     .construct = _rb_null_construct,
     .destruct = _rb_null_destruct,
     .enumerate_adapters = _rb_null_enumerate_adapters,
     .enumerate_modes = _rb_null_enumerate_modes,
     .set_drawable = _rb_null_set_drawable,
+    .enable_thread = _rb_null_enable_thread,
+    .disable_thread = _rb_null_disable_thread,
     .dispatch = _rb_null_dispatch,
     .flip = _rb_null_flip,
     .allocate_buffer = _rb_null_allocate_buffer,

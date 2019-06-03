@@ -154,8 +154,8 @@ _rb_gl_check_extension(const char* name, size_t length);
 
 RENDER_EXTERN void*
 _rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, unsigned int minor,
-                      void* share_context, const pixelformat_t pixelformat,
-                      const colorspace_t colorspace);
+                      const pixelformat_t pixelformat, const colorspace_t colorspace,
+                      void** concurrent_contexts, size_t concurrent_count);
 
 RENDER_EXTERN void
 _rb_gl_destroy_context(const render_drawable_t* drawable, void* context);
