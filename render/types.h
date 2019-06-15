@@ -416,6 +416,7 @@ struct render_target_t {
 	uint64_t concurrency;           \
 	uint64_t framecount;            \
 	uint64_t platform;              \
+	mutex_t* exclusive;             \
 	uuidmap_fixed_t shadertable;    \
 	uuidmap_fixed_t programtable;   \
 	uuidmap_fixed_t texturetable

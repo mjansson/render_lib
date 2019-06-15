@@ -204,6 +204,8 @@ render_backend_allocate(render_api_t api, bool allow_fallback) {
 		}
 	}
 
+	backend->exclusive = mutex_allocate(STRING_CONST("render_backend_exclusive"));
+
 	render_target_initialize_framebuffer(&backend->framebuffer, backend);
 	backend->framecount = 1;
 
@@ -241,6 +243,8 @@ render_backend_deallocate(render_backend_t* backend) {
 
 	render_target_finalize(&backend->framebuffer);
 
+	mutex_deallocate(backend->exclusive);
+
 	for (size_t ib = 0, bsize = array_size(_render_backends); ib < bsize; ++ib) {
 		if (_render_backends[ib] == backend) {
 			array_erase(_render_backends, ib);
@@ -265,6 +269,21 @@ size_t
 render_backend_enumerate_modes(render_backend_t* backend, unsigned int adapter,
                                render_resolution_t* store, size_t capacity) {
 	return backend->vtable.enumerate_modes(backend, adapter, store, capacity);
+}
+
+bool
+render_backend_try_enter_exclusive(render_backend_t* backend) {
+	return mutex_try_lock(backend->exclusive);
+}
+
+void
+render_backend_enter_exclusive(render_backend_t* backend) {
+	mutex_lock(backend->exclusive);
+}
+
+void
+render_backend_leave_exclusive(render_backend_t* backend) {
+	mutex_unlock(backend->exclusive);
 }
 
 void

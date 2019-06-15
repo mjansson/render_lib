@@ -607,6 +607,8 @@ _rb_gl4_disable_thread(render_backend_t* backend) {
 	if (thread_context) {
 		if (thread_context == backend_gl4->context) {
 			atomic_store32(&backend_gl4->context_used, 0, memory_order_release);
+			if (wglGetCurrentContext() == thread_context)
+				wglMakeCurrent(0, 0);
 		} else {
 			for (uint64_t icontext = 0; icontext < backend->concurrency; ++icontext) {
 				if (backend_gl4->concurrent_context[icontext] == thread_context) {
@@ -618,7 +620,6 @@ _rb_gl4_disable_thread(render_backend_t* backend) {
 				}
 			}
 		}
-		log_debug(HASH_RENDER, STRING_CONST("Disabled thread for GL4 rendering"));
 	}
 	_rb_gl_set_thread_context(0);
 }
@@ -659,8 +660,6 @@ _rb_gl4_enable_thread(render_backend_t* backend) {
 		log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
 		           STRING_CONST("Unable to enable thread for GL4 rendering: %.*s"),
 		           STRING_FORMAT(errmsg));
-	} else {
-		log_debug(HASH_RENDER, STRING_CONST("Enabled thread for GL4 rendering"));
 	}
 #elif FOUNDATION_PLATFORM_LINUX
 	glXMakeCurrent(backend->drawable.display, (GLXDrawable)backend->drawable.drawable,
@@ -1371,6 +1370,8 @@ _rb_gl_upload_texture(render_backend_t* backend, render_texture_t* texture, cons
                       size_t size) {
 	FOUNDATION_UNUSED(backend);
 	FOUNDATION_UNUSED(size);
+
+	_rb_gl_check_error("Error prior to texture upload");
 
 	glActiveTexture(GL_TEXTURE0);
 	GLuint texture_name = (GLuint)texture->backend_data[0];

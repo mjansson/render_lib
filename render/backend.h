@@ -81,6 +81,15 @@ render_backend_max_concurrency(render_backend_t* backend);
 RENDER_API render_backend_t*
 render_backend_thread(void);
 
+RENDER_API bool
+render_backend_try_enter_exclusive(render_backend_t* backend);
+
+RENDER_API void
+render_backend_enter_exclusive(render_backend_t* backend);
+
+RENDER_API void
+render_backend_leave_exclusive(render_backend_t* backend);
+
 RENDER_API uint64_t
 render_backend_resource_platform(render_backend_t* backend);
 
