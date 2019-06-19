@@ -11,7 +11,8 @@
  *
  * https://github.com/rampantpixels
  *
- * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
+ * This library is put in the public domain; you can redistribute it and/or modify it without any
+ * restrictions.
  *
  */
 
@@ -24,10 +25,8 @@ render_context_t*
 render_context_allocate(size_t commands) {
 	render_context_t* context;
 
-	if (!FOUNDATION_VALIDATE_MSG(commands < (radixsort_index_t)(-1), "Oversized context"))
-		commands = (radixsort_index_t)(-1) - 1;
 	if (!FOUNDATION_VALIDATE_MSG(commands > 0, "Cannot create empty contexts"))
-		commands = 8;
+		commands = 32;
 
 	memory_context_push(HASH_RENDER);
 
@@ -35,11 +34,10 @@ render_context_allocate(size_t commands) {
 	                          MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 
 	context->allocated = (int32_t)commands;
-	context->commands  = memory_allocate(HASH_RENDER, sizeof(render_command_t) * commands, 0,
-	                                     MEMORY_PERSISTENT);
-	context->keys      = memory_allocate(HASH_RENDER, sizeof(uint64_t) * commands, 0,
-	                                     MEMORY_PERSISTENT);
-	context->sort      = radixsort_allocate(RADIXSORT_UINT64, (radixsort_index_t)commands);
+	context->commands =
+	    memory_allocate(HASH_RENDER, sizeof(render_command_t) * commands, 0, MEMORY_PERSISTENT);
+	context->keys = memory_allocate(HASH_RENDER, sizeof(uint64_t) * commands, 0, MEMORY_PERSISTENT);
+	context->sort = radixsort_allocate(RADIXSORT_UINT64, commands);
 
 	memory_context_pop();
 
@@ -69,7 +67,7 @@ void
 render_context_queue(render_context_t* context, render_command_t* command, uint64_t sort) {
 	int32_t idx = atomic_exchange_and_add32(&context->reserved, 1, memory_order_relaxed);
 	FOUNDATION_ASSERT_MSG(idx < context->allocated, "Render command overallocation");
-	context->keys[ idx ] = sort;
+	context->keys[idx] = sort;
 	memcpy(context->commands + idx, command, sizeof(render_command_t));
 }
 

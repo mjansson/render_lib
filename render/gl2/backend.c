@@ -667,6 +667,24 @@ _rb_gl2_render(render_backend_gl2_t* backend, render_context_t* context,
 	glDrawElements(_rb_gl2_primitive_type[primitive], (GLsizei)pnum,
 	               _rb_gl2_index_format_type[indexbuffer->format], 0);
 }
+static void
+_rb_gl2_dispatch_command(render_backend_gl2_t* backend, render_target_t* target,
+                         render_context_t* context, render_command_t* command) {
+	switch (command->type) {
+		case RENDERCOMMAND_CLEAR:
+			_rb_gl2_clear(backend, context, command);
+			break;
+
+		case RENDERCOMMAND_VIEWPORT:
+			_rb_gl2_viewport(backend, target, context, command);
+			break;
+
+		case RENDERCOMMAND_RENDER_TRIANGLELIST:
+		case RENDERCOMMAND_RENDER_LINELIST:
+			_rb_gl2_render(backend, context, command);
+			break;
+	}
+}
 
 static void
 _rb_gl2_dispatch(render_backend_t* backend, render_target_t* target, render_context_t** contexts,
@@ -679,26 +697,15 @@ _rb_gl2_dispatch(render_backend_t* backend, render_target_t* target, render_cont
 	for (size_t context_index = 0, context_size = num_contexts; context_index < context_size;
 	     ++context_index) {
 		render_context_t* context = contexts[context_index];
-		render_command_t* command = context->commands;
-		const radixsort_index_t* order = context->order;
-
 		int cmd_size = atomic_load32(&context->reserved, memory_order_acquire);
-		for (int cmd_index = 0; cmd_index < cmd_size; ++cmd_index, ++order) {
-			command = context->commands + *order;
-			switch (command->type) {
-				case RENDERCOMMAND_CLEAR:
-					_rb_gl2_clear(backend_gl2, context, command);
-					break;
-
-				case RENDERCOMMAND_VIEWPORT:
-					_rb_gl2_viewport(backend_gl2, target, context, command);
-					break;
-
-				case RENDERCOMMAND_RENDER_TRIANGLELIST:
-				case RENDERCOMMAND_RENDER_LINELIST:
-					_rb_gl2_render(backend_gl2, context, command);
-					break;
-			}
+		if (context->sort->indextype == RADIXSORT_INDEX16) {
+			const uint16_t* order = context->order;
+			for (int cmd_index = 0; cmd_index < cmd_size; ++cmd_index, ++order)
+				_rb_gl2_dispatch_command(backend_gl2, target, context, context->commands + *order);
+		} else if (context->sort->indextype == RADIXSORT_INDEX32) {
+			const uint32_t* order = context->order;
+			for (int cmd_index = 0; cmd_index < cmd_size; ++cmd_index, ++order)
+				_rb_gl2_dispatch_command(backend_gl2, target, context, context->commands + *order);
 		}
 	}
 }

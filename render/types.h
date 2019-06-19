@@ -436,7 +436,7 @@ struct render_context_t {
 	radixsort_t* sort;
 	uint32_t group;
 
-	const radixsort_index_t* order;
+	const void* order;
 };
 
 struct render_state_t {
