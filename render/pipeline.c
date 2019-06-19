@@ -11,7 +11,8 @@
  *
  * https://github.com/rampantpixels
  *
- * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
+ * This library is put in the public domain; you can redistribute it and/or modify it without any
+ * restrictions.
  *
  */
 
@@ -24,9 +25,12 @@
 #include <foundation/memory.h>
 #include <foundation/array.h>
 
+#include <task/scheduler.h>
+
 render_pipeline_t*
 render_pipeline_allocate(render_backend_t* backend) {
-	render_pipeline_t* pipeline = memory_allocate(HASH_RENDER, sizeof(render_pipeline_t), 0, MEMORY_PERSISTENT);
+	render_pipeline_t* pipeline =
+	    memory_allocate(HASH_RENDER, sizeof(render_pipeline_t), 0, MEMORY_PERSISTENT);
 	render_pipeline_initialize(pipeline, backend);
 	return pipeline;
 }
@@ -52,16 +56,39 @@ render_pipeline_deallocate(render_pipeline_t* pipeline) {
 	memory_deallocate(pipeline);
 }
 
+static task_return_t
+render_pipeline_execute_step(task_arg_t arg) {
+	render_pipeline_step_t* step = arg;
+	size_t context_count =
+
+	    step->executor(step->backend, step->target, step->contexts, array_size(step->contexts));
+
+	render_sort_merge(step->contexts, num_contexts);
+}
+
 void
 render_pipeline_execute(render_pipeline_t* pipeline) {
-	for (size_t istep = 0, ssize = array_size(pipeline->steps); istep < ssize; ++istep) {
-		render_pipeline_step_t* step = pipeline->steps + istep;
-		size_t num_contexts = array_size(step->contexts);
-		
-		step->executor(pipeline->backend, step->target, step->contexts, num_contexts);
+	if (pipeline->scheduler) {
+		size_t step_count = array_size(pipeline->steps);
+		array_resize(pipeline->step_task, step_count);
+		array_resize(pipeline->step_arg, step_count);
+		for (size_t istep = 0; istep < step_count; ++istep) {
+			pipeline->step_task[istep].function = render_pipeline_execute_step;
+			pipeline->step_task[istep].name =
+			    string_const(STRING_CONST("render_pipeline_execute_step"));
+			pipeline->step_arg[istep] = pipeline->steps + istep;
+		}
+		task_scheduler_multiqueue(pipeline->scheduler, step_count, pipeline->step_task,
+		                          pipeline->step_arg, 0);
+	} else {
+		for (size_t istep = 0, ssize = array_size(pipeline->steps); istep < ssize; ++istep) {
+			render_pipeline_step_t* step = pipeline->steps + istep;
+			step->executor(pipeline->backend, step->target, step->contexts,
+			               array_size(step->contexts));
 
-		render_sort_merge(step->contexts, num_contexts);
-		render_backend_dispatch(pipeline->backend, step->target, step->contexts, num_contexts);
+			render_sort_merge(step->contexts, num_contexts);
+			render_backend_dispatch(pipeline->backend, step->target, step->contexts, num_contexts);
+		}
 	}
 }
 
@@ -86,8 +113,8 @@ render_pipeline_step_blit_initialize(render_pipeline_step_t* step, render_target
                                      render_target_t* target_destination) {
 	memset(step, 0, sizeof(render_pipeline_step_t));
 	step->target = target_destination;
-	//step->contexts = nullptr;
-	//step->executor = executor;
+	// step->contexts = nullptr;
+	// step->executor = executor;
 
 	FOUNDATION_UNUSED(target_source);
 }
