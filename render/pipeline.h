@@ -11,7 +11,8 @@
  *
  * https://github.com/rampantpixels
  *
- * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
+ * This library is put in the public domain; you can redistribute it and/or modify it without any
+ * restrictions.
  *
  */
 
@@ -38,6 +39,9 @@ render_pipeline_deallocate(render_pipeline_t* pipeline);
 
 void
 render_pipeline_execute(render_pipeline_t* pipeline);
+
+void
+render_pipeline_dispatch(render_pipeline_t* pipeline);
 
 void
 render_pipeline_step_initialize(render_pipeline_step_t* step, render_target_t* target,

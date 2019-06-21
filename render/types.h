@@ -626,6 +626,7 @@ FOUNDATION_ALIGNED_STRUCT(render_texture_t, 8) {
 struct render_pipeline_step_t {
 	render_backend_t* backend;
 	render_target_t* target;
+	atomic32_t* task_counter;
 	render_pipeline_execute_fn executor;
 	render_context_t** contexts;
 };
@@ -636,6 +637,7 @@ struct render_pipeline_t {
 	task_scheduler_t* scheduler;
 	task_t* step_task;
 	task_arg_t* step_arg;
+	atomic32_t step_complete;
 };
 
 struct render_resolution_t {
