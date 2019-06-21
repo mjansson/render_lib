@@ -242,6 +242,7 @@ render_backend_deallocate(render_backend_t* backend) {
 	uuidmap_finalize((uuidmap_t*)&backend->texturetable);
 
 	render_target_finalize(&backend->framebuffer);
+	render_drawable_finalize(&backend->drawable);
 
 	mutex_deallocate(backend->exclusive);
 

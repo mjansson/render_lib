@@ -107,32 +107,40 @@ _rb_gl_set_thread_context(void* context) {
 	set_thread_gl_context(context);
 }
 
-/*
-#if !BUILD_DEPLOY
+#if BUILD_DEBUG
 
-static void STDCALL
+static void APIENTRY
 _rb_gl_debug_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length,
-                      const GLchar* message, GLvoid* userParam) {
-    FOUNDATION_UNUSED(source);
-    FOUNDATION_UNUSED(type);
-    FOUNDATION_UNUSED(id);
-    FOUNDATION_UNUSED(severity);
-    FOUNDATION_UNUSED(userParam);
-    log_debugf(HASH_RENDER, STRING_CONST("OpenGL debug message: %.*s"), (int)length, message);
+                      const GLchar* message, const void* user_param) {
+	FOUNDATION_UNUSED(source);
+	FOUNDATION_UNUSED(type);
+	FOUNDATION_UNUSED(id);
+	FOUNDATION_UNUSED(severity);
+	FOUNDATION_UNUSED(user_param);
+	if (severity == GL_DEBUG_SEVERITY_HIGH)
+		log_errorf(HASH_RENDER, ERROR_INTERNAL_FAILURE, STRING_CONST("OpenGL: %.*s"), (int)length,
+		           message);
+	else if (severity == GL_DEBUG_SEVERITY_MEDIUM)
+		log_warnf(HASH_RENDER, WARNING_SUSPICIOUS, STRING_CONST("OpenGL: %.*s"), (int)length,
+		          message);
+	else if (severity == GL_DEBUG_SEVERITY_LOW)
+		log_infof(HASH_RENDER, STRING_CONST("OpenGL: %.*s"), (int)length, message);
+	else if (severity == GL_DEBUG_SEVERITY_NOTIFICATION)
+		log_debugf(HASH_RENDER, STRING_CONST("OpenGL: %.*s"), (int)length, message);
 }
 
 #endif
-*/
 
 void
 _rb_gl_destroy_context(const render_drawable_t* drawable, void* context) {
+	if (!context)
+		return;
+	glFinish();
 #if FOUNDATION_PLATFORM_WINDOWS
 	FOUNDATION_UNUSED(drawable);
-	if (context) {
-		if (wglGetCurrentContext() == context)
-			wglMakeCurrent(0, 0);
-		wglDeleteContext((HGLRC)context);
-	}
+	if (wglGetCurrentContext() == context)
+		wglMakeCurrent(0, 0);
+	wglDeleteContext((HGLRC)context);
 #elif FOUNDATION_PLATFORM_LINUX
 	glXDestroyContext(drawable->display, context);
 #elif FOUNDATION_PLATFORM_MACOS
@@ -228,8 +236,8 @@ _rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, uns
 		                    0};
 		size_t num_attribs = sizeof(attributes) / sizeof(attributes[0]);
 
-		int pixel_format;
-		UINT num_formats;
+		int pixel_format = 0;
+		UINT num_formats = 0;
 		wglChoosePixelFormatARB(hdc, attributes, 0, 1, &pixel_format, &num_formats);
 		if (!num_formats) {
 			// Try reducing depth bits to 24
@@ -289,12 +297,16 @@ _rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, uns
 	// Now create context
 	HGLRC hglrc = 0;
 	if (wglCreateContextAttribsARB) {
+		int context_flags = 0;
+#if BUILD_DEBUG
+		context_flags |= WGL_CONTEXT_DEBUG_BIT_ARB;
+#endif
 		int attributes[] = {WGL_CONTEXT_MAJOR_VERSION_ARB,
 		                    major,
 		                    WGL_CONTEXT_MINOR_VERSION_ARB,
 		                    minor,
 		                    WGL_CONTEXT_FLAGS_ARB,
-		                    0,
+		                    context_flags,
 		                    WGL_CONTEXT_PROFILE_MASK_ARB,
 		                    WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
 		                    0,
@@ -401,7 +413,7 @@ _rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, uns
 	if (!hglrc)
 		wglMakeCurrent(0, 0);
 
-	return hglrc;
+	void* context = hglrc;
 
 #elif FOUNDATION_PLATFORM_LINUX
 
@@ -494,8 +506,6 @@ failed:
 		XCloseDisplay(display);
 	}
 
-	return context;
-
 #elif FOUNDATION_PLATFORM_MACOS
 
 	bool supported = false;
@@ -554,11 +564,29 @@ failed:
 	if ((!supported || !drawable) && context)
 		_rb_gl_destroy_agl_context(context);
 
-	return supported ? context : 0;
+	if (!supported)
+		context = nullptr;
 
 #else
 #error Not implemented
 #endif
+
+#if BUILD_DEBUG
+	glDebugMessageControl =
+	    (PFNGLDEBUGMESSAGECONTROLPROC)_rb_gl_get_proc_address("glDebugMessageControl");
+	if (glDebugMessageControl) {
+		GLuint unused = 0;
+		glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, &unused, true);
+	}
+	glDebugMessageCallback =
+	    (PFNGLDEBUGMESSAGECALLBACKPROC)_rb_gl_get_proc_address("glDebugMessageCallback");
+	if (glDebugMessageCallback) {
+		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+		glDebugMessageCallback(_rb_gl_debug_callback, nullptr);
+	}
+#endif
+
+	return context;
 }
 
 bool
@@ -764,14 +792,11 @@ _rb_gl4_set_drawable(render_backend_t* backend, const render_drawable_t* drawabl
 	const char* vendor = (const char*)glGetString(GL_VENDOR);
 	const char* renderer = (const char*)glGetString(GL_RENDERER);
 	const char* version = (const char*)glGetString(GL_VERSION);
-	const char* ext = (const char*)glGetString(GL_EXTENSIONS);
-	glGetError();
-
 	log_infof(HASH_RENDER, STRING_CONST("Vendor:     %s"), vendor ? vendor : "<unknown>");
 	log_infof(HASH_RENDER, STRING_CONST("Renderer:   %s"), renderer ? renderer : "<unknown>");
 	log_infof(HASH_RENDER, STRING_CONST("Version:    %s"), version ? version : "<unknown>");
-	log_infof(HASH_RENDER, STRING_CONST("Extensions: %s"), ext ? ext : "<none>");
 #endif
+	glGetError();
 
 #if FOUNDATION_PLATFORM_WINDOWS
 	const char* wglext = 0;
@@ -1754,6 +1779,8 @@ _rb_gl4_flip(render_backend_t* backend) {
 #if FOUNDATION_PLATFORM_WINDOWS
 
 	if (backend_gl4->drawable.hdc) {
+		HDC current_dc = wglGetCurrentDC();
+		FOUNDATION_ASSERT(current_dc == backend_gl4->drawable.hdc);
 		if (!SwapBuffers(backend_gl4->drawable.hdc)) {
 			string_const_t errmsg = system_error_message(0);
 			log_warnf(HASH_RENDER, WARNING_SYSTEM_CALL_FAIL,
