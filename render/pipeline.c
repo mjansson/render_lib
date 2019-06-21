@@ -46,6 +46,8 @@ render_pipeline_initialize(render_pipeline_t* pipeline, render_backend_t* backen
 void
 render_pipeline_finalize(render_pipeline_t* pipeline) {
 	if (pipeline) {
+		array_deallocate(pipeline->step_task);
+		array_deallocate(pipeline->step_arg);
 		for (size_t istep = 0, ssize = array_size(pipeline->steps); istep < ssize; ++istep)
 			render_pipeline_step_finalize(pipeline->steps + istep);
 		array_deallocate(pipeline->steps);
