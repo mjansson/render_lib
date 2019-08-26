@@ -52,6 +52,7 @@ typedef struct render_backend_gl2_t {
 
 	void** concurrent_context;
 	atomic32_t* concurrent_used;
+	void* concurrent_buffer;
 
 	render_resolution_t resolution;
 
@@ -69,11 +70,27 @@ _rb_gl2_disable_thread(render_backend_t* backend) {
 	if (thread_context) {
 		if (thread_context == backend_gl2->context) {
 			atomic_store32(&backend_gl2->context_used, 0, memory_order_release);
+#if FOUNDATION_PLATFORM_WINDOWS
+			if (wglGetCurrentContext() == thread_context)
+				wglMakeCurrent(0, 0);
+#elif FOUNDATION_PLATFORM_LINUX
+			if (glXGetCurrentContext() == thread_context)
+				glXMakeCurrent(backend->drawable.display, (GLXDrawable)backend->drawable.drawable, nullptr);
+#else
+			#error Not implemented
+#endif
 		} else {
 			for (uint64_t icontext = 0; icontext < backend->concurrency; ++icontext) {
 				if (backend_gl2->concurrent_context[icontext] == thread_context) {
+#if FOUNDATION_PLATFORM_WINDOWS
 					if (wglGetCurrentContext() == thread_context)
 						wglMakeCurrent(0, 0);
+#elif FOUNDATION_PLATFORM_LINUX
+					if (glXGetCurrentContext() == thread_context)
+						glXMakeCurrent(backend->drawable.display, (GLXDrawable)backend->drawable.drawable, nullptr);
+#else
+					#error Not implemented
+#endif
 					atomic_store32(&backend_gl2->concurrent_used[icontext], 0,
 					               memory_order_release);
 					break;
@@ -151,7 +168,7 @@ _rb_gl2_destruct(render_backend_t* backend) {
 	for (uint64_t icontext = 0; icontext < backend->concurrency; ++icontext)
 		_rb_gl_destroy_context(&backend_gl2->drawable, backend_gl2->concurrent_context[icontext]);
 	memory_deallocate(backend_gl2->concurrent_context);
-	memory_deallocate(backend_gl2->concurrent_used);
+	memory_deallocate(backend_gl2->concurrent_buffer);
 
 	_rb_gl2_disable_thread(backend);
 	if (backend_gl2->context)
@@ -172,9 +189,10 @@ _rb_gl2_set_drawable(render_backend_t* backend, const render_drawable_t* drawabl
 		backend_gl2->concurrent_context =
 		    memory_allocate(HASH_RENDER, sizeof(void*) * backend_gl2->concurrency, 0,
 		                    MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
-		backend_gl2->concurrent_used =
+		backend_gl2->concurrent_buffer =
 		    memory_allocate(HASH_RENDER, sizeof(atomic32_t) * backend_gl2->concurrency, 0,
 		                    MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+		backend_gl2->concurrent_used = backend_gl2->concurrent_buffer;
 	}
 
 	atomic_store32(&backend_gl2->context_used, 1, memory_order_release);

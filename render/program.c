@@ -87,7 +87,7 @@ render_program_load_impl(render_backend_t* backend, const uuid_t uuid) {
 
 	error_context_declare_local(
 	    char uuidbuf[40];
-	    const string_t uuidstr = string_from_uuid(uuidbuf, sizeof(uuidbuf), uuid);
+	    const string_t uuidstr = string_from_uuid(uuidbuf, sizeof(uuidbuf), uuid)
 	);
 	error_context_push(STRING_CONST("loading program"), STRING_ARGS(uuidstr));
 
@@ -180,7 +180,7 @@ bool
 render_program_reload(render_program_t* program, const uuid_t uuid) {
 	error_context_declare_local(
 	    char uuidbuf[40];
-	    const string_t uuidstr = string_from_uuid(uuidbuf, sizeof(uuidbuf), uuid);
+	    const string_t uuidstr = string_from_uuid(uuidbuf, sizeof(uuidbuf), uuid)
 	);
 	error_context_push(STRING_CONST("reloading program"), STRING_ARGS(uuidstr));
 

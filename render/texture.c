@@ -70,7 +70,7 @@ render_texture_load(render_backend_t* backend, const uuid_t uuid) {
 
 	error_context_declare_local(
 	    char uuidbuf[40];
-	    const string_t uuidstr = string_from_uuid(uuidbuf, sizeof(uuidbuf), uuid);
+	    const string_t uuidstr = string_from_uuid(uuidbuf, sizeof(uuidbuf), uuid)
 	);
 	error_context_push(STRING_CONST("loading texture"), STRING_ARGS(uuidstr));
 
@@ -157,7 +157,7 @@ bool
 render_texture_reload(render_texture_t* texture, const uuid_t uuid) {
 	error_context_declare_local(
 	    char uuidbuf[40];
-	    const string_t uuidstr = string_from_uuid(uuidbuf, sizeof(uuidbuf), uuid);
+	    const string_t uuidstr = string_from_uuid(uuidbuf, sizeof(uuidbuf), uuid)
 	);
 	error_context_push(STRING_CONST("reloading texture"), STRING_ARGS(uuidstr));
 

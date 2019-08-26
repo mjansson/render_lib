@@ -52,6 +52,7 @@ typedef struct render_backend_gl4_t {
 
 	void** concurrent_context;
 	atomic32_t* concurrent_used;
+	void* concurrent_buffer;
 
 	render_resolution_t resolution;
 
@@ -203,6 +204,12 @@ _rb_gl_init_gl_extensions(void) {
 		wglDeleteContext(hglrc);
 	window_finalize(&window_dummy);
 	render_drawable_finalize(&drawable);
+}
+
+#else
+
+RENDER_EXTERN void
+_rb_gl_init_gl_extensions(void) {
 }
 
 #endif
@@ -468,15 +475,22 @@ _rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, uns
 			array_push(attributes, 0);
 			array_push(attributes, 0);
 
-			for (int ic = 0; ic < numconfig; ++ic) {
-				context =
-				    glXCreateContextAttribs(display, fbconfig[ic], share_context, 1, attributes);
-				if (context) {
-					if (colorspace == COLORSPACE_sRGB) {
-						glEnable(GL_FRAMEBUFFER_SRGB);
-						_rb_gl_check_error("Unable to enable sRGB framebuffer");
-					}
+			int ic = 0;
+			for (ic = 0; ic < numconfig; ++ic) {
+				context = glXCreateContextAttribs(display, fbconfig[ic], nullptr, 1, attributes);
+				if (context)
 					break;
+			}
+
+			if (context) {
+				for (size_t icontext = 0; icontext < concurrent_count; ++icontext) {
+					concurrent_contexts[icontext] = glXCreateContextAttribs(display, fbconfig[ic], context, 1, attributes);
+					if (!concurrent_contexts[icontext]) {
+						log_errorf(
+						    HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
+						    STRING_CONST("Unable to create GL context for concurrency"));
+						break;
+					}
 				}
 			}
 
@@ -495,6 +509,13 @@ _rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, uns
 			          major, minor);
 			glXDestroyContext(display, context);
 			context = nullptr;
+		}
+	}
+
+	if (context) {
+		if (colorspace == COLORSPACE_sRGB) {
+			glEnable(GL_FRAMEBUFFER_SRGB);
+			_rb_gl_check_error("Unable to enable sRGB framebuffer");
 		}
 	}
 
@@ -572,13 +593,13 @@ failed:
 #endif
 
 #if BUILD_DEBUG
-	glDebugMessageControl =
+	PFNGLDEBUGMESSAGECONTROLPROC glDebugMessageControl =
 	    (PFNGLDEBUGMESSAGECONTROLPROC)_rb_gl_get_proc_address("glDebugMessageControl");
 	if (glDebugMessageControl) {
 		GLuint unused = 0;
 		glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, &unused, true);
 	}
-	glDebugMessageCallback =
+	PFNGLDEBUGMESSAGECALLBACKPROC glDebugMessageCallback =
 	    (PFNGLDEBUGMESSAGECALLBACKPROC)_rb_gl_get_proc_address("glDebugMessageCallback");
 	if (glDebugMessageCallback) {
 		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
@@ -611,7 +632,7 @@ _rb_gl_check_context(unsigned int major, unsigned int minor) {
 #elif FOUNDATION_PLATFORM_LINUX || FOUNDATION_PLATFORM_MACOS
 
 	context =
-	    _rb_gl_create_context(backend, 0, major, minor, 0, PIXELFORMAT_R8G8B8, COLORSPACE_LINEAR);
+	    _rb_gl_create_context(0, major, minor, PIXELFORMAT_R8G8B8, COLORSPACE_LINEAR, 0, 0);
 
 #else
 #error Not implemented
@@ -635,13 +656,27 @@ _rb_gl4_disable_thread(render_backend_t* backend) {
 	if (thread_context) {
 		if (thread_context == backend_gl4->context) {
 			atomic_store32(&backend_gl4->context_used, 0, memory_order_release);
+#if FOUNDATION_PLATFORM_WINDOWS
 			if (wglGetCurrentContext() == thread_context)
 				wglMakeCurrent(0, 0);
+#elif FOUNDATION_PLATFORM_LINUX
+			if (glXGetCurrentContext() == thread_context)
+				glXMakeCurrent(backend->drawable.display, (GLXDrawable)backend->drawable.drawable, nullptr);
+#else
+			#error Not implemented
+#endif
 		} else {
 			for (uint64_t icontext = 0; icontext < backend->concurrency; ++icontext) {
 				if (backend_gl4->concurrent_context[icontext] == thread_context) {
+#if FOUNDATION_PLATFORM_WINDOWS
 					if (wglGetCurrentContext() == thread_context)
 						wglMakeCurrent(0, 0);
+#elif FOUNDATION_PLATFORM_LINUX
+					if (glXGetCurrentContext() == thread_context)
+						glXMakeCurrent(backend->drawable.display, (GLXDrawable)backend->drawable.drawable, nullptr);
+#else
+					#error Not implemented
+#endif
 					atomic_store32(&backend_gl4->concurrent_used[icontext], 0,
 					               memory_order_release);
 					break;
@@ -718,7 +753,7 @@ _rb_gl4_destruct(render_backend_t* backend) {
 	for (uint64_t icontext = 0; icontext < backend->concurrency; ++icontext)
 		_rb_gl_destroy_context(&backend_gl4->drawable, backend_gl4->concurrent_context[icontext]);
 	memory_deallocate(backend_gl4->concurrent_context);
-	memory_deallocate(backend_gl4->concurrent_used);
+	memory_deallocate(backend_gl4->concurrent_buffer);
 
 	_rb_gl4_disable_thread(backend);
 	if (backend_gl4->context)
@@ -747,9 +782,10 @@ _rb_gl4_set_drawable(render_backend_t* backend, const render_drawable_t* drawabl
 		backend_gl4->concurrent_context =
 		    memory_allocate(HASH_RENDER, sizeof(void*) * backend_gl4->concurrency, 0,
 		                    MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
-		backend_gl4->concurrent_used =
+		backend_gl4->concurrent_buffer =
 		    memory_allocate(HASH_RENDER, sizeof(atomic32_t) * backend_gl4->concurrency, 0,
 		                    MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+		backend_gl4->concurrent_used = backend_gl4->concurrent_buffer;
 	}
 
 	atomic_store32(&backend_gl4->context_used, 1, memory_order_release);

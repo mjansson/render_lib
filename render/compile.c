@@ -23,7 +23,6 @@
 
 #include "gl4/glwrap.h"
 #include "gl4/glprocs.h"
-#include "gl4/gl/glext.h"
 
 #if RESOURCE_ENABLE_LOCAL_SOURCE
 
@@ -190,7 +189,7 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 		return render_shader_ref_compile(uuid, platform, source, source_hash, type, type_length);
 
 	error_context_declare_local(char uuidbuf[40]; const string_t uuidstr = string_from_uuid(
-	                                                  uuidbuf, sizeof(uuidbuf), uuid););
+	                                                  uuidbuf, sizeof(uuidbuf), uuid));
 	error_context_push(STRING_CONST("compiling shader"), STRING_ARGS(uuidstr));
 
 	array_push(subplatforms, platform);
@@ -626,7 +625,7 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 		return result;
 
 	error_context_declare_local(char uuidbuf[40]; const string_t uuidstr = string_from_uuid(
-	                                                  uuidbuf, sizeof(uuidbuf), uuid););
+	                                                  uuidbuf, sizeof(uuidbuf), uuid));
 	error_context_push(STRING_CONST("compiling program"), STRING_ARGS(uuidstr));
 
 	array_push(subplatforms, platform);

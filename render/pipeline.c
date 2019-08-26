@@ -108,7 +108,7 @@ void
 render_pipeline_dispatch(render_pipeline_t* pipeline) {
 	if (pipeline->scheduler) {
 		size_t step_count = array_size(pipeline->steps);
-		while (atomic_load32(&pipeline->step_complete, memory_order_acquire) < step_count)
+		while ((size_t)atomic_load32(&pipeline->step_complete, memory_order_acquire) < step_count)
 			thread_yield();
 	}
 
