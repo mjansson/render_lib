@@ -11,7 +11,8 @@
  *
  * https://github.com/rampantpixels
  *
- * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
+ * This library is put in the public domain; you can redistribute it and/or modify it without any
+ * restrictions.
  *
  */
 
@@ -24,13 +25,22 @@
 
 #include <render/types.h>
 
+RENDER_API void
+render_parameterbuffer_initialize(render_parameterbuffer_t* parameterbuffer,
+                                  render_backend_t* backend, render_usage_t usage,
+                                  const render_parameter_t* parameters, size_t parameter_count,
+                                  const void* data, size_t data_size);
+
 RENDER_API render_parameterbuffer_t*
 render_parameterbuffer_allocate(render_backend_t* backend, render_usage_t usage,
-                                const render_parameter_t* parameters, size_t num_parameters,
+                                const render_parameter_t* parameters, size_t parameter_count,
                                 const void* data, size_t data_size);
 
 RENDER_API void
 render_parameterbuffer_deallocate(render_parameterbuffer_t* buffer);
+
+RENDER_API void
+render_parameterbuffer_finalize(render_parameterbuffer_t* buffer);
 
 RENDER_API void
 render_parameterbuffer_link(render_parameterbuffer_t* buffer, render_program_t* program);

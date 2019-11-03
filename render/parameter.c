@@ -11,7 +11,8 @@
  *
  * https://github.com/rampantpixels
  *
- * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
+ * This library is put in the public domain; you can redistribute it and/or modify it without any
+ * restrictions.
  *
  */
 
@@ -20,32 +21,44 @@
 #include <render/render.h>
 #include <render/internal.h>
 
-render_parameterbuffer_t*
-render_parameterbuffer_allocate(render_backend_t* backend, render_usage_t usage,
-                                const render_parameter_t* parameters, size_t num_parameters,
-                                const void* data, size_t data_size) {
-	size_t paramsize = sizeof(render_parameter_t) * num_parameters;
-	render_parameterbuffer_t* buffer = memory_allocate(HASH_RENDER,
-	                                                   sizeof(render_parameterbuffer_t) + paramsize, 0,
-	                                                   MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
-	buffer->backend    = backend;
-	buffer->usage      = (uint8_t)usage;
-	buffer->buffertype = RENDERBUFFER_PARAMETER;
-	buffer->policy     = RENDERBUFFER_UPLOAD_ONDISPATCH;
-	buffer->buffersize = data_size;
-	buffer->num_parameters = (unsigned int)num_parameters;
-	semaphore_initialize(&buffer->lock, 1);
-	memcpy(&buffer->parameters, parameters, paramsize);
-
-	buffer->allocated = 1;
-	buffer->used = 1;
-	buffer->store = backend->vtable.allocate_buffer(backend, (render_buffer_t*)buffer);
-	if (data) {
-		memcpy(buffer->store, data, data_size);
-		buffer->flags |= RENDERBUFFER_DIRTY;
+void
+render_parameterbuffer_initialize(render_parameterbuffer_t* parameterbuffer,
+                                  render_backend_t* backend, render_usage_t usage,
+                                  const render_parameter_t* parameters, size_t parameter_count,
+                                  const void* data, size_t data_size) {
+	parameterbuffer->backend = backend;
+	parameterbuffer->usage = (uint8_t)usage;
+	parameterbuffer->buffertype = RENDERBUFFER_PARAMETER;
+	parameterbuffer->policy = RENDERBUFFER_UPLOAD_ONDISPATCH;
+	parameterbuffer->buffersize = data_size;
+	parameterbuffer->parameter_count = (unsigned int)parameter_count;
+	semaphore_initialize(&parameterbuffer->lock, 1);
+	if (parameters) {
+		memcpy(&parameterbuffer->parameters, parameters,
+		       sizeof(render_parameter_t) * parameter_count);
 	}
 
-	return buffer;
+	parameterbuffer->allocated = 1;
+	parameterbuffer->used = 1;
+	parameterbuffer->store =
+	    backend->vtable.allocate_buffer(backend, (render_buffer_t*)parameterbuffer);
+	if (data) {
+		memcpy(parameterbuffer->store, data, data_size);
+		parameterbuffer->flags |= RENDERBUFFER_DIRTY;
+	}
+}
+
+render_parameterbuffer_t*
+render_parameterbuffer_allocate(render_backend_t* backend, render_usage_t usage,
+                                const render_parameter_t* parameters, size_t parameter_count,
+                                const void* data, size_t data_size) {
+	render_parameterbuffer_t* parameterbuffer = memory_allocate(
+	    HASH_RENDER,
+	    sizeof(render_parameterbuffer_t) + (sizeof(render_parameter_t) * parameter_count), 0,
+	    MEMORY_PERSISTENT);
+	render_parameterbuffer_initialize(parameterbuffer, backend, usage, parameters, parameter_count,
+	                                  data, data_size);
+	return parameterbuffer;
 }
 
 void
@@ -83,8 +96,8 @@ render_parameterbuffer_restore(render_parameterbuffer_t* buffer) {
 	buffer->backend->vtable.allocate_buffer(buffer->backend, (render_buffer_t*)buffer);
 
 	//...
-	//All loadable resources should have a stream identifier, an offset and a size
-	//to be able to repoen the stream and read the raw buffer back
+	// All loadable resources should have a stream identifier, an offset and a size
+	// to be able to repoen the stream and read the raw buffer back
 	//...
 
 	buffer->flags |= RENDERBUFFER_DIRTY;

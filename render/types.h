@@ -547,10 +547,13 @@ struct render_indexbuffer_t {
 	render_index_format_t format;
 };
 
+#define RENDER_DECLARE_PARAMETERBUFFER(_parameter_count) \
+	RENDER_DECLARE_BUFFER;                               \
+	unsigned int parameter_count;                        \
+	render_parameter_t parameters[_parameter_count]
+
 struct render_parameterbuffer_t {
-	RENDER_DECLARE_BUFFER;
-	unsigned int num_parameters;
-	render_parameter_t parameters[FOUNDATION_FLEXIBLE_ARRAY];
+	RENDER_DECLARE_PARAMETERBUFFER(FOUNDATION_FLEXIBLE_ARRAY);
 };
 
 struct render_statebuffer_t {

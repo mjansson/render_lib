@@ -624,7 +624,7 @@ _rb_gl2_render(render_backend_gl2_t* backend, render_context_t* context,
 	// Bind the parameter blocks
 	GLuint unit = 0;
 	render_parameter_t* param = parameterbuffer->parameters;
-	for (unsigned int ip = 0; ip < parameterbuffer->num_parameters; ++ip, ++param) {
+	for (unsigned int ip = 0; ip < parameterbuffer->parameter_count; ++ip, ++param) {
 		void* data = pointer_offset(parameterbuffer->store, param->offset);
 		if (param->type == RENDERPARAMETER_TEXTURE) {
 			glActiveTexture(GL_TEXTURE0 + unit);
