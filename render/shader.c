@@ -92,7 +92,7 @@ render_shader_load(render_backend_t* backend, const uuid_t uuid) {
 
 	error_context_declare_local(
 	    char uuidbuf[40];
-	    const string_t uuidstr = string_from_uuid(uuidbuf, sizeof(uuidbuf), uuid);
+	    const string_t uuidstr = string_from_uuid(uuidbuf, sizeof(uuidbuf), uuid)
 	);
 	error_context_push(STRING_CONST("loading shader"), STRING_ARGS(uuidstr));
 
@@ -172,7 +172,7 @@ bool
 render_shader_reload(render_shader_t* shader, const uuid_t uuid) {
 	error_context_declare_local(
 	    char uuidbuf[40];
-	    const string_t uuidstr = string_from_uuid(uuidbuf, sizeof(uuidbuf), uuid);
+	    const string_t uuidstr = string_from_uuid(uuidbuf, sizeof(uuidbuf), uuid)
 	);
 	error_context_push(STRING_CONST("reloading shader"), STRING_ARGS(uuidstr));
 

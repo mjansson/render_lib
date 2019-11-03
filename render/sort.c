@@ -26,7 +26,7 @@ render_sort_merge(render_context_t** contexts, size_t num_contexts) {
 	for (size_t i = 0, size = num_contexts; i < size; ++i)
 		contexts[i]->order =
 		    radixsort_sort(contexts[i]->sort, contexts[i]->keys,
-		                   atomic_load32(&contexts[i]->reserved, memory_order_acquire));
+		                   (size_t)atomic_load32(&contexts[i]->reserved, memory_order_acquire));
 }
 
 void
