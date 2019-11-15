@@ -485,6 +485,8 @@ render_program_compile_opengl(render_backend_t* backend, uuid_t vertexshader, uu
 		unsigned int attrib = 0;
 		if (string_equal(name, (size_t)num_chars, STRING_CONST("position")))
 			attrib = VERTEXATTRIBUTE_POSITION;
+		else if (string_equal(name, (size_t)num_chars, STRING_CONST("normal")))
+			attrib = VERTEXATTRIBUTE_NORMAL;
 		else if (string_equal(name, (size_t)num_chars, STRING_CONST("color")))
 			attrib = VERTEXATTRIBUTE_PRIMARYCOLOR;
 		else if (string_equal(name, (size_t)num_chars, STRING_CONST("texcoord")))
