@@ -1656,20 +1656,27 @@ static const unsigned int _rb_gl4_primitive_add[] = {0, 0};
 static const GLenum _rb_gl4_index_format_type[INDEXFORMAT_NUMTYPES] = {
     GL_UNSIGNED_BYTE, GL_UNSIGNED_SHORT, GL_UNSIGNED_INT};
 
-//                                                 BLEND_ZERO, BLEND_ONE, BLEND_SRCCOLOR,
-//                                                 BLEND_INVSRCCOLOR, BLEND_DESTCOLOR,
-//                                                 BLEND_INVDESTCOLOR,     BLEND_SRCALPHA,
-//                                                 BLEND_INVSRCALPHA,      BLEND_DESTALPHA,
-//                                                 BLEND_INVDESTALPHA,     BLEND_FACTOR,
-//                                                 BLEND_INVFACTOR, BLEND_SRCALPHASAT
-// static const GLenum       _rb_gl4_blend_func[] = { GL_ZERO,    GL_ONE,    GL_SRC_COLOR,
-// GL_ONE_MINUS_SRC_COLOR, GL_DST_COLOR,    GL_ONE_MINUS_DST_COLOR, GL_SRC_ALPHA,
-// GL_ONE_MINUS_SRC_ALPHA, GL_DST_ALPHA,    GL_ONE_MINUS_DST_ALPHA, GL_CONSTANT_ALPHA,
-// GL_ONE_MINUS_CONSTANT_ALPHA, GL_SRC_ALPHA_SATURATE };
+static const GLenum _rb_gl4_blend_func[] = {GL_ZERO,
+                                            GL_ONE,
+                                            GL_SRC_COLOR,
+                                            GL_ONE_MINUS_SRC_COLOR,
+                                            GL_DST_COLOR,
+                                            GL_ONE_MINUS_DST_COLOR,
+                                            GL_SRC_ALPHA,
+                                            GL_ONE_MINUS_SRC_ALPHA,
+                                            GL_DST_ALPHA,
+                                            GL_ONE_MINUS_DST_ALPHA,
+                                            GL_CONSTANT_ALPHA,
+                                            GL_ONE_MINUS_CONSTANT_ALPHA,
+                                            GL_SRC_ALPHA_SATURATE};
+
+static const GLenum _rb_gl4_cmp_func[] = {GL_NEVER,    GL_LESS,   GL_LEQUAL,  GL_EQUAL,
+                                          GL_NOTEQUAL, GL_GEQUAL, GL_GREATER, GL_ALWAYS};
 
 static void
 _rb_gl4_set_default_state(void) {
 	glBlendFunc(GL_ONE, GL_ZERO);
+	glDisable(GL_BLEND);
 	glDepthFunc(GL_LEQUAL);
 	glDepthMask(GL_TRUE);
 	glEnable(GL_DEPTH_TEST);
@@ -1679,8 +1686,17 @@ _rb_gl4_set_default_state(void) {
 
 static void
 _rb_gl4_set_state(render_state_t* state) {
-	FOUNDATION_UNUSED(state);
-	_rb_gl4_set_default_state();
+	glBlendFunc(_rb_gl4_blend_func[state->blend_source_color],
+	            _rb_gl4_blend_func[state->blend_dest_color]);
+	if (state->blend_enable)
+		glEnable(GL_BLEND);
+	else
+		glDisable(GL_BLEND);
+	glDepthFunc(_rb_gl4_cmp_func[state->depth_func]);
+	glDepthMask(state->depth_write ? GL_TRUE : GL_FALSE);
+	glEnable(GL_DEPTH_TEST);
+	glFrontFace(GL_CCW);
+	glEnable(GL_CULL_FACE);
 }
 
 static void

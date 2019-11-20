@@ -20,6 +20,7 @@ HASH_PROGRAM                               program
 HASH_TEXTURE                               texture
 
 HASH_TRANSFORM_MVP                         transform_mvp
+HASH_TRANSFORM_MODEL                       transform_model
 HASH_TEX                                   tex
 HASH_PARAMETERS                            parameters
 
@@ -27,3 +28,9 @@ HASH_ALBEDO                                albedo
 HASH_OCCLUSION                             occlusion
 HASH_ROUGHNESS                             roughness
 HASH_METALLIC                              metallic
+
+HASH_SAMPLER_ALBEDO                        sampler_albedo
+HASH_SAMPLER_OCCLUSION                     sampler_occlusion
+HASH_SAMPLER_ROUGHNESS                     sampler_roughness
+HASH_SAMPLER_METALLIC                      sampler_metallic
+HASH_SAMPLER_NORMAL                        sampler_normal

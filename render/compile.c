@@ -443,8 +443,12 @@ render_program_compile_opengl(render_backend_t* backend, uuid_t vertexshader, uu
 				binding = VERTEXATTRIBUTE_POSITION;
 			else if (string_equal(name, (size_t)num_chars, STRING_CONST("color")))
 				binding = VERTEXATTRIBUTE_PRIMARYCOLOR;
+			else if (string_equal(name, (size_t)num_chars, STRING_CONST("normal")))
+				binding = VERTEXATTRIBUTE_NORMAL;
 			else if (string_equal(name, (size_t)num_chars, STRING_CONST("texcoord")))
 				binding = VERTEXATTRIBUTE_TEXCOORD0;
+			else if (string_equal(name, (size_t)num_chars, STRING_CONST("tangent")))
+				binding = VERTEXATTRIBUTE_TANGENT;
 			glBindAttribLocation(handle, binding, name);
 		}
 	}
@@ -491,6 +495,8 @@ render_program_compile_opengl(render_backend_t* backend, uuid_t vertexshader, uu
 			attrib = VERTEXATTRIBUTE_PRIMARYCOLOR;
 		else if (string_equal(name, (size_t)num_chars, STRING_CONST("texcoord")))
 			attrib = VERTEXATTRIBUTE_TEXCOORD0;
+		else if (string_equal(name, (size_t)num_chars, STRING_CONST("tangent")))
+			attrib = VERTEXATTRIBUTE_TANGENT;
 		else {
 			log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL,
 			           STRING_CONST("Invalid/unknown attribute name: %.*s"), (int)num_chars, name);

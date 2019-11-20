@@ -34,6 +34,7 @@ render_vertexbuffer_allocate(render_backend_t* backend, render_usage_t usage, si
 	buffer->buffersize = buffer_size;
 	semaphore_initialize(&buffer->lock, 1);
 	memcpy(&buffer->decl, decl, sizeof(render_vertex_decl_t));
+	memset(buffer->backend_data, 0, sizeof(buffer->backend_data));
 
 	if (num_vertices) {
 		buffer->allocated = num_vertices;

@@ -37,6 +37,7 @@ render_parameterbuffer_initialize(render_parameterbuffer_t* parameterbuffer,
 		memcpy(&parameterbuffer->parameters, parameters,
 		       sizeof(render_parameter_t) * parameter_count);
 	}
+	memset(parameterbuffer->backend_data, 0, sizeof(parameterbuffer->backend_data));
 
 	parameterbuffer->allocated = 1;
 	parameterbuffer->used = 1;

@@ -11,7 +11,8 @@
  *
  * https://github.com/rampantpixels
  *
- * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
+ * This library is put in the public domain; you can redistribute it and/or modify it without any
+ * restrictions.
  *
  */
 
@@ -24,9 +25,22 @@
 
 #include <render/types.h>
 
+RENDER_API render_state_t
+render_state_default(void);
+
+RENDER_API void
+render_statebuffer_initialize(render_statebuffer_t* statebuffer, render_backend_t* backend,
+                              render_usage_t usage, const render_state_t state);
+
 RENDER_API render_statebuffer_t*
 render_statebuffer_allocate(render_backend_t* backend, render_usage_t usage,
                             const render_state_t state);
+
+RENDER_API void
+render_statebuffer_deallocate(render_statebuffer_t* buffer);
+
+RENDER_API void
+render_statebuffer_finalize(render_statebuffer_t* buffer);
 
 RENDER_API void
 render_statebuffer_lock(render_statebuffer_t* buffer, unsigned int lock);

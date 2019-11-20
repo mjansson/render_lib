@@ -11,7 +11,8 @@
  *
  * https://github.com/rampantpixels
  *
- * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
+ * This library is put in the public domain; you can redistribute it and/or modify it without any
+ * restrictions.
  *
  */
 
@@ -20,24 +21,44 @@
 #include <render/render.h>
 #include <render/internal.h>
 
+render_state_t
+render_state_default(void) {
+	render_state_t state = {0};
+	state.blend_source_color = BLEND_ONE;
+	state.blend_source_alpha = BLEND_ONE;
+	state.depth_func = RENDER_CMP_LESSEQUAL;
+	state.target_write[0] = true;
+	state.depth_write = true;
+	return state;
+}
+
 render_statebuffer_t*
 render_statebuffer_allocate(render_backend_t* backend, render_usage_t usage,
                             const render_state_t state) {
-	render_statebuffer_t* buffer = memory_allocate(HASH_RENDER,
-	                                               sizeof(render_statebuffer_t), 0,
-	                                               MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
-	buffer->backend    = backend;
-	buffer->usage      = (uint8_t)usage;
+	render_statebuffer_t* statebuffer = memory_allocate(
+	    HASH_RENDER, sizeof(render_statebuffer_t), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	render_statebuffer_initialize(statebuffer, backend, usage, state);
+	return statebuffer;
+}
+
+void
+render_statebuffer_initialize(render_statebuffer_t* buffer, render_backend_t* backend,
+                              render_usage_t usage, const render_state_t state) {
+	buffer->backend = backend;
+	buffer->usage = (uint8_t)usage;
 	buffer->buffertype = RENDERBUFFER_STATE;
-	buffer->policy     = RENDERBUFFER_UPLOAD_ONDISPATCH;
+	buffer->policy = RENDERBUFFER_UPLOAD_ONDISPATCH;
 	buffer->buffersize = sizeof(render_state_t);
 
 	buffer->allocated = 1;
 	buffer->used = 1;
 	buffer->state = state;
 	buffer->store = &buffer->state;
+}
 
-	return buffer;
+void
+render_statebuffer_deallocate(render_statebuffer_t* buffer) {
+	render_buffer_deallocate((render_buffer_t*)buffer);
 }
 
 void
@@ -52,7 +73,7 @@ render_statebuffer_unlock(render_statebuffer_t* buffer) {
 
 render_state_t*
 render_statebuffer_data(render_statebuffer_t* buffer) {
-	return buffer ? buffer->access : nullptr;	
+	return buffer ? buffer->access : nullptr;
 }
 
 void
@@ -70,8 +91,8 @@ render_statebuffer_restore(render_statebuffer_t* buffer) {
 	buffer->backend->vtable.allocate_buffer(buffer->backend, (render_buffer_t*)buffer);
 
 	//...
-	//All loadable resources should have a stream identifier, an offset and a size
-	//to be able to repoen the stream and read the raw buffer back
+	// All loadable resources should have a stream identifier, an offset and a size
+	// to be able to repoen the stream and read the raw buffer back
 	//...
 
 	buffer->flags |= RENDERBUFFER_DIRTY;
