@@ -555,6 +555,11 @@ render_program_compile_opengl(render_backend_t* backend, uuid_t vertexshader, uu
 		render_parameter_t* parameter = program->parameters + iu;
 
 		glGetActiveUniform(handle, (GLuint)iu, sizeof(name), &num_chars, &size, &gltype, name);
+		size_t bracket_pos = string_find(name, num_chars, '[', 0);
+		if (bracket_pos != STRING_NPOS) {
+			name[bracket_pos] = 0;
+			num_chars = (GLsizei)bracket_pos;
+		}
 
 		parameter->name = hash(name, (size_t)num_chars);
 		parameter->location = (unsigned int)glGetUniformLocation(handle, name);
@@ -565,20 +570,20 @@ render_program_compile_opengl(render_backend_t* backend, uuid_t vertexshader, uu
 		switch (gltype) {
 			case GL_FLOAT_VEC4:
 				parameter->type = RENDERPARAMETER_FLOAT4;
-				offset += 16;
+				offset += (uint16_t)(16 * size);
 				break;
 			case GL_INT_VEC4:
 			case 0x8DC8:  // GL_UNSIGNED_INT_VEC4:
 				parameter->type = RENDERPARAMETER_INT4;
-				offset += 16;
+				offset += (uint16_t)(16 * size);
 				break;
 			case GL_FLOAT_MAT4:
 				parameter->type = RENDERPARAMETER_MATRIX;
-				offset += 16 * 4;
+				offset += (uint16_t)(16 * 4 * size);
 				break;
 			case GL_SAMPLER_2D:
 				parameter->type = RENDERPARAMETER_TEXTURE;
-				offset += sizeof(GLuint);
+				offset += (uint16_t)(sizeof(GLuint) * size);
 				break;
 			default:
 				log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL,
