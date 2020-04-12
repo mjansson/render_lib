@@ -1,15 +1,15 @@
-/* indexbuffer.c  -  Render library  -  Public Domain  -  2014 Mattias Jansson / Rampant Pixels
+/* vertexbuffer.c  -  Render library  -  Public Domain  -  2014 Mattias Jansson
  *
  * This library provides a cross-platform rendering library in C11 providing
  * basic 2D/3D rendering functionality for projects based on our foundation library.
  *
- * The latest source code maintained by Rampant Pixels is always available at
+ * The latest source code maintained by Mattias Jansson is always available at
  *
- * https://github.com/rampantpixels/render_lib
+ * https://github.com/mjansson/render_lib
  *
- * The dependent library source code maintained by Rampant Pixels is always available at
+ * The dependent library source code maintained by Mattias Jansson is always available at
  *
- * https://github.com/rampantpixels
+ * https://github.com/mjansson
  *
  * This library is put in the public domain; you can redistribute it and/or modify it without any
  * restrictions.
@@ -22,11 +22,10 @@
 #include <render/internal.h>
 
 render_vertexbuffer_t*
-render_vertexbuffer_allocate(render_backend_t* backend, render_usage_t usage, size_t num_vertices,
-                             size_t buffer_size, const render_vertex_decl_t* decl, const void* data,
-                             size_t data_size) {
-	render_vertexbuffer_t* buffer = memory_allocate(HASH_RENDER, sizeof(render_vertexbuffer_t), 0,
-	                                                MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+render_vertexbuffer_allocate(render_backend_t* backend, render_usage_t usage, size_t vertex_count, size_t buffer_size,
+                             const render_vertex_decl_t* decl, const void* data, size_t data_size) {
+	render_vertexbuffer_t* buffer =
+	    memory_allocate(HASH_RENDER, sizeof(render_vertexbuffer_t), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 	buffer->backend = backend;
 	buffer->usage = (uint8_t)usage;
 	buffer->buffertype = RENDERBUFFER_VERTEX;
@@ -36,9 +35,9 @@ render_vertexbuffer_allocate(render_backend_t* backend, render_usage_t usage, si
 	memcpy(&buffer->decl, decl, sizeof(render_vertex_decl_t));
 	memset(buffer->backend_data, 0, sizeof(buffer->backend_data));
 
-	if (num_vertices) {
-		buffer->allocated = num_vertices;
-		buffer->used = num_vertices;
+	if (vertex_count) {
+		buffer->allocated = vertex_count;
+		buffer->used = vertex_count;
 		buffer->store = backend->vtable.allocate_buffer(backend, (render_buffer_t*)buffer);
 		if (data) {
 			if (data_size > buffer->buffersize)
@@ -88,7 +87,7 @@ render_vertexbuffer_restore(render_vertexbuffer_t* buffer) {
 	buffer->flags |= RENDERBUFFER_DIRTY;
 }
 
-static const uint16_t _vertex_format_size[VERTEXFORMAT_NUMTYPES + 1] = {
+static const uint16_t _vertex_format_size[VERTEXFORMAT_COUNT + 1] = {
 
     4,   // VERTEXFORMAT_FLOAT
     8,   // VERTEXFORMAT_FLOAT2
@@ -117,7 +116,7 @@ size_t
 render_vertex_decl_calculate_size(const render_vertex_decl_t* decl) {
 	size_t size = 0;
 	for (unsigned int i = 0; i < RENDER_MAX_ATTRIBUTES; ++i) {
-		if (decl->attribute[i].format >= VERTEXFORMAT_NUMTYPES)
+		if (decl->attribute[i].format >= VERTEXFORMAT_COUNT)
 			continue;
 		size_t end = decl->attribute[i].offset + _vertex_format_size[decl->attribute[i].format];
 		if (end > size)
@@ -127,18 +126,15 @@ render_vertex_decl_calculate_size(const render_vertex_decl_t* decl) {
 }
 
 render_vertex_decl_t*
-render_vertex_decl_allocate(render_vertex_decl_element_t* elements, size_t num_elements) {
-	render_vertex_decl_t* decl =
-	    memory_allocate(HASH_RENDER, sizeof(render_vertex_decl_t), 0, MEMORY_PERSISTENT);
-	render_vertex_decl_initialize(decl, elements, num_elements);
+render_vertex_decl_allocate(render_vertex_decl_element_t* elements, size_t elements_count) {
+	render_vertex_decl_t* decl = memory_allocate(HASH_RENDER, sizeof(render_vertex_decl_t), 0, MEMORY_PERSISTENT);
+	render_vertex_decl_initialize(decl, elements, elements_count);
 	return decl;
 }
 
 render_vertex_decl_t*
-render_vertex_decl_allocate_varg(render_vertex_format_t format,
-                                 render_vertex_attribute_id attribute, ...) {
-	render_vertex_decl_t* decl =
-	    memory_allocate(HASH_RENDER, sizeof(render_vertex_decl_t), 0, MEMORY_PERSISTENT);
+render_vertex_decl_allocate_varg(render_vertex_format_t format, render_vertex_attribute_id attribute, ...) {
+	render_vertex_decl_t* decl = memory_allocate(HASH_RENDER, sizeof(render_vertex_decl_t), 0, MEMORY_PERSISTENT);
 	va_list list;
 	va_start(list, attribute);
 	render_vertex_decl_initialize_vlist(decl, format, attribute, list);
@@ -147,24 +143,22 @@ render_vertex_decl_allocate_varg(render_vertex_format_t format,
 }
 
 render_vertex_decl_t*
-render_vertex_decl_allocate_vlist(render_vertex_format_t format,
-                                  render_vertex_attribute_id attribute, va_list list) {
-	render_vertex_decl_t* decl =
-	    memory_allocate(HASH_RENDER, sizeof(render_vertex_decl_t), 0, MEMORY_PERSISTENT);
+render_vertex_decl_allocate_vlist(render_vertex_format_t format, render_vertex_attribute_id attribute, va_list list) {
+	render_vertex_decl_t* decl = memory_allocate(HASH_RENDER, sizeof(render_vertex_decl_t), 0, MEMORY_PERSISTENT);
 	render_vertex_decl_initialize_vlist(decl, format, attribute, list);
 	return decl;
 }
 
 void
 render_vertex_decl_initialize(render_vertex_decl_t* decl, render_vertex_decl_element_t* elements,
-                              size_t num_elements) {
+                              size_t elements_count) {
 	size_t i;
 	unsigned int offset = 0;
 	memset(decl, 0, sizeof(render_vertex_decl_t));
 	for (i = 0; i < RENDER_MAX_ATTRIBUTES; ++i)
 		decl->attribute[i].format = VERTEXFORMAT_UNUSED;
 
-	for (i = 0; i < num_elements; ++i) {
+	for (i = 0; i < elements_count; ++i) {
 		if (elements[i].attribute < RENDER_MAX_ATTRIBUTES) {
 			decl->attribute[elements[i].attribute].format = (uint8_t)elements[i].format;
 			decl->attribute[elements[i].attribute].binding = 0;
@@ -207,7 +201,7 @@ render_vertex_decl_initialize_vlist(render_vertex_decl_t* decl, render_vertex_fo
 		}
 
 		format = va_arg(clist, render_vertex_format_t);
-		if (format < VERTEXFORMAT_NUMTYPES)
+		if (format < VERTEXFORMAT_COUNT)
 			attribute = va_arg(clist, render_vertex_attribute_id);
 	}
 

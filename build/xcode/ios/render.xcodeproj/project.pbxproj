@@ -196,7 +196,7 @@
 			isa = PBXProject;
 			attributes = {
 				LastUpgradeCheck = 0600;
-				ORGANIZATIONNAME = "Rampant Pixels AB";
+				ORGANIZATIONNAME = "";
 			};
 			buildConfigurationList = 455515EA1935D32700CF089B /* Build configuration list for PBXProject "render" */;
 			compatibilityVersion = "Xcode 3.2";

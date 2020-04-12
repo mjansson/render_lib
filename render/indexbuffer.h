@@ -1,15 +1,15 @@
-/* indexbuffer.h  -  Render library  -  Public Domain  -  2014 Mattias Jansson / Rampant Pixels
+/* indexbuffer.h  -  Render library  -  Public Domain  -  2014 Mattias Jansson
  *
  * This library provides a cross-platform rendering library in C11 providing
  * basic 2D/3D rendering functionality for projects based on our foundation library.
  *
- * The latest source code maintained by Rampant Pixels is always available at
+ * The latest source code maintained by Mattias Jansson is always available at
  *
- * https://github.com/rampantpixels/render_lib
+ * https://github.com/mjansson/render_lib
  *
- * The dependent library source code maintained by Rampant Pixels is always available at
+ * The dependent library source code maintained by Mattias Jansson is always available at
  *
- * https://github.com/rampantpixels
+ * https://github.com/mjansson
  *
  * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
  *
@@ -25,9 +25,8 @@
 #include <render/types.h>
 
 RENDER_API render_indexbuffer_t*
-render_indexbuffer_allocate(render_backend_t* backend, render_usage_t type, size_t num_indices,
-                            size_t buffer_size, render_index_format_t format,
-                            const void* data, size_t data_size);
+render_indexbuffer_allocate(render_backend_t* backend, render_usage_t type, size_t index_count, size_t buffer_size,
+                            render_index_format_t format, const void* data, size_t data_size);
 
 RENDER_API void
 render_indexbuffer_deallocate(render_indexbuffer_t* buffer);

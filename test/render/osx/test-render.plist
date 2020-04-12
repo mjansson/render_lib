@@ -17,13 +17,13 @@
 	<key>CFBundleShortVersionString</key>
 	<string>1.0</string>
 	<key>CFBundleSignature</key>
-	<string>RPIX</string>
+	<string>MAJA</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>${MACOSX_DEPLOYMENT_TARGET}</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>Copyright © 2014 Rampant Pixels AB. All rights reserved.</string>
+	<string>Copyright © 2014 Mattias Jansson. All rights reserved.</string>
 	<key>NSMainNibFile</key>
 	<string>test-render</string>
 	<key>NSPrincipalClass</key>

@@ -9,11 +9,10 @@ sys.path.insert(0, os.path.join('build', 'ninja'))
 
 import generator
 
-dependlibs = ['render', 'resource', 'vector',
-              'window', 'network', 'task', 'foundation']
+dependlibs = ['resource', 'vector', 'window', 'network', 'task', 'foundation']
 
 generator = generator.Generator(project='render', dependlibs=dependlibs, variables=[
-                                ('bundleidentifier', 'com.rampantpixels.render.$(binname)')])
+                                ('bundleidentifier', 'com.maniccoder.render.$(binname)')])
 target = generator.target
 writer = generator.writer
 toolchain = generator.toolchain
@@ -57,7 +56,7 @@ if generator.is_subninja():
 
 includepaths = generator.test_includepaths()
 
-linklibs = ['test'] + linklibs
+linklibs = ['test', 'render'] + dependlibs + linklibs
 
 test_cases = [
     'render'
@@ -80,7 +79,7 @@ if toolchain.is_monolithic() or target.is_ios() or target.is_android() or target
             os.path.join('drawable-xhdpi', 'icon.png'), os.path.join('drawable-xxhdpi',
                                                                      'icon.png'), os.path.join('drawable-xxxhdpi', 'icon.png')
         ]]
-        test_extrasources = [os.path.join('all', 'android', 'java', 'com', 'rampantpixels', 'render', 'test', item) for item in [
+        test_extrasources = [os.path.join('all', 'android', 'java', 'com', 'maniccoder', 'render', 'test', item) for item in [
             'TestActivity.java'
         ]]
     elif target.is_tizen():

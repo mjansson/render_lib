@@ -1,15 +1,15 @@
-/* command.h  -  Render library  -  Public Domain  -  2014 Mattias Jansson / Rampant Pixels
+/* command.h  -  Render library  -  Public Domain  -  2014 Mattias Jansson
  *
  * This library provides a cross-platform rendering library in C11 providing
  * basic 2D/3D rendering functionality for projects based on our foundation library.
  *
- * The latest source code maintained by Rampant Pixels is always available at
+ * The latest source code maintained by Mattias Jansson is always available at
  *
- * https://github.com/rampantpixels/render_lib
+ * https://github.com/mjansson/render_lib
  *
- * The dependent library source code maintained by Rampant Pixels is always available at
+ * The dependent library source code maintained by Mattias Jansson is always available at
  *
- * https://github.com/rampantpixels
+ * https://github.com/mjansson
  *
  * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
  *
@@ -31,16 +31,14 @@ RENDER_API void
 render_command_null(render_command_t* command);
 
 RENDER_API void
-render_command_clear(render_command_t* command, unsigned int buffer_mask, uint32_t color,
-                     unsigned int color_mask, float depth, uint32_t stencil);
+render_command_clear(render_command_t* command, unsigned int buffer_mask, uint32_t color, unsigned int color_mask,
+                     float depth, uint32_t stencil);
 
 RENDER_API void
-render_command_viewport(render_command_t* command, unsigned int x, unsigned int y,
-                        unsigned int width, unsigned int height, real min_z, real max_z);
+render_command_viewport(render_command_t* command, unsigned int x, unsigned int y, unsigned int width,
+                        unsigned int height, real min_z, real max_z);
 
 RENDER_API void
-render_command_render(render_command_t* command, render_primitive_t type, size_t num,
-                      render_program_t* program, render_vertexbuffer_t* vertexbuffer,
-                      render_indexbuffer_t* indexbuffer, render_parameterbuffer_t* parameterbuffer,
-                      render_statebuffer_t* statebuffer);
-
+render_command_render(render_command_t* command, render_primitive_t type, size_t count, render_program_t* program,
+                      render_vertexbuffer_t* vertexbuffer, render_indexbuffer_t* indexbuffer,
+                      render_parameterbuffer_t* parameterbuffer, render_statebuffer_t* statebuffer);

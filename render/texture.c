@@ -1,15 +1,15 @@
-/* texture.c  -  Render library  -  Public Domain  -  2014 Mattias Jansson / Rampant Pixels
+/* texture.c  -  Render library  -  Public Domain  -  2014 Mattias Jansson
  *
  * This library provides a cross-platform rendering library in C11 providing
  * basic 2D/3D rendering functionality for projects based on our foundation library.
  *
- * The latest source code maintained by Rampant Pixels is always available at
+ * The latest source code maintained by Mattias Jansson is always available at
  *
- * https://github.com/rampantpixels/render_lib
+ * https://github.com/mjansson/render_lib
  *
- * The dependent library source code maintained by Rampant Pixels is always available at
+ * The dependent library source code maintained by Mattias Jansson is always available at
  *
- * https://github.com/rampantpixels
+ * https://github.com/mjansson
  *
  * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
  *
@@ -28,11 +28,9 @@ FOUNDATION_STATIC_ASSERT(sizeof(render_texture_t) == 96, "invalid texture size")
 
 render_texture_t*
 render_texture_allocate(void) {
-	render_texture_t* texture = memory_allocate(HASH_RENDER, sizeof(render_texture_t), 16,
-	                                            MEMORY_PERSISTENT);
+	render_texture_t* texture = memory_allocate(HASH_RENDER, sizeof(render_texture_t), 16, MEMORY_PERSISTENT);
 	render_texture_initialize(texture);
 	return texture;
-
 }
 
 void
@@ -68,10 +66,8 @@ render_texture_load(render_backend_t* backend, const uuid_t uuid) {
 	bool recompile = false;
 	bool recompiled = false;
 
-	error_context_declare_local(
-	    char uuidbuf[40];
-	    const string_t uuidstr = string_from_uuid(uuidbuf, sizeof(uuidbuf), uuid)
-	);
+	error_context_declare_local(char uuidbuf[40];
+	                            const string_t uuidstr = string_from_uuid(uuidbuf, sizeof(uuidbuf), uuid));
 	error_context_push(STRING_CONST("loading texture"), STRING_ARGS(uuidstr));
 
 	render_backend_enable_thread(backend);
@@ -80,7 +76,7 @@ retry:
 
 	stream = resource_stream_open_static(uuid, platform);
 	if (stream) {
-		header = resource_stream_read_header(stream);		
+		header = resource_stream_read_header(stream);
 		if (header.version == RENDER_TEXTURE_RESOURCE_VERSION) {
 			if (header.type == HASH_TEXTURE)
 				texture = render_texture_allocate();
@@ -90,8 +86,7 @@ retry:
 			}
 		}
 		if (!texture && !recompiled) {
-			log_warnf(HASH_RENDER, WARNING_INVALID_VALUE,
-			          STRING_CONST("Got unexpected type/version %" PRIx64 " : %u"),
+			log_warnf(HASH_RENDER, WARNING_INVALID_VALUE, STRING_CONST("Got unexpected type/version %" PRIx64 " : %u"),
 			          (uint64_t)header.type, (uint32_t)header.version);
 			recompile = true;
 		}
@@ -104,18 +99,16 @@ retry:
 		char* buffer;
 		uint32_t version = stream_read_uint32(stream);
 		size_t size = (size_t)stream_read_uint64(stream);
-		if ((version == RENDER_TEXTURE_RESOURCE_VERSION) && (size < 128 * 1024))  {
+		if ((version == RENDER_TEXTURE_RESOURCE_VERSION) && (size < 128 * 1024)) {
 			buffer = memory_allocate(HASH_RENDER, size + 1, 0, MEMORY_TEMPORARY);
 			if (stream_read(stream, buffer, size) == size) {
 				buffer[size] = 0;
 				success = render_backend_texture_upload(backend, texture, buffer, size);
 			}
 			memory_deallocate(buffer);
-		}
-		else if (!recompiled) {
+		} else if (!recompiled) {
 			log_warnf(HASH_RENDER, WARNING_INVALID_VALUE,
-			          STRING_CONST("Got unexpected version/size when loading blob: %u (%" PRIsize ")"),
-			          version, size);
+			          STRING_CONST("Got unexpected version/size when loading blob: %u (%" PRIsize ")"), version, size);
 			recompile = true;
 		}
 		stream_deallocate(stream);
@@ -150,15 +143,12 @@ render_texture_lookup(render_backend_t* backend, const uuid_t uuid) {
 	if (texture)
 		atomic_incr32(&texture->ref, memory_order_release);
 	return texture;
-
 }
 
 bool
 render_texture_reload(render_texture_t* texture, const uuid_t uuid) {
-	error_context_declare_local(
-	    char uuidbuf[40];
-	    const string_t uuidstr = string_from_uuid(uuidbuf, sizeof(uuidbuf), uuid)
-	);
+	error_context_declare_local(char uuidbuf[40];
+	                            const string_t uuidstr = string_from_uuid(uuidbuf, sizeof(uuidbuf), uuid));
 	error_context_push(STRING_CONST("reloading texture"), STRING_ARGS(uuidstr));
 
 	render_backend_t* backend = texture->backend;
@@ -189,18 +179,16 @@ render_texture_reload(render_texture_t* texture, const uuid_t uuid) {
 		char* buffer;
 		uint32_t version = stream_read_uint32(stream);
 		size_t size = (size_t)stream_read_uint64(stream);
-		if ((version == RENDER_TEXTURE_RESOURCE_VERSION) && (size < 128 * 1024))  {
+		if ((version == RENDER_TEXTURE_RESOURCE_VERSION) && (size < 128 * 1024)) {
 			buffer = memory_allocate(HASH_RENDER, size + 1, 0, MEMORY_TEMPORARY);
 			if (stream_read(stream, buffer, size) == size) {
 				buffer[size] = 0;
 				success = render_backend_texture_upload(backend, &tmptexture, buffer, size);
 			}
 			memory_deallocate(buffer);
-		}
-		else {
+		} else {
 			log_warnf(HASH_RENDER, WARNING_INVALID_VALUE,
-			          STRING_CONST("Got unexpected version/size when loading blob: %u (%" PRIsize ")"),
-			          version, size);
+			          STRING_CONST("Got unexpected version/size when loading blob: %u (%" PRIsize ")"), version, size);
 		}
 		stream_deallocate(stream);
 		stream = nullptr;
@@ -231,5 +219,5 @@ render_texture_unload(render_texture_t* texture) {
 	if (texture && atomic_load32(&texture->ref, memory_order_acquire)) {
 		if (!atomic_decr32(&texture->ref, memory_order_release))
 			render_texture_deallocate(texture);
-	}	
+	}
 }

@@ -1,15 +1,15 @@
-/* backend.h  -  Render library  -  Public Domain  -  2014 Mattias Jansson / Rampant Pixels
+/* backend.h  -  Render library  -  Public Domain  -  2014 Mattias Jansson
  *
  * This library provides a cross-platform rendering library in C11 providing
  * basic 2D/3D rendering functionality for projects based on our foundation library.
  *
- * The latest source code maintained by Rampant Pixels is always available at
+ * The latest source code maintained by Mattias Jansson is always available at
  *
- * https://github.com/rampantpixels/render_lib
+ * https://github.com/mjansson/render_lib
  *
- * The dependent library source code maintained by Rampant Pixels is always available at
+ * The dependent library source code maintained by Mattias Jansson is always available at
  *
- * https://github.com/rampantpixels
+ * https://github.com/mjansson
  *
  * This library is put in the public domain; you can redistribute it and/or modify it without any
  * restrictions.
@@ -38,17 +38,16 @@ RENDER_API size_t
 render_backend_enumerate_adapters(render_backend_t* backend, unsigned int* store, size_t capacity);
 
 RENDER_API size_t
-render_backend_enumerate_modes(render_backend_t* backend, unsigned int adapter,
-                               render_resolution_t* store, size_t capacity);
+render_backend_enumerate_modes(render_backend_t* backend, unsigned int adapter, render_resolution_t* store,
+                               size_t capacity);
 
 RENDER_API void
-render_backend_set_format(render_backend_t* backend, const pixelformat_t format,
-                          const colorspace_t space);
+render_backend_set_format(render_backend_t* backend, const pixelformat_t format, const colorspace_t space);
 
 //! Set maximum number of extra threads that can call render backend functions beyond the
 //  main thread. Must be called prior to render_backend_set_drawable call.
 RENDER_API void
-render_backend_set_max_concurrency(render_backend_t* backend, size_t num_threads);
+render_backend_set_max_concurrency(render_backend_t* backend, size_t thread_count);
 
 RENDER_API bool
 render_backend_set_drawable(render_backend_t* backend, const render_drawable_t* drawable);
@@ -60,8 +59,8 @@ RENDER_API render_target_t*
 render_backend_target_framebuffer(render_backend_t* backend);
 
 RENDER_API void
-render_backend_dispatch(render_backend_t* backend, render_target_t* target,
-                        render_context_t** contexts, size_t num_contexts);
+render_backend_dispatch(render_backend_t* backend, render_target_t* target, render_context_t** contexts,
+                        size_t contexts_count);
 
 RENDER_API void
 render_backend_flip(render_backend_t* backend);
@@ -97,8 +96,7 @@ RENDER_API void
 render_backend_set_resource_platform(render_backend_t* backend, uint64_t platform);
 
 RENDER_API bool
-render_backend_shader_upload(render_backend_t* backend, render_shader_t* shader, const void* buffer,
-                             size_t size);
+render_backend_shader_upload(render_backend_t* backend, render_shader_t* shader, const void* buffer, size_t size);
 
 RENDER_API uuidmap_t*
 render_backend_shader_table(render_backend_t* backend);
@@ -110,16 +108,13 @@ RENDER_API uuidmap_t*
 render_backend_program_table(render_backend_t* backend);
 
 RENDER_API bool
-render_backend_texture_upload(render_backend_t* backend, render_texture_t* texture,
-                              const void* buffer, size_t size);
+render_backend_texture_upload(render_backend_t* backend, render_texture_t* texture, const void* buffer, size_t size);
 
 RENDER_API void
-render_backend_parameter_bind_texture(render_backend_t* backend, void* buffer,
-                                      render_texture_t* texture);
+render_backend_parameter_bind_texture(render_backend_t* backend, void* buffer, render_texture_t* texture);
 
 RENDER_API void
-render_backend_parameter_bind_target(render_backend_t* backend, void* buffer,
-                                     render_target_t* target);
+render_backend_parameter_bind_target(render_backend_t* backend, void* buffer, render_target_t* target);
 
 RENDER_API uuidmap_t*
 render_backend_texture_table(render_backend_t* backend);

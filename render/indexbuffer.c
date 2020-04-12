@@ -1,15 +1,15 @@
-/* indexbuffer.c  -  Render library  -  Public Domain  -  2014 Mattias Jansson / Rampant Pixels
+/* indexbuffer.c  -  Render library  -  Public Domain  -  2014 Mattias Jansson
  *
  * This library provides a cross-platform rendering library in C11 providing
  * basic 2D/3D rendering functionality for projects based on our foundation library.
  *
- * The latest source code maintained by Rampant Pixels is always available at
+ * The latest source code maintained by Mattias Jansson is always available at
  *
- * https://github.com/rampantpixels/render_lib
+ * https://github.com/mjansson/render_lib
  *
- * The dependent library source code maintained by Rampant Pixels is always available at
+ * The dependent library source code maintained by Mattias Jansson is always available at
  *
- * https://github.com/rampantpixels
+ * https://github.com/mjansson
  *
  * This library is put in the public domain; you can redistribute it and/or modify it without any
  * restrictions.
@@ -22,14 +22,13 @@
 #include <render/internal.h>
 
 render_indexbuffer_t*
-render_indexbuffer_allocate(render_backend_t* backend, render_usage_t usage, size_t num_indices,
-                            size_t buffer_size, render_index_format_t format, const void* data,
-                            size_t data_size) {
-	FOUNDATION_ASSERT(format < INDEXFORMAT_NUMTYPES);
+render_indexbuffer_allocate(render_backend_t* backend, render_usage_t usage, size_t index_count, size_t buffer_size,
+                            render_index_format_t format, const void* data, size_t data_size) {
+	FOUNDATION_ASSERT(format < INDEXFORMAT_COUNT);
 	size_t format_size = format ? (format * 2) : 1;
 
-	render_indexbuffer_t* buffer = memory_allocate(HASH_RENDER, sizeof(render_indexbuffer_t), 0,
-	                                               MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	render_indexbuffer_t* buffer =
+	    memory_allocate(HASH_RENDER, sizeof(render_indexbuffer_t), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 	buffer->backend = backend;
 	buffer->usage = (uint8_t)usage;
 	buffer->buffertype = RENDERBUFFER_INDEX;
@@ -39,10 +38,10 @@ render_indexbuffer_allocate(render_backend_t* backend, render_usage_t usage, siz
 	semaphore_initialize(&buffer->lock, 1);
 	memset(buffer->backend_data, 0, sizeof(buffer->backend_data));
 
-	if (num_indices) {
+	if (index_count) {
 		size_t allocated = buffer_size / format_size;
 		buffer->allocated = allocated;
-		buffer->used = (allocated < num_indices) ? allocated : num_indices;
+		buffer->used = (allocated < index_count) ? allocated : index_count;
 		buffer->store = backend->vtable.allocate_buffer(backend, (render_buffer_t*)buffer);
 		if (data) {
 			if (data_size > buffer->buffersize)

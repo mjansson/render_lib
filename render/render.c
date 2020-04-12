@@ -1,15 +1,15 @@
-/* render.c  -  Render library  -  Public Domain  -  2013 Mattias Jansson / Rampant Pixels
+/* render.c  -  Render library  -  Public Domain  -  2013 Mattias Jansson
  *
  * This library provides a cross-platform rendering library in C11 providing
  * basic 2D/3D rendering functionality for projects based on our foundation library.
  *
- * The latest source code maintained by Rampant Pixels is always available at
+ * The latest source code maintained by Mattias Jansson is always available at
  *
- * https://github.com/rampantpixels/render_lib
+ * https://github.com/mjansson/render_lib
  *
- * The dependent library source code maintained by Rampant Pixels is always available at
+ * The dependent library source code maintained by Mattias Jansson is always available at
  *
- * https://github.com/rampantpixels
+ * https://github.com/mjansson
  *
  * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
  *
@@ -27,9 +27,9 @@
 
 static bool _render_initialized;
 
-//Global data
+// Global data
 render_config_t _render_config;
-bool _render_api_disabled[RENDERAPI_NUM];
+bool _render_api_disabled[RENDERAPI_COUNT];
 render_backend_t** _render_backends;
 
 int
@@ -37,14 +37,11 @@ render_module_initialize(render_config_t config) {
 	if (_render_initialized)
 		return 0;
 
-	_render_config.target_max = config.target_max    ?
-	                            config.target_max    : 32;
+	_render_config.target_max = config.target_max ? config.target_max : 32;
 
-	_render_config.buffer_max = config.buffer_max    ?
-	                            config.buffer_max    : 1024;
+	_render_config.buffer_max = config.buffer_max ? config.buffer_max : 1024;
 
-	_render_config.program_max = config.program_max    ?
-	                             config.program_max    : 128;
+	_render_config.program_max = config.program_max ? config.program_max : 128;
 
 	_render_api_disabled[RENDERAPI_UNKNOWN] = true;
 	_render_api_disabled[RENDERAPI_DEFAULT] = true;
@@ -76,33 +73,30 @@ render_module_is_initialized(void) {
 }
 
 void
-render_api_enable(const render_api_t* api, size_t num) {
-	for (size_t i = 0; i < num; ++i) {
-		if ((api[i] > RENDERAPI_DEFAULT) && (api[i] < RENDERAPI_NUM)) {
-			if ((api[i] != RENDERAPI_OPENGL) &&
-			        (api[i] != RENDERAPI_DIRECTX) &&
-			        (api[i] != RENDERAPI_GLES))
+render_api_enable(const render_api_t* api, size_t count) {
+	for (size_t i = 0; i < count; ++i) {
+		if ((api[i] > RENDERAPI_DEFAULT) && (api[i] < RENDERAPI_COUNT)) {
+			if ((api[i] != RENDERAPI_OPENGL) && (api[i] != RENDERAPI_DIRECTX) && (api[i] != RENDERAPI_GLES))
 				_render_api_disabled[api[i]] = false;
 		}
 	}
 }
 
 void
-render_api_disable(const render_api_t* api, size_t num) {
-	for (size_t i = 0; i < num; ++i) {
-		if ((api[i] > RENDERAPI_DEFAULT) && (api[i] < RENDERAPI_NUM))
+render_api_disable(const render_api_t* api, size_t count) {
+	for (size_t i = 0; i < count; ++i) {
+		if ((api[i] > RENDERAPI_DEFAULT) && (api[i] < RENDERAPI_COUNT))
 			_render_api_disabled[api[i]] = true;
 	}
 }
 
 void
-render_module_parse_config(const char* path, size_t path_size,
-                           const char* buffer, size_t size,
-                           const json_token_t* tokens, size_t num_tokens) {
+render_module_parse_config(const char* path, size_t path_size, const char* buffer, size_t size,
+                           const json_token_t* tokens, size_t tokens_count) {
 	FOUNDATION_UNUSED(path);
 	FOUNDATION_UNUSED(path_size);
 	FOUNDATION_UNUSED(buffer);
 	FOUNDATION_UNUSED(size);
 	FOUNDATION_UNUSED(tokens);
-	FOUNDATION_UNUSED(num_tokens);
+	FOUNDATION_UNUSED(tokens_count);
 }

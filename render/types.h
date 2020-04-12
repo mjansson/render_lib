@@ -1,15 +1,15 @@
-/* types.h  -  Render library  -  Public Domain  -  2013 Mattias Jansson / Rampant Pixels
+/* types.h  -  Render library  -  Public Domain  -  2013 Mattias Jansson
  *
  * This library provides a cross-platform rendering library in C11 providing
  * basic 2D/3D rendering functionality for projects based on our foundation library.
  *
- * The latest source code maintained by Rampant Pixels is always available at
+ * The latest source code maintained by Mattias Jansson is always available at
  *
- * https://github.com/rampantpixels/render_lib
+ * https://github.com/mjansson/render_lib
  *
- * The dependent library source code maintained by Rampant Pixels is always available at
+ * The dependent library source code maintained by Mattias Jansson is always available at
  *
- * https://github.com/rampantpixels
+ * https://github.com/mjansson
  *
  * This library is put in the public domain; you can redistribute it and/or modify it without any
  * restrictions.
@@ -48,7 +48,7 @@ typedef enum render_api_t {
 	RENDERAPI_GLES2,
 	RENDERAPI_GLES3,
 
-	RENDERAPI_NUM
+	RENDERAPI_COUNT
 } render_api_t;
 
 typedef enum render_api_group_t {
@@ -57,7 +57,7 @@ typedef enum render_api_group_t {
 	RENDERAPIGROUP_DIRECTX,
 	RENDERAPIGROUP_GLES,
 
-	RENDERAPIGROUP_NUM
+	RENDERAPIGROUP_COUNT
 } render_api_group_t;
 
 typedef enum render_drawable_type_t {
@@ -122,7 +122,7 @@ typedef enum render_vertex_format_t {
 	VERTEXFORMAT_INT2,
 	VERTEXFORMAT_INT4,
 
-	VERTEXFORMAT_NUMTYPES,
+	VERTEXFORMAT_COUNT,
 	VERTEXFORMAT_UNUSED = 255
 } render_vertex_format_t;
 
@@ -130,7 +130,7 @@ typedef enum render_index_format_t {
 	INDEXFORMAT_UBYTE = 0,
 	INDEXFORMAT_USHORT,
 	INDEXFORMAT_UINT,
-	INDEXFORMAT_NUMTYPES
+	INDEXFORMAT_COUNT
 } render_index_format_t;
 
 #define RENDER_MAX_ATTRIBUTES 16
@@ -170,9 +170,7 @@ typedef enum render_texture_type_t {
 	RENDERTEXTURE_CUBE
 } render_texture_type_t;
 
-typedef enum render_texture_flag_t {
-	RENDERTEXTURE_FLAG_AUTOGENERATE_MIPMAPS = 1
-} render_texture_flag_t;
+typedef enum render_texture_flag_t { RENDERTEXTURE_FLAG_AUTOGENERATE_MIPMAPS = 1 } render_texture_flag_t;
 
 typedef enum render_blend_factor_t {
 	BLEND_ZERO = 0,
@@ -226,7 +224,7 @@ typedef enum pixelformat_t {
 	PIXELFORMAT_PVRTC_2,
 	PIXELFORMAT_PVRTC_4,
 
-	PIXELFORMAT_NUMFORMATS
+	PIXELFORMAT_COUNT
 } pixelformat_t;
 
 typedef enum colorspace_t {
@@ -235,7 +233,7 @@ typedef enum colorspace_t {
 	COLORSPACE_LINEAR,
 	COLORSPACE_sRGB,
 
-	COLORSPACE_NUMSPACES
+	COLORSPACE_COUNT
 } colorspace_t;
 
 typedef enum render_primitive_t {
@@ -244,7 +242,7 @@ typedef enum render_primitive_t {
 	RENDERPRIMITIVE_TRIANGLELIST,
 	RENDERPRIMITIVE_LINELIST,
 
-	RENDERPRIMITIVE_NUMTYPES
+	RENDERPRIMITIVE_COUNT
 } render_primitive_t;
 
 typedef enum render_command_id {
@@ -289,37 +287,28 @@ typedef struct render_config_t render_config_t;
 typedef bool (*render_backend_construct_fn)(render_backend_t*);
 typedef void (*render_backend_destruct_fn)(render_backend_t*);
 typedef size_t (*render_backend_enumerate_adapters_fn)(render_backend_t*, unsigned int*, size_t);
-typedef size_t (*render_backend_enumerate_modes_fn)(render_backend_t*, unsigned int,
-                                                    render_resolution_t*, size_t);
+typedef size_t (*render_backend_enumerate_modes_fn)(render_backend_t*, unsigned int, render_resolution_t*, size_t);
 typedef void (*render_backend_enable_thread_fn)(render_backend_t*);
 typedef void (*render_backend_disable_thread_fn)(render_backend_t*);
 typedef bool (*render_backend_set_drawable_fn)(render_backend_t*, const render_drawable_t*);
-typedef void (*render_backend_dispatch_fn)(render_backend_t*, render_target_t*, render_context_t**,
-                                           size_t);
+typedef void (*render_backend_dispatch_fn)(render_backend_t*, render_target_t*, render_context_t**, size_t);
 typedef void (*render_backend_flip_fn)(render_backend_t*);
 typedef void* (*render_backend_allocate_buffer_fn)(render_backend_t*, render_buffer_t*);
-typedef void (*render_backend_deallocate_buffer_fn)(render_backend_t*, render_buffer_t*, bool,
-                                                    bool);
+typedef void (*render_backend_deallocate_buffer_fn)(render_backend_t*, render_buffer_t*, bool, bool);
 typedef bool (*render_backend_upload_buffer_fn)(render_backend_t*, render_buffer_t*);
-typedef bool (*render_backend_upload_shader_fn)(render_backend_t*, render_shader_t*, const void*,
-                                                size_t);
+typedef bool (*render_backend_upload_shader_fn)(render_backend_t*, render_shader_t*, const void*, size_t);
 typedef bool (*render_backend_upload_program_fn)(render_backend_t*, render_program_t*);
-typedef bool (*render_backend_upload_texture_fn)(render_backend_t*, render_texture_t*, const void*,
-                                                 size_t);
-typedef void (*render_backend_parameter_bind_texture_fn)(render_backend_t*, void*,
-                                                         render_texture_t*);
+typedef bool (*render_backend_upload_texture_fn)(render_backend_t*, render_texture_t*, const void*, size_t);
+typedef void (*render_backend_parameter_bind_texture_fn)(render_backend_t*, void*, render_texture_t*);
 typedef void (*render_backend_parameter_bind_target_fn)(render_backend_t*, void*, render_target_t*);
 typedef void (*render_backend_deallocate_shader_fn)(render_backend_t*, render_shader_t*);
 typedef void (*render_backend_deallocate_program_fn)(render_backend_t*, render_program_t*);
 typedef void (*render_backend_deallocate_texture_fn)(render_backend_t*, render_texture_t*);
-typedef void (*render_backend_link_buffer_fn)(render_backend_t*, render_buffer_t*,
-                                              render_program_t* program);
+typedef void (*render_backend_link_buffer_fn)(render_backend_t*, render_buffer_t*, render_program_t* program);
 typedef bool (*render_backend_allocate_target_fn)(render_backend_t*, render_target_t*);
-typedef bool (*render_backend_resize_target_fn)(render_backend_t*, render_target_t*, unsigned int,
-                                                unsigned int);
+typedef bool (*render_backend_resize_target_fn)(render_backend_t*, render_target_t*, unsigned int, unsigned int);
 typedef void (*render_backend_deallocate_target_fn)(render_backend_t*, render_target_t*);
-typedef void (*render_pipeline_execute_fn)(render_backend_t*, render_target_t* target,
-                                           render_context_t**, size_t);
+typedef void (*render_pipeline_execute_fn)(render_backend_t*, render_target_t* target, render_context_t**, size_t);
 
 struct render_config_t {
 	/*! Maximum number of concurrently allocated render targets */
@@ -593,10 +582,10 @@ FOUNDATION_ALIGNED_STRUCT(render_program_t, 8) {
 	RENDER_32BIT_PADDING_ARR(data, 4)
 	atomic32_t ref;
 	uint32_t size_parameterdata;
-	uint32_t num_parameters;
+	uint32_t parameters_count;
 	uint32_t unused;
 	uuid_t uuid;
-	uint32_t num_attributes;
+	uint32_t attributes_count;
 	render_program_attribute_t attribute[RENDER_MAX_ATTRIBUTES];
 	hash_t attribute_name[RENDER_MAX_ATTRIBUTES];
 	render_parameter_t* parameters;

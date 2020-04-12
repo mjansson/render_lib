@@ -1,15 +1,15 @@
-/* drawable.c  -  Render library  -  Public Domain  -  2014 Mattias Jansson / Rampant Pixels
+/* drawable.c  -  Render library  -  Public Domain  -  2014 Mattias Jansson
  *
  * This library provides a cross-platform rendering library in C11 providing
  * basic 2D/3D rendering functionality for projects based on our foundation library.
  *
- * The latest source code maintained by Rampant Pixels is always available at
+ * The latest source code maintained by Mattias Jansson is always available at
  *
- * https://github.com/rampantpixels/render_lib
+ * https://github.com/mjansson/render_lib
  *
- * The dependent library source code maintained by Rampant Pixels is always available at
+ * The dependent library source code maintained by Mattias Jansson is always available at
  *
- * https://github.com/rampantpixels
+ * https://github.com/mjansson
  *
  * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
  *
@@ -21,16 +21,15 @@
 #include <render/internal.h>
 
 #if FOUNDATION_PLATFORM_WINDOWS
-#  include <foundation/windows.h>
+#include <foundation/windows.h>
 #elif FOUNDATION_PLATFORM_LINUX_RASPBERRYPI
-#  pragma GCC diagnostic ignored "-Wredundant-decls"
-#  include <EGL/egl.h>
+#pragma GCC diagnostic ignored "-Wredundant-decls"
+#include <EGL/egl.h>
 #endif
 
 render_drawable_t*
 render_drawable_allocate(void) {
-	return memory_allocate(HASH_RENDER, sizeof(render_drawable_t), 0,
-	                       MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	return memory_allocate(HASH_RENDER, sizeof(render_drawable_t), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 }
 
 void
@@ -68,13 +67,13 @@ render_drawable_initialize_window(render_drawable_t* drawable, window_t* window,
 	drawable->native = window_native(window);
 	drawable->display = window_display(window);
 #else
-#  error Not implemented
+#error Not implemented
 #endif
 }
 
 void
-render_drawable_initialize_fullscreen(render_drawable_t* drawable, unsigned int adapter,
-                                      unsigned int width, unsigned int height, unsigned int refresh) {
+render_drawable_initialize_fullscreen(render_drawable_t* drawable, unsigned int adapter, unsigned int width,
+                                      unsigned int height, unsigned int refresh) {
 	drawable->type = RENDERDRAWABLE_FULLSCREEN;
 	drawable->adapter = adapter;
 	drawable->width = width;

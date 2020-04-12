@@ -1,15 +1,15 @@
-/* import.c  -  Render library  -  Public Domain  -  2014 Mattias Jansson / Rampant Pixels
+/* import.c  -  Render library  -  Public Domain  -  2014 Mattias Jansson
  *
  * This library provides a cross-platform rendering library in C11 providing
  * basic 2D/3D rendering functionality for projects based on our foundation library.
  *
- * The latest source code maintained by Rampant Pixels is always available at
+ * The latest source code maintained by Mattias Jansson is always available at
  *
- * https://github.com/rampantpixels/render_lib
+ * https://github.com/mjansson/render_lib
  *
- * The dependent library source code maintained by Rampant Pixels is always available at
+ * The dependent library source code maintained by Mattias Jansson is always available at
  *
- * https://github.com/rampantpixels
+ * https://github.com/mjansson
  *
  * This library is put in the public domain; you can redistribute it and/or modify it without any
  * restrictions.
@@ -51,8 +51,7 @@ render_import_shader_guess_type(stream_t* stream) {
 		if (string_find_string(STRING_ARGS(line), STRING_CONST("gl_FragColor"), 0) != STRING_NPOS) {
 			type = IMPORTTYPE_GLSL_PIXELSHADER;
 			break;
-		} else if (string_find_string(STRING_ARGS(line), STRING_CONST("gl_Position"), 0) !=
-		           STRING_NPOS) {
+		} else if (string_find_string(STRING_ARGS(line), STRING_CONST("gl_Position"), 0) != STRING_NPOS) {
 			type = IMPORTTYPE_GLSL_VERTEXSHADER;
 			break;
 		}
@@ -67,8 +66,8 @@ static int
 glsl_type_to_parameter_type(const string_const_t type) {
 	if ((type.length >= 4) && string_equal(type.str, 4, STRING_CONST("vec4")))
 		return RENDERPARAMETER_FLOAT4;
-	else if ((type.length >= 5) && (string_equal(type.str, 5, STRING_CONST("ivec4")) ||
-	                                string_equal(type.str, 5, STRING_CONST("uvec4"))))
+	else if ((type.length >= 5) &&
+	         (string_equal(type.str, 5, STRING_CONST("ivec4")) || string_equal(type.str, 5, STRING_CONST("uvec4"))))
 		return RENDERPARAMETER_INT4;
 	else if ((type.length >= 4) && string_equal(type.str, 4, STRING_CONST("mat4")))
 		return RENDERPARAMETER_MATRIX;
@@ -97,8 +96,7 @@ glsl_name_from_token(const string_const_t token) {
 }
 
 static int
-render_import_glsl_shader(stream_t* stream, const uuid_t uuid, const char* type,
-                          size_t type_length) {
+render_import_glsl_shader(stream_t* stream, const uuid_t uuid, const char* type, size_t type_length) {
 	resource_source_t source;
 	void* blob = 0;
 	size_t size;
@@ -137,8 +135,7 @@ render_import_glsl_shader(stream_t* stream, const uuid_t uuid, const char* type,
 
 	// Parse source and set parameters
 	maxtokens = 256;
-	token =
-	    memory_allocate(HASH_RESOURCE, sizeof(string_const_t) * maxtokens, 0, MEMORY_PERSISTENT);
+	token = memory_allocate(HASH_RESOURCE, sizeof(string_const_t) * maxtokens, 0, MEMORY_PERSISTENT);
 	begin = 0;
 	parameter = 0;
 	do {
@@ -147,8 +144,7 @@ render_import_glsl_shader(stream_t* stream, const uuid_t uuid, const char* type,
 
 		next = string_find_first_of(blob, size, STRING_CONST("\n\r"), begin);
 		line = string_substr(blob, size, begin, next - begin);
-		ntokens = string_explode(STRING_ARGS(line), STRING_CONST(GLSL_TOKEN_DELIM), tokens,
-		                         maxtokens, false);
+		ntokens = string_explode(STRING_ARGS(line), STRING_CONST(GLSL_TOKEN_DELIM), tokens, maxtokens, false);
 
 		for (itok = 0; itok < ntokens; ++itok) {
 			if ((string_equal(STRING_ARGS(tokens[itok]), STRING_CONST("attribute")) ||
@@ -168,28 +164,23 @@ render_import_glsl_shader(stream_t* stream, const uuid_t uuid, const char* type,
 					parameter_dim = glsl_dim_from_token(namestr);
 
 				namestr = glsl_name_from_token(namestr);
-				typestr = string_to_const(string_from_uint(
-				    typebuf, sizeof(typebuf), (unsigned int)parameter_type, false, 0, 0));
-				dimstr = string_to_const(string_from_uint(
-				    dimbuf, sizeof(dimbuf), (unsigned int)parameter_dim, false, 0, 0));
+				typestr = string_to_const(
+				    string_from_uint(typebuf, sizeof(typebuf), (unsigned int)parameter_type, false, 0, 0));
+				dimstr =
+				    string_to_const(string_from_uint(dimbuf, sizeof(dimbuf), (unsigned int)parameter_dim, false, 0, 0));
 
-				log_debugf(HASH_RESOURCE, STRING_CONST("parameter: %.*s type %.*s dim %.*s"),
-				           STRING_FORMAT(namestr), STRING_FORMAT(typestr), STRING_FORMAT(dimstr));
+				log_debugf(HASH_RESOURCE, STRING_CONST("parameter: %.*s type %.*s dim %.*s"), STRING_FORMAT(namestr),
+				           STRING_FORMAT(typestr), STRING_FORMAT(dimstr));
 
-				string_t param = string_format(buffer, sizeof(buffer),
-				                               STRING_CONST("parameter_type_%" PRIsize), parameter);
-				resource_source_set(&source, timestamp, hash(STRING_ARGS(param)), platform,
-				                    STRING_ARGS(typestr));
+				string_t param =
+				    string_format(buffer, sizeof(buffer), STRING_CONST("parameter_type_%" PRIsize), parameter);
+				resource_source_set(&source, timestamp, hash(STRING_ARGS(param)), platform, STRING_ARGS(typestr));
 
-				param = string_format(buffer, sizeof(buffer),
-				                      STRING_CONST("parameter_name_%" PRIsize), parameter);
-				resource_source_set(&source, timestamp, hash(STRING_ARGS(param)), platform,
-				                    STRING_ARGS(namestr));
+				param = string_format(buffer, sizeof(buffer), STRING_CONST("parameter_name_%" PRIsize), parameter);
+				resource_source_set(&source, timestamp, hash(STRING_ARGS(param)), platform, STRING_ARGS(namestr));
 
-				param = string_format(buffer, sizeof(buffer),
-				                      STRING_CONST("parameter_dim_%" PRIsize), parameter);
-				resource_source_set(&source, timestamp, hash(STRING_ARGS(param)), platform,
-				                    STRING_ARGS(dimstr));
+				param = string_format(buffer, sizeof(buffer), STRING_CONST("parameter_dim_%" PRIsize), parameter);
+				resource_source_set(&source, timestamp, hash(STRING_ARGS(param)), platform, STRING_ARGS(dimstr));
 				++parameter;
 			}
 		}
@@ -204,15 +195,13 @@ render_import_glsl_shader(stream_t* stream, const uuid_t uuid, const char* type,
 
 	if (!resource_source_write(&source, uuid, false)) {
 		string_const_t uuidstr = string_from_uuid_static(uuid);
-		log_warnf(HASH_RESOURCE, WARNING_SUSPICIOUS,
-		          STRING_CONST("Failed writing imported GLSL shader: %.*s"),
+		log_warnf(HASH_RESOURCE, WARNING_SUSPICIOUS, STRING_CONST("Failed writing imported GLSL shader: %.*s"),
 		          STRING_FORMAT(uuidstr));
 		ret = -1;
 		goto finalize;
 	} else {
 		string_const_t uuidstr = string_from_uuid_static(uuid);
-		log_infof(HASH_RESOURCE, STRING_CONST("Wrote imported GLSL shader: %.*s"),
-		          STRING_FORMAT(uuidstr));
+		log_infof(HASH_RESOURCE, STRING_CONST("Wrote imported GLSL shader: %.*s"), STRING_FORMAT(uuidstr));
 	}
 
 finalize:
@@ -272,8 +261,7 @@ render_import_shader(stream_t* stream, const uuid_t uuid) {
 			resource_signature_t sig = resource_import_lookup(STRING_ARGS(fullpath));
 			if (uuid_is_null(sig.uuid)) {
 				if (!resource_import(STRING_ARGS(fullpath), uuid_null())) {
-					log_warnf(HASH_RESOURCE, WARNING_SUSPICIOUS,
-					          STRING_CONST("Unable to import linked shader: %.*s"),
+					log_warnf(HASH_RESOURCE, WARNING_SUSPICIOUS, STRING_CONST("Unable to import linked shader: %.*s"),
 					          STRING_FORMAT(fullpath));
 					ret = -1;
 					goto finalize;
@@ -281,8 +269,7 @@ render_import_shader(stream_t* stream, const uuid_t uuid) {
 				sig = resource_import_lookup(STRING_ARGS(fullpath));
 				if (uuid_is_null(sig.uuid)) {
 					log_warnf(HASH_RESOURCE, WARNING_SUSPICIOUS,
-					          STRING_CONST("Import linked shader gave no UUID: %.*s"),
-					          STRING_FORMAT(fullpath));
+					          STRING_CONST("Import linked shader gave no UUID: %.*s"), STRING_FORMAT(fullpath));
 					ret = -1;
 					goto finalize;
 				}
@@ -291,13 +278,11 @@ render_import_shader(stream_t* stream, const uuid_t uuid) {
 		}
 
 		if (!uuid_is_null(shaderuuid)) {
-			resource_platform_t targetplatformdecl =
-			    render_import_parse_target(STRING_ARGS(target), platformdecl);
+			resource_platform_t targetplatformdecl = render_import_parse_target(STRING_ARGS(target), platformdecl);
 			uint64_t targetplatform = resource_platform(targetplatformdecl);
 
 			string_const_t uuidstr = string_from_uuid_static(shaderuuid);
-			resource_source_set(&source, timestamp, HASH_SHADER, targetplatform,
-			                    STRING_ARGS(uuidstr));
+			resource_source_set(&source, timestamp, HASH_SHADER, targetplatform, STRING_ARGS(uuidstr));
 
 			resource_dependency_t dep;
 			dep.uuid = shaderuuid;
@@ -310,14 +295,13 @@ render_import_shader(stream_t* stream, const uuid_t uuid) {
 
 	if (!resource_source_write(&source, uuid, false)) {
 		string_const_t uuidstr = string_from_uuid_static(uuid);
-		log_warnf(HASH_RESOURCE, WARNING_SUSPICIOUS,
-		          STRING_CONST("Failed writing imported shader: %.*s"), STRING_FORMAT(uuidstr));
+		log_warnf(HASH_RESOURCE, WARNING_SUSPICIOUS, STRING_CONST("Failed writing imported shader: %.*s"),
+		          STRING_FORMAT(uuidstr));
 		ret = -1;
 		goto finalize;
 	} else {
 		string_const_t uuidstr = string_from_uuid_static(uuid);
-		log_infof(HASH_RESOURCE, STRING_CONST("Wrote imported shader: %.*s"),
-		          STRING_FORMAT(uuidstr));
+		log_infof(HASH_RESOURCE, STRING_CONST("Wrote imported shader: %.*s"), STRING_FORMAT(uuidstr));
 	}
 
 finalize:
@@ -381,8 +365,7 @@ render_import_program(stream_t* stream, const uuid_t uuid) {
 			resource_signature_t sig = resource_import_lookup(STRING_ARGS(fullpath));
 			if (uuid_is_null(sig.uuid)) {
 				if (!resource_import(STRING_ARGS(fullpath), uuid_null())) {
-					log_warnf(HASH_RESOURCE, WARNING_SUSPICIOUS,
-					          STRING_CONST("Unable to import linked shader: %.*s"),
+					log_warnf(HASH_RESOURCE, WARNING_SUSPICIOUS, STRING_CONST("Unable to import linked shader: %.*s"),
 					          STRING_FORMAT(fullpath));
 					ret = -1;
 					goto finalize;
@@ -390,8 +373,7 @@ render_import_program(stream_t* stream, const uuid_t uuid) {
 				sig = resource_import_lookup(STRING_ARGS(fullpath));
 				if (uuid_is_null(sig.uuid)) {
 					log_warnf(HASH_RESOURCE, WARNING_SUSPICIOUS,
-					          STRING_CONST("Import linked shader gave no UUID: %.*s"),
-					          STRING_FORMAT(fullpath));
+					          STRING_CONST("Import linked shader gave no UUID: %.*s"), STRING_FORMAT(fullpath));
 					ret = -1;
 					goto finalize;
 				}
@@ -415,14 +397,13 @@ render_import_program(stream_t* stream, const uuid_t uuid) {
 
 	if (!resource_source_write(&source, uuid, false)) {
 		string_const_t uuidstr = string_from_uuid_static(uuid);
-		log_warnf(HASH_RESOURCE, WARNING_SUSPICIOUS,
-		          STRING_CONST("Failed writing imported program: %.*s"), STRING_FORMAT(uuidstr));
+		log_warnf(HASH_RESOURCE, WARNING_SUSPICIOUS, STRING_CONST("Failed writing imported program: %.*s"),
+		          STRING_FORMAT(uuidstr));
 		ret = -1;
 		goto finalize;
 	} else {
 		string_const_t uuidstr = string_from_uuid_static(uuid);
-		log_infof(HASH_RESOURCE, STRING_CONST("Wrote imported program: %.*s"),
-		          STRING_FORMAT(uuidstr));
+		log_infof(HASH_RESOURCE, STRING_CONST("Wrote imported program: %.*s"), STRING_FORMAT(uuidstr));
 	}
 
 finalize:

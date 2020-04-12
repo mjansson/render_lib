@@ -1,15 +1,15 @@
-/* glprocs.h  -  Render library  -  Public Domain  -  2014 Mattias Jansson / Rampant Pixels
+/* glprocs.h  -  Render library  -  Public Domain  -  2014 Mattias Jansson
  *
  * This library provides a cross-platform rendering library in C11 providing
  * basic 2D/3D rendering functionality for projects based on our foundation library.
  *
- * The latest source code maintained by Rampant Pixels is always available at
+ * The latest source code maintained by Mattias Jansson is always available at
  *
- * https://github.com/rampantpixels/render_lib
+ * https://github.com/mjansson/render_lib
  *
- * The dependent library source code maintained by Rampant Pixels is always available at
+ * The dependent library source code maintained by Mattias Jansson is always available at
  *
- * https://github.com/rampantpixels
+ * https://github.com/mjansson
  *
  * This library is put in the public domain; you can redistribute it and/or modify it without any
  * restrictions.
@@ -157,8 +157,8 @@ _rb_gl_check_extension(const char* name, size_t length);
 
 RENDER_EXTERN void*
 _rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, unsigned int minor,
-                      const pixelformat_t pixelformat, const colorspace_t colorspace,
-                      void** concurrent_contexts, size_t concurrent_count);
+                      const pixelformat_t pixelformat, const colorspace_t colorspace, void** concurrent_contexts,
+                      size_t concurrent_count);
 
 RENDER_EXTERN void
 _rb_gl_destroy_context(const render_drawable_t* drawable, void* context);
@@ -170,15 +170,13 @@ RENDER_EXTERN size_t
 _rb_gl_enumerate_adapters(render_backend_t* backend, unsigned int* store, size_t capacity);
 
 RENDER_EXTERN size_t
-_rb_gl_enumerate_modes(render_backend_t* backend, unsigned int adapter, render_resolution_t* store,
-                       size_t capacity);
+_rb_gl_enumerate_modes(render_backend_t* backend, unsigned int adapter, render_resolution_t* store, size_t capacity);
 
 RENDER_EXTERN bool
 _rb_gl_allocate_target(render_backend_t* backend, render_target_t* target);
 
 RENDER_EXTERN bool
-_rb_gl_resize_target(render_backend_t* backend, render_target_t* target, unsigned int width,
-                     unsigned int height);
+_rb_gl_resize_target(render_backend_t* backend, render_target_t* target, unsigned int width, unsigned int height);
 
 RENDER_EXTERN void
 _rb_gl_deallocate_target(render_backend_t* backend, render_target_t* target);
@@ -187,8 +185,7 @@ RENDER_EXTERN bool
 _rb_gl_activate_target(render_backend_t* backend, render_target_t* target);
 
 RENDER_EXTERN bool
-_rb_gl_upload_texture(render_backend_t* backend, render_texture_t* texture, const void* buffer,
-                      size_t size);
+_rb_gl_upload_texture(render_backend_t* backend, render_texture_t* texture, const void* buffer, size_t size);
 
 RENDER_EXTERN void
 _rb_gl_deallocate_texture(render_backend_t* backend, render_texture_t* texture);

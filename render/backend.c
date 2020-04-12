@@ -1,15 +1,15 @@
-/* backend.c  -  Render library  -  Public Domain  -  2014 Mattias Jansson / Rampant Pixels
+/* backend.c  -  Render library  -  Public Domain  -  2014 Mattias Jansson
  *
  * This library provides a cross-platform rendering library in C11 providing
  * basic 2D/3D rendering functionality for projects based on our foundation library.
  *
- * The latest source code maintained by Rampant Pixels is always available at
+ * The latest source code maintained by Mattias Jansson is always available at
  *
- * https://github.com/rampantpixels/render_lib
+ * https://github.com/mjansson/render_lib
  *
- * The dependent library source code maintained by Rampant Pixels is always available at
+ * The dependent library source code maintained by Mattias Jansson is always available at
  *
- * https://github.com/rampantpixels
+ * https://github.com/mjansson
  *
  * This library is put in the public domain; you can redistribute it and/or modify it without any
  * restrictions.
@@ -39,8 +39,7 @@ render_api_fallback(render_api_t api) {
 		case RENDERAPI_DEFAULT:
 #if FOUNDATION_PLATFORM_WINDOWS
 			return RENDERAPI_DIRECTX;
-#elif FOUNDATION_PLATFORM_IOS || FOUNDATION_PLATFORM_ANDROID || \
-    FOUNDATION_PLATFORM_LINUX_RASPBERRYPI
+#elif FOUNDATION_PLATFORM_IOS || FOUNDATION_PLATFORM_ANDROID || FOUNDATION_PLATFORM_LINUX_RASPBERRYPI
 			return RENDERAPI_GLES;
 #else
 			return RENDERAPI_OPENGL;
@@ -78,7 +77,7 @@ render_api_fallback(render_api_t api) {
 		case RENDERAPI_PS4:
 		case RENDERAPI_XBOX360:
 		case RENDERAPI_XBOXONE:
-		case RENDERAPI_NUM:
+		case RENDERAPI_COUNT:
 			return RENDERAPI_NULL;
 
 		default:
@@ -106,8 +105,7 @@ render_backend_allocate(render_api_t api, bool allow_fallback) {
 			case RENDERAPI_GLES2:
 				backend = render_backend_gles2_allocate();
 				if (!backend || !backend->vtable.construct(backend)) {
-					log_info(HASH_RENDER,
-					         STRING_CONST("Failed to initialize OpenGL ES 2 render backend"));
+					log_info(HASH_RENDER, STRING_CONST("Failed to initialize OpenGL ES 2 render backend"));
 					render_backend_deallocate(backend);
 					backend = nullptr;
 				}
@@ -124,8 +122,7 @@ render_backend_allocate(render_api_t api, bool allow_fallback) {
 			case RENDERAPI_OPENGL2:
 				backend = render_backend_gl2_allocate();
 				if (!backend || !backend->vtable.construct(backend)) {
-					log_info(HASH_RENDER,
-					         STRING_CONST("Failed to initialize OpenGL 2 render backend"));
+					log_info(HASH_RENDER, STRING_CONST("Failed to initialize OpenGL 2 render backend"));
 					render_backend_deallocate(backend);
 					backend = nullptr;
 				}
@@ -134,8 +131,7 @@ render_backend_allocate(render_api_t api, bool allow_fallback) {
 			case RENDERAPI_OPENGL4:
 				backend = render_backend_gl4_allocate();
 				if (!backend || !backend->vtable.construct(backend)) {
-					log_info(HASH_RENDER,
-					         STRING_CONST("Failed to initialize OpenGL 4 render backend"));
+					log_info(HASH_RENDER, STRING_CONST("Failed to initialize OpenGL 4 render backend"));
 					render_backend_deallocate(backend);
 					backend = nullptr;
 				}
@@ -174,29 +170,24 @@ render_backend_allocate(render_api_t api, bool allow_fallback) {
 			case RENDERAPI_XBOX360:
 			case RENDERAPI_XBOXONE:
 				// Try loading dynamic library
-				log_warnf(HASH_RENDER, WARNING_SUSPICIOUS,
-				          STRING_CONST("Render API not yet implemented (%u)"), api);
+				log_warnf(HASH_RENDER, WARNING_SUSPICIOUS, STRING_CONST("Render API not yet implemented (%u)"), api);
 				break;
 
-			case RENDERAPI_NUM:
+			case RENDERAPI_COUNT:
 			case RENDERAPI_DEFAULT:
 			case RENDERAPI_OPENGL:
 			case RENDERAPI_DIRECTX:
 			case RENDERAPI_GLES:
 			default:
 				// Try loading dynamic library
-				log_warnf(
-				    HASH_RENDER, WARNING_SUSPICIOUS,
-				    STRING_CONST(
-				        "Unknown render API (%u), dynamic library loading not implemented yet"),
-				    api);
+				log_warnf(HASH_RENDER, WARNING_SUSPICIOUS,
+				          STRING_CONST("Unknown render API (%u), dynamic library loading not implemented yet"), api);
 				break;
 		}
 
 		if (!backend) {
 			if (!allow_fallback) {
-				log_warn(HASH_RENDER, WARNING_UNSUPPORTED,
-				         STRING_CONST("Requested render api not supported"));
+				log_warn(HASH_RENDER, WARNING_UNSUPPORTED, STRING_CONST("Requested render api not supported"));
 				return 0;
 			}
 
@@ -210,14 +201,11 @@ render_backend_allocate(render_api_t api, bool allow_fallback) {
 	backend->framecount = 1;
 
 	uuidmap_initialize((uuidmap_t*)&backend->shadertable,
-	                   sizeof(backend->shadertable.bucket) / sizeof(backend->shadertable.bucket[0]),
-	                   0);
-	uuidmap_initialize(
-	    (uuidmap_t*)&backend->programtable,
-	    sizeof(backend->programtable.bucket) / sizeof(backend->programtable.bucket[0]), 0);
-	uuidmap_initialize(
-	    (uuidmap_t*)&backend->texturetable,
-	    sizeof(backend->texturetable.bucket) / sizeof(backend->texturetable.bucket[0]), 0);
+	                   sizeof(backend->shadertable.bucket) / sizeof(backend->shadertable.bucket[0]), 0);
+	uuidmap_initialize((uuidmap_t*)&backend->programtable,
+	                   sizeof(backend->programtable.bucket) / sizeof(backend->programtable.bucket[0]), 0);
+	uuidmap_initialize((uuidmap_t*)&backend->texturetable,
+	                   sizeof(backend->texturetable.bucket) / sizeof(backend->texturetable.bucket[0]), 0);
 
 	render_backend_set_resource_platform(backend, 0);
 
@@ -267,8 +255,8 @@ render_backend_enumerate_adapters(render_backend_t* backend, unsigned int* store
 }
 
 size_t
-render_backend_enumerate_modes(render_backend_t* backend, unsigned int adapter,
-                               render_resolution_t* store, size_t capacity) {
+render_backend_enumerate_modes(render_backend_t* backend, unsigned int adapter, render_resolution_t* store,
+                               size_t capacity) {
 	return backend->vtable.enumerate_modes(backend, adapter, store, capacity);
 }
 
@@ -288,10 +276,8 @@ render_backend_leave_exclusive(render_backend_t* backend) {
 }
 
 void
-render_backend_set_format(render_backend_t* backend, const pixelformat_t format,
-                          const colorspace_t space) {
-	if (!FOUNDATION_VALIDATE_MSG(!backend->drawable.type,
-	                             "Unable to change format when drawable is already set"))
+render_backend_set_format(render_backend_t* backend, const pixelformat_t format, const colorspace_t space) {
+	if (!FOUNDATION_VALIDATE_MSG(!backend->drawable.type, "Unable to change format when drawable is already set"))
 		return;
 	backend->pixelformat = format;
 	backend->colorspace = space;
@@ -310,8 +296,8 @@ render_backend_set_drawable(render_backend_t* backend, const render_drawable_t* 
 	if (drawable->type == RENDERDRAWABLE_WINDOW)
 		render_drawable_initialize_window(&backend->drawable, drawable->window, drawable->tag);
 	else if (drawable->type == RENDERDRAWABLE_FULLSCREEN)
-		render_drawable_initialize_fullscreen(&backend->drawable, drawable->adapter,
-		                                      drawable->width, drawable->height, drawable->refresh);
+		render_drawable_initialize_fullscreen(&backend->drawable, drawable->adapter, drawable->width, drawable->height,
+		                                      drawable->refresh);
 
 	backend->framebuffer.width = backend->drawable.width;
 	backend->framebuffer.height = backend->drawable.height;
@@ -334,11 +320,11 @@ render_backend_target_framebuffer(render_backend_t* backend) {
 }
 
 void
-render_backend_dispatch(render_backend_t* backend, render_target_t* target,
-                        render_context_t** contexts, size_t num_contexts) {
-	backend->vtable.dispatch(backend, target, contexts, num_contexts);
+render_backend_dispatch(render_backend_t* backend, render_target_t* target, render_context_t** contexts,
+                        size_t contexts_count) {
+	backend->vtable.dispatch(backend, target, contexts, contexts_count);
 
-	for (size_t i = 0; i < num_contexts; ++i)
+	for (size_t i = 0; i < contexts_count; ++i)
 		atomic_store32(&contexts[i]->reserved, 0, memory_order_release);
 }
 
@@ -370,10 +356,10 @@ render_backend_disable_thread(render_backend_t* backend) {
 }
 
 void
-render_backend_set_max_concurrency(render_backend_t* backend, size_t num_threads) {
+render_backend_set_max_concurrency(render_backend_t* backend, size_t thread_count) {
 	if (backend->concurrency || backend->drawable.width)
 		return;
-	backend->concurrency = (uint64_t)num_threads;
+	backend->concurrency = (uint64_t)thread_count;
 }
 
 size_t
@@ -415,8 +401,7 @@ render_backend_texture_table(render_backend_t* backend) {
 }
 
 bool
-render_backend_shader_upload(render_backend_t* backend, render_shader_t* shader, const void* buffer,
-                             size_t size) {
+render_backend_shader_upload(render_backend_t* backend, render_shader_t* shader, const void* buffer, size_t size) {
 	if (shader->backend && (shader->backend != backend))
 		shader->backend->vtable.deallocate_shader(shader->backend, shader);
 	shader->backend = nullptr;
@@ -440,8 +425,7 @@ render_backend_program_upload(render_backend_t* backend, render_program_t* progr
 }
 
 bool
-render_backend_texture_upload(render_backend_t* backend, render_texture_t* texture,
-                              const void* buffer, size_t size) {
+render_backend_texture_upload(render_backend_t* backend, render_texture_t* texture, const void* buffer, size_t size) {
 	if (texture->backend && (texture->backend != backend))
 		texture->backend->vtable.deallocate_texture(texture->backend, texture);
 	texture->backend = nullptr;
@@ -453,13 +437,11 @@ render_backend_texture_upload(render_backend_t* backend, render_texture_t* textu
 }
 
 void
-render_backend_parameter_bind_texture(render_backend_t* backend, void* buffer,
-                                      render_texture_t* texture) {
+render_backend_parameter_bind_texture(render_backend_t* backend, void* buffer, render_texture_t* texture) {
 	backend->vtable.parameter_bind_texture(backend, buffer, texture);
 }
 
 void
-render_backend_parameter_bind_target(render_backend_t* backend, void* buffer,
-                                     render_target_t* target) {
+render_backend_parameter_bind_target(render_backend_t* backend, void* buffer, render_target_t* target) {
 	backend->vtable.parameter_bind_target(backend, buffer, target);
 }

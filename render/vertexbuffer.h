@@ -1,15 +1,15 @@
-/* vertexbuffer.h  -  Render library  -  Public Domain  -  2014 Mattias Jansson / Rampant Pixels
+/* vertexbuffer.h  -  Render library  -  Public Domain  -  2014 Mattias Jansson
  *
  * This library provides a cross-platform rendering library in C11 providing
  * basic 2D/3D rendering functionality for projects based on our foundation library.
  *
- * The latest source code maintained by Rampant Pixels is always available at
+ * The latest source code maintained by Mattias Jansson is always available at
  *
- * https://github.com/rampantpixels/render_lib
+ * https://github.com/mjansson/render_lib
  *
- * The dependent library source code maintained by Rampant Pixels is always available at
+ * The dependent library source code maintained by Mattias Jansson is always available at
  *
- * https://github.com/rampantpixels
+ * https://github.com/mjansson
  *
  * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
  *
@@ -32,10 +32,10 @@ render_vertex_attribute_size(render_vertex_format_t format);
 
 /*! Allocate a new vertex declaration from array of elements
 \param elements Vertex declaration elements
-\param num Number of vertex declaration elements in array
+\param elements_count Number of vertex declaration elements in array
 \return New allocated vertex declaration */
 RENDER_API render_vertex_decl_t*
-render_vertex_decl_allocate(render_vertex_decl_element_t* elements, size_t num);
+render_vertex_decl_allocate(render_vertex_decl_element_t* elements, size_t elements_count);
 
 /*! Allocate a new vertex declaration from variable number of elements.
 Argument list must be pairs of (render_vertex_format_t, render_vertex_attribute_id)
@@ -44,8 +44,7 @@ arguments. Terminate argument list with a VERTEXFORMAT_UNKNOWN format identifier
 \param attribute Element attribute identifier
 \return New allocated vertex declaration */
 RENDER_API render_vertex_decl_t*
-render_vertex_decl_allocate_varg(render_vertex_format_t format,
-                                 render_vertex_attribute_id attribute, ...);
+render_vertex_decl_allocate_varg(render_vertex_format_t format, render_vertex_attribute_id attribute, ...);
 
 /*! Allocate a new vertex declaration from variable number of elements.
 Argument list must be pairs of (render_vertex_format_t, render_vertex_attribute_id)
@@ -55,16 +54,15 @@ arguments. Terminate argument list with a VERTEXFORMAT_UNKNOWN format identifier
 \param list Variable argument list
 \return New allocated vertex declaration */
 RENDER_API render_vertex_decl_t*
-render_vertex_decl_allocate_vlist(render_vertex_format_t format,
-                                  render_vertex_attribute_id attribute, va_list list);
+render_vertex_decl_allocate_vlist(render_vertex_format_t format, render_vertex_attribute_id attribute, va_list list);
 
 /*! Initialize a vertex declaration from array of elements
 \param decl Vertex declaration
 \param elements Vertex declaration elements
-\param num Number of vertex declaration elements in array */
+\param elements_count Number of vertex declaration elements in array */
 RENDER_API void
 render_vertex_decl_initialize(render_vertex_decl_t* decl, render_vertex_decl_element_t* elements,
-                              size_t num);
+                              size_t elements_count);
 
 /*! Initialize a vertex declaration from variable number of elements.
 Argument list must be pairs of (render_vertex_format_t, render_vertex_attribute_id)
@@ -103,11 +101,9 @@ render_vertex_decl_deallocate(render_vertex_decl_t* decl);
 RENDER_API size_t
 render_vertex_decl_calculate_size(const render_vertex_decl_t* decl);
 
-
 RENDER_API render_vertexbuffer_t*
-render_vertexbuffer_allocate(render_backend_t* backend, render_usage_t usage, size_t num_vertices,
-                             size_t buffer_size, const render_vertex_decl_t* decl,
-                             const void* data, size_t data_size);
+render_vertexbuffer_allocate(render_backend_t* backend, render_usage_t usage, size_t vertex_count, size_t buffer_size,
+                             const render_vertex_decl_t* decl, const void* data, size_t data_size);
 
 RENDER_API void
 render_vertexbuffer_deallocate(render_vertexbuffer_t* buffer);

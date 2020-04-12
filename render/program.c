@@ -1,15 +1,15 @@
-/* program.c  -  Render library  -  Public Domain  -  2015 Mattias Jansson / Rampant Pixels
+/* program.c  -  Render library  -  Public Domain  -  2015 Mattias Jansson
  *
  * This library provides a cross-platform rendering library in C11 providing
  * basic 2D/3D rendering functionality for projects based on our foundation library.
  *
- * The latest source code maintained by Rampant Pixels is always available at
+ * The latest source code maintained by Mattias Jansson is always available at
  *
- * https://github.com/rampantpixels/render_lib
+ * https://github.com/mjansson/render_lib
  *
- * The dependent library source code maintained by Rampant Pixels is always available at
+ * The dependent library source code maintained by Mattias Jansson is always available at
  *
- * https://github.com/rampantpixels
+ * https://github.com/mjansson
  *
  * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
  *
@@ -24,22 +24,22 @@
 #include <resource/platform.h>
 #include <resource/compile.h>
 
-//Size expectations for the program compiler and loader
+// Size expectations for the program compiler and loader
 FOUNDATION_STATIC_ASSERT(sizeof(render_vertex_decl_t) == 128, "invalid vertex decl size");
 FOUNDATION_STATIC_ASSERT(sizeof(render_program_t) <= 308, "invalid program size");
 
 render_program_t*
-render_program_allocate(size_t num_parameters) {
-	size_t size = sizeof(render_program_t) + (sizeof(render_parameter_t) * num_parameters);
+render_program_allocate(size_t parameters_count) {
+	size_t size = sizeof(render_program_t) + (sizeof(render_parameter_t) * parameters_count);
 	render_program_t* program = memory_allocate(HASH_RENDER, size, 8, MEMORY_PERSISTENT);
-	render_program_initialize(program, num_parameters);
+	render_program_initialize(program, parameters_count);
 	return program;
 }
 
 void
-render_program_initialize(render_program_t* program, size_t num_parameters) {
+render_program_initialize(render_program_t* program, size_t parameters_count) {
 	memset(program, 0, sizeof(render_program_t));
-	program->num_parameters = (unsigned int)num_parameters;
+	program->parameters_count = (unsigned int)parameters_count;
 	program->parameters = program->inline_parameters;
 }
 
@@ -85,10 +85,8 @@ render_program_load_impl(render_backend_t* backend, const uuid_t uuid) {
 	render_shader_t* pshader = nullptr;
 	bool recompiled = false;
 
-	error_context_declare_local(
-	    char uuidbuf[40];
-	    const string_t uuidstr = string_from_uuid(uuidbuf, sizeof(uuidbuf), uuid)
-	);
+	error_context_declare_local(char uuidbuf[40];
+	                            const string_t uuidstr = string_from_uuid(uuidbuf, sizeof(uuidbuf), uuid));
 	error_context_push(STRING_CONST("loading program"), STRING_ARGS(uuidstr));
 
 	render_backend_enable_thread(backend);
@@ -102,8 +100,7 @@ retry:
 	header = resource_stream_read_header(stream);
 	if ((header.type != HASH_PROGRAM) || (header.version != expected_version)) {
 		if (!recompiled) {
-			log_warnf(HASH_RENDER, WARNING_INVALID_VALUE,
-			          STRING_CONST("Got unexpected type/version: %" PRIx64 " : %u"),
+			log_warnf(HASH_RENDER, WARNING_INVALID_VALUE, STRING_CONST("Got unexpected type/version: %" PRIx64 " : %u"),
 			          (uint64_t)header.type, (uint32_t)header.version);
 			stream_deallocate(stream);
 			stream = nullptr;
@@ -178,10 +175,8 @@ render_program_load(render_backend_t* backend, const uuid_t uuid) {
 
 bool
 render_program_reload(render_program_t* program, const uuid_t uuid) {
-	error_context_declare_local(
-	    char uuidbuf[40];
-	    const string_t uuidstr = string_from_uuid(uuidbuf, sizeof(uuidbuf), uuid)
-	);
+	error_context_declare_local(char uuidbuf[40];
+	                            const string_t uuidstr = string_from_uuid(uuidbuf, sizeof(uuidbuf), uuid));
 	error_context_push(STRING_CONST("reloading program"), STRING_ARGS(uuidstr));
 
 	bool success = false;
@@ -202,16 +197,14 @@ render_program_reload(render_program_t* program, const uuid_t uuid) {
 
 		program->size_parameterdata = tmpprogram->size_parameterdata;
 
-		if (program->num_parameters < tmpprogram->num_parameters) {
+		if (program->parameters_count < tmpprogram->parameters_count) {
 			if (program->parameters != program->inline_parameters)
 				memory_deallocate(program->parameters);
-			program->parameters = memory_allocate(HASH_RENDER,
-			                                      sizeof(render_parameter_t) * tmpprogram->num_parameters,
-			                                      0, MEMORY_PERSISTENT);
+			program->parameters = memory_allocate(
+			    HASH_RENDER, sizeof(render_parameter_t) * tmpprogram->parameters_count, 0, MEMORY_PERSISTENT);
 		}
-		memcpy(program->parameters, tmpprogram->parameters,
-		       sizeof(render_parameter_t) * tmpprogram->num_parameters);
-		program->num_parameters = tmpprogram->num_parameters;
+		memcpy(program->parameters, tmpprogram->parameters, sizeof(render_parameter_t) * tmpprogram->parameters_count);
+		program->parameters_count = tmpprogram->parameters_count;
 
 		memcpy(&program->attribute, &tmpprogram->attribute, sizeof(program->attribute));
 		memcpy(&program->attribute_name, &tmpprogram->attribute_name, sizeof(program->attribute_name));

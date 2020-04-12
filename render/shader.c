@@ -1,15 +1,15 @@
-/* shader.c  -  Render library  -  Public Domain  -  2014 Mattias Jansson / Rampant Pixels
+/* shader.c  -  Render library  -  Public Domain  -  2014 Mattias Jansson
  *
  * This library provides a cross-platform rendering library in C11 providing
  * basic 2D/3D rendering functionality for projects based on our foundation library.
  *
- * The latest source code maintained by Rampant Pixels is always available at
+ * The latest source code maintained by Mattias Jansson is always available at
  *
- * https://github.com/rampantpixels/render_lib
+ * https://github.com/mjansson/render_lib
  *
- * The dependent library source code maintained by Rampant Pixels is always available at
+ * The dependent library source code maintained by Mattias Jansson is always available at
  *
- * https://github.com/rampantpixels
+ * https://github.com/mjansson
  *
  * This library is put in the public domain; you can redistribute it and/or modify it without any restrictions.
  *
@@ -28,8 +28,7 @@ FOUNDATION_STATIC_ASSERT(sizeof(render_shader_t) == 64, "invalid shader size");
 
 render_shader_t*
 render_pixelshader_allocate(void) {
-	render_shader_t* shader = memory_allocate(HASH_RENDER, sizeof(render_shader_t), 16,
-	                                          MEMORY_PERSISTENT);
+	render_shader_t* shader = memory_allocate(HASH_RENDER, sizeof(render_shader_t), 16, MEMORY_PERSISTENT);
 	render_pixelshader_initialize(shader);
 	return shader;
 }
@@ -42,8 +41,7 @@ render_pixelshader_initialize(render_shader_t* shader) {
 
 render_shader_t*
 render_vertexshader_allocate(void) {
-	render_shader_t* shader = memory_allocate(HASH_RENDER, sizeof(render_shader_t), 16,
-	                                          MEMORY_PERSISTENT);
+	render_shader_t* shader = memory_allocate(HASH_RENDER, sizeof(render_shader_t), 16, MEMORY_PERSISTENT);
 	render_vertexshader_initialize(shader);
 	return shader;
 }
@@ -90,10 +88,8 @@ render_shader_load(render_backend_t* backend, const uuid_t uuid) {
 	bool recompile = false;
 	bool recompiled = false;
 
-	error_context_declare_local(
-	    char uuidbuf[40];
-	    const string_t uuidstr = string_from_uuid(uuidbuf, sizeof(uuidbuf), uuid)
-	);
+	error_context_declare_local(char uuidbuf[40];
+	                            const string_t uuidstr = string_from_uuid(uuidbuf, sizeof(uuidbuf), uuid));
 	error_context_push(STRING_CONST("loading shader"), STRING_ARGS(uuidstr));
 
 	render_backend_enable_thread(backend);
@@ -102,7 +98,7 @@ retry:
 
 	stream = resource_stream_open_static(uuid, platform);
 	if (stream) {
-		header = resource_stream_read_header(stream);		
+		header = resource_stream_read_header(stream);
 		if (header.version == RENDER_SHADER_RESOURCE_VERSION) {
 			if (header.type == HASH_PIXELSHADER)
 				shader = render_pixelshader_allocate();
@@ -114,8 +110,7 @@ retry:
 			}
 		}
 		if (!shader && !recompiled) {
-			log_warnf(HASH_RENDER, WARNING_INVALID_VALUE,
-			          STRING_CONST("Got unexpected type/version %" PRIx64 " : %u"),
+			log_warnf(HASH_RENDER, WARNING_INVALID_VALUE, STRING_CONST("Got unexpected type/version %" PRIx64 " : %u"),
 			          (uint64_t)header.type, (uint32_t)header.version);
 			recompile = true;
 		}
@@ -128,18 +123,16 @@ retry:
 		char* buffer;
 		uint32_t version = stream_read_uint32(stream);
 		size_t size = (size_t)stream_read_uint64(stream);
-		if ((version == RENDER_SHADER_RESOURCE_VERSION) && (size < 128 * 1024))  {
+		if ((version == RENDER_SHADER_RESOURCE_VERSION) && (size < 128 * 1024)) {
 			buffer = memory_allocate(HASH_RENDER, size + 1, 0, MEMORY_TEMPORARY);
 			if (stream_read(stream, buffer, size) == size) {
 				buffer[size] = 0;
 				success = render_backend_shader_upload(backend, shader, buffer, size);
 			}
 			memory_deallocate(buffer);
-		}
-		else if (!recompiled) {
+		} else if (!recompiled) {
 			log_warnf(HASH_RENDER, WARNING_INVALID_VALUE,
-			          STRING_CONST("Got unexpected version/size when loading blob: %u (%" PRIsize ")"),
-			          version, size);
+			          STRING_CONST("Got unexpected version/size when loading blob: %u (%" PRIsize ")"), version, size);
 			recompile = true;
 		}
 		stream_deallocate(stream);
@@ -170,10 +163,8 @@ retry:
 
 bool
 render_shader_reload(render_shader_t* shader, const uuid_t uuid) {
-	error_context_declare_local(
-	    char uuidbuf[40];
-	    const string_t uuidstr = string_from_uuid(uuidbuf, sizeof(uuidbuf), uuid)
-	);
+	error_context_declare_local(char uuidbuf[40];
+	                            const string_t uuidstr = string_from_uuid(uuidbuf, sizeof(uuidbuf), uuid));
 	error_context_push(STRING_CONST("reloading shader"), STRING_ARGS(uuidstr));
 
 	render_backend_t* backend = shader->backend;
@@ -205,18 +196,16 @@ render_shader_reload(render_shader_t* shader, const uuid_t uuid) {
 		char* buffer;
 		uint32_t version = stream_read_uint32(stream);
 		size_t size = (size_t)stream_read_uint64(stream);
-		if ((version == RENDER_SHADER_RESOURCE_VERSION) && (size < 128 * 1024))  {
+		if ((version == RENDER_SHADER_RESOURCE_VERSION) && (size < 128 * 1024)) {
 			buffer = memory_allocate(HASH_RENDER, size + 1, 0, MEMORY_TEMPORARY);
 			if (stream_read(stream, buffer, size) == size) {
 				buffer[size] = 0;
 				success = render_backend_shader_upload(backend, &tmpshader, buffer, size);
 			}
 			memory_deallocate(buffer);
-		}
-		else {
+		} else {
 			log_warnf(HASH_RENDER, WARNING_INVALID_VALUE,
-			          STRING_CONST("Got unexpected version/size when loading blob: %u (%" PRIsize ")"),
-			          version, size);
+			          STRING_CONST("Got unexpected version/size when loading blob: %u (%" PRIsize ")"), version, size);
 		}
 		stream_deallocate(stream);
 		stream = nullptr;
@@ -241,5 +230,5 @@ render_shader_unload(render_shader_t* shader) {
 	if (shader && atomic_load32(&shader->ref, memory_order_acquire)) {
 		if (!atomic_decr32(&shader->ref, memory_order_release))
 			render_shader_deallocate(shader);
-	}	
+	}
 }

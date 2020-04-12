@@ -1,15 +1,15 @@
-/* main.c  -  Render test  -  Public Domain  -  2013 Mattias Jansson / Rampant Pixels
+/* main.c  -  Render test  -  Public Domain  -  2013 Mattias Jansson
  *
  * This library provides a cross-platform rendering library in C11 providing
  * basic 2D/3D rendering functionality for projects based on our foundation library.
  *
- * The latest source code maintained by Rampant Pixels is always available at
+ * The latest source code maintained by Mattias Jansson is always available at
  *
- * https://github.com/rampantpixels/render_lib
+ * https://github.com/mjansson/render_lib
  *
- * The foundation library source code maintained by Rampant Pixels is always available at
+ * The foundation library source code maintained by Mattias Jansson is always available at
  *
- * https://github.com/rampantpixels/foundation_lib
+ * https://github.com/mjansson/foundation_lib
  *
  * This library is put in the public domain; you can redistribute it and/or modify it without any
  * restrictions.
@@ -30,7 +30,7 @@ test_render_application(void) {
 	memset(&app, 0, sizeof(app));
 	app.name = string_const(STRING_CONST("Render tests"));
 	app.short_name = string_const(STRING_CONST("test_render"));
-	app.company = string_const(STRING_CONST("Rampant Pixels"));
+	app.company = string_const(STRING_CONST(""));
 	app.version = render_module_version();
 	app.exception_handler = test_exception_handler;
 	return app;
@@ -49,8 +49,8 @@ test_render_config(void) {
 }
 
 static void
-test_parse_config(const char* path, size_t path_size, const char* buffer, size_t size,
-                  const json_token_t* tokens, size_t num_tokens) {
+test_parse_config(const char* path, size_t path_size, const char* buffer, size_t size, const json_token_t* tokens,
+                  size_t num_tokens) {
 	resource_module_parse_config(path, path_size, buffer, size, tokens, num_tokens);
 	render_module_parse_config(path, path_size, buffer, size, tokens, num_tokens);
 }
@@ -143,7 +143,7 @@ _test_render_api(render_api_t api) {
 	render_backend_t* backend = 0;
 	render_resolution_t resolutions[32];
 	render_drawable_t* drawable = 0;
-	object_t framebuffer = 0;
+	render_target_t* framebuffer = 0;
 
 	EXPECT_TRUE(render_module_is_initialized());
 
@@ -171,27 +171,26 @@ _test_render_api(render_api_t api) {
 	EXPECT_NE(backend, 0);
 	EXPECT_NE(drawable, 0);
 
-	log_infof(HASH_TEST, STRING_CONST("Resolution: %ux%u@%uHz"), resolutions[0].width,
-	          resolutions[0].height, resolutions[0].refresh);
+	log_infof(HASH_TEST, STRING_CONST("Resolution: %ux%u@%uHz"), resolutions[0].width, resolutions[0].height,
+	          resolutions[0].refresh);
 
-	render_drawable_set_window(drawable, window, 0);
+	render_drawable_initialize_window(drawable, &window, 0);
 
-	log_infof(HASH_TEST, STRING_CONST("Drawable  : %ux%u"), render_drawable_width(drawable),
-	          render_drawable_height(drawable));
+	log_infof(HASH_TEST, STRING_CONST("Drawable  : %ux%u"), drawable->width, drawable->height);
 
-	EXPECT_EQ(render_drawable_type(drawable), RENDERDRAWABLE_WINDOW);
-	EXPECT_EQ(render_drawable_width(drawable), window_width(window));
-	EXPECT_EQ(render_drawable_height(drawable), window_height(window));
+	EXPECT_EQ(drawable->type, RENDERDRAWABLE_WINDOW);
+	EXPECT_EQ(drawable->width, window_width(&window));
+	EXPECT_EQ(drawable->height, window_height(&window));
 
-	render_backend_set_format(backend, PIXELFORMAT_R8G8B8X8, COLORSPACE_LINEAR);
+	render_backend_set_format(backend, PIXELFORMAT_R8G8B8, COLORSPACE_LINEAR);
 	render_backend_set_drawable(backend, drawable);
 
 	framebuffer = render_backend_target_framebuffer(backend);
 	EXPECT_NE(framebuffer, 0);
-	EXPECT_GE(render_target_width(framebuffer), window_width(window));
-	EXPECT_GE(render_target_height(framebuffer), window_height(window));
-	EXPECT_EQ(render_target_pixelformat(framebuffer), PIXELFORMAT_R8G8B8X8);
-	EXPECT_EQ(render_target_colorspace(framebuffer), COLORSPACE_LINEAR);
+	EXPECT_GE(framebuffer->width, window_width(&window));
+	EXPECT_GE(framebuffer->height, window_height(&window));
+	EXPECT_EQ(framebuffer->pixelformat, PIXELFORMAT_R8G8B8);
+	EXPECT_EQ(framebuffer->colorspace, COLORSPACE_LINEAR);
 
 ignore_test:
 
@@ -210,7 +209,7 @@ _test_render_clear(render_api_t api) {
 	render_backend_t* backend = 0;
 	window_t window;
 	render_drawable_t* drawable = 0;
-	object_t framebuffer = 0;
+	render_target_t* framebuffer = 0;
 	render_context_t* context = 0;
 
 #if FOUNDATION_PLATFORM_MACOS || FOUNDATION_PLATFORM_IOS
@@ -228,57 +227,44 @@ _test_render_clear(render_api_t api) {
 
 	drawable = render_drawable_allocate();
 
-	render_drawable_set_window(drawable, window, 0);
+	render_drawable_initialize_window(drawable, &window, 0);
 
-	render_backend_set_format(backend, PIXELFORMAT_R8G8B8X8, COLORSPACE_LINEAR);
+	render_backend_set_format(backend, PIXELFORMAT_R8G8B8, COLORSPACE_LINEAR);
 	render_backend_set_drawable(backend, drawable);
 
 	framebuffer = render_backend_target_framebuffer(backend);
 	context = render_context_allocate(32);
 
-	render_context_set_target(context, framebuffer);
 	render_sort_reset(context);
 
-	render_command_viewport(render_context_reserve(context, render_sort_sequential_key(context)), 0,
-	                        0, render_target_width(framebuffer), render_target_height(framebuffer),
-	                        0, 1);
+	render_command_viewport(render_context_reserve(context, render_sort_sequential_key(context)), 0, 0,
+	                        framebuffer->width, framebuffer->height, 0, 1);
 	render_command_clear(render_context_reserve(context, render_sort_sequential_key(context)),
-	                     RENDERBUFFER_COLOR | RENDERBUFFER_DEPTH | RENDERBUFFER_STENCIL, 0x00000000,
-	                     0xF, 1, 0);
+	                     RENDERBUFFER_COLOR | RENDERBUFFER_DEPTH | RENDERBUFFER_STENCIL, 0x00000000, 0xF, 1, 0);
 
-	render_command_viewport(render_context_reserve(context, render_sort_sequential_key(context)), 0,
-	                        0, render_target_width(framebuffer) / 2,
-	                        render_target_height(framebuffer) / 2, 0, 1);
+	render_command_viewport(render_context_reserve(context, render_sort_sequential_key(context)), 0, 0,
+	                        framebuffer->width / 2, framebuffer->height / 2, 0, 1);
 	render_command_clear(render_context_reserve(context, render_sort_sequential_key(context)),
-	                     RENDERBUFFER_COLOR | RENDERBUFFER_DEPTH | RENDERBUFFER_STENCIL, 0xFFFFFFFF,
-	                     0x1, 1, 0);
+	                     RENDERBUFFER_COLOR | RENDERBUFFER_DEPTH | RENDERBUFFER_STENCIL, 0xFFFFFFFF, 0x1, 1, 0);
 
 	render_command_viewport(render_context_reserve(context, render_sort_sequential_key(context)),
-	                        render_target_width(framebuffer) / 2, 0,
-	                        render_target_width(framebuffer) / 2,
-	                        render_target_height(framebuffer) / 2, 0, 1);
+	                        framebuffer->width / 2, 0, framebuffer->height / 2, framebuffer->height / 2, 0, 1);
 	render_command_clear(render_context_reserve(context, render_sort_sequential_key(context)),
-	                     RENDERBUFFER_COLOR | RENDERBUFFER_DEPTH | RENDERBUFFER_STENCIL, 0xFFFFFFFF,
-	                     0x2, 1, 0);
+	                     RENDERBUFFER_COLOR | RENDERBUFFER_DEPTH | RENDERBUFFER_STENCIL, 0xFFFFFFFF, 0x2, 1, 0);
 
 	render_command_viewport(render_context_reserve(context, render_sort_sequential_key(context)), 0,
-	                        render_target_height(framebuffer) / 2,
-	                        render_target_width(framebuffer) / 2,
-	                        render_target_height(framebuffer) / 2, 0, 1);
+	                        framebuffer->height / 2, framebuffer->width / 2, framebuffer->height / 2, 0, 1);
 	render_command_clear(render_context_reserve(context, render_sort_sequential_key(context)),
-	                     RENDERBUFFER_COLOR | RENDERBUFFER_DEPTH | RENDERBUFFER_STENCIL, 0xFFFFFFFF,
-	                     0x4, 1, 0);
+	                     RENDERBUFFER_COLOR | RENDERBUFFER_DEPTH | RENDERBUFFER_STENCIL, 0xFFFFFFFF, 0x4, 1, 0);
 
-	render_command_viewport(
-	    render_context_reserve(context, render_sort_sequential_key(context)),
-	    render_target_width(framebuffer) / 2, render_target_height(framebuffer) / 2,
-	    render_target_width(framebuffer) / 2, render_target_height(framebuffer) / 2, 0, 1);
+	render_command_viewport(render_context_reserve(context, render_sort_sequential_key(context)),
+	                        framebuffer->width / 2, framebuffer->height / 2, framebuffer->width / 2,
+	                        framebuffer->height / 2, 0, 1);
 	render_command_clear(render_context_reserve(context, render_sort_sequential_key(context)),
-	                     RENDERBUFFER_COLOR | RENDERBUFFER_DEPTH | RENDERBUFFER_STENCIL, 0xFFFFFFFF,
-	                     0xF, 1, 0);
+	                     RENDERBUFFER_COLOR | RENDERBUFFER_DEPTH | RENDERBUFFER_STENCIL, 0xFFFFFFFF, 0xF, 1, 0);
 
 	render_sort_merge(&context, 1);
-	render_backend_dispatch(backend, &context, 1);
+	render_backend_dispatch(backend, framebuffer, &context, 1);
 	render_backend_flip(backend);
 
 	// TODO: Verify framebuffer
@@ -300,22 +286,20 @@ _test_render_box(render_api_t api) {
 	render_backend_t* backend = 0;
 	window_t window;
 	render_drawable_t* drawable = 0;
-	object_t framebuffer = 0;
-	object_t parameterbuffer = 0;
-	object_t vertexbuffer = 0;
-	object_t indexbuffer = 0;
+	render_target_t* framebuffer = 0;
+	render_parameterbuffer_t* parameterbuffer = 0;
+	render_vertexbuffer_t* vertexbuffer = 0;
+	render_indexbuffer_t* indexbuffer = 0;
 	render_context_t* context = 0;
-	object_t programobj = 0;
 	render_program_t* program = nullptr;
 	render_vertex_decl_t* vertex_decl = 0;
 	matrix_t mvp;
 
-	float32_t vertexdata[8 * 7] = {
-	    -0.5f, 0.5f,  0.5f,  1, 1, 1, 1, -0.5f, -0.5f, 0.5f,  0, 1, 0, 1,
-	    0.5f,  -0.5f, 0.5f,  0, 0, 1, 1, 0.5f,  0.5f,  0.5f,  1, 0, 0, 1,
+	float32_t vertexdata[8 * 7] = {-0.5f, 0.5f,  0.5f,  1, 1, 1, 1, -0.5f, -0.5f, 0.5f,  0, 1, 0, 1,
+	                               0.5f,  -0.5f, 0.5f,  0, 0, 1, 1, 0.5f,  0.5f,  0.5f,  1, 0, 0, 1,
 
-	    -0.5f, 0.5f,  -0.5f, 1, 1, 0, 1, -0.5f, -0.5f, -0.5f, 1, 0, 1, 1,
-	    0.5f,  -0.5f, -0.5f, 0, 1, 1, 1, 0.5f,  0.5f,  -0.5f, 0, 0, 0, 1};
+	                               -0.5f, 0.5f,  -0.5f, 1, 1, 0, 1, -0.5f, -0.5f, -0.5f, 1, 0, 1, 1,
+	                               0.5f,  -0.5f, -0.5f, 0, 1, 1, 1, 0.5f,  0.5f,  -0.5f, 0, 0, 0, 1};
 
 	uint16_t indexdata[6 * 6] = {0, 1, 2, 0, 2, 3, 1, 5, 6, 1, 6, 2, 3, 2, 6, 3, 6, 7,
 	                             7, 6, 5, 7, 5, 4, 4, 3, 1, 4, 1, 0, 4, 0, 3, 4, 3, 7};
@@ -335,69 +319,59 @@ _test_render_box(render_api_t api) {
 
 	drawable = render_drawable_allocate();
 
-	render_drawable_set_window(drawable, window, 0);
+	render_drawable_initialize_window(drawable, &window, 0);
 
-	render_backend_set_format(backend, PIXELFORMAT_R8G8B8X8, COLORSPACE_LINEAR);
+	render_backend_set_format(backend, PIXELFORMAT_R8G8B8, COLORSPACE_LINEAR);
 	render_backend_set_drawable(backend, drawable);
 
 	framebuffer = render_backend_target_framebuffer(backend);
 	context = render_context_allocate(32);
 
-	render_context_set_target(context, framebuffer);
 	render_sort_reset(context);
 
-	render_command_viewport(render_context_reserve(context, render_sort_sequential_key(context)), 0,
-	                        0, render_target_width(framebuffer), render_target_height(framebuffer),
-	                        0, 1);
+	render_command_viewport(render_context_reserve(context, render_sort_sequential_key(context)), 0, 0,
+	                        framebuffer->width, framebuffer->height, 0, 1);
 	render_command_clear(render_context_reserve(context, render_sort_sequential_key(context)),
-	                     RENDERBUFFER_COLOR | RENDERBUFFER_DEPTH | RENDERBUFFER_STENCIL, 0x00000000,
-	                     0xFFFFFFFF, 1, 0);
+	                     RENDERBUFFER_COLOR | RENDERBUFFER_DEPTH | RENDERBUFFER_STENCIL, 0x00000000, 0xFFFFFFFF, 1, 0);
 
 	render_sort_merge(&context, 1);
-	render_backend_dispatch(backend, &context, 1);
+	render_backend_dispatch(backend, framebuffer, &context, 1);
 	render_backend_flip(backend);
 
 	// color.program : 1ab9bba8-3f2f-4649-86bb-8b8b07e99af2
 	uuid_t program_uuid = uuid_make(0x46493f2f1ab9bba8, 0xf29ae9078b8bbb86);
-	programobj = render_backend_program_load(backend, program_uuid);
-	program = render_backend_program_raw(backend, programobj);
-	EXPECT_NE(programobj, 0);
+	program = render_program_load(backend, program_uuid);
 	EXPECT_NE(program, nullptr);
 
 	mvp = matrix_identity();
 
-	parameterbuffer =
-	    render_parameterbuffer_create(backend, RENDERUSAGE_DYNAMIC, program->parameters,
-	                                  program->num_parameters, &mvp, sizeof(mvp));
-	EXPECT_TYPENE(parameterbuffer, 0, object_t, PRIx32);
+	parameterbuffer = render_parameterbuffer_allocate(backend, RENDERUSAGE_DYNAMIC, program->parameters,
+	                                                  program->parameters_count, &mvp, sizeof(mvp));
+	EXPECT_NE(parameterbuffer, 0);
 
 	render_parameterbuffer_link(parameterbuffer, program);
 
-	vertex_decl = render_vertex_decl_allocate_varg(
-	    VERTEXFORMAT_FLOAT3, VERTEXATTRIBUTE_POSITION, VERTEXFORMAT_FLOAT4,
-	    VERTEXATTRIBUTE_PRIMARYCOLOR, VERTEXFORMAT_UNKNOWN);
+	vertex_decl = render_vertex_decl_allocate_varg(VERTEXFORMAT_FLOAT3, VERTEXATTRIBUTE_POSITION, VERTEXFORMAT_FLOAT4,
+	                                               VERTEXATTRIBUTE_PRIMARYCOLOR, VERTEXFORMAT_UNUSED);
 
-	vertexbuffer =
-	    render_vertexbuffer_create(backend, RENDERUSAGE_STATIC, 8, vertex_decl, vertexdata);
-	EXPECT_TYPENE(vertexbuffer, 0, object_t, PRIx32);
+	vertexbuffer = render_vertexbuffer_allocate(backend, RENDERUSAGE_STATIC, 8, sizeof(vertexdata), vertex_decl,
+	                                            vertexdata, sizeof(vertexdata));
+	EXPECT_NE(vertexbuffer, 0);
 
-	indexbuffer = render_indexbuffer_create(backend, RENDERUSAGE_STATIC, 36, indexdata);
-	EXPECT_TYPENE(indexbuffer, 0, object_t, PRIx32);
+	indexbuffer = render_indexbuffer_allocate(backend, RENDERUSAGE_STATIC, 36, sizeof(indexdata), INDEXFORMAT_USHORT, indexdata, sizeof(indexdata));
+	EXPECT_NE(indexbuffer, 0);
 
 	render_sort_reset(context);
 
-	render_command_viewport(render_context_reserve(context, render_sort_sequential_key(context)), 0,
-	                        0, render_target_width(framebuffer), render_target_height(framebuffer),
-	                        0, 1);
+	render_command_viewport(render_context_reserve(context, render_sort_sequential_key(context)), 0, 0,
+	                        framebuffer->width, framebuffer->height, 0, 1);
 	render_command_clear(render_context_reserve(context, render_sort_sequential_key(context)),
-	                     RENDERBUFFER_COLOR | RENDERBUFFER_DEPTH | RENDERBUFFER_STENCIL, 0x00000000,
-	                     0xFFFFFFFF, 1, 0);
+	                     RENDERBUFFER_COLOR | RENDERBUFFER_DEPTH | RENDERBUFFER_STENCIL, 0x00000000, 0xFFFFFFFF, 1, 0);
 	render_command_render(render_context_reserve(context, render_sort_sequential_key(context)),
-	                      RENDERPRIMITIVE_TRIANGLELIST, 12, program, vertexbuffer, indexbuffer,
-	                      parameterbuffer, 0);
+	                      RENDERPRIMITIVE_TRIANGLELIST, 12, program, vertexbuffer, indexbuffer, parameterbuffer, 0);
 
 	render_sort_merge(&context, 1);
-	render_backend_dispatch(backend, &context, 1);
+	render_backend_dispatch(backend, framebuffer, &context, 1);
 	render_backend_flip(backend);
 
 	// TODO: Verify framebuffer
@@ -406,12 +380,11 @@ _test_render_box(render_api_t api) {
 
 ignore_test:
 
-	render_indexbuffer_release(indexbuffer);
-	render_vertexbuffer_release(vertexbuffer);
+	render_indexbuffer_deallocate(indexbuffer);
+	render_vertexbuffer_deallocate(vertexbuffer);
 	render_vertex_decl_deallocate(vertex_decl);
-	render_parameterbuffer_release(parameterbuffer);
-	if (backend)
-		render_backend_program_release(backend, programobj);
+	render_parameterbuffer_deallocate(parameterbuffer);
+	render_program_unload(program);
 	render_context_deallocate(context);
 	render_backend_deallocate(backend);
 	render_drawable_deallocate(drawable);

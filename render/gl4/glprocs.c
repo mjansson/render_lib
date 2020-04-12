@@ -1,15 +1,15 @@
-/* glprocs.c  -  Render library  -  Public Domain  -  2014 Mattias Jansson / Rampant Pixels
+/* glprocs.c  -  Render library  -  Public Domain  -  2014 Mattias Jansson
  *
  * This library provides a cross-platform rendering library in C11 providing
  * basic 2D/3D rendering functionality for projects based on our foundation library.
  *
- * The latest source code maintained by Rampant Pixels is always available at
+ * The latest source code maintained by Mattias Jansson is always available at
  *
- * https://github.com/rampantpixels/render_lib
+ * https://github.com/mjansson/render_lib
  *
- * The dependent library source code maintained by Rampant Pixels is always available at
+ * The dependent library source code maintained by Mattias Jansson is always available at
  *
- * https://github.com/rampantpixels
+ * https://github.com/mjansson
  *
  * This library is put in the public domain; you can redistribute it and/or modify it without any
  * restrictions.
@@ -152,25 +152,17 @@ _rb_gl_get_texture_procs(void) {
 #ifndef GL_GLEXT_PROTOTYPES
 	glActiveTexture = (PFNGLACTIVETEXTUREPROC)_rb_gl_get_proc_address("glActiveTexture");
 	glSampleCoverage = (PFNGLSAMPLECOVERAGEPROC)_rb_gl_get_proc_address("glSampleCoverage");
-	glCompressedTexImage3D =
-	    (PFNGLCOMPRESSEDTEXIMAGE3DPROC)_rb_gl_get_proc_address("glCompressedTexImage3D");
-	glCompressedTexImage2D =
-	    (PFNGLCOMPRESSEDTEXIMAGE2DPROC)_rb_gl_get_proc_address("glCompressedTexImage2D");
-	glCompressedTexImage1D =
-	    (PFNGLCOMPRESSEDTEXIMAGE1DPROC)_rb_gl_get_proc_address("glCompressedTexImage1D");
-	glCompressedTexSubImage3D =
-	    (PFNGLCOMPRESSEDTEXSUBIMAGE3DPROC)_rb_gl_get_proc_address("glCompressedTexSubImage3D");
-	glCompressedTexSubImage2D =
-	    (PFNGLCOMPRESSEDTEXSUBIMAGE2DPROC)_rb_gl_get_proc_address("glCompressedTexSubImage2D");
-	glCompressedTexSubImage1D =
-	    (PFNGLCOMPRESSEDTEXSUBIMAGE1DPROC)_rb_gl_get_proc_address("glCompressedTexSubImage1D");
-	glGetCompressedTexImage =
-	    (PFNGLGETCOMPRESSEDTEXIMAGEPROC)_rb_gl_get_proc_address("glGetCompressedTexImage");
-	if (!glActiveTexture || !glSampleCoverage || !glCompressedTexImage3D ||
-	    !glCompressedTexImage2D || !glCompressedTexImage1D || !glCompressedTexSubImage3D ||
-	    !glCompressedTexSubImage2D || !glCompressedTexSubImage1D || !glGetCompressedTexImage) {
-		log_error(HASH_RENDER, ERROR_UNSUPPORTED,
-		          STRING_CONST("Unable to get GL procs for textures"));
+	glCompressedTexImage3D = (PFNGLCOMPRESSEDTEXIMAGE3DPROC)_rb_gl_get_proc_address("glCompressedTexImage3D");
+	glCompressedTexImage2D = (PFNGLCOMPRESSEDTEXIMAGE2DPROC)_rb_gl_get_proc_address("glCompressedTexImage2D");
+	glCompressedTexImage1D = (PFNGLCOMPRESSEDTEXIMAGE1DPROC)_rb_gl_get_proc_address("glCompressedTexImage1D");
+	glCompressedTexSubImage3D = (PFNGLCOMPRESSEDTEXSUBIMAGE3DPROC)_rb_gl_get_proc_address("glCompressedTexSubImage3D");
+	glCompressedTexSubImage2D = (PFNGLCOMPRESSEDTEXSUBIMAGE2DPROC)_rb_gl_get_proc_address("glCompressedTexSubImage2D");
+	glCompressedTexSubImage1D = (PFNGLCOMPRESSEDTEXSUBIMAGE1DPROC)_rb_gl_get_proc_address("glCompressedTexSubImage1D");
+	glGetCompressedTexImage = (PFNGLGETCOMPRESSEDTEXIMAGEPROC)_rb_gl_get_proc_address("glGetCompressedTexImage");
+	if (!glActiveTexture || !glSampleCoverage || !glCompressedTexImage3D || !glCompressedTexImage2D ||
+	    !glCompressedTexImage1D || !glCompressedTexSubImage3D || !glCompressedTexSubImage2D ||
+	    !glCompressedTexSubImage1D || !glGetCompressedTexImage) {
+		log_error(HASH_RENDER, ERROR_UNSUPPORTED, STRING_CONST("Unable to get GL procs for textures"));
 		return false;
 	}
 	glGenerateMipmap = (PFNGLGENERATEMIPMAPPROC)_rb_gl_get_proc_address("glGenerateMipmap");
@@ -188,12 +180,10 @@ _rb_gl_get_query_procs(void) {
 	glEndQuery = (PFNGLENDQUERYPROC)_rb_gl_get_proc_address("glEndQuery");
 	glGetQueryiv = (PFNGLGETQUERYIVPROC)_rb_gl_get_proc_address("glGetQueryiv");
 	glGetQueryObjectiv = (PFNGLGETQUERYOBJECTIVPROC)_rb_gl_get_proc_address("glGetQueryObjectiv");
-	glGetQueryObjectuiv =
-	    (PFNGLGETQUERYOBJECTUIVPROC)_rb_gl_get_proc_address("glGetQueryObjectuiv");
-	if (!glGenQueries || !glDeleteQueries || !glIsQuery || !glBeginQuery || !glEndQuery ||
-	    !glGetQueryiv || !glGetQueryObjectiv || !glGetQueryObjectuiv) {
-		log_error(HASH_RENDER, ERROR_UNSUPPORTED,
-		          STRING_CONST("Unable to get GL procs for queries"));
+	glGetQueryObjectuiv = (PFNGLGETQUERYOBJECTUIVPROC)_rb_gl_get_proc_address("glGetQueryObjectuiv");
+	if (!glGenQueries || !glDeleteQueries || !glIsQuery || !glBeginQuery || !glEndQuery || !glGetQueryiv ||
+	    !glGetQueryObjectiv || !glGetQueryObjectuiv) {
+		log_error(HASH_RENDER, ERROR_UNSUPPORTED, STRING_CONST("Unable to get GL procs for queries"));
 		return false;
 	}
 #endif
@@ -212,15 +202,11 @@ _rb_gl_get_buffer_procs(void) {
 	glGetBufferSubData = (PFNGLGETBUFFERSUBDATAPROC)_rb_gl_get_proc_address("glGetBufferSubData");
 	glMapBuffer = (PFNGLMAPBUFFERPROC)_rb_gl_get_proc_address("glMapBuffer");
 	glUnmapBuffer = (PFNGLUNMAPBUFFERPROC)_rb_gl_get_proc_address("glUnmapBuffer");
-	glGetBufferParameteriv =
-	    (PFNGLGETBUFFERPARAMETERIVPROC)_rb_gl_get_proc_address("glGetBufferParameteriv");
-	glGetBufferPointerv =
-	    (PFNGLGETBUFFERPOINTERVPROC)_rb_gl_get_proc_address("glGetBufferPointerv");
-	if (!glBindBuffer || !glDeleteBuffers || !glGenBuffers || !glIsBuffer || !glBufferData ||
-	    !glBufferSubData || !glGetBufferSubData || !glMapBuffer || !glUnmapBuffer ||
-	    !glGetBufferParameteriv || !glGetBufferPointerv) {
-		log_error(HASH_RENDER, ERROR_UNSUPPORTED,
-		          STRING_CONST("Unable to get GL procs for buffers"));
+	glGetBufferParameteriv = (PFNGLGETBUFFERPARAMETERIVPROC)_rb_gl_get_proc_address("glGetBufferParameteriv");
+	glGetBufferPointerv = (PFNGLGETBUFFERPOINTERVPROC)_rb_gl_get_proc_address("glGetBufferPointerv");
+	if (!glBindBuffer || !glDeleteBuffers || !glGenBuffers || !glIsBuffer || !glBufferData || !glBufferSubData ||
+	    !glGetBufferSubData || !glMapBuffer || !glUnmapBuffer || !glGetBufferParameteriv || !glGetBufferPointerv) {
+		log_error(HASH_RENDER, ERROR_UNSUPPORTED, STRING_CONST("Unable to get GL procs for buffers"));
 		return false;
 	}
 #endif
@@ -230,14 +216,10 @@ _rb_gl_get_buffer_procs(void) {
 bool
 _rb_gl_get_shader_procs(void) {
 #ifndef GL_GLEXT_PROTOTYPES
-	glBlendEquationSeparate =
-	    (PFNGLBLENDEQUATIONSEPARATEPROC)_rb_gl_get_proc_address("glBlendEquationSeparate");
-	glStencilOpSeparate =
-	    (PFNGLSTENCILOPSEPARATEPROC)_rb_gl_get_proc_address("glStencilOpSeparate");
-	glStencilFuncSeparate =
-	    (PFNGLSTENCILFUNCSEPARATEPROC)_rb_gl_get_proc_address("glStencilFuncSeparate");
-	glStencilMaskSeparate =
-	    (PFNGLSTENCILMASKSEPARATEPROC)_rb_gl_get_proc_address("glStencilMaskSeparate");
+	glBlendEquationSeparate = (PFNGLBLENDEQUATIONSEPARATEPROC)_rb_gl_get_proc_address("glBlendEquationSeparate");
+	glStencilOpSeparate = (PFNGLSTENCILOPSEPARATEPROC)_rb_gl_get_proc_address("glStencilOpSeparate");
+	glStencilFuncSeparate = (PFNGLSTENCILFUNCSEPARATEPROC)_rb_gl_get_proc_address("glStencilFuncSeparate");
+	glStencilMaskSeparate = (PFNGLSTENCILMASKSEPARATEPROC)_rb_gl_get_proc_address("glStencilMaskSeparate");
 	glDrawBuffers = (PFNGLDRAWBUFFERSPROC)_rb_gl_get_proc_address("glDrawBuffers");
 
 	glAttachShader = (PFNGLATTACHSHADERPROC)_rb_gl_get_proc_address("glAttachShader");
@@ -247,12 +229,10 @@ _rb_gl_get_shader_procs(void) {
 	glDeleteProgram = (PFNGLDELETEPROGRAMPROC)_rb_gl_get_proc_address("glDeleteProgram");
 	glDeleteShader = (PFNGLDELETESHADERPROC)_rb_gl_get_proc_address("glDeleteShader");
 	glDetachShader = (PFNGLDETACHSHADERPROC)_rb_gl_get_proc_address("glDetachShader");
-	glGetAttachedShaders =
-	    (PFNGLGETATTACHEDSHADERSPROC)_rb_gl_get_proc_address("glGetAttachedShaders");
+	glGetAttachedShaders = (PFNGLGETATTACHEDSHADERSPROC)_rb_gl_get_proc_address("glGetAttachedShaders");
 
 	glGetProgramiv = (PFNGLGETPROGRAMIVPROC)_rb_gl_get_proc_address("glGetProgramiv");
-	glGetProgramInfoLog =
-	    (PFNGLGETPROGRAMINFOLOGPROC)_rb_gl_get_proc_address("glGetProgramInfoLog");
+	glGetProgramInfoLog = (PFNGLGETPROGRAMINFOLOGPROC)_rb_gl_get_proc_address("glGetProgramInfoLog");
 	glGetShaderiv = (PFNGLGETSHADERIVPROC)_rb_gl_get_proc_address("glGetShaderiv");
 	glGetShaderInfoLog = (PFNGLGETSHADERINFOLOGPROC)_rb_gl_get_proc_address("glGetShaderInfoLog");
 	glGetShaderSource = (PFNGLGETSHADERSOURCEPROC)_rb_gl_get_proc_address("glGetShaderSource");
@@ -268,46 +248,33 @@ _rb_gl_get_shader_procs(void) {
 	glUniform4iv = (PFNGLUNIFORM4IVPROC)_rb_gl_get_proc_address("glUniform4iv");
 	glUniformMatrix4fv = (PFNGLUNIFORMMATRIX4FVPROC)_rb_gl_get_proc_address("glUniformMatrix4fv");
 	glGetActiveUniform = (PFNGLGETACTIVEUNIFORMPROC)_rb_gl_get_proc_address("glGetActiveUniform");
-	glGetUniformLocation =
-	    (PFNGLGETUNIFORMLOCATIONPROC)_rb_gl_get_proc_address("glGetUniformLocation");
+	glGetUniformLocation = (PFNGLGETUNIFORMLOCATIONPROC)_rb_gl_get_proc_address("glGetUniformLocation");
 	glGetUniformfv = (PFNGLGETUNIFORMFVPROC)_rb_gl_get_proc_address("glGetUniformfv");
 	glGetUniformiv = (PFNGLGETUNIFORMIVPROC)_rb_gl_get_proc_address("glGetUniformiv");
 
-	glBindAttribLocation =
-	    (PFNGLBINDATTRIBLOCATIONPROC)_rb_gl_get_proc_address("glBindAttribLocation");
+	glBindAttribLocation = (PFNGLBINDATTRIBLOCATIONPROC)_rb_gl_get_proc_address("glBindAttribLocation");
 	glGetActiveAttrib = (PFNGLGETACTIVEATTRIBPROC)_rb_gl_get_proc_address("glGetActiveAttrib");
-	glGetAttribLocation =
-	    (PFNGLGETATTRIBLOCATIONPROC)_rb_gl_get_proc_address("glGetAttribLocation");
+	glGetAttribLocation = (PFNGLGETATTRIBLOCATIONPROC)_rb_gl_get_proc_address("glGetAttribLocation");
 
 	glDisableVertexAttribArray =
 	    (PFNGLDISABLEVERTEXATTRIBARRAYPROC)_rb_gl_get_proc_address("glDisableVertexAttribArray");
-	glEnableVertexAttribArray =
-	    (PFNGLENABLEVERTEXATTRIBARRAYPROC)_rb_gl_get_proc_address("glEnableVertexAttribArray");
-	glGetVertexAttribdv =
-	    (PFNGLGETVERTEXATTRIBDVPROC)_rb_gl_get_proc_address("glGetVertexAttribdv");
-	glGetVertexAttribfv =
-	    (PFNGLGETVERTEXATTRIBFVPROC)_rb_gl_get_proc_address("glGetVertexAttribfv");
-	glGetVertexAttribiv =
-	    (PFNGLGETVERTEXATTRIBIVPROC)_rb_gl_get_proc_address("glGetVertexAttribiv");
-	glGetVertexAttribPointerv =
-	    (PFNGLGETVERTEXATTRIBPOINTERVPROC)_rb_gl_get_proc_address("glGetVertexAttribPointerv");
-	glVertexAttribPointer =
-	    (PFNGLVERTEXATTRIBPOINTERPROC)_rb_gl_get_proc_address("glVertexAttribPointer");
+	glEnableVertexAttribArray = (PFNGLENABLEVERTEXATTRIBARRAYPROC)_rb_gl_get_proc_address("glEnableVertexAttribArray");
+	glGetVertexAttribdv = (PFNGLGETVERTEXATTRIBDVPROC)_rb_gl_get_proc_address("glGetVertexAttribdv");
+	glGetVertexAttribfv = (PFNGLGETVERTEXATTRIBFVPROC)_rb_gl_get_proc_address("glGetVertexAttribfv");
+	glGetVertexAttribiv = (PFNGLGETVERTEXATTRIBIVPROC)_rb_gl_get_proc_address("glGetVertexAttribiv");
+	glGetVertexAttribPointerv = (PFNGLGETVERTEXATTRIBPOINTERVPROC)_rb_gl_get_proc_address("glGetVertexAttribPointerv");
+	glVertexAttribPointer = (PFNGLVERTEXATTRIBPOINTERPROC)_rb_gl_get_proc_address("glVertexAttribPointer");
 
-	if (!glBlendEquationSeparate || !glDrawBuffers || !glStencilOpSeparate ||
-	    !glStencilFuncSeparate || !glStencilMaskSeparate || !glAttachShader || !glCompileShader ||
-	    !glCreateProgram || !glCreateShader || !glDeleteProgram || !glDeleteShader ||
-	    !glDetachShader || !glGetAttachedShaders || !glGetProgramiv || !glGetProgramInfoLog ||
-	    !glGetShaderiv || !glGetShaderInfoLog || !glGetShaderSource || !glIsProgram ||
-	    !glIsShader || !glLinkProgram || !glShaderSource || !glUseProgram || !glValidateProgram ||
-	    !glUniform1i || !glUniform4fv || !glUniform4iv || !glUniformMatrix4fv ||
-	    !glGetActiveUniform || !glGetUniformLocation || !glGetUniformfv || !glGetUniformiv ||
-	    !glBindAttribLocation || !glGetActiveAttrib || !glGetAttribLocation ||
-	    !glDisableVertexAttribArray || !glEnableVertexAttribArray || !glGetVertexAttribdv ||
-	    !glGetVertexAttribfv || !glGetVertexAttribiv || !glGetVertexAttribPointerv ||
-	    !glVertexAttribPointer) {
-		log_error(HASH_RENDER, ERROR_UNSUPPORTED,
-		          STRING_CONST("Unable to get GL procs for shaders"));
+	if (!glBlendEquationSeparate || !glDrawBuffers || !glStencilOpSeparate || !glStencilFuncSeparate ||
+	    !glStencilMaskSeparate || !glAttachShader || !glCompileShader || !glCreateProgram || !glCreateShader ||
+	    !glDeleteProgram || !glDeleteShader || !glDetachShader || !glGetAttachedShaders || !glGetProgramiv ||
+	    !glGetProgramInfoLog || !glGetShaderiv || !glGetShaderInfoLog || !glGetShaderSource || !glIsProgram ||
+	    !glIsShader || !glLinkProgram || !glShaderSource || !glUseProgram || !glValidateProgram || !glUniform1i ||
+	    !glUniform4fv || !glUniform4iv || !glUniformMatrix4fv || !glGetActiveUniform || !glGetUniformLocation ||
+	    !glGetUniformfv || !glGetUniformiv || !glBindAttribLocation || !glGetActiveAttrib || !glGetAttribLocation ||
+	    !glDisableVertexAttribArray || !glEnableVertexAttribArray || !glGetVertexAttribdv || !glGetVertexAttribfv ||
+	    !glGetVertexAttribiv || !glGetVertexAttribPointerv || !glVertexAttribPointer) {
+		log_error(HASH_RENDER, ERROR_UNSUPPORTED, STRING_CONST("Unable to get GL procs for shaders"));
 		return false;
 	}
 #endif
@@ -319,27 +286,19 @@ _rb_gl_get_framebuffer_procs(void) {
 	// We require GL_ARB_framebuffer_object extension
 #ifndef GL_GLEXT_PROTOTYPES
 	glBindFramebuffer = (PFNGLBINDFRAMEBUFFERPROC)_rb_gl_get_proc_address("glBindFramebuffer");
-	glDeleteFramebuffers =
-	    (PFNGLDELETEFRAMEBUFFERSPROC)_rb_gl_get_proc_address("glDeleteFramebuffers");
+	glDeleteFramebuffers = (PFNGLDELETEFRAMEBUFFERSPROC)_rb_gl_get_proc_address("glDeleteFramebuffers");
 	glGenFramebuffers = (PFNGLGENFRAMEBUFFERSPROC)_rb_gl_get_proc_address("glGenFramebuffers");
-	glCheckFramebufferStatus =
-	    (PFNGLCHECKFRAMEBUFFERSTATUSPROC)_rb_gl_get_proc_address("glCheckFramebufferStatus");
+	glCheckFramebufferStatus = (PFNGLCHECKFRAMEBUFFERSTATUSPROC)_rb_gl_get_proc_address("glCheckFramebufferStatus");
 	glBindRenderbuffer = (PFNGLBINDRENDERBUFFERPROC)_rb_gl_get_proc_address("glBindRenderbuffer");
-	glDeleteRenderbuffers =
-	    (PFNGLDELETERENDERBUFFERSPROC)_rb_gl_get_proc_address("glDeleteRenderbuffers");
+	glDeleteRenderbuffers = (PFNGLDELETERENDERBUFFERSPROC)_rb_gl_get_proc_address("glDeleteRenderbuffers");
 	glGenRenderbuffers = (PFNGLGENRENDERBUFFERSPROC)_rb_gl_get_proc_address("glGenRenderbuffers");
-	glRenderbufferStorage =
-	    (PFNGLRENDERBUFFERSTORAGEPROC)_rb_gl_get_proc_address("glRenderbufferStorage");
-	glFramebufferTexture =
-	    (PFNGLFRAMEBUFFERTEXTUREPROC)_rb_gl_get_proc_address("glFramebufferTexture");
-	glFramebufferRenderbuffer =
-	    (PFNGLFRAMEBUFFERRENDERBUFFERPROC)_rb_gl_get_proc_address("glFramebufferRenderbuffer");
-	if (!glBindFramebuffer || !glDeleteFramebuffers || !glGenFramebuffers ||
-	    !glCheckFramebufferStatus || !glBindRenderbuffer || !glDeleteRenderbuffers ||
-	    !glGenRenderbuffers || !glRenderbufferStorage || !glFramebufferTexture ||
-	    !glFramebufferRenderbuffer) {
-		log_error(HASH_RENDER, ERROR_UNSUPPORTED,
-		          STRING_CONST("Unable to get GL procs for frame buffers"));
+	glRenderbufferStorage = (PFNGLRENDERBUFFERSTORAGEPROC)_rb_gl_get_proc_address("glRenderbufferStorage");
+	glFramebufferTexture = (PFNGLFRAMEBUFFERTEXTUREPROC)_rb_gl_get_proc_address("glFramebufferTexture");
+	glFramebufferRenderbuffer = (PFNGLFRAMEBUFFERRENDERBUFFERPROC)_rb_gl_get_proc_address("glFramebufferRenderbuffer");
+	if (!glBindFramebuffer || !glDeleteFramebuffers || !glGenFramebuffers || !glCheckFramebufferStatus ||
+	    !glBindRenderbuffer || !glDeleteRenderbuffers || !glGenRenderbuffers || !glRenderbufferStorage ||
+	    !glFramebufferTexture || !glFramebufferRenderbuffer) {
+		log_error(HASH_RENDER, ERROR_UNSUPPORTED, STRING_CONST("Unable to get GL procs for frame buffers"));
 		return false;
 	}
 #endif
@@ -350,12 +309,10 @@ bool
 _rb_gl_get_arrays_procs(void) {
 #ifndef GL_GLEXT_PROTOTYPES
 	glBindVertexArray = (PFNGLBINDVERTEXARRAYPROC)_rb_gl_get_proc_address("glBindVertexArray");
-	glDeleteVertexArrays =
-	    (PFNGLDELETEVERTEXARRAYSPROC)_rb_gl_get_proc_address("glDeleteVertexArrays");
+	glDeleteVertexArrays = (PFNGLDELETEVERTEXARRAYSPROC)_rb_gl_get_proc_address("glDeleteVertexArrays");
 	glGenVertexArrays = (PFNGLGENVERTEXARRAYSPROC)_rb_gl_get_proc_address("glGenVertexArrays");
 	if (!glBindVertexArray || !glDeleteVertexArrays || !glGenVertexArrays) {
-		log_error(HASH_RENDER, ERROR_UNSUPPORTED,
-		          STRING_CONST("Unable to get GL procs for vertex arrays"));
+		log_error(HASH_RENDER, ERROR_UNSUPPORTED, STRING_CONST("Unable to get GL procs for vertex arrays"));
 		return false;
 	}
 #endif

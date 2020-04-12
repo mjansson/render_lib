@@ -1,15 +1,15 @@
-/* backend.c  -  Render library  -  Public Domain  -  2014 Mattias Jansson / Rampant Pixels
+/* backend.c  -  Render library  -  Public Domain  -  2014 Mattias Jansson
  *
  * This library provides a cross-platform rendering library in C11 providing
  * basic 2D/3D rendering functionality for projects based on our foundation library.
  *
- * The latest source code maintained by Rampant Pixels is always available at
+ * The latest source code maintained by Mattias Jansson is always available at
  *
- * https://github.com/rampantpixels/render_lib
+ * https://github.com/mjansson/render_lib
  *
- * The dependent library source code maintained by Rampant Pixels is always available at
+ * The dependent library source code maintained by Mattias Jansson is always available at
  *
- * https://github.com/rampantpixels
+ * https://github.com/mjansson
  *
  * This library is put in the public domain; you can redistribute it and/or modify it without any
  * restrictions.
@@ -45,8 +45,7 @@ _rb_null_enumerate_adapters(render_backend_t* backend, unsigned int* store, size
 }
 
 static size_t
-_rb_null_enumerate_modes(render_backend_t* backend, unsigned int adapter,
-                         render_resolution_t* store, size_t capacity) {
+_rb_null_enumerate_modes(render_backend_t* backend, unsigned int adapter, render_resolution_t* store, size_t capacity) {
 	FOUNDATION_UNUSED(backend);
 	FOUNDATION_UNUSED(adapter);
 	if (capacity) {
@@ -99,8 +98,7 @@ _rb_null_upload_buffer(render_backend_t* backend, render_buffer_t* buffer) {
 }
 
 static bool
-_rb_null_upload_shader(render_backend_t* backend, render_shader_t* shader, const void* buffer,
-                       size_t size) {
+_rb_null_upload_shader(render_backend_t* backend, render_shader_t* shader, const void* buffer, size_t size) {
 	FOUNDATION_UNUSED(backend);
 	FOUNDATION_UNUSED(shader);
 	FOUNDATION_UNUSED(buffer);
@@ -116,8 +114,7 @@ _rb_null_upload_program(render_backend_t* backend, render_program_t* program) {
 }
 
 static bool
-_rb_null_upload_texture(render_backend_t* backend, render_texture_t* texture, const void* buffer,
-                        size_t size) {
+_rb_null_upload_texture(render_backend_t* backend, render_texture_t* texture, const void* buffer, size_t size) {
 	FOUNDATION_UNUSED(backend);
 	FOUNDATION_UNUSED(texture);
 	FOUNDATION_UNUSED(buffer);
@@ -132,8 +129,7 @@ _rb_null_deallocate_texture(render_backend_t* backend, render_texture_t* texture
 }
 
 static void
-_rb_null_parameter_bind_texture(render_backend_t* backend, void* buffer,
-                                render_texture_t* texture) {
+_rb_null_parameter_bind_texture(render_backend_t* backend, void* buffer, render_texture_t* texture) {
 	FOUNDATION_UNUSED(backend);
 	FOUNDATION_UNUSED(buffer);
 	FOUNDATION_UNUSED(texture);
@@ -147,8 +143,7 @@ _rb_null_parameter_bind_target(render_backend_t* backend, void* buffer, render_t
 }
 
 static void
-_rb_null_link_buffer(render_backend_t* backend, render_buffer_t* buffer,
-                     render_program_t* program) {
+_rb_null_link_buffer(render_backend_t* backend, render_buffer_t* buffer, render_program_t* program) {
 	FOUNDATION_UNUSED(backend);
 	FOUNDATION_UNUSED(buffer);
 	FOUNDATION_UNUSED(program);
@@ -174,8 +169,7 @@ _rb_null_allocate_target(render_backend_t* backend, render_target_t* target) {
 }
 
 static bool
-_rb_null_resize_target(render_backend_t* backend, render_target_t* target, unsigned int width,
-                       unsigned int height) {
+_rb_null_resize_target(render_backend_t* backend, render_target_t* target, unsigned int width, unsigned int height) {
 	FOUNDATION_UNUSED(backend);
 	if (target) {
 		target->width = width;
@@ -200,36 +194,35 @@ _rb_null_disable_thread(render_backend_t* backend) {
 	FOUNDATION_UNUSED(backend);
 }
 
-static render_backend_vtable_t _render_backend_vtable_null = {
-    .construct = _rb_null_construct,
-    .destruct = _rb_null_destruct,
-    .enumerate_adapters = _rb_null_enumerate_adapters,
-    .enumerate_modes = _rb_null_enumerate_modes,
-    .set_drawable = _rb_null_set_drawable,
-    .enable_thread = _rb_null_enable_thread,
-    .disable_thread = _rb_null_disable_thread,
-    .dispatch = _rb_null_dispatch,
-    .flip = _rb_null_flip,
-    .allocate_buffer = _rb_null_allocate_buffer,
-    .upload_buffer = _rb_null_upload_buffer,
-    .upload_shader = _rb_null_upload_shader,
-    .upload_program = _rb_null_upload_program,
-    .upload_texture = _rb_null_upload_texture,
-    .parameter_bind_texture = _rb_null_parameter_bind_texture,
-    .parameter_bind_target = _rb_null_parameter_bind_target,
-    .link_buffer = _rb_null_link_buffer,
-    .deallocate_buffer = _rb_null_deallocate_buffer,
-    .deallocate_shader = _rb_null_deallocate_shader,
-    .deallocate_program = _rb_null_deallocate_program,
-    .deallocate_texture = _rb_null_deallocate_texture,
-    .allocate_target = _rb_null_allocate_target,
-    .resize_target = _rb_null_resize_target,
-    .deallocate_target = _rb_null_deallocate_target};
+static render_backend_vtable_t _render_backend_vtable_null = {.construct = _rb_null_construct,
+                                                              .destruct = _rb_null_destruct,
+                                                              .enumerate_adapters = _rb_null_enumerate_adapters,
+                                                              .enumerate_modes = _rb_null_enumerate_modes,
+                                                              .set_drawable = _rb_null_set_drawable,
+                                                              .enable_thread = _rb_null_enable_thread,
+                                                              .disable_thread = _rb_null_disable_thread,
+                                                              .dispatch = _rb_null_dispatch,
+                                                              .flip = _rb_null_flip,
+                                                              .allocate_buffer = _rb_null_allocate_buffer,
+                                                              .upload_buffer = _rb_null_upload_buffer,
+                                                              .upload_shader = _rb_null_upload_shader,
+                                                              .upload_program = _rb_null_upload_program,
+                                                              .upload_texture = _rb_null_upload_texture,
+                                                              .parameter_bind_texture = _rb_null_parameter_bind_texture,
+                                                              .parameter_bind_target = _rb_null_parameter_bind_target,
+                                                              .link_buffer = _rb_null_link_buffer,
+                                                              .deallocate_buffer = _rb_null_deallocate_buffer,
+                                                              .deallocate_shader = _rb_null_deallocate_shader,
+                                                              .deallocate_program = _rb_null_deallocate_program,
+                                                              .deallocate_texture = _rb_null_deallocate_texture,
+                                                              .allocate_target = _rb_null_allocate_target,
+                                                              .resize_target = _rb_null_resize_target,
+                                                              .deallocate_target = _rb_null_deallocate_target};
 
 render_backend_t*
 render_backend_null_allocate(void) {
-	render_backend_t* backend = memory_allocate(HASH_RENDER, sizeof(render_backend_t), 0,
-	                                            MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	render_backend_t* backend =
+	    memory_allocate(HASH_RENDER, sizeof(render_backend_t), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 	backend->api = RENDERAPI_NULL;
 	backend->api_group = RENDERAPIGROUP_NONE;
 	backend->vtable = _render_backend_vtable_null;
