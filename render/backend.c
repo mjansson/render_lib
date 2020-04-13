@@ -223,6 +223,8 @@ render_backend_deallocate(render_backend_t* backend) {
 	if (!backend)
 		return;
 
+	render_backend_disable_thread(backend);
+
 	backend->vtable.destruct(backend);
 
 	uuidmap_finalize((uuidmap_t*)&backend->shadertable);

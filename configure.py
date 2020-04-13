@@ -28,6 +28,7 @@ render_lib = generator.lib(module='render', sources=[
     os.path.join('null', 'backend.c')
 ])
 
+extralibs = []
 gllibs = []
 glframeworks = []
 if target.is_macos():
@@ -36,10 +37,11 @@ elif target.is_ios():
     glframeworks = ['QuartzCore', 'OpenGLES']
 if target.is_windows():
     gllibs = ['opengl32', 'gdi32', 'iphlpapi', 'ws2_32']
+    extralibs = ['iphlpapi', 'ws2_32']
 if target.is_linux():
     gllibs = ['GL', 'Xxf86vm', 'Xext', 'X11']
 
-linklibs = gllibs
+linklibs = ['render'] + gllibs + extralibs
 
 if not target.is_ios() and not target.is_android() and not target.is_tizen():
     configs = [config for config in toolchain.configs if config not in [
@@ -56,7 +58,7 @@ if generator.is_subninja():
 
 includepaths = generator.test_includepaths()
 
-linklibs = ['test', 'render'] + dependlibs + linklibs
+linklibs = ['test', 'render'] + dependlibs + gllibs + extralibs
 
 test_cases = [
     'render'
@@ -95,7 +97,7 @@ if toolchain.is_monolithic() or target.is_ios() or target.is_android() or target
 else:
     # Build one binary per test case
     generator.bin(module='all', sources=['main.c'], binname='test-all', basepath='test',
-                  implicit_deps=[render_lib], libs=['render'] + dependlibs, includepaths=includepaths)
+                  implicit_deps=[render_lib], libs=['render'] + dependlibs + extralibs, includepaths=includepaths)
     for test in test_cases:
         if target.is_macos():
             test_resources = [os.path.join('osx', item) for item in [

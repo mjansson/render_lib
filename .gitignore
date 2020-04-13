@@ -229,3 +229,6 @@ coveralls.json
 coverallsreport.json
 codecov.json
 codecovreport.json
+
+#Imported resource source files
+resource/source

@@ -90,7 +90,7 @@ render_pipeline_execute(render_pipeline_t* pipeline) {
 			pipeline->step_task[istep].name = string_const(STRING_CONST("render_pipeline_execute_step"));
 			pipeline->step_arg[istep] = step;
 		}
-		task_scheduler_multiqueue(pipeline->scheduler, step_count, pipeline->step_task, pipeline->step_arg, 0);
+		task_scheduler_multiqueue(pipeline->scheduler, pipeline->step_task, pipeline->step_arg, step_count, 0);
 	} else {
 		for (size_t istep = 0, ssize = array_size(pipeline->steps); istep < ssize; ++istep) {
 			render_pipeline_step_t* step = pipeline->steps + istep;
