@@ -50,9 +50,9 @@ test_render_config(void) {
 
 static void
 test_parse_config(const char* path, size_t path_size, const char* buffer, size_t size, const json_token_t* tokens,
-                  size_t num_tokens) {
-	resource_module_parse_config(path, path_size, buffer, size, tokens, num_tokens);
-	render_module_parse_config(path, path_size, buffer, size, tokens, num_tokens);
+                  size_t tokens_count) {
+	resource_module_parse_config(path, path_size, buffer, size, tokens, tokens_count);
+	render_module_parse_config(path, path_size, buffer, size, tokens, tokens_count);
 }
 
 static int
@@ -358,7 +358,8 @@ _test_render_box(render_api_t api) {
 	                                            vertexdata, sizeof(vertexdata));
 	EXPECT_NE(vertexbuffer, 0);
 
-	indexbuffer = render_indexbuffer_allocate(backend, RENDERUSAGE_STATIC, 36, sizeof(indexdata), INDEXFORMAT_USHORT, indexdata, sizeof(indexdata));
+	indexbuffer = render_indexbuffer_allocate(backend, RENDERUSAGE_STATIC, 36, sizeof(indexdata), INDEXFORMAT_USHORT,
+	                                          indexdata, sizeof(indexdata));
 	EXPECT_NE(indexbuffer, 0);
 
 	render_sort_reset(context);

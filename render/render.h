@@ -78,7 +78,7 @@ render_api_disable(const render_api_t* api, size_t count);
 \param buffer Data buffer
 \param size Size of data buffer
 \param tokens JSON tokens
-\param num_tokens Number of JSON tokens */
+\param tokens_count Number of JSON tokens */
 RENDER_API void
 render_module_parse_config(const char* path, size_t path_size, const char* buffer, size_t size,
                            const json_token_t* tokens, size_t tokens_count);

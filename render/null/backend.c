@@ -64,11 +64,11 @@ _rb_null_set_drawable(render_backend_t* backend, const render_drawable_t* drawab
 
 static void
 _rb_null_dispatch(render_backend_t* backend, render_target_t* target, render_context_t** contexts,
-                  size_t num_contexts) {
+                  size_t contexts_count) {
 	FOUNDATION_UNUSED(backend);
 	FOUNDATION_UNUSED(target);
 	FOUNDATION_UNUSED(contexts);
-	FOUNDATION_UNUSED(num_contexts);
+	FOUNDATION_UNUSED(contexts_count);
 }
 
 static void

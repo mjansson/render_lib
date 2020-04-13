@@ -364,16 +364,16 @@ _rb_gles2_set_drawable(render_backend_t* backend, render_drawable_t* drawable) {
 
 	// choose configs
 	EGLConfig matching_configs[MAX_MATCHING_CONFIGS];
-	EGLint num_matching_configs = 0;
+	EGLint matching_configs_count = 0;
 	if (!eglChooseConfig(drawable->display, config_attrs, matching_configs, MAX_MATCHING_CONFIGS,
-	                     &num_matching_configs)) {
+	                     &matching_configs_count)) {
 		log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
 		           STRING_CONST("Unable to find suitable EGL config: %s (display %" PRIfixPTR ")"),
 		           eglGetErrorMessage(eglGetError()), drawable->display);
 		return false;
 	}
 
-	if (!num_matching_configs) {
+	if (!matching_configs_count) {
 		log_error(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
 		          STRING_CONST("Unable to find suitable EGL config: no matching config"));
 		return false;
@@ -597,10 +597,10 @@ _rb_gles2_set_drawable(render_backend_t* backend, render_drawable_t* drawable) {
 }
 
 static void
-_rb_gles2_dispatch(render_backend_t* backend, render_context_t** contexts, size_t num_contexts) {
+_rb_gles2_dispatch(render_backend_t* backend, render_context_t** contexts, size_t contexts_count) {
 	render_backend_gles2_t* backend_gles2 = (render_backend_gles2_t*)backend;
 
-	for (size_t context_index = 0, context_size = num_contexts; context_index < context_size; ++context_index) {
+	for (size_t context_index = 0, context_size = contexts_count; context_index < context_size; ++context_index) {
 		render_context_t* context = contexts[context_index];
 		render_command_t* command = context->commands;
 		const radixsort_index_t* order = context->order;
@@ -733,7 +733,7 @@ _rb_gles2_dispatch(render_backend_t* backend, render_context_t** contexts, size_
 
 					                glBindTexture( GL_TEXTURE_2D, texture ? texture->object : 0 );
 
-					                for( unsigned int iu = 0; iu < program->num_uniforms; ++iu )
+					                for( unsigned int iu = 0; iu < program->uniforms_count; ++iu )
 					                {
 					                    if( program->uniforms[iu].name == *param_name )
 					                    {
@@ -744,7 +744,7 @@ _rb_gles2_dispatch(render_backend_t* backend, render_context_t** contexts, size_
 					            }
 					            else
 					            {
-					                for( unsigned int iu = 0; iu < program->num_uniforms; ++iu )
+					                for( unsigned int iu = 0; iu < program->uniforms_count; ++iu )
 					                {
 					                    if( program->uniforms[iu].name == *param_name )
 					                    {

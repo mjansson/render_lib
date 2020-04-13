@@ -145,7 +145,8 @@ typedef enum render_vertex_attribute_id {
 	VERTEXATTRIBUTE_TEXCOORD0 = 8,
 	VERTEXATTRIBUTE_TEXCOORD1 = 9,
 	VERTEXATTRIBUTE_TANGENT = 14,
-	VERTEXATTRIBUTE_BINORMAL = 15
+	VERTEXATTRIBUTE_BINORMAL = 15,
+	VERTEXATTRIBUTE_COUNT = 16
 } render_vertex_attribute_id;
 
 typedef enum render_shader_type_t {
@@ -268,7 +269,6 @@ typedef struct render_buffer_t render_buffer_t;
 typedef struct render_vertexbuffer_t render_vertexbuffer_t;
 typedef struct render_indexbuffer_t render_indexbuffer_t;
 typedef struct render_shader_t render_shader_t;
-typedef struct render_shader_ref_t render_shader_ref_t;
 typedef struct render_vertexshader_t render_vertexshader_t;
 typedef struct render_pixelshader_t render_pixelshader_t;
 typedef struct render_program_t render_program_t;

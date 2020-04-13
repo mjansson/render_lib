@@ -147,9 +147,9 @@ FOUNDATION_ATTRIBUTE(noreturn) test_exception_handler(const char* dump_file, siz
 #else
 
 static void
-test_parse_config(const char* buffer, size_t size, const json_token_t* tokens, size_t num_tokens) {
-	resource_module_parse_config(buffer, size, tokens, num_tokens);
-	render_module_parse_config(buffer, size, tokens, num_tokens);
+test_parse_config(const char* buffer, size_t size, const json_token_t* tokens, size_t tokens_count) {
+	resource_module_parse_config(buffer, size, tokens, tokens_count);
+	render_module_parse_config(buffer, size, tokens, tokens_count);
 }
 
 #endif
