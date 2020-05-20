@@ -531,7 +531,7 @@ render_program_compile_opengl(render_backend_t* backend, uuid_t vertexshader, uu
 		render_parameter_t* parameter = program->parameters + iu;
 
 		glGetActiveUniform(handle, (GLuint)iu, sizeof(name), &char_count, &size, &gltype, name);
-		size_t bracket_pos = string_find(name, char_count, '[', 0);
+		size_t bracket_pos = string_find(name, (size_t)char_count, '[', 0);
 		if (bracket_pos != STRING_NPOS) {
 			name[bracket_pos] = 0;
 			char_count = (GLsizei)bracket_pos;
@@ -559,7 +559,7 @@ render_program_compile_opengl(render_backend_t* backend, uuid_t vertexshader, uu
 				break;
 			case GL_SAMPLER_2D:
 				parameter->type = RENDERPARAMETER_TEXTURE;
-				offset += (uint16_t)(sizeof(GLuint) * size);
+				offset += (uint16_t)(sizeof(GLuint) * (size_t)size);
 				break;
 			default:
 				log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Invalid/unknown uniform type: %u"),

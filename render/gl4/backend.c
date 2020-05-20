@@ -875,7 +875,7 @@ _rb_gl_enumerate_modes(render_backend_t* backend, unsigned int adapter, render_r
 					continue;
 
 				int refresh =
-				    ((int)(0.5f + (1000.0f * xmodes[m]->dotclock) / (float)(xmodes[m]->htotal * xmodes[m]->vtotal)));
+				    ((int)(0.5f + (1000.0f * (float)xmodes[m]->dotclock) / (float)(xmodes[m]->htotal * xmodes[m]->vtotal)));
 
 				// 255 = MODE_BAD according to XFree sources...
 				if (XF86VidModeValidateModeLine(display, visual[v].screen, xmodes[m]) == 255)
@@ -907,15 +907,15 @@ _rb_gl_enumerate_modes(render_backend_t* backend, unsigned int adapter, render_r
 	}
 
 	// Sort and index modes
-	for (size_t c = 0, size = (count < capacity ? count : capacity); c < size; ++c)
+	for (size_t c = 0, size = (mode_count < capacity ? mode_count : capacity); c < size; ++c)
 		store[c].id = (unsigned int)c;
 
-	if (!count) {
+	if (!mode_count) {
 		log_warnf(HASH_RENDER, WARNING_SUSPICIOUS,
 		          STRING_CONST("Unable to enumerate resolutions for adapter %d, adding default fallback"), adapter);
 		render_resolution_t mode = {0, 800, 600, PIXELFORMAT_R8G8B8A8, COLORSPACE_LINEAR, 60};
 		if (capacity)
-			store[count++] = mode;
+			store[mode_count++] = mode;
 	}
 
 exit:
@@ -1624,7 +1624,7 @@ _rb_gl4_set_default_state(void) {
 static void
 _rb_gl4_set_state(render_state_t* state) {
 	glBlendFunc(_rb_gl4_blend_func[state->blend_source_color], _rb_gl4_blend_func[state->blend_dest_color]);
-	if (state->blend_enable)
+	if (state->blend_enable[0])
 		glEnable(GL_BLEND);
 	else
 		glDisable(GL_BLEND);
