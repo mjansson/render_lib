@@ -41,7 +41,8 @@ if target.is_windows():
 if target.is_linux():
     gllibs = ['GL', 'Xxf86vm', 'Xext', 'X11']
 
-linklibs = ['render'] + gllibs + extralibs
+dependlibs = ['render'] + dependlibs
+linklibs = gllibs + extralibs
 
 if not target.is_ios() and not target.is_android() and not target.is_tizen():
     configs = [config for config in toolchain.configs if config not in [
@@ -58,7 +59,7 @@ if generator.is_subninja():
 
 includepaths = generator.test_includepaths()
 
-linklibs = ['test', 'render'] + dependlibs + gllibs + extralibs
+linklibs = ['test'] + dependlibs + gllibs + extralibs
 
 test_cases = [
     'render'
