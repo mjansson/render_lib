@@ -429,6 +429,8 @@ _rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, uns
 		}
 	}
 
+	XLockDisplay(display);
+
 	if (glXQueryExtension(display, 0, 0) != True) {
 		log_warn(HASH_RENDER, WARNING_UNSUPPORTED, STRING_CONST("Unable to query GLX extension"));
 		goto failed;
@@ -503,6 +505,8 @@ _rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, uns
 	}
 
 failed:
+
+	XUnlockDisplay(display);
 
 	if (!drawable) {
 		if (context)
@@ -629,6 +633,10 @@ static void
 _rb_gl4_disable_thread(render_backend_t* backend) {
 	render_backend_gl4_t* backend_gl4 = (render_backend_gl4_t*)backend;
 
+#if FOUNDATION_PLATFORM_LINUX
+	XLockDisplay(backend->drawable.display);
+#endif
+
 	void* thread_context = _rb_gl_get_thread_context();
 	if (thread_context) {
 		if (thread_context == backend_gl4->context) {
@@ -638,7 +646,7 @@ _rb_gl4_disable_thread(render_backend_t* backend) {
 				wglMakeCurrent(0, 0);
 #elif FOUNDATION_PLATFORM_LINUX
 			if (glXGetCurrentContext() == thread_context)
-				glXMakeCurrent(backend->drawable.display, (GLXDrawable)backend->drawable.drawable, nullptr);
+				glXMakeCurrent(backend->drawable.display, None, nullptr);
 #else
 #error Not implemented
 #endif
@@ -650,7 +658,7 @@ _rb_gl4_disable_thread(render_backend_t* backend) {
 						wglMakeCurrent(0, 0);
 #elif FOUNDATION_PLATFORM_LINUX
 					if (glXGetCurrentContext() == thread_context)
-						glXMakeCurrent(backend->drawable.display, (GLXDrawable)backend->drawable.drawable, nullptr);
+						glXMakeCurrent(backend->drawable.display, None, nullptr);
 #else
 #error Not implemented
 #endif
@@ -660,6 +668,11 @@ _rb_gl4_disable_thread(render_backend_t* backend) {
 			}
 		}
 	}
+
+#if FOUNDATION_PLATFORM_LINUX
+	XUnlockDisplay(backend->drawable.display);
+#endif
+
 	_rb_gl_set_thread_context(0);
 }
 
@@ -777,12 +790,16 @@ _rb_gl4_set_drawable(render_backend_t* backend, const render_drawable_t* drawabl
 
 #if FOUNDATION_PLATFORM_LINUX
 
+	XLockDisplay(drawable->display);
+
 	glXMakeCurrent(drawable->display, (GLXDrawable)drawable->drawable, backend_gl4->context);
 
 	if (True == glXIsDirect(drawable->display, backend_gl4->context))
 		log_debug(HASH_RENDER, STRING_CONST("Direct rendering enabled"));
 	else
 		log_warn(HASH_RENDER, WARNING_PERFORMANCE, STRING_CONST("Indirect rendering"));
+
+	XUnlockDisplay(drawable->display);
 
 #endif
 
@@ -826,6 +843,8 @@ _rb_gl4_set_drawable(render_backend_t* backend, const render_drawable_t* drawabl
 
 	_rb_gl_check_error("Error setting up default state");
 
+	log_debug(HASH_RENDER, STRING_CONST("GL4 backend drawable initialized"));
+
 	return true;
 }
 
@@ -844,6 +863,8 @@ _rb_gl_enumerate_modes(render_backend_t* backend, unsigned int adapter, render_r
 		          STRING_CONST("Unable to enumerate modes, unable to open display"));
 		goto exit;
 	}
+
+	XLockDisplay(display);
 
 	size_t store_count = 0;
 	int depths[] = {15, 16, 24, 32};
@@ -920,6 +941,7 @@ _rb_gl_enumerate_modes(render_backend_t* backend, unsigned int adapter, render_r
 
 exit:
 
+	XUnlockDisplay(display);
 	XCloseDisplay(display);
 
 #else
