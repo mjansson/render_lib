@@ -710,7 +710,9 @@ _rb_gl4_enable_thread(render_backend_t* backend) {
 		           STRING_FORMAT(errmsg));
 	}
 #elif FOUNDATION_PLATFORM_LINUX
+	XLockDisplay(backend->drawable.display);
 	glXMakeCurrent(backend->drawable.display, (GLXDrawable)backend->drawable.drawable, thread_context);
+	XUnlockDisplay(backend->drawable.display);
 	_rb_gl_check_error("Unable to enable thread for GL4 rendering");
 #else
 	FOUNDATION_ASSERT_FAIL("Platform not implemented");

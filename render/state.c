@@ -48,6 +48,7 @@ render_statebuffer_initialize(render_statebuffer_t* buffer, render_backend_t* ba
 	buffer->buffertype = RENDERBUFFER_STATE;
 	buffer->policy = RENDERBUFFER_UPLOAD_ONDISPATCH;
 	buffer->buffersize = sizeof(render_state_t);
+	semaphore_initialize(&buffer->lock, 1);
 
 	buffer->allocated = 1;
 	buffer->used = 1;
