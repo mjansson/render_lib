@@ -39,7 +39,7 @@ render_vertex_decl_allocate(render_vertex_decl_element_t* elements, size_t eleme
 
 /*! Allocate a new vertex declaration from variable number of elements.
 Argument list must be pairs of (render_vertex_format_t, render_vertex_attribute_id)
-arguments. Terminate argument list with a VERTEXFORMAT_UNKNOWN format identifier.
+arguments. Terminate argument list with a VERTEXFORMAT_UNUSED format identifier.
 \param format Element format identifier
 \param attribute Element attribute identifier
 \return New allocated vertex declaration */
@@ -48,7 +48,7 @@ render_vertex_decl_allocate_varg(render_vertex_format_t format, render_vertex_at
 
 /*! Allocate a new vertex declaration from variable number of elements.
 Argument list must be pairs of (render_vertex_format_t, render_vertex_attribute_id)
-arguments. Terminate argument list with a VERTEXFORMAT_UNKNOWN format identifier.
+arguments. Terminate argument list with a VERTEXFORMAT_UNUSED format identifier.
 \param format Element format identifier
 \param attribute Element attribute identifier
 \param list Variable argument list
@@ -66,7 +66,7 @@ render_vertex_decl_initialize(render_vertex_decl_t* decl, render_vertex_decl_ele
 
 /*! Initialize a vertex declaration from variable number of elements.
 Argument list must be pairs of (render_vertex_format_t, render_vertex_attribute_id)
-arguments. Terminate argument list with a VERTEXFORMAT_UNKNOWN format identifier.
+arguments. Terminate argument list with a VERTEXFORMAT_UNUSED format identifier.
 \param decl Vertex declaration
 \param format Element format identifier
 \param attribute Element attribute identifier */
@@ -76,7 +76,7 @@ render_vertex_decl_initialize_varg(render_vertex_decl_t* decl, render_vertex_for
 
 /*! Initialize a vertex declaration from variable number of elements.
 Argument list must be pairs of (render_vertex_format_t, render_vertex_attribute_id)
-arguments. Terminate argument list with a VERTEXFORMAT_UNKNOWN format identifier.
+arguments. Terminate argument list with a VERTEXFORMAT_UNUSED format identifier.
 \param decl Vertex declaration
 \param format Element format identifier
 \param attribute Element attribute identifier
