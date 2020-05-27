@@ -398,8 +398,8 @@ _rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, uns
 
 	if (hglrc && (colorspace == COLORSPACE_sRGB)) {
 		glEnable(GL_FRAMEBUFFER_SRGB);
-		_rb_gl_check_error("Unable to enable sRGB framebuffer");
-		log_info(HASH_RENDER, STRING_CONST("sRGB framebuffer"));
+		if (!_rb_gl_check_error("Unable to enable sRGB framebuffer"))
+			log_info(HASH_RENDER, STRING_CONST("sRGB framebuffer"));
 	}
 
 	if (!hglrc)
@@ -448,18 +448,26 @@ _rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, uns
 		PFNGLXCREATECONTEXTATTRIBSARBPROC glXCreateContextAttribs =
 		    (PFNGLXCREATECONTEXTATTRIBSARBPROC)_rb_gl_get_proc_address("glXCreateContextAttribsARB");
 		if (glXCreateContextAttribs) {
-			int* attributes = 0;
-			array_push(attributes, GLX_CONTEXT_MAJOR_VERSION_ARB);
-			array_push(attributes, (int)major);
-			array_push(attributes, GLX_CONTEXT_MINOR_VERSION_ARB);
-			array_push(attributes, (int)minor);
-			array_push(attributes, GLX_CONTEXT_FLAGS_ARB);
-			array_push(attributes, 0);
-			array_push(attributes, GLX_CONTEXT_PROFILE_MASK_ARB);
-			array_push(attributes, GLX_CONTEXT_CORE_PROFILE_BIT_ARB);
-			FOUNDATION_UNUSED(colorspace);
-			array_push(attributes, 0);
-			array_push(attributes, 0);
+			int context_flags = 0;
+#if BUILD_DEBUG
+			context_flags |= GLX_CONTEXT_DEBUG_BIT_ARB;
+#endif
+			int attributes[] = {GLX_CONTEXT_MAJOR_VERSION_ARB,
+			                    (int)major,
+			                    GLX_CONTEXT_MINOR_VERSION_ARB,
+			                    (int)minor,
+			                    GLX_CONTEXT_FLAGS_ARB,
+			                    context_flags,
+			                    GLX_CONTEXT_PROFILE_MASK_ARB,
+			                    GLX_CONTEXT_CORE_PROFILE_BIT_ARB,
+			                    0,
+			                    0,
+			                    0};
+			size_t attributes_count = sizeof(attributes) / sizeof(attributes[0]);
+			if ((colorspace == COLORSPACE_sRGB) && (major < 4)) {
+				attributes[attributes_count - 3] = GLX_FRAMEBUFFER_SRGB_CAPABLE_ARB;
+				attributes[attributes_count - 2] = GL_TRUE;
+			}
 
 			int ic = 0;
 			for (ic = 0; ic < config_count; ++ic) {
@@ -479,8 +487,6 @@ _rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, uns
 					}
 				}
 			}
-
-			array_deallocate(attributes);
 		} else {
 			log_warn(HASH_RENDER, WARNING_UNSUPPORTED,
 			         STRING_CONST("Unable to get glXCreateContextAttribs proc address"));
@@ -497,11 +503,10 @@ _rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, uns
 		}
 	}
 
-	if (context) {
-		if (colorspace == COLORSPACE_sRGB) {
-			glEnable(GL_FRAMEBUFFER_SRGB);
-			_rb_gl_check_error("Unable to enable sRGB framebuffer");
-		}
+	if (context && (colorspace == COLORSPACE_sRGB)) {
+		glEnable(GL_FRAMEBUFFER_SRGB);
+		if (!_rb_gl_check_error("Unable to enable sRGB framebuffer"))
+			log_info(HASH_RENDER, STRING_CONST("sRGB framebuffer"));
 	}
 
 failed:
