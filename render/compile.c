@@ -429,6 +429,12 @@ render_program_compile_opengl(render_backend_t* backend, uuid_t vertexshader, uu
 				binding = VERTEXATTRIBUTE_TEXCOORD0;
 			else if (string_equal(name, (size_t)char_count, STRING_CONST("tangent")))
 				binding = VERTEXATTRIBUTE_TANGENT;
+			else if (string_equal(name, (size_t)char_count, STRING_CONST("bitangent")))
+				binding = VERTEXATTRIBUTE_BITANGENT;
+			else if ((char_count > 8) && string_equal(name, 8, STRING_CONST("texcoord"))) {
+				unsigned int level = string_to_uint(name + 8, (size_t)char_count - 8, false);
+				binding = VERTEXATTRIBUTE_TEXCOORD0 + level;
+			}
 			glBindAttribLocation(handle, binding, name);
 		}
 	}
@@ -475,7 +481,12 @@ render_program_compile_opengl(render_backend_t* backend, uuid_t vertexshader, uu
 			attrib = VERTEXATTRIBUTE_TEXCOORD0;
 		else if (string_equal(name, (size_t)char_count, STRING_CONST("tangent")))
 			attrib = VERTEXATTRIBUTE_TANGENT;
-		else {
+		else if (string_equal(name, (size_t)char_count, STRING_CONST("bitangent")))
+			attrib = VERTEXATTRIBUTE_BITANGENT;
+		else if ((char_count > 8) && string_equal(name, 8, STRING_CONST("texcoord"))) {
+			unsigned int level = string_to_uint(name + 8, (size_t)char_count - 8, false);
+			attrib = VERTEXATTRIBUTE_TEXCOORD0 + level;
+		} else {
 			log_errorf(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Invalid/unknown attribute name: %.*s"),
 			           (int)char_count, name);
 			compiled = false;

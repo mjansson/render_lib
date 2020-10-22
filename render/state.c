@@ -58,7 +58,9 @@ render_statebuffer_initialize(render_statebuffer_t* buffer, render_backend_t* ba
 
 void
 render_statebuffer_deallocate(render_statebuffer_t* buffer) {
-	render_buffer_deallocate((render_buffer_t*)buffer);
+	// Not used right now since no render buffer resources are allocated
+	// render_buffer_deallocate((render_buffer_t*)buffer);
+	FOUNDATION_UNUSED(buffer);
 }
 
 void
