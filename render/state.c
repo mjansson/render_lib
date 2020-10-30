@@ -60,7 +60,7 @@ void
 render_statebuffer_deallocate(render_statebuffer_t* buffer) {
 	// Not used right now since no render buffer resources are allocated
 	// render_buffer_deallocate((render_buffer_t*)buffer);
-	FOUNDATION_UNUSED(buffer);
+	memory_deallocate(buffer);
 }
 
 void
