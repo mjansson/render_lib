@@ -902,8 +902,8 @@ _rb_gl_enumerate_modes(render_backend_t* backend, unsigned int adapter, render_r
 				if ((xmodes[m]->hdisplay < 600) || (xmodes[m]->vdisplay < 400))
 					continue;
 
-				int refresh =
-				    ((int)(0.5f + (1000.0f * (float)xmodes[m]->dotclock) / (float)(xmodes[m]->htotal * xmodes[m]->vtotal)));
+				int refresh = ((int)(0.5f + (1000.0f * (float)xmodes[m]->dotclock) /
+				                                (float)(xmodes[m]->htotal * xmodes[m]->vtotal)));
 
 				// 255 = MODE_BAD according to XFree sources...
 				if (XF86VidModeValidateModeLine(display, visual[v].screen, xmodes[m]) == 255)
@@ -1660,8 +1660,11 @@ _rb_gl4_set_state(render_state_t* state) {
 	glDepthFunc(_rb_gl4_cmp_func[state->depth_func]);
 	glDepthMask(state->depth_write ? GL_TRUE : GL_FALSE);
 	glEnable(GL_DEPTH_TEST);
-	glFrontFace(GL_CCW);
-	glEnable(GL_CULL_FACE);
+	glFrontFace((state->cull_mode == RENDER_CULL_CCW) ? GL_CW : GL_CCW);
+	if (state->cull_mode != RENDER_CULL_NONE)
+		glEnable(GL_CULL_FACE);
+	else
+		glDisable(GL_CULL_FACE);
 }
 
 static void

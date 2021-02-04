@@ -212,6 +212,8 @@ typedef enum render_compare_func_t {
 	RENDER_CMP_ALWAYS
 } render_compare_func_t;
 
+typedef enum render_cull_mode_t { RENDER_CULL_CW = 0, RENDER_CULL_CCW = 1, RENDER_CULL_NONE = 2 } render_cull_mode_t;
+
 typedef enum pixelformat_t {
 	PIXELFORMAT_INVALID = 0,
 
@@ -441,6 +443,7 @@ struct render_state_t {
 	render_blend_factor_t blend_dest_alpha;
 	render_blend_op_t blend_op_alpha;
 	render_compare_func_t depth_func;
+	render_cull_mode_t cull_mode;
 	bool blend_enable[8];
 	bool target_write[8];
 	bool depth_write;
