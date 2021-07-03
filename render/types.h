@@ -613,7 +613,7 @@ FOUNDATION_ALIGNED_STRUCT(render_program_t, 8) {
 	unsigned int height;                      \
 	unsigned int depth;                       \
 	unsigned int levels;                      \
-	uint32_t __unused;                        \
+	uint32_t unused;                          \
 	uintptr_t backend_data[4];                \
 	RENDER_32BIT_PADDING_ARR(backend_data, 4) \
 	uuid_t uuid
