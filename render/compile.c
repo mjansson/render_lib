@@ -262,8 +262,8 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 			}
 			if (sourcebuffer) {
 				GLuint handle = glCreateShader(string_equal(type, type_length, STRING_CONST("vertexshader")) ?
-				                                   GL_VERTEX_SHADER_ARB :
-				                                   GL_FRAGMENT_SHADER_ARB);
+                                                   GL_VERTEX_SHADER_ARB :
+                                                   GL_FRAGMENT_SHADER_ARB);
 				const GLchar* glsource = (GLchar*)sourcebuffer;
 				GLint source_size = (GLint)sourcechange->value.blob.size;
 				glShaderSource(handle, 1, &glsource, &source_size);
@@ -555,6 +555,10 @@ render_program_compile_opengl(render_backend_t* backend, uuid_t vertexshader, uu
 		parameter->stages = SHADER_VERTEX | SHADER_PIXEL;
 
 		switch (gltype) {
+			case GL_FLOAT:
+				parameter->type = RENDERPARAMETER_FLOAT;
+				offset += (uint16_t)(4 * size);
+				break;
 			case GL_FLOAT_VEC4:
 				parameter->type = RENDERPARAMETER_FLOAT4;
 				offset += (uint16_t)(16 * size);

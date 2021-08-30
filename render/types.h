@@ -165,7 +165,8 @@ typedef enum render_parameter_type_t {
 	RENDERPARAMETER_INT4,
 	RENDERPARAMETER_MATRIX,
 	RENDERPARAMETER_TEXTURE,
-	RENDERPARAMETER_ATTRIBUTE
+	RENDERPARAMETER_ATTRIBUTE,
+	RENDERPARAMETER_FLOAT
 } render_parameter_type_t;
 
 typedef enum render_texture_type_t {
