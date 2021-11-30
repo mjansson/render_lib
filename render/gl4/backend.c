@@ -1665,6 +1665,7 @@ _rb_gl4_set_state(render_state_t* state) {
 		glEnable(GL_CULL_FACE);
 	else
 		glDisable(GL_CULL_FACE);
+	glLineWidth(2.0f);
 }
 
 static void

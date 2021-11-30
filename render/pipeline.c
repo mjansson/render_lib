@@ -46,7 +46,6 @@ void
 render_pipeline_finalize(render_pipeline_t* pipeline) {
 	if (pipeline) {
 		array_deallocate(pipeline->step_task);
-		array_deallocate(pipeline->step_arg);
 		for (size_t istep = 0, ssize = array_size(pipeline->steps); istep < ssize; ++istep)
 			render_pipeline_step_finalize(pipeline->steps + istep);
 		array_deallocate(pipeline->steps);
@@ -59,54 +58,41 @@ render_pipeline_deallocate(render_pipeline_t* pipeline) {
 	memory_deallocate(pipeline);
 }
 
-static task_return_t
-render_pipeline_execute_step(task_arg_t arg) {
-	render_pipeline_step_t* step = arg;
+static void
+render_pipeline_execute_step(task_t* task) {
+	render_pipeline_step_t* step = task->context;
 
 	size_t context_count = array_size(step->contexts);
 	step->executor(step->backend, step->target, step->contexts, context_count);
 
 	render_sort_merge(step->contexts, context_count);
-
-	if (step->task_counter)
-		atomic_incr32(step->task_counter, memory_order_release);
-
-	return (task_return_t){TASK_FINISH, 0};
 }
 
 void
 render_pipeline_execute(render_pipeline_t* pipeline) {
-	if (pipeline->scheduler) {
-		size_t step_count = array_size(pipeline->steps);
-		array_resize(pipeline->step_task, step_count);
-		array_resize(pipeline->step_arg, step_count);
-		atomic_store32(&pipeline->step_complete, 0, memory_order_release);
-		for (size_t istep = 0; istep < step_count; ++istep) {
-			render_pipeline_step_t* step = pipeline->steps + istep;
-			step->backend = pipeline->backend;
-			step->task_counter = &pipeline->step_complete;
+	size_t step_count = array_size(pipeline->steps);
+	array_resize(pipeline->step_task, step_count);
+	atomic_store32(&pipeline->step_counter, (int32_t)step_count, memory_order_release);
+	for (size_t istep = 0; istep < step_count; ++istep) {
+		render_pipeline_step_t* step = pipeline->steps + istep;
+		step->backend = pipeline->backend;
 
-			pipeline->step_task[istep].function = render_pipeline_execute_step;
-			pipeline->step_task[istep].name = string_const(STRING_CONST("render_pipeline_execute_step"));
-			pipeline->step_arg[istep] = step;
-		}
-		task_scheduler_multiqueue(pipeline->scheduler, pipeline->step_task, pipeline->step_arg, step_count, 0);
-	} else {
-		for (size_t istep = 0, ssize = array_size(pipeline->steps); istep < ssize; ++istep) {
-			render_pipeline_step_t* step = pipeline->steps + istep;
-			step->backend = pipeline->backend;
-			step->task_counter = nullptr;
-			render_pipeline_execute_step(step);
-		}
+		pipeline->step_task[istep].function = render_pipeline_execute_step;
+		pipeline->step_task[istep].context = step;
+		pipeline->step_task[istep].fiber = nullptr;
+		pipeline->step_task[istep].counter = &pipeline->step_counter;
+		// pipeline->step_task[istep].name = string_const(STRING_CONST("render_pipeline_execute_step"));
 	}
+	task_scheduler_multiqueue(pipeline->scheduler, pipeline->step_task, step_count);
 }
 
 void
 render_pipeline_dispatch(render_pipeline_t* pipeline) {
 	if (pipeline->scheduler) {
-		size_t step_count = array_size(pipeline->steps);
-		while ((size_t)atomic_load32(&pipeline->step_complete, memory_order_acquire) < step_count)
+		while ((size_t)atomic_load32(&pipeline->step_counter, memory_order_acquire)) {
+			// TODO: Improve to a proper waiting task yield
 			thread_yield();
+		}
 	}
 
 	for (size_t istep = 0, ssize = array_size(pipeline->steps); istep < ssize; ++istep) {

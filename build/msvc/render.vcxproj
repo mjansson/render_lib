@@ -1,0 +1,114 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="Globals">
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>render</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ProjectGuid>{54B53CC6-0852-47EB-9864-35B0CEC69DC7}</ProjectGuid>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <Import Project="$(SolutionDir)\build.default.props" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup>
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <ItemGroup>
+    <ClCompile Include="..\..\render\backend.c" />
+    <ClCompile Include="..\..\render\buffer.c" />
+    <ClCompile Include="..\..\render\command.c" />
+    <ClCompile Include="..\..\render\compile.c" />
+    <ClCompile Include="..\..\render\context.c" />
+    <ClCompile Include="..\..\render\drawable.c" />
+    <ClCompile Include="..\..\render\event.c" />
+    <ClCompile Include="..\..\render\gl2\backend.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)backend.gl2.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Deploy|x64'">$(IntDir)backend.gl2.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)backend.gl2.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)backend.gl2.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\render\gl4\backend.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)backend.gl4.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Deploy|x64'">$(IntDir)backend.gl4.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)backend.gl4.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)backend.gl4.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\render\gl4\glprocs.c" />
+    <ClCompile Include="..\..\render\gles2\backend.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)backend.gles2.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Deploy|x64'">$(IntDir)backend.gles2.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)backend.gles2.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)backend.gles2.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\render\import.c" />
+    <ClCompile Include="..\..\render\indexbuffer.c" />
+    <ClCompile Include="..\..\render\null\backend.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)backend.null.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Deploy|x64'">$(IntDir)backend.null.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)backend.null.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)backend.null.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\render\parameter.c" />
+    <ClCompile Include="..\..\render\pipeline.c" />
+    <ClCompile Include="..\..\render\program.c" />
+    <ClCompile Include="..\..\render\projection.c" />
+    <ClCompile Include="..\..\render\render.c" />
+    <ClCompile Include="..\..\render\shader.c" />
+    <ClCompile Include="..\..\render\sort.c" />
+    <ClCompile Include="..\..\render\state.c" />
+    <ClCompile Include="..\..\render\target.c" />
+    <ClCompile Include="..\..\render\texture.c" />
+    <ClCompile Include="..\..\render\version.c" />
+    <ClCompile Include="..\..\render\vertexbuffer.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\render\backend.h" />
+    <ClInclude Include="..\..\render\build.h" />
+    <ClInclude Include="..\..\render\command.h" />
+    <ClInclude Include="..\..\render\compile.h" />
+    <ClInclude Include="..\..\render\context.h" />
+    <ClInclude Include="..\..\render\drawable.h" />
+    <ClInclude Include="..\..\render\event.h" />
+    <ClInclude Include="..\..\render\gl2\backend.h" />
+    <ClInclude Include="..\..\render\gl4\backend.h" />
+    <ClInclude Include="..\..\render\gl4\glprocs.h" />
+    <ClInclude Include="..\..\render\gl4\glwrap.h" />
+    <ClInclude Include="..\..\render\gl4\gl\glext.h" />
+    <ClInclude Include="..\..\render\gl4\gl\wglext.h" />
+    <ClInclude Include="..\..\render\gles2\backend.h" />
+    <ClInclude Include="..\..\render\hashstrings.h" />
+    <ClInclude Include="..\..\render\import.h" />
+    <ClInclude Include="..\..\render\indexbuffer.h" />
+    <ClInclude Include="..\..\render\internal.h" />
+    <ClInclude Include="..\..\render\null\backend.h" />
+    <ClInclude Include="..\..\render\parameter.h" />
+    <ClInclude Include="..\..\render\pipeline.h" />
+    <ClInclude Include="..\..\render\program.h" />
+    <ClInclude Include="..\..\render\projection.h" />
+    <ClInclude Include="..\..\render\render.h" />
+    <ClInclude Include="..\..\render\shader.h" />
+    <ClInclude Include="..\..\render\sort.h" />
+    <ClInclude Include="..\..\render\state.h" />
+    <ClInclude Include="..\..\render\target.h" />
+    <ClInclude Include="..\..\render\texture.h" />
+    <ClInclude Include="..\..\render\types.h" />
+    <ClInclude Include="..\..\render\vertexbuffer.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\..\render\hashstrings.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\render\gl4\backend.m" />
+    <None Include="..\..\render\gles2\backend.m" />
+  </ItemGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\foundation;$(ProjectDir)..\..\..\foundation_lib;$(ProjectDir)..\..\..\window;$(ProjectDir)..\..\..\window_lib;$(ProjectDir)..\..\..\resource;$(ProjectDir)..\..\..\resource_lib;$(ProjectDir)..\..\..\task;$(ProjectDir)..\..\..\task_lib;$(ProjectDir)..\..\..\vector;$(ProjectDir)..\..\..\vector_lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>RENDER_COMPILE=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>
