@@ -59,8 +59,8 @@ render_pipeline_deallocate(render_pipeline_t* pipeline) {
 }
 
 static void
-render_pipeline_execute_step(task_t* task) {
-	render_pipeline_step_t* step = task->context;
+render_pipeline_execute_step(task_context_t context) {
+	render_pipeline_step_t* step = context;
 
 	size_t context_count = array_size(step->contexts);
 	step->executor(step->backend, step->target, step->contexts, context_count);
@@ -79,7 +79,6 @@ render_pipeline_execute(render_pipeline_t* pipeline) {
 
 		pipeline->step_task[istep].function = render_pipeline_execute_step;
 		pipeline->step_task[istep].context = step;
-		pipeline->step_task[istep].fiber = nullptr;
 		pipeline->step_task[istep].counter = &pipeline->step_counter;
 		// pipeline->step_task[istep].name = string_const(STRING_CONST("render_pipeline_execute_step"));
 	}
