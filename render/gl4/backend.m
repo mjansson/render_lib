@@ -1,4 +1,4 @@
-/* backend.m  -  Render library  -  Public Domain  -  2014 Mattias Jansson 
+/* backend.m  -  Render library  -  Public Domain  -  2014 Mattias Jansson
  *
  * This library provides a cross-platform rendering library in C11 providing
  * basic 2D/3D rendering functionality for projects based on our foundation library.
@@ -29,27 +29,36 @@
 #import <AppKit/NSOpenGL.h>
 #import <OpenGL/OpenGL.h>
 
+#if FOUNDATION_COMPILER_CLANG
+#pragma clang diagnostic push
+#if __has_warning("-Wdeprecated-declarations")
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#endif
+#endif
+
 void*
-_rb_gl_create_agl_context(void* view, unsigned int displaymask, unsigned int color,
-                          unsigned int depth, unsigned int stencil, void* pixelformat) {
+_rb_gl_create_agl_context(void* view, unsigned int displaymask, unsigned int color, unsigned int depth,
+                          unsigned int stencil, void* pixelformat) {
 	FOUNDATION_UNUSED(pixelformat);
 
 	NSView* nsview = (__bridge NSView*)view;
 
-	NSOpenGLPixelFormatAttribute attribs[] = {
-		NSOpenGLPFAScreenMask, displaymask,
-		NSOpenGLPFADoubleBuffer,
-		NSOpenGLPFAMinimumPolicy,
-		NSOpenGLPFAWindow,
-		NSOpenGLPFANoRecovery,
-		NSOpenGLPFAColorSize, (color > 16) ? color : 16,
-		NSOpenGLPFADepthSize, (depth > 15) ? depth : 15,
-		NSOpenGLPFAStencilSize, stencil,
-		0
-	};
+	NSOpenGLPixelFormatAttribute attribs[] = {NSOpenGLPFAScreenMask,
+	                                          displaymask,
+	                                          NSOpenGLPFADoubleBuffer,
+	                                          NSOpenGLPFAMinimumPolicy,
+	                                          NSOpenGLPFAWindow,
+	                                          NSOpenGLPFANoRecovery,
+	                                          NSOpenGLPFAColorSize,
+	                                          (color > 16) ? color : 16,
+	                                          NSOpenGLPFADepthSize,
+	                                          (depth > 15) ? depth : 15,
+	                                          NSOpenGLPFAStencilSize,
+	                                          stencil,
+	                                          0};
 
 	if (!stencil)
-		attribs[ 10 ] = attribs[ 11 ] = 0;
+		attribs[10] = attribs[11] = 0;
 
 	NSOpenGLPixelFormat* format = [[NSOpenGLPixelFormat alloc] initWithAttributes:attribs];
 	if (!format)
@@ -60,21 +69,27 @@ _rb_gl_create_agl_context(void* view, unsigned int displaymask, unsigned int col
 		[context setView:nsview];
 	[context makeCurrentContext];
 
-	//void* context_cgl = [context CGLContextObj];
+	// void* context_cgl = [context CGLContextObj];
 	//*pixelformat = [format CGLPixelFormatObj];
 
-	log_infof(HASH_RENDER, STRING_CONST("Created gl context %" PRIfixPTR " for view %" PRIfixPTR),
-	          (uintptr_t)context, (uintptr_t)view);
+	log_infof(HASH_RENDER, STRING_CONST("Created gl context %" PRIfixPTR " for view %" PRIfixPTR), (uintptr_t)context,
+	          (uintptr_t)view);
 
 	return (__bridge_retained void*)context;
 }
 
 void
-_rb_gl_make_agl_context_current(void* context) {
+_rb_gl_agl_make_context_current(void* context) {
 	if (!context)
 		[NSOpenGLContext clearCurrentContext];
 	else
 		[(__bridge NSOpenGLContext*)context makeCurrentContext];
+}
+
+void*
+_rb_gl_agl_context_current(void) {
+	NSOpenGLContext* context = [NSOpenGLContext currentContext];
+	return (__bridge void*)context;
 }
 
 void
@@ -95,5 +110,8 @@ _rb_gl_flush_drawable(void* context) {
 		[(__bridge NSOpenGLContext*)context flushBuffer];
 }
 
+#if FOUNDATION_COMPILER_CLANG
+#pragma clang diagnostic pop
+#endif
 
 #endif

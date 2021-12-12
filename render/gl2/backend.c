@@ -24,6 +24,13 @@
 
 #include <render/gl2/backend.h>
 
+#if FOUNDATION_COMPILER_CLANG
+#pragma clang diagnostic push
+#if __has_warning("-Wdeprecated-declarations")
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#endif
+#endif
+
 #if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_MACOS || \
     (FOUNDATION_PLATFORM_LINUX && !FOUNDATION_PLATFORM_LINUX_RASPBERRYPI)
 
@@ -74,6 +81,9 @@ _rb_gl2_disable_thread(render_backend_t* backend) {
 #elif FOUNDATION_PLATFORM_LINUX
 			if (glXGetCurrentContext() == thread_context)
 				glXMakeCurrent(backend->drawable.display, (GLXDrawable)backend->drawable.drawable, nullptr);
+#elif FOUNDATION_PLATFORM_MACOS
+			if (_rb_gl_agl_context_current() == thread_context)
+				_rb_gl_agl_make_context_current(nullptr);
 #else
 #error Not implemented
 #endif
@@ -86,6 +96,9 @@ _rb_gl2_disable_thread(render_backend_t* backend) {
 #elif FOUNDATION_PLATFORM_LINUX
 					if (glXGetCurrentContext() == thread_context)
 						glXMakeCurrent(backend->drawable.display, (GLXDrawable)backend->drawable.drawable, nullptr);
+#elif FOUNDATION_PLATFORM_MACOS
+					if (_rb_gl_agl_context_current() == thread_context)
+						_rb_gl_agl_make_context_current(nullptr);
 #else
 #error Not implemented
 #endif
@@ -791,4 +804,8 @@ render_gl2_allocate(void) {
 	return 0;
 }
 
+#endif
+
+#if FOUNDATION_COMPILER_CLANG
+#pragma clang diagnostic pop
 #endif

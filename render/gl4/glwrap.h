@@ -46,6 +46,10 @@
 #include <mach-o/dyld.h>
 #include <dlfcn.h>
 
+#ifndef APIENTRY
+#define APIENTRY
+#endif
+
 // Objective-C interface
 RENDER_EXTERN void*
 _rb_gl_create_agl_context(void* view, unsigned int displaymask, unsigned int color, unsigned int depth,
@@ -54,11 +58,18 @@ _rb_gl_create_agl_context(void* view, unsigned int displaymask, unsigned int col
 RENDER_EXTERN void
 _rb_gl_destroy_agl_context(void* context);
 
+RENDER_EXTERN void*
+_rb_gl_agl_context_current(void);
+
 RENDER_EXTERN void
-_rb_gl_make_agl_context_current(void* context);
+_rb_gl_agl_make_context_current(void* context);
 
 RENDER_EXTERN void
 _rb_gl_flush_drawable(void* context);
+
+#define glDeleteVertexArrays glDeleteVertexArraysAPPLE
+#define glGenVertexArrays glGenVertexArraysAPPLE
+#define glBindVertexArray glBindVertexArrayAPPLE
 
 #elif FOUNDATION_PLATFORM_LINUX
 

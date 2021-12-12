@@ -24,6 +24,13 @@
 #include "gl4/glwrap.h"
 #include "gl4/glprocs.h"
 
+#if FOUNDATION_COMPILER_CLANG
+#pragma clang diagnostic push
+#if __has_warning("-Wdeprecated-declarations")
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#endif
+#endif
+
 #if RESOURCE_ENABLE_LOCAL_SOURCE
 
 int
@@ -262,7 +269,7 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 			}
 			if (sourcebuffer) {
 				GLuint handle = glCreateShader(string_equal(type, type_length, STRING_CONST("vertexshader")) ?
-                                                   GL_VERTEX_SHADER_ARB :
+				                                   GL_VERTEX_SHADER_ARB :
                                                    GL_FRAGMENT_SHADER_ARB);
 				const GLchar* glsource = (GLchar*)sourcebuffer;
 				GLint source_size = (GLint)sourcechange->value.blob.size;
@@ -850,4 +857,8 @@ render_compile(const uuid_t uuid, uint64_t platform, resource_source_t* source, 
 	return -1;
 }
 
+#endif
+
+#if FOUNDATION_COMPILER_CLANG
+#pragma clang diagnostic pop
 #endif

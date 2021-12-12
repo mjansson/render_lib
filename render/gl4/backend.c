@@ -24,6 +24,13 @@
 
 #include <render/gl4/backend.h>
 
+#if FOUNDATION_COMPILER_CLANG
+#pragma clang diagnostic push
+#if __has_warning("-Wdeprecated-declarations")
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#endif
+#endif
+
 #if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_MACOS || \
     (FOUNDATION_PLATFORM_LINUX && !FOUNDATION_PLATFORM_LINUX_RASPBERRYPI)
 
@@ -107,7 +114,7 @@ _rb_gl_set_thread_context(void* context) {
 }
 
 #if BUILD_DEBUG
-
+#if !FOUNDATION_PLATFORM_MACOS
 static void APIENTRY
 _rb_gl_debug_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message,
                       const void* user_param) {
@@ -116,6 +123,7 @@ _rb_gl_debug_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GL
 	FOUNDATION_UNUSED(id);
 	FOUNDATION_UNUSED(severity);
 	FOUNDATION_UNUSED(user_param);
+
 	if (severity == GL_DEBUG_SEVERITY_HIGH)
 		log_errorf(HASH_RENDER, ERROR_INTERNAL_FAILURE, STRING_CONST("OpenGL: %.*s"), (int)length, message);
 	else if (severity == GL_DEBUG_SEVERITY_MEDIUM)
@@ -125,7 +133,7 @@ _rb_gl_debug_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GL
 	else if (severity == GL_DEBUG_SEVERITY_NOTIFICATION)
 		log_debugf(HASH_RENDER, STRING_CONST("OpenGL: %.*s"), (int)length, message);
 }
-
+#endif
 #endif
 
 void
@@ -537,11 +545,6 @@ failed:
 		goto failed;
 	}
 
-	if (share_context) {
-		log_error(HASH_RENDER, ERROR_NOT_IMPLEMENTED, STRING_CONST("Context sharing not implemented"));
-		goto failed;
-	}
-
 	const char* version = (const char*)glGetString(GL_VERSION);
 	unsigned int have_major = 0, have_minor = 0, have_revision = 0;
 	string_const_t version_arr[4];
@@ -577,11 +580,30 @@ failed:
 	if (!supported)
 		context = nullptr;
 
+	if (context && (colorspace == COLORSPACE_sRGB)) {
+		glEnable(GL_FRAMEBUFFER_SRGB);
+		if (!_rb_gl_check_error("Unable to enable sRGB framebuffer"))
+			log_info(HASH_RENDER, STRING_CONST("sRGB framebuffer"));
+	}
+
+	if (context) {
+		for (size_t icontext = 0; icontext < concurrent_count; ++icontext) {
+			concurrent_contexts[icontext] = _rb_gl_create_agl_context(view, displaymask, 32 /*color_depth*/,
+			                                                          24 /*_res._depth*/, 8 /*_res._stencil*/, context);
+			if (!concurrent_contexts[icontext]) {
+				log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
+				           STRING_CONST("Unable to create GL context for concurrency"));
+				break;
+			}
+		}
+	}
+
 #else
 #error Not implemented
 #endif
 
 #if BUILD_DEBUG
+#if !FOUNDATION_PLATFORM_MACOS
 	PFNGLDEBUGMESSAGECONTROLPROC fnglDebugMessageControl =
 	    (PFNGLDEBUGMESSAGECONTROLPROC)_rb_gl_get_proc_address("glDebugMessageControl");
 	if (fnglDebugMessageControl) {
@@ -594,6 +616,7 @@ failed:
 		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 		fnglDebugMessageCallback(_rb_gl_debug_callback, nullptr);
 	}
+#endif
 #endif
 
 	return context;
@@ -652,6 +675,9 @@ _rb_gl4_disable_thread(render_backend_t* backend) {
 #elif FOUNDATION_PLATFORM_LINUX
 			if (glXGetCurrentContext() == thread_context)
 				glXMakeCurrent(backend->drawable.display, None, nullptr);
+#elif FOUNDATION_PLATFORM_MACOS
+			if (_rb_gl_agl_context_current() == thread_context)
+				_rb_gl_agl_make_context_current(nullptr);
 #else
 #error Not implemented
 #endif
@@ -664,6 +690,9 @@ _rb_gl4_disable_thread(render_backend_t* backend) {
 #elif FOUNDATION_PLATFORM_LINUX
 					if (glXGetCurrentContext() == thread_context)
 						glXMakeCurrent(backend->drawable.display, None, nullptr);
+#elif FOUNDATION_PLATFORM_MACOS
+					if (_rb_gl_agl_context_current() == thread_context)
+						_rb_gl_agl_make_context_current(nullptr);
 #else
 #error Not implemented
 #endif
@@ -1274,7 +1303,8 @@ _rb_gl_allocate_target(render_backend_t* backend, render_target_t* target) {
 		goto failure;
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
-	glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, render_texture, 0);
+	// glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, render_texture, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, render_texture, 0);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_buffer);
 	if (_rb_gl_check_error("Unable to create render target: Error setting target attachments"))
 		goto failure;
@@ -1358,7 +1388,8 @@ _rb_gl_resize_target(render_backend_t* backend, render_target_t* target, unsigne
 		return false;
 	}
 
-	glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, render_texture, 0);
+	// glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, render_texture, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, render_texture, 0);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_buffer);
 	if (_rb_gl_check_error("Unable to resize render target: Error setting target attachments")) {
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -1810,11 +1841,11 @@ _rb_gl4_flip(render_backend_t* backend) {
 
 #elif FOUNDATION_PLATFORM_MACOS
 
-	if (backend_gl2->context) {
+	if (backend_gl4->context) {
 		/*if( backend_gl2->fullscreen )
 		    CGLFlushDrawable( backend_gl2->context );
 		else*/
-		_rb_gl_flush_drawable(backend_gl2->context);
+		_rb_gl_flush_drawable(backend_gl4->context);
 	}
 
 #elif FOUNDATION_PLATFORM_LINUX
@@ -1883,4 +1914,8 @@ render_backend_gl4_allocate(void) {
 	return 0;
 }
 
+#endif
+
+#if FOUNDATION_COMPILER_CLANG
+#pragma clang diagnostic pop
 #endif
