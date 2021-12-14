@@ -101,8 +101,10 @@ render_shader_ref_compile(const uuid_t uuid, uint64_t platform, resource_source_
 	           platform);
 	resource_change_t* shaderchange = resource_source_get(source, HASH_SHADER, platform);
 	uuid_t shaderuuid = shaderchange ? string_to_uuid(STRING_ARGS(shaderchange->value.value)) : uuid_null();
-	if (uuid_is_null(shaderuuid))
+	if (uuid_is_null(shaderuuid)) {
+		error_context_pop();
 		return -1;
+	}
 	if (resource_compile_need_update(shaderuuid, platform)) {
 		recompiled = resource_compile(shaderuuid, platform);
 		if (!recompiled) {
