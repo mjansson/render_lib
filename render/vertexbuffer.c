@@ -87,7 +87,7 @@ render_vertexbuffer_restore(render_vertexbuffer_t* buffer) {
 	buffer->flags |= RENDERBUFFER_DIRTY;
 }
 
-static const uint16_t _vertex_format_size[VERTEXFORMAT_COUNT + 1] = {
+static const uint16_t vertex_format_size[VERTEXFORMAT_COUNT + 1] = {
 
     4,   // VERTEXFORMAT_FLOAT
     8,   // VERTEXFORMAT_FLOAT2
@@ -109,7 +109,7 @@ static const uint16_t _vertex_format_size[VERTEXFORMAT_COUNT + 1] = {
 
 uint16_t
 render_vertex_attribute_size(render_vertex_format_t format) {
-	return _vertex_format_size[format];
+	return vertex_format_size[format];
 }
 
 size_t
@@ -118,7 +118,7 @@ render_vertex_decl_calculate_size(const render_vertex_decl_t* decl) {
 	for (unsigned int i = 0; i < RENDER_MAX_ATTRIBUTES; ++i) {
 		if (decl->attribute[i].format >= VERTEXFORMAT_COUNT)
 			continue;
-		size_t end = decl->attribute[i].offset + _vertex_format_size[decl->attribute[i].format];
+		size_t end = decl->attribute[i].offset + vertex_format_size[decl->attribute[i].format];
 		if (end > size)
 			size = end;
 	}
@@ -163,7 +163,7 @@ render_vertex_decl_initialize(render_vertex_decl_t* decl, render_vertex_decl_ele
 			decl->attribute[elements[i].attribute].format = (uint8_t)elements[i].format;
 			decl->attribute[elements[i].attribute].binding = 0;
 			decl->attribute[elements[i].attribute].offset = (uint16_t)offset;
-			offset += _vertex_format_size[elements[i].format];
+			offset += vertex_format_size[elements[i].format];
 		}
 	}
 
@@ -197,7 +197,7 @@ render_vertex_decl_initialize_vlist(render_vertex_decl_t* decl, render_vertex_fo
 			decl->attribute[attribute].binding = 0;
 			decl->attribute[attribute].offset = (uint16_t)offset;
 
-			offset += _vertex_format_size[format];
+			offset += vertex_format_size[format];
 		}
 
 		format = va_arg(clist, render_vertex_format_t);

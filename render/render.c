@@ -25,51 +25,51 @@
 #include <render/import.h>
 #include <render/internal.h>
 
-static bool _render_initialized;
+static bool render_initialized;
 
 // Global data
-render_config_t _render_config;
-bool _render_api_disabled[RENDERAPI_COUNT];
-render_backend_t** _render_backends;
+render_config_t render_config;
+bool render_api_disabled[RENDERAPI_COUNT];
+render_backend_t** render_backends_current;
 
 int
 render_module_initialize(render_config_t config) {
-	if (_render_initialized)
+	if (render_initialized)
 		return 0;
 
-	_render_config.target_max = config.target_max ? config.target_max : 32;
+	render_config.target_max = config.target_max ? config.target_max : 32;
 
-	_render_config.buffer_max = config.buffer_max ? config.buffer_max : 1024;
+	render_config.buffer_max = config.buffer_max ? config.buffer_max : 1024;
 
-	_render_config.program_max = config.program_max ? config.program_max : 128;
+	render_config.program_max = config.program_max ? config.program_max : 128;
 
-	_render_api_disabled[RENDERAPI_UNKNOWN] = true;
-	_render_api_disabled[RENDERAPI_DEFAULT] = true;
-	_render_api_disabled[RENDERAPI_OPENGL] = true;
-	_render_api_disabled[RENDERAPI_DIRECTX] = true;
-	_render_api_disabled[RENDERAPI_GLES] = true;
+	render_api_disabled[RENDERAPI_UNKNOWN] = true;
+	render_api_disabled[RENDERAPI_DEFAULT] = true;
+	render_api_disabled[RENDERAPI_OPENGL] = true;
+	render_api_disabled[RENDERAPI_DIRECTX] = true;
+	render_api_disabled[RENDERAPI_GLES] = true;
 
 	resource_import_register(render_import);
 	resource_compile_register(render_compile);
 
-	_render_initialized = true;
+	render_initialized = true;
 
 	return 0;
 }
 
 void
 render_module_finalize(void) {
-	if (!_render_initialized)
+	if (!render_initialized)
 		return;
 
-	array_deallocate(_render_backends);
+	array_deallocate(render_backends_current);
 
-	_render_initialized = false;
+	render_initialized = false;
 }
 
 bool
 render_module_is_initialized(void) {
-	return _render_initialized;
+	return render_initialized;
 }
 
 void
@@ -77,7 +77,7 @@ render_api_enable(const render_api_t* api, size_t count) {
 	for (size_t i = 0; i < count; ++i) {
 		if ((api[i] > RENDERAPI_DEFAULT) && (api[i] < RENDERAPI_COUNT)) {
 			if ((api[i] != RENDERAPI_OPENGL) && (api[i] != RENDERAPI_DIRECTX) && (api[i] != RENDERAPI_GLES))
-				_render_api_disabled[api[i]] = false;
+				render_api_disabled[api[i]] = false;
 		}
 	}
 }
@@ -86,7 +86,7 @@ void
 render_api_disable(const render_api_t* api, size_t count) {
 	for (size_t i = 0; i < count; ++i) {
 		if ((api[i] > RENDERAPI_DEFAULT) && (api[i] < RENDERAPI_COUNT))
-			_render_api_disabled[api[i]] = true;
+			render_api_disabled[api[i]] = true;
 	}
 }
 

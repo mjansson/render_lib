@@ -88,7 +88,7 @@ render_api_fallback(render_api_t api) {
 
 render_backend_t**
 render_backends(void) {
-	return _render_backends;
+	return render_backends_current;
 }
 
 render_backend_t*
@@ -99,7 +99,7 @@ render_backend_allocate(render_api_t api, bool allow_fallback) {
 	memory_context_push(HASH_RENDER);
 
 	while (!backend) {
-		while (_render_api_disabled[api])
+		while (render_api_disabled[api])
 			api = render_api_fallback(api);
 		switch (api) {
 			case RENDERAPI_GLES2:
@@ -209,7 +209,7 @@ render_backend_allocate(render_api_t api, bool allow_fallback) {
 
 	render_backend_set_resource_platform(backend, 0);
 
-	array_push(_render_backends, backend);
+	array_push(render_backends_current, backend);
 
 	memory_context_pop();
 
@@ -236,9 +236,9 @@ render_backend_deallocate(render_backend_t* backend) {
 
 	mutex_deallocate(backend->exclusive);
 
-	for (size_t ib = 0, bsize = array_size(_render_backends); ib < bsize; ++ib) {
-		if (_render_backends[ib] == backend) {
-			array_erase(_render_backends, ib);
+	for (size_t ib = 0, bsize = array_size(render_backends_current); ib < bsize; ++ib) {
+		if (render_backends_current[ib] == backend) {
+			array_erase(render_backends_current, ib);
 			break;
 		}
 	}

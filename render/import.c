@@ -100,24 +100,22 @@ render_import_glsl_shader(stream_t* stream, const uuid_t uuid, const char* type,
 	resource_source_t source;
 	void* blob = 0;
 	size_t size;
-	size_t read;
 	size_t begin;
 	size_t next;
 	hash_t checksum;
 	tick_t timestamp;
-	uint64_t platform;
 	size_t maxtokens;
 	size_t parameter;
 	string_const_t* token = 0;
 	string_const_t valstr;
 	char buffer[128];
-	int ret = 0;
 	resource_platform_t platformdecl = {-1, -1, RENDERAPIGROUP_OPENGL, -1, -1, -1};
+	uint64_t platform;
+	int ret = 0;
 
 	resource_source_initialize(&source);
 	resource_source_read(&source, uuid);
 
-	read = 0;
 	size = stream_size(stream);
 	blob = memory_allocate(HASH_RESOURCE, size, 0, MEMORY_PERSISTENT);
 
@@ -227,15 +225,12 @@ render_import_shader(stream_t* stream, const uuid_t uuid) {
 	char buffer[1024];
 	char pathbuf[BUILD_MAX_PATHLEN];
 	resource_source_t source;
-	resource_platform_t platformdecl = {-1, -1, -1, -1, -1, -1};
-	uint64_t platform;
 	tick_t timestamp;
 	int ret = 0;
 
 	resource_source_initialize(&source);
 	resource_source_read(&source, uuid);
 
-	platform = resource_platform(platformdecl);
 	timestamp = stream_last_modified(stream);
 
 	while (!stream_eos(stream)) {
@@ -278,6 +273,7 @@ render_import_shader(stream_t* stream, const uuid_t uuid) {
 		}
 
 		if (!uuid_is_null(shaderuuid)) {
+			resource_platform_t platformdecl = {-1, -1, -1, -1, -1, -1};
 			resource_platform_t targetplatformdecl = render_import_parse_target(STRING_ARGS(target), platformdecl);
 			uint64_t targetplatform = resource_platform(targetplatformdecl);
 
@@ -307,7 +303,7 @@ render_import_shader(stream_t* stream, const uuid_t uuid) {
 finalize:
 	resource_source_finalize(&source);
 
-	return 0;
+	return ret;
 }
 
 static int

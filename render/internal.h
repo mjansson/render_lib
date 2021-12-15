@@ -30,9 +30,9 @@
 #include <render/types.h>
 #include <render/hashstrings.h>
 
-RENDER_EXTERN bool _render_api_disabled[];
-RENDER_EXTERN render_config_t _render_config;
-RENDER_EXTERN render_backend_t** _render_backends;
+RENDER_EXTERN bool render_api_disabled[];
+RENDER_EXTERN render_config_t render_config;
+RENDER_EXTERN render_backend_t** render_backends_current;
 
 // INTERNAL FUNCTIONS
 

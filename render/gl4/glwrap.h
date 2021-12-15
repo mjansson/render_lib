@@ -52,20 +52,20 @@
 
 // Objective-C interface
 RENDER_EXTERN void*
-_rb_gl_create_agl_context(void* view, unsigned int displaymask, unsigned int color, unsigned int depth,
-                          unsigned int stencil, void* pixelformat);
+rb_gl_create_agl_context(void* view, unsigned int displaymask, unsigned int color, unsigned int depth,
+                         unsigned int stencil, void* pixelformat);
 
 RENDER_EXTERN void
-_rb_gl_destroy_agl_context(void* context);
+rb_gl_destroy_agl_context(void* context);
 
 RENDER_EXTERN void*
-_rb_gl_agl_context_current(void);
+rb_gl_agl_context_current(void);
 
 RENDER_EXTERN void
-_rb_gl_agl_make_context_current(void* context);
+rb_gl_agl_make_context_current(void* context);
 
 RENDER_EXTERN void
-_rb_gl_flush_drawable(void* context);
+rb_gl_flush_drawable(void* context);
 
 #define glDeleteVertexArrays glDeleteVertexArraysAPPLE
 #define glGenVertexArrays glGenVertexArraysAPPLE
@@ -86,4 +86,4 @@ _rb_gl_flush_drawable(void* context);
 #endif
 
 RENDER_EXTERN void
-_rb_gl_init_gl_extensions(void);
+rb_gl_init_gl_extensions(void);

@@ -123,81 +123,81 @@ extern PFNGLDEBUGMESSAGECONTROLPROC glDebugMessageControl;
 typedef void (*glfn)(void);
 
 RENDER_EXTERN glfn
-_rb_gl_get_proc_address(const char* name);
+rb_gl_get_proc_address(const char* name);
 
 RENDER_EXTERN bool
-_rb_gl_get_texture_procs(void);
+rb_gl_get_texture_procs(void);
 
 RENDER_EXTERN bool
-_rb_gl_get_query_procs(void);
+rb_gl_get_query_procs(void);
 
 RENDER_EXTERN bool
-_rb_gl_get_buffer_procs(void);
+rb_gl_get_buffer_procs(void);
 
 RENDER_EXTERN bool
-_rb_gl_get_shader_procs(void);
+rb_gl_get_shader_procs(void);
 
 RENDER_EXTERN bool
-_rb_gl_get_framebuffer_procs(void);
+rb_gl_get_framebuffer_procs(void);
 
 RENDER_EXTERN bool
-_rb_gl_get_arrays_procs(void);
+rb_gl_get_arrays_procs(void);
 
 RENDER_EXTERN bool
-_rb_gl_get_standard_procs(unsigned int major, unsigned int minor);
+rb_gl_get_standard_procs(unsigned int major, unsigned int minor);
 
 RENDER_EXTERN bool
-_rb_gl_check_error(const char* message);
+rb_gl_check_error(const char* message);
 
 RENDER_EXTERN bool
-_rb_gl_check_context(unsigned int major, unsigned int minor);
+rb_gl_check_context(unsigned int major, unsigned int minor);
 
 RENDER_EXTERN bool
-_rb_gl_check_extension(const char* name, size_t length);
+rb_gl_check_extension(const char* name, size_t length);
 
 RENDER_EXTERN void*
-_rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, unsigned int minor,
-                      const pixelformat_t pixelformat, const colorspace_t colorspace, void** concurrent_contexts,
-                      size_t concurrent_count);
+rb_gl_create_context(const render_drawable_t* drawable, unsigned int major, unsigned int minor,
+                     const pixelformat_t pixelformat, const colorspace_t colorspace, void** concurrent_contexts,
+                     size_t concurrent_count);
 
 RENDER_EXTERN void
-_rb_gl_destroy_context(const render_drawable_t* drawable, void* context);
+rb_gl_destroy_context(const render_drawable_t* drawable, void* context);
 
 RENDER_EXTERN const char*
-_rb_gl_error_message(GLenum err);
+rb_gl_error_message(GLenum err);
 
 RENDER_EXTERN size_t
-_rb_gl_enumerate_adapters(render_backend_t* backend, unsigned int* store, size_t capacity);
+rb_gl_enumerate_adapters(render_backend_t* backend, unsigned int* store, size_t capacity);
 
 RENDER_EXTERN size_t
-_rb_gl_enumerate_modes(render_backend_t* backend, unsigned int adapter, render_resolution_t* store, size_t capacity);
+rb_gl_enumerate_modes(render_backend_t* backend, unsigned int adapter, render_resolution_t* store, size_t capacity);
 
 RENDER_EXTERN bool
-_rb_gl_allocate_target(render_backend_t* backend, render_target_t* target);
+rb_gl_allocate_target(render_backend_t* backend, render_target_t* target);
 
 RENDER_EXTERN bool
-_rb_gl_resize_target(render_backend_t* backend, render_target_t* target, unsigned int width, unsigned int height);
+rb_gl_resize_target(render_backend_t* backend, render_target_t* target, unsigned int width, unsigned int height);
 
 RENDER_EXTERN void
-_rb_gl_deallocate_target(render_backend_t* backend, render_target_t* target);
+rb_gl_deallocate_target(render_backend_t* backend, render_target_t* target);
 
 RENDER_EXTERN bool
-_rb_gl_activate_target(render_backend_t* backend, render_target_t* target);
+rb_gl_activate_target(render_backend_t* backend, render_target_t* target);
 
 RENDER_EXTERN bool
-_rb_gl_upload_texture(render_backend_t* backend, render_texture_t* texture, const void* buffer, size_t size);
+rb_gl_upload_texture(render_backend_t* backend, render_texture_t* texture, const void* buffer, size_t size);
 
 RENDER_EXTERN void
-_rb_gl_deallocate_texture(render_backend_t* backend, render_texture_t* texture);
+rb_gl_deallocate_texture(render_backend_t* backend, render_texture_t* texture);
 
 RENDER_EXTERN void
-_rb_gl_parameter_bind_texture(render_backend_t* backend, void* buffer, render_texture_t* texture);
+rb_gl_parameter_bind_texture(render_backend_t* backend, void* buffer, render_texture_t* texture);
 
 RENDER_EXTERN void
-_rb_gl_parameter_bind_target(render_backend_t* backend, void* buffer, render_target_t* target);
+rb_gl_parameter_bind_target(render_backend_t* backend, void* buffer, render_target_t* target);
 
 RENDER_EXTERN void*
-_rb_gl_get_thread_context(void);
+rb_gl_get_thread_context(void);
 
 RENDER_EXTERN void
-_rb_gl_set_thread_context(void* context);
+rb_gl_set_thread_context(void* context);

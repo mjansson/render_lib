@@ -65,13 +65,13 @@ typedef struct render_backend_gl2_t {
 } render_backend_gl2_t;
 
 static void
-_rb_gl2_set_default_state(void);
+rb_gl2_set_default_state(void);
 
 static void
-_rb_gl2_disable_thread(render_backend_t* backend) {
+rb_gl2_disable_thread(render_backend_t* backend) {
 	render_backend_gl2_t* backend_gl2 = (render_backend_gl2_t*)backend;
 
-	void* thread_context = _rb_gl_get_thread_context();
+	void* thread_context = rb_gl_get_thread_context();
 	if (thread_context) {
 		if (thread_context == backend_gl2->context) {
 			atomic_store32(&backend_gl2->context_used, 0, memory_order_release);
@@ -82,8 +82,8 @@ _rb_gl2_disable_thread(render_backend_t* backend) {
 			if (glXGetCurrentContext() == thread_context)
 				glXMakeCurrent(backend->drawable.display, (GLXDrawable)backend->drawable.drawable, nullptr);
 #elif FOUNDATION_PLATFORM_MACOS
-			if (_rb_gl_agl_context_current() == thread_context)
-				_rb_gl_agl_make_context_current(nullptr);
+			if (rb_gl_agl_context_current() == thread_context)
+				rb_gl_agl_make_context_current(nullptr);
 #else
 #error Not implemented
 #endif
@@ -97,8 +97,8 @@ _rb_gl2_disable_thread(render_backend_t* backend) {
 					if (glXGetCurrentContext() == thread_context)
 						glXMakeCurrent(backend->drawable.display, (GLXDrawable)backend->drawable.drawable, nullptr);
 #elif FOUNDATION_PLATFORM_MACOS
-					if (_rb_gl_agl_context_current() == thread_context)
-						_rb_gl_agl_make_context_current(nullptr);
+					if (rb_gl_agl_context_current() == thread_context)
+						rb_gl_agl_make_context_current(nullptr);
 #else
 #error Not implemented
 #endif
@@ -109,14 +109,14 @@ _rb_gl2_disable_thread(render_backend_t* backend) {
 		}
 		log_debug(HASH_RENDER, STRING_CONST("Disabled thread for GL2 rendering"));
 	}
-	_rb_gl_set_thread_context(0);
+	rb_gl_set_thread_context(0);
 }
 
 static void
-_rb_gl2_enable_thread(render_backend_t* backend) {
+rb_gl2_enable_thread(render_backend_t* backend) {
 	render_backend_gl2_t* backend_gl2 = (render_backend_gl2_t*)backend;
 
-	void* thread_context = _rb_gl_get_thread_context();
+	void* thread_context = rb_gl_get_thread_context();
 	if (!thread_context) {
 		if (!backend_gl2->context)
 			return;
@@ -136,7 +136,7 @@ _rb_gl2_enable_thread(render_backend_t* backend) {
 				return;
 			}
 		}
-		_rb_gl_set_thread_context(thread_context);
+		rb_gl_set_thread_context(thread_context);
 	}
 
 #if FOUNDATION_PLATFORM_WINDOWS
@@ -149,7 +149,7 @@ _rb_gl2_enable_thread(render_backend_t* backend) {
 	}
 #elif FOUNDATION_PLATFORM_LINUX
 	glXMakeCurrent(backend->drawable.display, (GLXDrawable)backend->drawable.drawable, thread_context);
-	_rb_gl_check_error("Unable to enable thread for GL2 rendering");
+	rb_gl_check_error("Unable to enable thread for GL2 rendering");
 #else
 	FOUNDATION_ASSERT_FAIL("Platform not implemented");
 	error_report(ERRORLEVEL_ERROR, ERROR_NOT_IMPLEMENTED);
@@ -157,7 +157,7 @@ _rb_gl2_enable_thread(render_backend_t* backend) {
 }
 
 static bool
-_rb_gl2_construct(render_backend_t* backend) {
+rb_gl2_construct(render_backend_t* backend) {
 	// TODO: Caps check
 	// if( !... )
 	//  return false;
@@ -167,17 +167,17 @@ _rb_gl2_construct(render_backend_t* backend) {
 }
 
 static void
-_rb_gl2_destruct(render_backend_t* backend) {
+rb_gl2_destruct(render_backend_t* backend) {
 	render_backend_gl2_t* backend_gl2 = (render_backend_gl2_t*)backend;
 
 	for (uint64_t icontext = 0; icontext < backend->concurrency; ++icontext)
-		_rb_gl_destroy_context(&backend_gl2->drawable, backend_gl2->concurrent_context[icontext]);
+		rb_gl_destroy_context(&backend_gl2->drawable, backend_gl2->concurrent_context[icontext]);
 	memory_deallocate(backend_gl2->concurrent_context);
 	memory_deallocate(backend_gl2->concurrent_buffer);
 
-	_rb_gl2_disable_thread(backend);
+	rb_gl2_disable_thread(backend);
 	if (backend_gl2->context)
-		_rb_gl_destroy_context(&backend_gl2->drawable, backend_gl2->context);
+		rb_gl_destroy_context(&backend_gl2->drawable, backend_gl2->context);
 	backend_gl2->context = 0;
 	atomic_store32(&backend_gl2->context_used, 0, memory_order_release);
 
@@ -185,7 +185,7 @@ _rb_gl2_destruct(render_backend_t* backend) {
 }
 
 static bool
-_rb_gl2_set_drawable(render_backend_t* backend, const render_drawable_t* drawable) {
+rb_gl2_set_drawable(render_backend_t* backend, const render_drawable_t* drawable) {
 	render_backend_gl2_t* backend_gl2 = (render_backend_gl2_t*)backend;
 	if (!FOUNDATION_VALIDATE_MSG(!backend_gl2->context, "Drawable switching not supported yet"))
 		return error_report(ERRORLEVEL_ERROR, ERROR_NOT_IMPLEMENTED);
@@ -199,15 +199,15 @@ _rb_gl2_set_drawable(render_backend_t* backend, const render_drawable_t* drawabl
 	}
 
 	atomic_store32(&backend_gl2->context_used, 1, memory_order_release);
-	backend_gl2->context = _rb_gl_create_context(drawable, 2, 0, backend->pixelformat, backend->colorspace,
-	                                             backend_gl2->concurrent_context, (size_t)backend_gl2->concurrency);
+	backend_gl2->context = rb_gl_create_context(drawable, 2, 0, backend->pixelformat, backend->colorspace,
+	                                            backend_gl2->concurrent_context, (size_t)backend_gl2->concurrency);
 	if (!backend_gl2->context) {
 		log_error(HASH_RENDER, ERROR_UNSUPPORTED, STRING_CONST("Unable to create OpenGL 2 context"));
 		atomic_store32(&backend_gl2->context_used, 0, memory_order_release);
 		return false;
 	}
 
-	_rb_gl_set_thread_context(backend_gl2->context);
+	rb_gl_set_thread_context(backend_gl2->context);
 
 	for (uint64_t icontext = 0; icontext < backend->concurrency; ++icontext) {
 		if (!backend_gl2->concurrent_context[icontext]) {
@@ -246,15 +246,15 @@ _rb_gl2_set_drawable(render_backend_t* backend, const render_drawable_t* drawabl
 	PFNWGLGETEXTENSIONSSTRINGARBPROC wglGetExtensionsStringARB = 0;
 	PFNWGLGETEXTENSIONSSTRINGEXTPROC wglGetExtensionsStringEXT = 0;
 	if ((wglGetExtensionsStringARB =
-	         (PFNWGLGETEXTENSIONSSTRINGARBPROC)_rb_gl_get_proc_address("wglGetExtensionsStringARB")) != 0)
+	         (PFNWGLGETEXTENSIONSSTRINGARBPROC)rb_gl_get_proc_address("wglGetExtensionsStringARB")) != 0)
 		wglext = wglGetExtensionsStringARB((HDC)drawable->hdc);
 	else if ((wglGetExtensionsStringEXT =
-	              (PFNWGLGETEXTENSIONSSTRINGEXTPROC)_rb_gl_get_proc_address("wglGetExtensionsStringEXT")) != 0)
+	              (PFNWGLGETEXTENSIONSSTRINGEXTPROC)rb_gl_get_proc_address("wglGetExtensionsStringEXT")) != 0)
 		wglext = wglGetExtensionsStringEXT();
 	log_debugf(HASH_RENDER, STRING_CONST("WGL Extensions: %s"), wglext ? wglext : "<none>");
 #endif
 
-	if (!_rb_gl_get_standard_procs(2, 0))
+	if (!rb_gl_get_standard_procs(2, 0))
 		return false;
 
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
@@ -269,21 +269,21 @@ _rb_gl2_set_drawable(render_backend_t* backend, const render_drawable_t* drawabl
 	glEnable(GL_BLEND);
 	glCullFace(GL_BACK);
 
-	_rb_gl2_set_default_state();
+	rb_gl2_set_default_state();
 
-	_rb_gl_check_error("Error setting up default state");
+	rb_gl_check_error("Error setting up default state");
 
 	return true;
 }
 
 static void*
-_rb_gl2_allocate_buffer(render_backend_t* backend, render_buffer_t* buffer) {
+rb_gl2_allocate_buffer(render_backend_t* backend, render_buffer_t* buffer) {
 	FOUNDATION_UNUSED(backend);
 	return memory_allocate(HASH_RENDER, buffer->buffersize, 16, MEMORY_PERSISTENT);
 }
 
 static void
-_rb_gl2_deallocate_buffer(render_backend_t* backend, render_buffer_t* buffer, bool sys, bool aux) {
+rb_gl2_deallocate_buffer(render_backend_t* backend, render_buffer_t* buffer, bool sys, bool aux) {
 	FOUNDATION_UNUSED(backend);
 	if (sys)
 		memory_deallocate(buffer->store);
@@ -296,7 +296,7 @@ _rb_gl2_deallocate_buffer(render_backend_t* backend, render_buffer_t* buffer, bo
 }
 
 static bool
-_rb_gl2_upload_buffer(render_backend_t* backend, render_buffer_t* buffer) {
+rb_gl2_upload_buffer(render_backend_t* backend, render_buffer_t* buffer) {
 	FOUNDATION_UNUSED(backend);
 	if ((buffer->buffertype == RENDERBUFFER_PARAMETER) || (buffer->buffertype == RENDERBUFFER_STATE))
 		return true;
@@ -304,7 +304,7 @@ _rb_gl2_upload_buffer(render_backend_t* backend, render_buffer_t* buffer) {
 	GLuint buffer_object = (GLuint)buffer->backend_data[0];
 	if (!buffer_object) {
 		glGenBuffers(1, &buffer_object);
-		if (_rb_gl_check_error("Unable to create buffer object"))
+		if (rb_gl_check_error("Unable to create buffer object"))
 			return false;
 		buffer->backend_data[0] = buffer_object;
 	}
@@ -312,7 +312,7 @@ _rb_gl2_upload_buffer(render_backend_t* backend, render_buffer_t* buffer) {
 	glBindBuffer(GL_ARRAY_BUFFER, buffer_object);
 	glBufferData(GL_ARRAY_BUFFER, (long)buffer->buffersize, buffer->store,
 	             (buffer->usage == RENDERUSAGE_DYNAMIC) ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
-	if (_rb_gl_check_error("Unable to upload buffer object data"))
+	if (rb_gl_check_error("Unable to upload buffer object data"))
 		return false;
 
 	buffer->flags &= ~(uint32_t)RENDERBUFFER_DIRTY;
@@ -320,14 +320,14 @@ _rb_gl2_upload_buffer(render_backend_t* backend, render_buffer_t* buffer) {
 }
 
 static void
-_rb_gl2_link_buffer(render_backend_t* backend, render_buffer_t* buffer, render_program_t* program) {
+rb_gl2_link_buffer(render_backend_t* backend, render_buffer_t* buffer, render_program_t* program) {
 	FOUNDATION_UNUSED(backend);
 	FOUNDATION_UNUSED(buffer);
 	FOUNDATION_UNUSED(program);
 }
 
 static bool
-_rb_gl2_upload_shader(render_backend_t* backend, render_shader_t* shader, const void* buffer, size_t size) {
+rb_gl2_upload_shader(render_backend_t* backend, render_shader_t* shader, const void* buffer, size_t size) {
 	bool is_pixel_shader = (shader->shadertype == SHADER_PIXEL);
 	// render_backend_gl2_t* backend_gl2 = (render_backend_gl2_t*)backend;
 	FOUNDATION_UNUSED(backend);
@@ -347,7 +347,7 @@ _rb_gl2_upload_shader(render_backend_t* backend, render_shader_t* shader, const 
 		case SHADER_VERTEX:
 			handle = glCreateShader(is_pixel_shader ? GL_FRAGMENT_SHADER_ARB : GL_VERTEX_SHADER_ARB);
 			if (!handle) {
-				if (!_rb_gl_check_error("Unable to compile shader: Error creating shader"))
+				if (!rb_gl_check_error("Unable to compile shader: Error creating shader"))
 					log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
 					           STRING_CONST("Unable to compile shader: Error creating shader (no error)"));
 				break;
@@ -383,7 +383,7 @@ _rb_gl2_upload_shader(render_backend_t* backend, render_shader_t* shader, const 
 }
 
 static void
-_rb_gl2_deallocate_shader(render_backend_t* backend, render_shader_t* shader) {
+rb_gl2_deallocate_shader(render_backend_t* backend, render_shader_t* shader) {
 	FOUNDATION_UNUSED(backend);
 	if (shader->backend_data[0])
 		glDeleteShader((GLuint)shader->backend_data[0]);
@@ -391,7 +391,7 @@ _rb_gl2_deallocate_shader(render_backend_t* backend, render_shader_t* shader) {
 }
 
 static bool
-_rb_gl2_check_program_link(GLuint handle) {
+rb_gl2_check_program_link(GLuint handle) {
 	GLint result = 0;
 	glGetProgramiv(handle, GL_LINK_STATUS, &result);
 	if (!result) {
@@ -415,7 +415,7 @@ _rb_gl2_check_program_link(GLuint handle) {
 }
 
 static bool
-_rb_gl2_upload_program(render_backend_t* backend, render_program_t* program) {
+rb_gl2_upload_program(render_backend_t* backend, render_program_t* program) {
 	FOUNDATION_UNUSED(backend);
 	if (program->backend_data[0])
 		glDeleteProgram((GLuint)program->backend_data[0]);
@@ -438,7 +438,7 @@ _rb_gl2_upload_program(render_backend_t* backend, render_program_t* program) {
 	glAttachShader(handle, (GLuint)vshader->backend_data[0]);
 	glAttachShader(handle, (GLuint)pshader->backend_data[0]);
 	glLinkProgram(handle);
-	if (!_rb_gl2_check_program_link(handle))
+	if (!rb_gl2_check_program_link(handle))
 		return false;
 
 	// TODO: By storing name strings in render_program_t we can avoid double link
@@ -459,7 +459,7 @@ _rb_gl2_upload_program(render_backend_t* backend, render_program_t* program) {
 		}
 	}
 	glLinkProgram(handle);
-	if (!_rb_gl2_check_program_link(handle))
+	if (!rb_gl2_check_program_link(handle))
 		return false;
 
 	glGetProgramiv(handle, GL_ACTIVE_UNIFORMS, &uniforms);
@@ -483,7 +483,7 @@ _rb_gl2_upload_program(render_backend_t* backend, render_program_t* program) {
 }
 
 static void
-_rb_gl2_deallocate_program(render_backend_t* backend, render_program_t* program) {
+rb_gl2_deallocate_program(render_backend_t* backend, render_program_t* program) {
 	FOUNDATION_UNUSED(backend);
 	if (program->backend_data[0])
 		glDeleteProgram((GLuint)program->backend_data[0]);
@@ -491,7 +491,7 @@ _rb_gl2_deallocate_program(render_backend_t* backend, render_program_t* program)
 }
 
 static void
-_rb_gl2_clear(render_backend_gl2_t* backend, render_context_t* context, render_command_t* command) {
+rb_gl2_clear(render_backend_gl2_t* backend, render_context_t* context, render_command_t* command) {
 	FOUNDATION_UNUSED(context);
 	unsigned int buffer_mask = command->data.clear.buffer_mask;
 	unsigned int bits = 0;
@@ -531,8 +531,8 @@ _rb_gl2_clear(render_backend_gl2_t* backend, render_context_t* context, render_c
 }
 
 static void
-_rb_gl2_viewport(render_backend_gl2_t* backend, render_target_t* target, render_context_t* context,
-                 render_command_t* command) {
+rb_gl2_viewport(render_backend_gl2_t* backend, render_target_t* target, render_context_t* context,
+                render_command_t* command) {
 	FOUNDATION_UNUSED(context);
 	GLint x = (GLint)command->data.viewport.x;
 	GLint y = (GLint)command->data.viewport.y;
@@ -545,20 +545,20 @@ _rb_gl2_viewport(render_backend_gl2_t* backend, render_target_t* target, render_
 	backend->use_clear_scissor = (x || y || (w != (GLsizei)target->width) || (h != (GLsizei)target->height));
 }
 
-static const GLint _rb_gl2_vertex_format_size[VERTEXFORMAT_COUNT] = {1, 2, 3, 4, 4, 4, 1, 2, 4, 1, 2, 4};
-static const GLenum _rb_gl2_vertex_format_type[VERTEXFORMAT_COUNT] = {GL_FLOAT,         GL_FLOAT, GL_FLOAT, GL_FLOAT,
-                                                                      GL_UNSIGNED_BYTE, GL_BYTE,  GL_SHORT, GL_SHORT,
-                                                                      GL_SHORT,         GL_INT,   GL_INT,   GL_INT};
-static const GLboolean _rb_gl2_vertex_format_norm[VERTEXFORMAT_COUNT] = {GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE,
-                                                                         GL_TRUE,  GL_TRUE,  GL_FALSE, GL_FALSE,
-                                                                         GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE};
+static const GLint rb_gl2_vertex_format_size[VERTEXFORMAT_COUNT] = {1, 2, 3, 4, 4, 4, 1, 2, 4, 1, 2, 4};
+static const GLenum rb_gl2_vertex_format_type[VERTEXFORMAT_COUNT] = {GL_FLOAT,         GL_FLOAT, GL_FLOAT, GL_FLOAT,
+                                                                     GL_UNSIGNED_BYTE, GL_BYTE,  GL_SHORT, GL_SHORT,
+                                                                     GL_SHORT,         GL_INT,   GL_INT,   GL_INT};
+static const GLboolean rb_gl2_vertex_format_norm[VERTEXFORMAT_COUNT] = {GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE,
+                                                                        GL_TRUE,  GL_TRUE,  GL_FALSE, GL_FALSE,
+                                                                        GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE};
 
-static const GLenum _rb_gl2_primitive_type[RENDERPRIMITIVE_COUNT] = {GL_TRIANGLES, GL_TRIANGLES, GL_LINES};
-static const unsigned int _rb_gl2_primitive_mult[RENDERPRIMITIVE_COUNT] = {3, 3, 2};
-static const unsigned int _rb_gl2_primitive_add[RENDERPRIMITIVE_COUNT] = {0, 0, 0};
+static const GLenum rb_gl2_primitive_type[RENDERPRIMITIVE_COUNT] = {GL_TRIANGLES, GL_TRIANGLES, GL_LINES};
+static const unsigned int rb_gl2_primitive_mult[RENDERPRIMITIVE_COUNT] = {3, 3, 2};
+static const unsigned int rb_gl2_primitive_add[RENDERPRIMITIVE_COUNT] = {0, 0, 0};
 
-static const GLenum _rb_gl2_index_format_type[INDEXFORMAT_COUNT] = {GL_UNSIGNED_BYTE, GL_UNSIGNED_SHORT,
-                                                                    GL_UNSIGNED_INT};
+static const GLenum rb_gl2_index_format_type[INDEXFORMAT_COUNT] = {GL_UNSIGNED_BYTE, GL_UNSIGNED_SHORT,
+                                                                   GL_UNSIGNED_INT};
 
 //                                                 BLEND_ZERO, BLEND_ONE, BLEND_SRCCOLOR,
 //                                                 BLEND_INVSRCCOLOR, BLEND_DESTCOLOR,
@@ -566,13 +566,13 @@ static const GLenum _rb_gl2_index_format_type[INDEXFORMAT_COUNT] = {GL_UNSIGNED_
 //                                                 BLEND_INVSRCALPHA,      BLEND_DESTALPHA,
 //                                                 BLEND_INVDESTALPHA,     BLEND_FACTOR,
 //                                                 BLEND_INVFACTOR, BLEND_SRCALPHASAT
-// static const GLenum       _rb_gl2_blend_func[] = { GL_ZERO,    GL_ONE,    GL_SRC_COLOR,
+// static const GLenum       rb_gl2_blend_func[] = { GL_ZERO,    GL_ONE,    GL_SRC_COLOR,
 // GL_ONE_MINUS_SRC_COLOR, GL_DST_COLOR,    GL_ONE_MINUS_DST_COLOR, GL_SRC_ALPHA,
 // GL_ONE_MINUS_SRC_ALPHA, GL_DST_ALPHA,    GL_ONE_MINUS_DST_ALPHA, GL_CONSTANT_ALPHA,
 // GL_ONE_MINUS_CONSTANT_ALPHA, GL_SRC_ALPHA_SATURATE };
 
 static void
-_rb_gl2_set_default_state(void) {
+rb_gl2_set_default_state(void) {
 	glBlendFunc(GL_ONE, GL_ZERO);
 	glDepthFunc(GL_LEQUAL);
 	glDepthMask(GL_TRUE);
@@ -582,13 +582,13 @@ _rb_gl2_set_default_state(void) {
 }
 
 static void
-_rb_gl2_set_state(render_state_t* state) {
+rb_gl2_set_state(render_state_t* state) {
 	FOUNDATION_UNUSED(state);
-	_rb_gl2_set_default_state();
+	rb_gl2_set_default_state();
 }
 
 static void
-_rb_gl2_render(render_backend_gl2_t* backend, render_context_t* context, render_command_t* command) {
+rb_gl2_render(render_backend_gl2_t* backend, render_context_t* context, render_command_t* command) {
 	render_vertexbuffer_t* vertexbuffer = command->data.render.vertexbuffer;
 	render_indexbuffer_t* indexbuffer = command->data.render.indexbuffer;
 	render_parameterbuffer_t* parameterbuffer = command->data.render.parameterbuffer;
@@ -601,9 +601,9 @@ _rb_gl2_render(render_backend_gl2_t* backend, render_context_t* context, render_
 	}
 
 	if (vertexbuffer->flags & RENDERBUFFER_DIRTY)
-		_rb_gl2_upload_buffer((render_backend_t*)backend, (render_buffer_t*)vertexbuffer);
+		rb_gl2_upload_buffer((render_backend_t*)backend, (render_buffer_t*)vertexbuffer);
 	if (indexbuffer->flags & RENDERBUFFER_DIRTY)
-		_rb_gl2_upload_buffer((render_backend_t*)backend, (render_buffer_t*)indexbuffer);
+		rb_gl2_upload_buffer((render_backend_t*)backend, (render_buffer_t*)indexbuffer);
 
 	// Bind vertex attributes
 	glBindBuffer(GL_ARRAY_BUFFER, (GLuint)vertexbuffer->backend_data[0]);
@@ -612,8 +612,8 @@ _rb_gl2_render(render_backend_gl2_t* backend, render_context_t* context, render_
 	for (unsigned int attrib = 0; attrib < RENDER_MAX_ATTRIBUTES; ++attrib) {
 		const uint8_t format = decl->attribute[attrib].format;
 		if (format < VERTEXFORMAT_COUNT) {
-			glVertexAttribPointer(attrib, _rb_gl2_vertex_format_size[format], _rb_gl2_vertex_format_type[format],
-			                      _rb_gl2_vertex_format_norm[format], (GLsizei)decl->attribute[attrib].stride,
+			glVertexAttribPointer(attrib, rb_gl2_vertex_format_size[format], rb_gl2_vertex_format_type[format],
+			                      rb_gl2_vertex_format_norm[format], (GLsizei)decl->attribute[attrib].stride,
 			                      (const void*)(uintptr_t)decl->attribute[attrib].offset);
 			glEnableVertexAttribArray(attrib);
 		} else {
@@ -660,44 +660,44 @@ _rb_gl2_render(render_backend_gl2_t* backend, render_context_t* context, render_
 	if (command->data.render.statebuffer) {
 		// Set state from buffer
 		render_statebuffer_t* buffer = command->data.render.statebuffer;
-		_rb_gl2_set_state(&buffer->state);
+		rb_gl2_set_state(&buffer->state);
 	} else {
 		// Set default state
-		_rb_gl2_set_default_state();
+		rb_gl2_set_default_state();
 	}
 
 	unsigned int primitive = command->type - RENDERCOMMAND_RENDER_TRIANGLELIST;
 	unsigned int count = command->count;
-	unsigned int gl_count = _rb_gl2_primitive_mult[primitive] * count + _rb_gl2_primitive_add[primitive];
+	unsigned int gl_count = rb_gl2_primitive_mult[primitive] * count + rb_gl2_primitive_add[primitive];
 
-	glDrawElements(_rb_gl2_primitive_type[primitive], (GLsizei)gl_count, _rb_gl2_index_format_type[indexbuffer->format],
+	glDrawElements(rb_gl2_primitive_type[primitive], (GLsizei)gl_count, rb_gl2_index_format_type[indexbuffer->format],
 	               0);
 }
 static void
-_rb_gl2_dispatch_command(render_backend_gl2_t* backend, render_target_t* target, render_context_t* context,
-                         render_command_t* command) {
+rb_gl2_dispatch_command(render_backend_gl2_t* backend, render_target_t* target, render_context_t* context,
+                        render_command_t* command) {
 	switch (command->type) {
 		case RENDERCOMMAND_CLEAR:
-			_rb_gl2_clear(backend, context, command);
+			rb_gl2_clear(backend, context, command);
 			break;
 
 		case RENDERCOMMAND_VIEWPORT:
-			_rb_gl2_viewport(backend, target, context, command);
+			rb_gl2_viewport(backend, target, context, command);
 			break;
 
 		case RENDERCOMMAND_RENDER_TRIANGLELIST:
 		case RENDERCOMMAND_RENDER_LINELIST:
-			_rb_gl2_render(backend, context, command);
+			rb_gl2_render(backend, context, command);
 			break;
 	}
 }
 
 static void
-_rb_gl2_dispatch(render_backend_t* backend, render_target_t* target, render_context_t** contexts,
-                 size_t contexts_count) {
+rb_gl2_dispatch(render_backend_t* backend, render_target_t* target, render_context_t** contexts,
+                size_t contexts_count) {
 	render_backend_gl2_t* backend_gl2 = (render_backend_gl2_t*)backend;
 
-	if (!_rb_gl_activate_target(backend, target))
+	if (!rb_gl_activate_target(backend, target))
 		return;
 
 	for (size_t cindex = 0, csize = contexts_count; cindex < csize; ++cindex) {
@@ -706,17 +706,17 @@ _rb_gl2_dispatch(render_backend_t* backend, render_target_t* target, render_cont
 		if (context->sort->indextype == RADIXSORT_INDEX16) {
 			const uint16_t* order = context->order;
 			for (int cmd_index = 0; cmd_index < cmd_size; ++cmd_index, ++order)
-				_rb_gl2_dispatch_command(backend_gl2, target, context, context->commands + *order);
+				rb_gl2_dispatch_command(backend_gl2, target, context, context->commands + *order);
 		} else if (context->sort->indextype == RADIXSORT_INDEX32) {
 			const uint32_t* order = context->order;
 			for (int cmd_index = 0; cmd_index < cmd_size; ++cmd_index, ++order)
-				_rb_gl2_dispatch_command(backend_gl2, target, context, context->commands + *order);
+				rb_gl2_dispatch_command(backend_gl2, target, context, context->commands + *order);
 		}
 	}
 }
 
 static void
-_rb_gl2_flip(render_backend_t* backend) {
+rb_gl2_flip(render_backend_t* backend) {
 	render_backend_gl2_t* backend_gl2 = (render_backend_gl2_t*)backend;
 
 #if FOUNDATION_PLATFORM_WINDOWS
@@ -735,7 +735,7 @@ _rb_gl2_flip(render_backend_t* backend) {
 		/*if( backend_gl2->fullscreen )
 		    CGLFlushDrawable( backend_gl2->context );
 		else*/
-		_rb_gl_flush_drawable(backend_gl2->context);
+		rb_gl_flush_drawable(backend_gl2->context);
 	}
 
 #elif FOUNDATION_PLATFORM_LINUX
@@ -750,35 +750,35 @@ _rb_gl2_flip(render_backend_t* backend) {
 	++backend->framecount;
 }
 
-static render_backend_vtable_t _render_backend_vtable_gl2 = {.construct = _rb_gl2_construct,
-                                                             .destruct = _rb_gl2_destruct,
-                                                             .enumerate_adapters = _rb_gl_enumerate_adapters,
-                                                             .enumerate_modes = _rb_gl_enumerate_modes,
-                                                             .set_drawable = _rb_gl2_set_drawable,
-                                                             .enable_thread = _rb_gl2_enable_thread,
-                                                             .disable_thread = _rb_gl2_disable_thread,
-                                                             .allocate_buffer = _rb_gl2_allocate_buffer,
-                                                             .upload_buffer = _rb_gl2_upload_buffer,
-                                                             .upload_shader = _rb_gl2_upload_shader,
-                                                             .upload_program = _rb_gl2_upload_program,
-                                                             .upload_texture = _rb_gl_upload_texture,
-                                                             .parameter_bind_texture = _rb_gl_parameter_bind_texture,
-                                                             .parameter_bind_target = _rb_gl_parameter_bind_target,
-                                                             .link_buffer = _rb_gl2_link_buffer,
-                                                             .deallocate_buffer = _rb_gl2_deallocate_buffer,
-                                                             .deallocate_shader = _rb_gl2_deallocate_shader,
-                                                             .deallocate_program = _rb_gl2_deallocate_program,
-                                                             .deallocate_texture = _rb_gl_deallocate_texture,
-                                                             .allocate_target = _rb_gl_allocate_target,
-                                                             .resize_target = _rb_gl_resize_target,
-                                                             .deallocate_target = _rb_gl_deallocate_target,
-                                                             .dispatch = _rb_gl2_dispatch,
-                                                             .flip = _rb_gl2_flip};
+static render_backend_vtable_t render_backend_vtable_gl2 = {.construct = rb_gl2_construct,
+                                                            .destruct = rb_gl2_destruct,
+                                                            .enumerate_adapters = rb_gl_enumerate_adapters,
+                                                            .enumerate_modes = rb_gl_enumerate_modes,
+                                                            .set_drawable = rb_gl2_set_drawable,
+                                                            .enable_thread = rb_gl2_enable_thread,
+                                                            .disable_thread = rb_gl2_disable_thread,
+                                                            .allocate_buffer = rb_gl2_allocate_buffer,
+                                                            .upload_buffer = rb_gl2_upload_buffer,
+                                                            .upload_shader = rb_gl2_upload_shader,
+                                                            .upload_program = rb_gl2_upload_program,
+                                                            .upload_texture = rb_gl_upload_texture,
+                                                            .parameter_bind_texture = rb_gl_parameter_bind_texture,
+                                                            .parameter_bind_target = rb_gl_parameter_bind_target,
+                                                            .link_buffer = rb_gl2_link_buffer,
+                                                            .deallocate_buffer = rb_gl2_deallocate_buffer,
+                                                            .deallocate_shader = rb_gl2_deallocate_shader,
+                                                            .deallocate_program = rb_gl2_deallocate_program,
+                                                            .deallocate_texture = rb_gl_deallocate_texture,
+                                                            .allocate_target = rb_gl_allocate_target,
+                                                            .resize_target = rb_gl_resize_target,
+                                                            .deallocate_target = rb_gl_deallocate_target,
+                                                            .dispatch = rb_gl2_dispatch,
+                                                            .flip = rb_gl2_flip};
 
 render_backend_t*
 render_backend_gl2_allocate(void) {
-	_rb_gl_init_gl_extensions();
-	if (!_rb_gl_check_context(2, 0))
+	rb_gl_init_gl_extensions();
+	if (!rb_gl_check_context(2, 0))
 		return 0;
 
 #if RENDER_ENABLE_NVGLEXPERT
@@ -793,7 +793,7 @@ render_backend_gl2_allocate(void) {
 	    memory_allocate(HASH_RENDER, sizeof(render_backend_gl2_t), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 	backend->api = RENDERAPI_OPENGL2;
 	backend->api_group = RENDERAPIGROUP_OPENGL;
-	backend->vtable = _render_backend_vtable_gl2;
+	backend->vtable = render_backend_vtable_gl2;
 	return (render_backend_t*)backend;
 }
 
