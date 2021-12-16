@@ -1303,8 +1303,11 @@ rb_gl_allocate_target(render_backend_t* backend, render_target_t* target) {
 		goto failure;
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
-	// glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, render_texture, 0);
+#if FOUNDATION_PLATFORM_MACOS
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, render_texture, 0);
+#else
+	glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, render_texture, 0);
+#endif
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_buffer);
 	if (rb_gl_check_error("Unable to create render target: Error setting target attachments"))
 		goto failure;
@@ -1388,8 +1391,11 @@ rb_gl_resize_target(render_backend_t* backend, render_target_t* target, unsigned
 		return false;
 	}
 
-	// glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, render_texture, 0);
+#if FOUNDATION_PLATFORM_MACOS
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, render_texture, 0);
+#else
+	glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, render_texture, 0);
+#endif
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_buffer);
 	if (rb_gl_check_error("Unable to resize render target: Error setting target attachments")) {
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
