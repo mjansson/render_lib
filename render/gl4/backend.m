@@ -37,8 +37,8 @@
 #endif
 
 void*
-_rb_gl_create_agl_context(void* view, unsigned int displaymask, unsigned int color, unsigned int depth,
-                          unsigned int stencil, void* pixelformat) {
+rb_gl_create_agl_context(void* view, unsigned int displaymask, unsigned int color, unsigned int depth,
+                         unsigned int stencil, void* pixelformat) {
 	FOUNDATION_UNUSED(pixelformat);
 
 	NSView* nsview = (__bridge NSView*)view;
@@ -79,7 +79,7 @@ _rb_gl_create_agl_context(void* view, unsigned int displaymask, unsigned int col
 }
 
 void
-_rb_gl_agl_make_context_current(void* context) {
+rb_gl_agl_make_context_current(void* context) {
 	if (!context)
 		[NSOpenGLContext clearCurrentContext];
 	else
@@ -87,13 +87,13 @@ _rb_gl_agl_make_context_current(void* context) {
 }
 
 void*
-_rb_gl_agl_context_current(void) {
+rb_gl_agl_context_current(void) {
 	NSOpenGLContext* context = [NSOpenGLContext currentContext];
 	return (__bridge void*)context;
 }
 
 void
-_rb_gl_destroy_agl_context(void* context) {
+rb_gl_destroy_agl_context(void* context) {
 	if (!context)
 		return;
 
@@ -105,7 +105,7 @@ _rb_gl_destroy_agl_context(void* context) {
 }
 
 void
-_rb_gl_flush_drawable(void* context) {
+rb_gl_flush_drawable(void* context) {
 	if (context)
 		[(__bridge NSOpenGLContext*)context flushBuffer];
 }
