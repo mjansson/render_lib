@@ -85,6 +85,13 @@ render_program_load_impl(render_backend_t* backend, const uuid_t uuid) {
 	render_shader_t* pshader = nullptr;
 	bool recompiled = false;
 
+	if (backend->api == RENDERAPI_NULL) {
+		program =
+		    memory_allocate(HASH_RENDER, sizeof(render_program_t), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+		program->backend = backend;
+		return program;
+	}
+
 	error_context_declare_local(char uuidbuf[40];
 	                            const string_t uuidstr = string_from_uuid(uuidbuf, sizeof(uuidbuf), uuid));
 	error_context_push(STRING_CONST("loading program"), STRING_ARGS(uuidstr));

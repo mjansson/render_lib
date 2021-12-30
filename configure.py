@@ -23,6 +23,7 @@ render_lib = generator.lib(module='render', sources=[
     'texture.c', 'version.c', 'vertexbuffer.c',
     os.path.join('gl4', 'backend.c'), os.path.join(
         'gl4', 'backend.m'), os.path.join('gl4', 'glprocs.c'),
+    os.path.join('metal', 'backend.m'),
     os.path.join('gl2', 'backend.c'),
     os.path.join('gles2', 'backend.c'),
     os.path.join('null', 'backend.c')
@@ -32,9 +33,9 @@ extralibs = []
 gllibs = []
 glframeworks = []
 if target.is_macos():
-    glframeworks = ['OpenGL']
+    glframeworks = ['Metal', 'OpenGL']
 elif target.is_ios():
-    glframeworks = ['QuartzCore', 'OpenGLES']
+    glframeworks = ['Metal', 'QuartzCore', 'OpenGLES']
 if target.is_windows():
     gllibs = ['opengl32', 'gdi32', 'iphlpapi', 'ws2_32']
     extralibs = ['iphlpapi', 'ws2_32']
