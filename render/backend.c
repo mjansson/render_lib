@@ -92,6 +92,9 @@ render_backend_allocate(render_api_t api, bool allow_fallback) {
 
 	memory_context_push(HASH_RENDER);
 
+	if (api == RENDERAPI_DEFAULT)
+		allow_fallback = true;
+
 	while (!backend) {
 		while (render_api_disabled[api])
 			api = render_api_fallback(api);
