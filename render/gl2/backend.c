@@ -31,7 +31,7 @@
 #endif
 #endif
 
-#if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_MACOS || \
+#if FOUNDATION_PLATFORM_WINDOWS || \
     (FOUNDATION_PLATFORM_LINUX && !FOUNDATION_PLATFORM_LINUX_RASPBERRYPI)
 
 #include <render/gl4/glwrap.h>
@@ -800,7 +800,7 @@ render_backend_gl2_allocate(void) {
 #else
 
 render_backend_t*
-render_gl2_allocate(void) {
+render_backend_gl2_allocate(void) {
 	return 0;
 }
 

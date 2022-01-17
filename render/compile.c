@@ -21,8 +21,10 @@
 #include <resource/resource.h>
 #include <window/window.h>
 
+#if !FOUNDATION_PLATFORM_APPLE
 #include "gl4/glwrap.h"
 #include "gl4/glprocs.h"
+#endif
 
 #if FOUNDATION_COMPILER_CLANG
 #pragma clang diagnostic push
@@ -256,7 +258,7 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 
 		render_backend_set_format(backend, PIXELFORMAT_R8G8B8, COLORSPACE_LINEAR);
 		render_backend_set_drawable(backend, &drawable);
-
+#if !FOUNDATION_PLATFORM_APPLE
 		if ((platform_decl.render_api >= RENDERAPI_OPENGL) && (platform_decl.render_api <= RENDERAPI_OPENGL4)) {
 			char* sourcebuffer = 0;
 			resource_change_t* sourcechange = resource_source_get(source, HASH_SOURCE, subplatform);
@@ -305,7 +307,7 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 				glDeleteShader(handle);
 			}
 		}
-
+#endif
 		render_backend_deallocate(backend);
 		render_drawable_finalize(&drawable);
 		window_finalize(&window);
@@ -368,10 +370,10 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 
 static render_program_t*
 render_program_compile_opengl(render_backend_t* backend, uuid_t vertexshader, uuid_t pixelshader) {
-	render_shader_t* vshader = 0;
-	render_shader_t* pshader = 0;
 	render_program_t* program = 0;
-
+#if !FOUNDATION_PLATFORM_APPLE
+    render_shader_t* vshader = 0;
+    render_shader_t* pshader = 0;
 	GLuint handle = 0;
 	GLsizei log_capacity = 2048;
 	GLchar* log_buffer = memory_allocate(HASH_RESOURCE, (size_t)log_capacity, 0, MEMORY_TEMPORARY);
@@ -612,7 +614,7 @@ exit:
 		glDeleteProgram(handle);
 
 	memory_deallocate(log_buffer);
-
+#endif
 	return program;
 }
 

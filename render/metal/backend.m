@@ -27,12 +27,23 @@
 
 #include <Metal/Metal.h>
 
+#import <QuartzCore/QuartzCore.h>
+
+typedef struct render_backend_metal_t {
+	RENDER_DECLARE_BACKEND;
+
+	id<MTLDevice> device;
+	CAMetalLayer* layer;
+	id<MTLCommandQueue> command_queue;
+	MTLRenderPassDescriptor render_pass_descriptor;
+} render_backend_metal_t;
+
 static bool
 rb_metal_construct(render_backend_t* backend) {
-	FOUNDATION_UNUSED(backend);
+	render_backend_metal_t* backend_metal = (render_backend_metal_t*)backend;
 
-	id device = MTLCreateSystemDefaultDevice();
-	if (!device) {
+	backend_metal->device = MTLCreateSystemDefaultDevice();
+	if (!backend_metal->device) {
 		log_error(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Unable to create default system metal device"));
 		return false;
 	}
@@ -43,7 +54,8 @@ rb_metal_construct(render_backend_t* backend) {
 
 static void
 rb_metal_destruct(render_backend_t* backend) {
-	FOUNDATION_UNUSED(backend);
+	render_backend_metal_t* backend_metal = (render_backend_metal_t*)backend;
+	backend_metal->device = 0;
 	log_info(HASH_RENDER, STRING_CONST("Destructed metal render backend"));
 }
 
@@ -68,15 +80,47 @@ rb_metal_enumerate_modes(render_backend_t* backend, unsigned int adapter, render
 
 static bool
 rb_metal_set_drawable(render_backend_t* backend, const render_drawable_t* drawable) {
-	FOUNDATION_UNUSED(backend);
-	FOUNDATION_UNUSED(drawable);
-	return true;
+	render_backend_metal_t* backend_metal = (render_backend_metal_t*)backend;
+	if (!drawable || !drawable->view)
+        return false;
+    
+	dispatch_sync(dispatch_get_main_queue(), ^{
+		backend_metal->layer = (CAMetalLayer*)((__bridge NSView*)drawable->view).layer;
+	});
+	if (!backend_metal->layer)
+		return false;
+
+	backend_metal->command_queue = [backend_metal->device newCommandQueue];
+	backend_metal->render_pass_descriptor = [MTLRenderPassDescriptor new];
+    return true;
 }
 
 static void
 rb_metal_dispatch(render_backend_t* backend, render_target_t* target, render_context_t** contexts,
                   size_t contexts_count) {
-	FOUNDATION_UNUSED(backend);
+	render_backend_metal_t* backend_metal = (render_backend_metal_t*)backend;
+	if (!backend_metal->layer)
+		return;
+	
+	/*
+	for (size_t cindex = 0, csize = contexts_count; cindex < csize; ++cindex) {
+		render_context_t* context = contexts[cindex];
+		int cmd_size = atomic_load32(&context->reserved, memory_order_acquire);
+		if (context->sort->indextype == RADIXSORT_INDEX16) {
+			const uint16_t* order = context->order;
+			for (int cmd_index = 0; cmd_index < cmd_size; ++cmd_index, ++order)
+				rb_gl4_dispatch_command(backend_gl4, target, context, context->commands + *order);
+		} else if (context->sort->indextype == RADIXSORT_INDEX32) {
+			const uint32_t* order = context->order;
+			for (int cmd_index = 0; cmd_index < cmd_size; ++cmd_index, ++order)
+				rb_gl4_dispatch_command(backend_gl4, target, context, context->commands + *order);
+		}
+	}
+
+	backend_metal->render_pass_descriptor.colorAttachments[0].loadAction = MTLLoadActionClear;
+	backend_metal->render_pass_descriptor.colorAttachments[0].storeAction = MTLStoreActionStore;
+	backend_metal->render_pass_descriptor.colorAttachments[0].clearColor = MTLClearColorMake(0, 1, 1, 1);
+	 */
 	FOUNDATION_UNUSED(target);
 	FOUNDATION_UNUSED(contexts);
 	FOUNDATION_UNUSED(contexts_count);
@@ -233,7 +277,7 @@ static render_backend_vtable_t render_backend_vtable_metal = {.construct = rb_me
 render_backend_t*
 render_backend_metal_allocate(void) {
 	render_backend_t* backend =
-	    memory_allocate(HASH_RENDER, sizeof(render_backend_t), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	    memory_allocate(HASH_RENDER, sizeof(render_backend_metal_t), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 	backend->api = RENDERAPI_METAL;
 	backend->api_group = RENDERAPIGROUP_METAL;
 	backend->vtable = render_backend_vtable_metal;
