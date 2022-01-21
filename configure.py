@@ -33,7 +33,7 @@ extralibs = []
 gllibs = []
 glframeworks = []
 if target.is_macos():
-    glframeworks = ['Metal', 'OpenGL']
+    glframeworks = ['Metal', 'QuartzCore', 'CoreGraphics', 'Carbon']
 elif target.is_ios():
     glframeworks = ['Metal', 'QuartzCore', 'OpenGLES']
 if target.is_windows():

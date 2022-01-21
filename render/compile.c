@@ -372,8 +372,8 @@ static render_program_t*
 render_program_compile_opengl(render_backend_t* backend, uuid_t vertexshader, uuid_t pixelshader) {
 	render_program_t* program = 0;
 #if !FOUNDATION_PLATFORM_APPLE
-    render_shader_t* vshader = 0;
-    render_shader_t* pshader = 0;
+	render_shader_t* vshader = 0;
+	render_shader_t* pshader = 0;
 	GLuint handle = 0;
 	GLsizei log_capacity = 2048;
 	GLchar* log_buffer = memory_allocate(HASH_RESOURCE, (size_t)log_capacity, 0, MEMORY_TEMPORARY);
@@ -614,6 +614,8 @@ exit:
 		glDeleteProgram(handle);
 
 	memory_deallocate(log_buffer);
+#else
+	FOUNDATION_UNUSED(backend, vertexshader, pixelshader);
 #endif
 	return program;
 }

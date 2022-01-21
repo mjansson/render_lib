@@ -33,9 +33,9 @@ typedef struct render_backend_metal_t {
 	RENDER_DECLARE_BACKEND;
 
 	id<MTLDevice> device;
-	CAMetalLayer* layer;
+	CAMetalLayer* metal_layer;
 	id<MTLCommandQueue> command_queue;
-	MTLRenderPassDescriptor render_pass_descriptor;
+	MTLRenderPassDescriptor* render_pass_descriptor;
 } render_backend_metal_t;
 
 static bool
@@ -82,48 +82,69 @@ static bool
 rb_metal_set_drawable(render_backend_t* backend, const render_drawable_t* drawable) {
 	render_backend_metal_t* backend_metal = (render_backend_metal_t*)backend;
 	if (!drawable || !drawable->view)
-        return false;
-    
+		return false;
+
 	dispatch_sync(dispatch_get_main_queue(), ^{
-		backend_metal->layer = (CAMetalLayer*)((__bridge NSView*)drawable->view).layer;
+	  backend_metal->metal_layer = (CAMetalLayer*)((__bridge NSView*)drawable->view).layer;
 	});
-	if (!backend_metal->layer)
+	if (!backend_metal->metal_layer)
 		return false;
 
 	backend_metal->command_queue = [backend_metal->device newCommandQueue];
 	backend_metal->render_pass_descriptor = [MTLRenderPassDescriptor new];
-    return true;
+	if (!backend_metal->render_pass_descriptor)
+		return false;
+
+	MTLRenderPassDescriptor* desc = backend_metal->render_pass_descriptor;
+	desc.colorAttachments[0].loadAction = MTLLoadActionDontCare;
+	desc.colorAttachments[0].storeAction = MTLStoreActionStore;
+	desc.depthAttachment.loadAction = MTLLoadActionDontCare;
+	desc.depthAttachment.storeAction = MTLStoreActionDontCare;
+
+	return true;
 }
 
 static void
 rb_metal_dispatch(render_backend_t* backend, render_target_t* target, render_context_t** contexts,
                   size_t contexts_count) {
+	FOUNDATION_UNUSED(target, contexts, contexts_count);
 	render_backend_metal_t* backend_metal = (render_backend_metal_t*)backend;
-	if (!backend_metal->layer)
+	if (!backend_metal->metal_layer)
 		return;
-	
+
+	id<CAMetalDrawable> current_drawable = [backend_metal->metal_layer nextDrawable];
+	if (!current_drawable)
+		return;
+
+	id<MTLCommandBuffer> command_buffer = [backend_metal->command_queue commandBuffer];
+
+	MTLRenderPassDescriptor* desc = backend_metal->render_pass_descriptor;
+	desc.colorAttachments[0].texture = current_drawable.texture;
+
+	id<MTLRenderCommandEncoder> render_encoder = [command_buffer renderCommandEncoderWithDescriptor:desc];
+
+	desc.colorAttachments[0].loadAction = MTLLoadActionClear;
+	desc.colorAttachments[0].clearColor = MTLClearColorMake(0, 1, 1, 1);
 	/*
 	for (size_t cindex = 0, csize = contexts_count; cindex < csize; ++cindex) {
-		render_context_t* context = contexts[cindex];
-		int cmd_size = atomic_load32(&context->reserved, memory_order_acquire);
-		if (context->sort->indextype == RADIXSORT_INDEX16) {
-			const uint16_t* order = context->order;
-			for (int cmd_index = 0; cmd_index < cmd_size; ++cmd_index, ++order)
-				rb_gl4_dispatch_command(backend_gl4, target, context, context->commands + *order);
-		} else if (context->sort->indextype == RADIXSORT_INDEX32) {
-			const uint32_t* order = context->order;
-			for (int cmd_index = 0; cmd_index < cmd_size; ++cmd_index, ++order)
-				rb_gl4_dispatch_command(backend_gl4, target, context, context->commands + *order);
-		}
+	    render_context_t* context = contexts[cindex];
+	    int cmd_size = atomic_load32(&context->reserved, memory_order_acquire);
+	    if (context->sort->indextype == RADIXSORT_INDEX16) {
+	        const uint16_t* order = context->order;
+	        for (int cmd_index = 0; cmd_index < cmd_size; ++cmd_index, ++order)
+	            rb_metal_dispatch_command(backend_metal, target, context, context->commands + *order);
+	    } else if (context->sort->indextype == RADIXSORT_INDEX32) {
+	        const uint32_t* order = context->order;
+	        for (int cmd_index = 0; cmd_index < cmd_size; ++cmd_index, ++order)
+	            rb_metal_dispatch_command(backend_metal, target, context, context->commands + *order);
+	    }
 	}
-
-	backend_metal->render_pass_descriptor.colorAttachments[0].loadAction = MTLLoadActionClear;
-	backend_metal->render_pass_descriptor.colorAttachments[0].storeAction = MTLStoreActionStore;
-	backend_metal->render_pass_descriptor.colorAttachments[0].clearColor = MTLClearColorMake(0, 1, 1, 1);
 	 */
-	FOUNDATION_UNUSED(target);
-	FOUNDATION_UNUSED(contexts);
-	FOUNDATION_UNUSED(contexts_count);
+
+	[render_encoder endEncoding];
+
+	[command_buffer presentDrawable:current_drawable];
+	[command_buffer commit];
 }
 
 static void
