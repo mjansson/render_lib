@@ -46,7 +46,7 @@ render_compile(const uuid_t uuid, uint64_t platform, resource_source_t* source, 
 }
 
 static resource_change_t*
-resource_source_platform_reduce(resource_change_t* change, resource_change_t* best, void* data) {
+render_resource_source_platform_reduce(resource_change_t* change, resource_change_t* best, void* data) {
 	uint64_t** subplatforms = data;
 	uint64_t platform = (*subplatforms)[0];
 	size_t iplat, psize;
@@ -64,7 +64,7 @@ resource_source_platform_reduce(resource_change_t* change, resource_change_t* be
 }
 
 static resource_change_t*
-resource_source_platform_super(resource_change_t* change, resource_change_t* best, void* data) {
+render_resource_source_platform_super(resource_change_t* change, resource_change_t* best, void* data) {
 	uint64_t** subplatforms = data;
 	uint64_t platform = (*subplatforms)[0];
 	FOUNDATION_UNUSED(best);
@@ -205,13 +205,13 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 
 	hashmap_initialize(map, sizeof(fixedmap.bucket) / sizeof(fixedmap.bucket[0]), 8);
 	resource_source_map_all(source, map, false);
-	resource_source_map_reduce(source, map, &subplatforms, resource_source_platform_reduce);
+	resource_source_map_reduce(source, map, &subplatforms, render_resource_source_platform_reduce);
 	resource_source_map_clear(map);
 	if (array_size(subplatforms) == 1) {
 		// The requested platform had no values, find most specialized platform
 		// which is a super of the requested platform
 		resource_source_map_all(source, map, false);
-		resource_source_map_reduce(source, map, &subplatforms, resource_source_platform_super);
+		resource_source_map_reduce(source, map, &subplatforms, render_resource_source_platform_super);
 		resource_source_map_clear(map);
 	}
 	hashmap_finalize(map);
@@ -229,35 +229,45 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 
 		platform_decl = resource_platform_decompose(subplatform);
 		if (platform_decl.render_api <= RENDERAPI_DEFAULT) {
-			if (platform_decl.render_api_group == RENDERAPIGROUP_OPENGL)
+			if (platform_decl.render_api_group == RENDERAPIGROUP_OPENGL) {
 				platform_decl.render_api = RENDERAPI_OPENGL;
-			else if (platform_decl.render_api_group == RENDERAPIGROUP_DIRECTX)
+			} else if (platform_decl.render_api_group == RENDERAPIGROUP_DIRECTX) {
 				platform_decl.render_api = RENDERAPI_DIRECTX;
-			else if (platform_decl.render_api_group == RENDERAPIGROUP_GLES)
+			} else if (platform_decl.render_api_group == RENDERAPIGROUP_GLES) {
 				platform_decl.render_api = RENDERAPI_GLES;
-			else
+			} else if (platform_decl.render_api_group == RENDERAPIGROUP_METAL) {
+				platform_decl.render_api = RENDERAPI_METAL;
+				if (prev_backend && (prev_backend->api == RENDERAPI_METAL))
+					backend = prev_backend;
+			} else {
 				continue;  // Nonspecific render api
+			}
 		}
 
 		valid_platform = true;
-		backend = render_backend_allocate((render_api_t)platform_decl.render_api, true);
+		if (!backend)
+			backend = render_backend_allocate((render_api_t)platform_decl.render_api, true);
 		if (!backend) {
 			log_warn(HASH_RESOURCE, WARNING_UNSUPPORTED, STRING_CONST("Unable to create render backend"));
 			result = -1;
 			continue;
 		}
 
-#if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_LINUX
-		window_create(&window, WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render compile"), 100, 100, WINDOW_FLAG_NOSHOW);
-#else
-		window_initialize(&window, nullptr);
-#endif
-
 		render_drawable_t drawable;
-		render_drawable_initialize_window(&drawable, &window, 0);
+		if (backend != prev_backend) {
+#if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_LINUX
+			window_create(&window, WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render compile"), 100, 100,
+			              WINDOW_FLAG_NOSHOW);
+#else
+			window_initialize(&window, nullptr);
+#endif
+			render_drawable_initialize_window(&drawable, &window, 0);
 
-		render_backend_set_format(backend, PIXELFORMAT_R8G8B8, COLORSPACE_LINEAR);
-		render_backend_set_drawable(backend, &drawable);
+			render_backend_set_format(backend, PIXELFORMAT_R8G8B8, COLORSPACE_LINEAR);
+			render_backend_set_drawable(backend, &drawable);
+		}
+
+		result = -1;
 #if !FOUNDATION_PLATFORM_APPLE
 		if ((platform_decl.render_api >= RENDERAPI_OPENGL) && (platform_decl.render_api <= RENDERAPI_OPENGL4)) {
 			char* sourcebuffer = 0;
@@ -306,16 +316,114 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 				memory_deallocate(sourcebuffer);
 				glDeleteShader(handle);
 			}
+
+			if (compiled_size > 0)
+				result = 0;
 		}
 #endif
-		render_backend_deallocate(backend);
-		render_drawable_finalize(&drawable);
-		window_finalize(&window);
+#if FOUNDATION_PLATFORM_APPLE
+		if (platform_decl.render_api == RENDERAPI_METAL) {
+			char* sourcebuffer = 0;
+			resource_change_t* sourcechange = resource_source_get(source, HASH_SOURCE, subplatform);
+			if (sourcechange && (sourcechange->flags & RESOURCE_SOURCEFLAG_BLOB)) {
+				sourcebuffer = memory_allocate(HASH_RESOURCE, sourcechange->value.blob.size, 0, MEMORY_PERSISTENT);
+				if (!resource_source_read_blob(uuid, HASH_SOURCE, subplatform, sourcechange->value.blob.checksum,
+				                               sourcebuffer, sourcechange->value.blob.size)) {
+					log_error(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Failed to read full source blob"));
+					memory_deallocate(sourcebuffer);
+					sourcebuffer = 0;
+				}
+			}
+			if (sourcebuffer) {
+				// Write to a temporary file and use command line tooling to generate the binary blob
+				char pathbuf[BUILD_MAX_PATHLEN];
+				string_t source_file = path_make_temporary(pathbuf, sizeof(pathbuf));
+				source_file = string_append(STRING_ARGS(source_file), sizeof(pathbuf), STRING_CONST(".metal"));
+				string_const_t directory = path_directory_name(STRING_ARGS(source_file));
+				fs_make_directory(STRING_ARGS(directory));
 
-		if (compiled_size <= 0) {
-			result = -1;
-			continue;
+				stream_t* source_stream = fs_open_file(STRING_ARGS(source_file),
+				                                       STREAM_OUT | STREAM_BINARY | STREAM_CREATE | STREAM_TRUNCATE);
+				stream_write(source_stream, sourcebuffer, sourcechange->value.blob.size);
+				stream_deallocate(source_stream);
+				memory_deallocate(sourcebuffer);
+
+				string_t air_file = string_allocate_concat(STRING_ARGS(source_file), STRING_CONST(".air"));
+				string_t lib_file = string_allocate_concat(STRING_ARGS(source_file), STRING_CONST(".metallib"));
+
+				process_t* compile_process = process_allocate();
+
+				string_const_t proc_args[7];
+				size_t proc_args_count = sizeof(proc_args) / sizeof(proc_args[0]);
+
+				proc_args[0] = string_const(STRING_CONST("-sdk"));
+				proc_args[1] = string_const(STRING_CONST("macosx"));
+				proc_args[2] = string_const(STRING_CONST("metal"));
+				proc_args[3] = string_const(STRING_CONST("-c"));
+				proc_args[4] = path_strip_protocol(STRING_ARGS(source_file));
+				proc_args[5] = string_const(STRING_CONST("-o"));
+				proc_args[6] = path_strip_protocol(STRING_ARGS(air_file));
+
+				log_infof(HASH_RENDER, STRING_CONST("Compiling Metal source: %.*s -> %.*s"),
+				          STRING_FORMAT(proc_args[4]), STRING_FORMAT(proc_args[6]));
+
+				process_set_executable_path(compile_process, STRING_CONST("/usr/bin/xcrun"));
+				process_set_arguments(compile_process, proc_args, proc_args_count);
+				int spawn_ret = process_spawn(compile_process);
+				process_deallocate(compile_process);
+
+				if (spawn_ret == 0) {
+					process_t* lib_process = process_allocate();
+
+					proc_args[2] = string_const(STRING_CONST("metallib"));
+					proc_args[3] = path_strip_protocol(STRING_ARGS(air_file));
+					proc_args[4] = string_const(STRING_CONST("-o"));
+					proc_args[5] = path_strip_protocol(STRING_ARGS(lib_file));
+					proc_args_count = 6;
+
+					log_infof(HASH_RENDER, STRING_CONST("Compiling Metal library: %.*s -> %.*s"),
+					          STRING_FORMAT(proc_args[3]), STRING_FORMAT(proc_args[5]));
+
+					process_set_executable_path(lib_process, STRING_CONST("/usr/bin/xcrun"));
+					process_set_arguments(lib_process, proc_args, proc_args_count);
+					spawn_ret = process_spawn(lib_process);
+					process_deallocate(lib_process);
+
+					if (spawn_ret == 0) {
+						stream_t* lib_stream = stream_open(STRING_ARGS(lib_file), STREAM_IN | STREAM_BINARY);
+						if (lib_stream) {
+							compiled_size = stream_size(lib_stream);
+							compiled_blob = memory_allocate(HASH_RESOURCE, compiled_size, 0, MEMORY_PERSISTENT);
+							stream_read(lib_stream, compiled_blob, compiled_size);
+							stream_deallocate(lib_stream);
+							result = 0;
+						} else {
+							log_error(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
+							          STRING_CONST("Failed to read compiled Metal lib after compile"));
+						}
+					} else {
+						log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Unable to compile Metal lib: %d"),
+						           spawn_ret);
+						_exit(-1);
+					}
+				} else {
+					log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Unable to compile Metal source: %d"),
+					           spawn_ret);
+				}
+
+				string_deallocate(lib_file.str);
+				string_deallocate(air_file.str);
+			}
 		}
+#endif
+		if (backend != prev_backend) {
+			render_backend_deallocate(backend);
+			render_drawable_finalize(&drawable);
+			window_finalize(&window);
+		}
+
+		if (result < 0)
+			continue;
 
 		stream = resource_local_create_static(uuid, subplatform);
 		if (stream) {
@@ -370,6 +478,7 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 
 static render_program_t*
 render_program_compile_opengl(render_backend_t* backend, uuid_t vertexshader, uuid_t pixelshader) {
+	FOUNDATION_UNUSED(backend, vertexshader, pixelshader);
 	render_program_t* program = 0;
 #if !FOUNDATION_PLATFORM_APPLE
 	render_shader_t* vshader = 0;
@@ -614,8 +723,19 @@ exit:
 		glDeleteProgram(handle);
 
 	memory_deallocate(log_buffer);
-#else
+#endif
+	return program;
+}
+
+static render_program_t*
+render_program_compile_metal(render_backend_t* backend, uuid_t vertexshader, uuid_t pixelshader) {
 	FOUNDATION_UNUSED(backend, vertexshader, pixelshader);
+	render_program_t* program = 0;
+#if FOUNDATION_PLATFORM_APPLE
+	program = render_program_allocate(0);
+	program->vertexshader = 0;
+	program->pixelshader = 0;
+	program->attributes_count = 0;
 #endif
 	return program;
 }
@@ -649,14 +769,14 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 
 	hashmap_initialize(map, sizeof(fixedmap.bucket) / sizeof(fixedmap.bucket[0]), 8);
 	resource_source_map_all(source, map, false);
-	resource_source_map_reduce(source, map, &subplatforms, resource_source_platform_reduce);
+	resource_source_map_reduce(source, map, &subplatforms, render_resource_source_platform_reduce);
 	resource_source_map_clear(map);
 	if (array_size(subplatforms) == 1) {
 		// The requested platform had no values, find most specialized platform
 		// which is a super of the requested platform
 		superplatform = true;
 		resource_source_map_all(source, map, false);
-		resource_source_map_reduce(source, map, &subplatforms, resource_source_platform_super);
+		resource_source_map_reduce(source, map, &subplatforms, render_resource_source_platform_super);
 		resource_source_map_clear(map);
 	}
 
@@ -712,7 +832,7 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 		resource_source_initialize(&shadersource);
 		if (resource_source_read(&shadersource, vertexshader)) {
 			resource_source_map_all(&shadersource, map, false);
-			resource_source_map_reduce(&shadersource, map, &shaderplatforms, resource_source_platform_reduce);
+			resource_source_map_reduce(&shadersource, map, &shaderplatforms, render_resource_source_platform_reduce);
 			resource_source_map_clear(map);
 		}
 		resource_source_finalize(&shadersource);
@@ -720,7 +840,7 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 		resource_source_initialize(&shadersource);
 		if (resource_source_read(&shadersource, pixelshader)) {
 			resource_source_map_all(&shadersource, map, false);
-			resource_source_map_reduce(&shadersource, map, &shaderplatforms, resource_source_platform_reduce);
+			resource_source_map_reduce(&shadersource, map, &shaderplatforms, render_resource_source_platform_reduce);
 			resource_source_map_clear(map);
 		}
 		resource_source_finalize(&shadersource);
@@ -769,34 +889,42 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 
 		platform_decl = resource_platform_decompose(subplatform);
 		if (platform_decl.render_api <= RENDERAPI_DEFAULT) {
-			if (platform_decl.render_api_group == RENDERAPIGROUP_OPENGL)
+			if (platform_decl.render_api_group == RENDERAPIGROUP_OPENGL) {
 				platform_decl.render_api = RENDERAPI_OPENGL;
-			else if (platform_decl.render_api_group == RENDERAPIGROUP_DIRECTX)
+			} else if (platform_decl.render_api_group == RENDERAPIGROUP_DIRECTX) {
 				platform_decl.render_api = RENDERAPI_DIRECTX;
-			else if (platform_decl.render_api_group == RENDERAPIGROUP_GLES)
+			} else if (platform_decl.render_api_group == RENDERAPIGROUP_GLES) {
 				platform_decl.render_api = RENDERAPI_GLES;
-			else
+			} else if (platform_decl.render_api_group == RENDERAPIGROUP_METAL) {
+				platform_decl.render_api = RENDERAPI_METAL;
+				if (prev_backend && (prev_backend->api == RENDERAPI_METAL))
+					backend = prev_backend;
+			} else {
 				continue;  // Nonspecific render api
+			}
 		}
 
-		backend = render_backend_allocate((render_api_t)platform_decl.render_api, true);
+		if (!backend)
+			backend = render_backend_allocate((render_api_t)platform_decl.render_api, true);
 		if (!backend) {
 			log_warn(HASH_RESOURCE, WARNING_UNSUPPORTED,
 			         STRING_CONST("Unable to create render backend for shader compilation"));
 			break;
 		}
 
-#if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_LINUX
-		window_create(&window, WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render compile"), 100, 100, WINDOW_FLAG_NOSHOW);
-#else
-		window_initialize(&window, nullptr);
-#endif
-
 		render_drawable_t drawable;
-		render_drawable_initialize_window(&drawable, &window, 0);
+		if (backend != prev_backend) {
+#if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_LINUX
+			window_create(&window, WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render compile"), 100, 100,
+			              WINDOW_FLAG_NOSHOW);
+#else
+			window_initialize(&window, nullptr);
+#endif
+			render_drawable_initialize_window(&drawable, &window, 0);
 
-		render_backend_set_format(backend, PIXELFORMAT_R8G8B8, COLORSPACE_LINEAR);
-		render_backend_set_drawable(backend, &drawable);
+			render_backend_set_format(backend, PIXELFORMAT_R8G8B8, COLORSPACE_LINEAR);
+			render_backend_set_drawable(backend, &drawable);
+		}
 
 		resource_change_t* shaderchange = resource_source_get(source, HASH_VERTEXSHADER, subplatform);
 		vertexshader = string_to_uuid(STRING_ARGS(shaderchange->value.value));
@@ -806,6 +934,8 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 
 		if ((platform_decl.render_api >= RENDERAPI_OPENGL) && (platform_decl.render_api <= RENDERAPI_OPENGL4))
 			program = render_program_compile_opengl(backend, vertexshader, pixelshader);
+		else if (platform_decl.render_api == RENDERAPI_METAL)
+			program = render_program_compile_metal(backend, vertexshader, pixelshader);
 
 		if (program) {
 			stream = resource_local_create_static(uuid, subplatform);
@@ -832,9 +962,11 @@ render_program_compile(const uuid_t uuid, uint64_t platform, resource_source_t* 
 			render_program_deallocate(program);
 		}
 
-		render_backend_deallocate(backend);
-		render_drawable_finalize(&drawable);
-		window_finalize(&window);
+		if (backend != prev_backend) {
+			render_backend_deallocate(backend);
+			render_drawable_finalize(&drawable);
+			window_finalize(&window);
+		}
 	}
 
 	if (prev_backend)
