@@ -76,7 +76,7 @@ render_program_load_impl(render_backend_t* backend, const uuid_t uuid) {
 	uint64_t platform = render_backend_resource_platform(backend);
 	render_program_t* program = nullptr;
 	stream_t* stream = nullptr;
-	void* block;
+	void* block = nullptr;
 	bool success = false;
 	uuid_t* shaderuuid;
 	size_t remain;
@@ -154,8 +154,16 @@ finalize:
 		stream_deallocate(stream);
 
 	if (!success) {
-		render_program_deallocate(program);
-		program = nullptr;
+		if (program) {
+			render_program_deallocate(program);
+			program = nullptr;
+		} else {
+			if (vshader)
+				render_shader_unload(vshader);
+			if (pshader)
+				render_shader_unload(pshader);
+			memory_deallocate(block);
+		}
 	}
 
 	error_context_pop();
