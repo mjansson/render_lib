@@ -90,6 +90,12 @@ rb_metal_set_drawable(render_backend_t* backend, const render_drawable_t* drawab
 	if (!backend_metal->metal_layer)
 		return false;
 
+	backend_metal->metal_layer.device = backend_metal->device;
+	if (backend->colorspace == COLORSPACE_LINEAR)
+		backend_metal->metal_layer.pixelFormat = MTLPixelFormatBGRA8Unorm;
+	else
+		backend_metal->metal_layer.pixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
+
 	backend_metal->command_queue = [backend_metal->device newCommandQueue];
 	backend_metal->render_pass_descriptor = [MTLRenderPassDescriptor new];
 	if (!backend_metal->render_pass_descriptor)
@@ -112,39 +118,41 @@ rb_metal_dispatch(render_backend_t* backend, render_target_t* target, render_con
 	if (!backend_metal->metal_layer)
 		return;
 
-	id<CAMetalDrawable> current_drawable = [backend_metal->metal_layer nextDrawable];
-	if (!current_drawable)
-		return;
+	@autoreleasepool {
+		id<CAMetalDrawable> current_drawable = [backend_metal->metal_layer nextDrawable];
+		if (!current_drawable)
+			return;
 
-	id<MTLCommandBuffer> command_buffer = [backend_metal->command_queue commandBuffer];
+		id<MTLCommandBuffer> command_buffer = [backend_metal->command_queue commandBuffer];
 
-	MTLRenderPassDescriptor* desc = backend_metal->render_pass_descriptor;
-	desc.colorAttachments[0].texture = current_drawable.texture;
+		MTLRenderPassDescriptor* desc = backend_metal->render_pass_descriptor;
+		desc.colorAttachments[0].texture = current_drawable.texture;
 
-	id<MTLRenderCommandEncoder> render_encoder = [command_buffer renderCommandEncoderWithDescriptor:desc];
+		id<MTLRenderCommandEncoder> render_encoder = [command_buffer renderCommandEncoderWithDescriptor:desc];
 
-	desc.colorAttachments[0].loadAction = MTLLoadActionClear;
-	desc.colorAttachments[0].clearColor = MTLClearColorMake(0, 1, 1, 1);
-	/*
-	for (size_t cindex = 0, csize = contexts_count; cindex < csize; ++cindex) {
-	    render_context_t* context = contexts[cindex];
-	    int cmd_size = atomic_load32(&context->reserved, memory_order_acquire);
-	    if (context->sort->indextype == RADIXSORT_INDEX16) {
-	        const uint16_t* order = context->order;
-	        for (int cmd_index = 0; cmd_index < cmd_size; ++cmd_index, ++order)
-	            rb_metal_dispatch_command(backend_metal, target, context, context->commands + *order);
-	    } else if (context->sort->indextype == RADIXSORT_INDEX32) {
-	        const uint32_t* order = context->order;
-	        for (int cmd_index = 0; cmd_index < cmd_size; ++cmd_index, ++order)
-	            rb_metal_dispatch_command(backend_metal, target, context, context->commands + *order);
-	    }
+		desc.colorAttachments[0].loadAction = MTLLoadActionClear;
+		desc.colorAttachments[0].clearColor = MTLClearColorMake(0, 1, 1, 1);
+		/*
+		for (size_t cindex = 0, csize = contexts_count; cindex < csize; ++cindex) {
+		    render_context_t* context = contexts[cindex];
+		    int cmd_size = atomic_load32(&context->reserved, memory_order_acquire);
+		    if (context->sort->indextype == RADIXSORT_INDEX16) {
+		        const uint16_t* order = context->order;
+		        for (int cmd_index = 0; cmd_index < cmd_size; ++cmd_index, ++order)
+		            rb_metal_dispatch_command(backend_metal, target, context, context->commands + *order);
+		    } else if (context->sort->indextype == RADIXSORT_INDEX32) {
+		        const uint32_t* order = context->order;
+		        for (int cmd_index = 0; cmd_index < cmd_size; ++cmd_index, ++order)
+		            rb_metal_dispatch_command(backend_metal, target, context, context->commands + *order);
+		    }
+		}
+		 */
+
+		[render_encoder endEncoding];
+
+		[command_buffer presentDrawable:current_drawable];
+		[command_buffer commit];
 	}
-	 */
-
-	[render_encoder endEncoding];
-
-	[command_buffer presentDrawable:current_drawable];
-	[command_buffer commit];
 }
 
 static void
