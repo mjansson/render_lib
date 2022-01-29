@@ -102,8 +102,8 @@ else:
                   implicit_deps=[render_lib], libs=['render'] + dependlibs + extralibs, includepaths=includepaths)
     for test in test_cases:
         if target.is_macos():
-            test_resources = [os.path.join('osx', item) for item in [
-                'test-' + test + '.plist', 'Images.xcassets', 'test-' + test + '.xib']]
+            test_resources = [os.path.join('macos', item) for item in [
+                'test-' + test + '.plist', 'test-' + test + '.entitlements', 'Images.xcassets', 'test-' + test + '.xib']]
             generator.app(module=test, sources=['main.c'], binname='test-' + test, basepath='test', implicit_deps=[
                           render_lib], libs=linklibs, frameworks=glframeworks, resources=test_resources, includepaths=includepaths)
         else:

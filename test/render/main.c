@@ -407,8 +407,7 @@ DECLARE_TEST(render, null_box) {
 	return _test_render_box(RENDERAPI_NULL);
 }
 
-#if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_MACOS || \
-    (FOUNDATION_PLATFORM_LINUX && !FOUNDATION_PLATFORM_LINUX_RASPBERRYPI)
+#if FOUNDATION_PLATFORM_WINDOWS || (FOUNDATION_PLATFORM_LINUX && !FOUNDATION_PLATFORM_LINUX_RASPBERRYPI)
 
 DECLARE_TEST(render, gl4) {
 	return _test_render_api(RENDERAPI_OPENGL4);
@@ -436,7 +435,23 @@ DECLARE_TEST(render, gl2_box) {
 
 #endif
 
-#if FOUNDATION_PLATFORM_IOS || FOUNDATION_PLATFORM_ANDROID || FOUNDATION_PLATFORM_LINUX_RASPBERRYPI
+#if FOUNDATION_PLATFORM_APPLE
+
+DECLARE_TEST(render, metal) {
+	return _test_render_api(RENDERAPI_METAL);
+}
+
+DECLARE_TEST(render, metal_clear) {
+	return _test_render_clear(RENDERAPI_METAL);
+}
+
+DECLARE_TEST(render, metal_box) {
+	return _test_render_box(RENDERAPI_METAL);
+}
+
+#endif
+
+#if FOUNDATION_PLATFORM_ANDROID || FOUNDATION_PLATFORM_LINUX_RASPBERRYPI
 
 DECLARE_TEST(render, gles2) {
 	return _test_render_api(RENDERAPI_GLES2);
@@ -458,7 +473,7 @@ test_render_declare(void) {
 	ADD_TEST(render, null);
 	ADD_TEST(render, null_clear);
 	ADD_TEST(render, null_box);
-#if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_MACOS || FOUNDATION_PLATFORM_LINUX
+#if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_LINUX
 	ADD_TEST(render, gl4);
 	ADD_TEST(render, gl4_clear);
 	ADD_TEST(render, gl4_box);
@@ -466,7 +481,12 @@ test_render_declare(void) {
 	ADD_TEST(render, gl2_clear);
 	ADD_TEST(render, gl2_box);
 #endif
-#if FOUNDATION_PLATFORM_IOS || FOUNDATION_PLATFORM_ANDROID || FOUNDATION_PLATFORM_LINUX_RASPBERRYPI
+#if FOUNDATION_PLATFORM_APPLE
+	ADD_TEST(render, metal);
+	ADD_TEST(render, metal_clear);
+	ADD_TEST(render, metal_box);
+#endif
+#if FOUNDATION_PLATFORM_ANDROID || FOUNDATION_PLATFORM_LINUX_RASPBERRYPI
 	ADD_TEST(render, gles2);
 	ADD_TEST(render, gles2_clear);
 	ADD_TEST(render, gles2_box);
