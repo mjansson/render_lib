@@ -27,7 +27,7 @@
 #include <foundation/atomic.h>
 #include <foundation/thread.h>
 
-#include <task/scheduler.h>
+#include <task/task.h>
 
 render_pipeline_t*
 render_pipeline_allocate(render_backend_t* backend) {
@@ -83,17 +83,11 @@ render_pipeline_execute(render_pipeline_t* pipeline) {
 		// pipeline->step_task[istep].name = string_const(STRING_CONST("render_pipeline_execute_step"));
 	}
 	task_scheduler_multiqueue(pipeline->scheduler, pipeline->step_task, step_count);
+	task_yield_and_wait(&pipeline->step_counter);
 }
 
 void
 render_pipeline_dispatch(render_pipeline_t* pipeline) {
-	if (pipeline->scheduler) {
-		while ((size_t)atomic_load32(&pipeline->step_counter, memory_order_acquire)) {
-			// TODO: Improve to a proper waiting task yield
-			thread_yield();
-		}
-	}
-
 	for (size_t istep = 0, ssize = array_size(pipeline->steps); istep < ssize; ++istep) {
 		render_pipeline_step_t* step = pipeline->steps + istep;
 		size_t context_count = array_size(step->contexts);
