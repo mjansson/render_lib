@@ -80,6 +80,7 @@ extern PFNGLUSEPROGRAMPROC glUseProgram;
 extern PFNGLVALIDATEPROGRAMPROC glValidateProgram;
 
 extern PFNGLUNIFORM1IPROC glUniform1i;
+extern PFNGLUNIFORM1FPROC glUniform1f;
 extern PFNGLUNIFORM4FVPROC glUniform4fv;
 extern PFNGLUNIFORM4IVPROC glUniform4iv;
 extern PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv;

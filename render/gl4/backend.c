@@ -1755,6 +1755,8 @@ rb_gl4_render(render_backend_gl4_t* backend, render_context_t* context, render_c
 		} else if (param->type == RENDERPARAMETER_MATRIX) {
 			// Matrix math is row-major, must be transposed to match GL layout which is column major
 			glUniformMatrix4fv((GLint)param->location, param->dim, GL_TRUE, data);
+		} else if (param->type == RENDERPARAMETER_FLOAT) {
+			glUniform1f((GLint)param->location, *(float*)data);	
 		}
 	}
 	rb_gl_check_error("Error render primitives (bind uniforms)");

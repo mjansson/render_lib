@@ -108,6 +108,7 @@ PFNGLUSEPROGRAMPROC glUseProgram;
 PFNGLVALIDATEPROGRAMPROC glValidateProgram;
 
 PFNGLUNIFORM1IPROC glUniform1i;
+PFNGLUNIFORM1FPROC glUniform1f;
 PFNGLUNIFORM4FVPROC glUniform4fv;
 PFNGLUNIFORM4IVPROC glUniform4iv;
 PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv;
@@ -244,6 +245,7 @@ rb_gl_get_shader_procs(void) {
 	glValidateProgram = (PFNGLVALIDATEPROGRAMPROC)rb_gl_get_proc_address("glValidateProgram");
 
 	glUniform1i = (PFNGLUNIFORM1IPROC)rb_gl_get_proc_address("glUniform1i");
+	glUniform1f = (PFNGLUNIFORM1FPROC)rb_gl_get_proc_address("glUniform1f");
 	glUniform4fv = (PFNGLUNIFORM4FVPROC)rb_gl_get_proc_address("glUniform4fv");
 	glUniform4iv = (PFNGLUNIFORM4IVPROC)rb_gl_get_proc_address("glUniform4iv");
 	glUniformMatrix4fv = (PFNGLUNIFORMMATRIX4FVPROC)rb_gl_get_proc_address("glUniformMatrix4fv");
