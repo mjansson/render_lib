@@ -27,36 +27,22 @@
 FOUNDATION_STATIC_ASSERT(sizeof(render_shader_t) == 64, "invalid shader size");
 
 render_shader_t*
-render_pixelshader_allocate(void) {
+render_shader_allocate(void) {
 	render_shader_t* shader = memory_allocate(HASH_RENDER, sizeof(render_shader_t), 16, MEMORY_PERSISTENT);
-	render_pixelshader_initialize(shader);
+	render_shader_initialize(shader);
 	return shader;
 }
 
 void
-render_pixelshader_initialize(render_shader_t* shader) {
+render_shader_initialize(render_shader_t* shader) {
 	memset(shader, 0, sizeof(render_shader_t));
-	shader->shadertype = SHADER_PIXEL;
-}
-
-render_shader_t*
-render_vertexshader_allocate(void) {
-	render_shader_t* shader = memory_allocate(HASH_RENDER, sizeof(render_shader_t), 16, MEMORY_PERSISTENT);
-	render_vertexshader_initialize(shader);
-	return shader;
-}
-
-void
-render_vertexshader_initialize(render_shader_t* shader) {
-	memset(shader, 0, sizeof(render_shader_t));
-	shader->shadertype = SHADER_VERTEX;
 }
 
 void
 render_shader_finalize(render_shader_t* shader) {
 	if (shader->backend) {
 		uuidmap_erase(render_backend_shader_table(shader->backend), shader->uuid);
-		shader->backend->vtable.deallocate_shader(shader->backend, shader);
+		render_backend_shader_finalize(shader->backend, shader);
 	}
 }
 
@@ -92,18 +78,14 @@ render_shader_load(render_backend_t* backend, const uuid_t uuid) {
 	                            const string_t uuidstr = string_from_uuid(uuidbuf, sizeof(uuidbuf), uuid));
 	error_context_push(STRING_CONST("loading shader"), STRING_ARGS(uuidstr));
 
-	render_backend_enable_thread(backend);
-
 retry:
 
 	stream = resource_stream_open_static(uuid, platform);
 	if (stream) {
 		header = resource_stream_read_header(stream);
 		if (header.version == RENDER_SHADER_RESOURCE_VERSION) {
-			if (header.type == HASH_PIXELSHADER)
-				shader = render_pixelshader_allocate();
-			else if (header.type == HASH_VERTEXSHADER)
-				shader = render_vertexshader_allocate();
+			if (header.type == HASH_SHADER)
+				shader = render_shader_allocate();
 			if (shader) {
 				stream_read(stream, shader, sizeof(render_shader_t));
 				shader->backend = nullptr;
@@ -168,30 +150,28 @@ render_shader_reload(render_shader_t* shader, const uuid_t uuid) {
 	error_context_push(STRING_CONST("reloading shader"), STRING_ARGS(uuidstr));
 
 	render_backend_t* backend = shader->backend;
-	render_backend_enable_thread(backend);
 
 	bool success = false;
-	render_shader_t tmpshader;
-	tmpshader.shadertype = 0;
-
+	render_shader_t tmpshader = {0};
 	uint64_t platform = render_backend_resource_platform(backend);
 
 	stream_t* stream = resource_stream_open_static(uuid, platform);
 	if (stream) {
 		resource_header_t header = resource_stream_read_header(stream);
 		if (header.version == RENDER_SHADER_RESOURCE_VERSION) {
-			if ((header.type == HASH_PIXELSHADER) && (shader->shadertype == SHADER_PIXEL))
-				render_pixelshader_initialize(&tmpshader);
-			else if ((header.type == HASH_VERTEXSHADER) && (shader->shadertype == SHADER_VERTEX))
-				render_vertexshader_initialize(&tmpshader);
-			if (tmpshader.shadertype)
+			if (header.type == HASH_SHADER) {
+				render_shader_initialize(&tmpshader);
 				stream_read(stream, &tmpshader, sizeof(render_shader_t));
+				success = true;
+			}
 		}
 		stream_deallocate(stream);
 		stream = nullptr;
 	}
-	if (tmpshader.shadertype)
+	if (success) {
 		stream = resource_stream_open_dynamic(uuid, platform);
+		success = false;
+	}
 	if (stream) {
 		char* buffer;
 		uint32_t version = stream_read_uint32(stream);
@@ -218,7 +198,7 @@ render_shader_reload(render_shader_t* shader, const uuid_t uuid) {
 		memcpy(tmpshader.backend_data, swapdata, sizeof(swapdata));
 	}
 
-	backend->vtable.deallocate_shader(backend, &tmpshader);
+	render_backend_shader_finalize(backend, &tmpshader);
 
 	error_context_pop();
 

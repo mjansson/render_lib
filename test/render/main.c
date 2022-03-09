@@ -105,7 +105,6 @@ test_render_finalize(void) {
 DECLARE_TEST(render, initialize) {
 	render_config_t config;
 	render_backend_t* backend;
-	window_t window;
 
 	EXPECT_TRUE(render_module_is_initialized());
 
@@ -116,24 +115,11 @@ DECLARE_TEST(render, initialize) {
 	memset(&config, 0, sizeof(render_config_t));
 	render_module_initialize(config);
 
-#if FOUNDATION_PLATFORM_MACOS || FOUNDATION_PLATFORM_IOS
-	window_initialize(&window, delegate_window());
-#elif FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_LINUX
-	window_create(&window, WINDOW_ADAPTER_DEFAULT, STRING_CONST("Render test"), 800, 600, 0);
-#else
-#error Not implemented
-#endif
-	EXPECT_TRUE(window_is_open(&window));
-
 	backend = render_backend_allocate(RENDERAPI_DEFAULT, true);
 
 	EXPECT_NE(backend, 0);
 
 	render_backend_deallocate(backend);
-
-	window_finalize(&window);
-
-	EXPECT_FALSE(window_is_open(&window));
 
 	return 0;
 }
@@ -142,8 +128,8 @@ static void*
 _test_render_api(render_api_t api) {
 	render_backend_t* backend = 0;
 	render_resolution_t resolutions[32];
-	render_drawable_t* drawable = 0;
-	render_target_t* framebuffer = 0;
+	//render_drawable_t* drawable = 0;
+	//render_target_t* framebuffer = 0;
 
 	EXPECT_TRUE(render_module_is_initialized());
 
@@ -166,36 +152,20 @@ _test_render_api(render_api_t api) {
 
 	render_backend_enumerate_modes(backend, WINDOW_ADAPTER_DEFAULT, resolutions,
 	                               sizeof(resolutions) / sizeof(resolutions[0]));
-	drawable = render_drawable_allocate();
-
-	EXPECT_NE(backend, 0);
-	EXPECT_NE(drawable, 0);
-
 	log_infof(HASH_TEST, STRING_CONST("Resolution: %ux%u@%uHz"), resolutions[0].width, resolutions[0].height,
 	          resolutions[0].refresh);
 
-	render_drawable_initialize_window(drawable, &window, 0);
 
-	log_infof(HASH_TEST, STRING_CONST("Drawable  : %ux%u"), drawable->width, drawable->height);
+	render_target_t* render_target = render_target_window_allocate(backend, &window, 0);
+	EXPECT_NE(render_target, nullptr);
+	EXPECT_EQ(render_target->width, window_width(&window));
+	EXPECT_EQ(render_target->height, window_height(&window));
 
-	EXPECT_EQ(drawable->type, RENDERDRAWABLE_WINDOW);
-	EXPECT_EQ(drawable->width, window_width(&window));
-	EXPECT_EQ(drawable->height, window_height(&window));
-
-	render_backend_set_format(backend, PIXELFORMAT_R8G8B8, COLORSPACE_LINEAR);
-	render_backend_set_drawable(backend, drawable);
-
-	framebuffer = render_backend_target_framebuffer(backend);
-	EXPECT_NE(framebuffer, 0);
-	EXPECT_GE(framebuffer->width, window_width(&window));
-	EXPECT_GE(framebuffer->height, window_height(&window));
-	EXPECT_EQ(framebuffer->pixelformat, PIXELFORMAT_R8G8B8);
-	EXPECT_EQ(framebuffer->colorspace, COLORSPACE_LINEAR);
+	render_target_deallocate(render_target);
 
 ignore_test:
 
 	render_backend_deallocate(backend);
-	render_drawable_deallocate(drawable);
 
 	window_finalize(&window);
 
@@ -208,9 +178,8 @@ static void*
 _test_render_clear(render_api_t api) {
 	render_backend_t* backend = 0;
 	window_t window;
-	render_drawable_t* drawable = 0;
-	render_target_t* framebuffer = 0;
-	render_context_t* context = 0;
+	render_target_t* target = 0;
+	render_pipeline_t* pipeline = 0;
 
 #if FOUNDATION_PLATFORM_MACOS || FOUNDATION_PLATFORM_IOS
 	window_initialize(&window, delegate_window());
@@ -221,14 +190,24 @@ _test_render_clear(render_api_t api) {
 #endif
 
 	backend = render_backend_allocate(api, false);
-
 	if (!backend)
 		goto ignore_test;
 
-	drawable = render_drawable_allocate();
+	target = render_target_window_allocate(backend, &window, 0);
+	pipeline = render_pipeline_allocate(backend);
 
-	render_drawable_initialize_window(drawable, &window, 0);
+	render_pipeline_set_color_attachment(pipeline, 0, target);
+	render_pipeline_set_color_clear(pipeline, 0, RENDERCLEAR_CLEAR, vector(1, 0, 0, 0));
+	render_pipeline_set_depth_clear(pipeline, RENDERCLEAR_CLEAR, vector(0, 0, 0, 0));
 
+	render_pipeline_flush(pipeline);
+
+	render_shader_t* shader = render_shader_load(backend, uuid_decl(a7a465ed, 9fcb, 4383, 9494, abadc9b80eb9));
+	EXPECT_NE(shader, 0);
+
+	thread_sleep(30000);
+
+#if 0
 	render_backend_set_format(backend, PIXELFORMAT_R8G8B8, COLORSPACE_LINEAR);
 	render_backend_set_drawable(backend, drawable);
 
@@ -269,18 +248,20 @@ _test_render_clear(render_api_t api) {
 
 	// TODO: Verify framebuffer
 	thread_sleep(2000);
+#endif
+
+	render_pipeline_deallocate(pipeline);
+	render_target_deallocate(target);
 
 ignore_test:
 
-	render_context_deallocate(context);
 	render_backend_deallocate(backend);
-	render_drawable_deallocate(drawable);
 
 	window_finalize(&window);
 
 	return 0;
 }
-
+#if 0
 static void*
 _test_render_box(render_api_t api) {
 	render_backend_t* backend = 0;
@@ -394,11 +375,13 @@ ignore_test:
 
 	return 0;
 }
+#endif
 
 DECLARE_TEST(render, null) {
 	return _test_render_api(RENDERAPI_NULL);
 }
 
+#if 0
 DECLARE_TEST(render, null_clear) {
 	return _test_render_clear(RENDERAPI_NULL);
 }
@@ -406,33 +389,6 @@ DECLARE_TEST(render, null_clear) {
 DECLARE_TEST(render, null_box) {
 	return _test_render_box(RENDERAPI_NULL);
 }
-
-#if FOUNDATION_PLATFORM_WINDOWS || (FOUNDATION_PLATFORM_LINUX && !FOUNDATION_PLATFORM_LINUX_RASPBERRYPI)
-
-DECLARE_TEST(render, gl4) {
-	return _test_render_api(RENDERAPI_OPENGL4);
-}
-
-DECLARE_TEST(render, gl4_clear) {
-	return _test_render_clear(RENDERAPI_OPENGL4);
-}
-
-DECLARE_TEST(render, gl4_box) {
-	return _test_render_box(RENDERAPI_OPENGL4);
-}
-
-DECLARE_TEST(render, gl2) {
-	return _test_render_api(RENDERAPI_OPENGL2);
-}
-
-DECLARE_TEST(render, gl2_clear) {
-	return _test_render_clear(RENDERAPI_OPENGL2);
-}
-
-DECLARE_TEST(render, gl2_box) {
-	return _test_render_box(RENDERAPI_OPENGL2);
-}
-
 #endif
 
 #if FOUNDATION_PLATFORM_APPLE
@@ -445,25 +401,11 @@ DECLARE_TEST(render, metal_clear) {
 	return _test_render_clear(RENDERAPI_METAL);
 }
 
+#if 0
 DECLARE_TEST(render, metal_box) {
 	return _test_render_box(RENDERAPI_METAL);
 }
-
 #endif
-
-#if FOUNDATION_PLATFORM_ANDROID || FOUNDATION_PLATFORM_LINUX_RASPBERRYPI
-
-DECLARE_TEST(render, gles2) {
-	return _test_render_api(RENDERAPI_GLES2);
-}
-
-DECLARE_TEST(render, gles2_clear) {
-	return _test_render_clear(RENDERAPI_GLES2);
-}
-
-DECLARE_TEST(render, gles2_box) {
-	return _test_render_box(RENDERAPI_GLES2);
-}
 
 #endif
 
@@ -471,25 +413,12 @@ static void
 test_render_declare(void) {
 	ADD_TEST(render, initialize);
 	ADD_TEST(render, null);
-	ADD_TEST(render, null_clear);
-	ADD_TEST(render, null_box);
-#if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_LINUX
-	ADD_TEST(render, gl4);
-	ADD_TEST(render, gl4_clear);
-	ADD_TEST(render, gl4_box);
-	ADD_TEST(render, gl2);
-	ADD_TEST(render, gl2_clear);
-	ADD_TEST(render, gl2_box);
-#endif
+	//ADD_TEST(render, null_clear);
+	//ADD_TEST(render, null_box);
 #if FOUNDATION_PLATFORM_APPLE
 	ADD_TEST(render, metal);
 	ADD_TEST(render, metal_clear);
-	ADD_TEST(render, metal_box);
-#endif
-#if FOUNDATION_PLATFORM_ANDROID || FOUNDATION_PLATFORM_LINUX_RASPBERRYPI
-	ADD_TEST(render, gles2);
-	ADD_TEST(render, gles2_clear);
-	ADD_TEST(render, gles2_box);
+	//ADD_TEST(render, metal_box);
 #endif
 }
 

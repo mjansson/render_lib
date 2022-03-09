@@ -21,57 +21,14 @@
 #include <render/render.h>
 #include <render/internal.h>
 
+
 render_target_t*
-render_target_allocate(render_backend_t* backend, unsigned int width, unsigned int height, pixelformat_t pixelformat,
-                       colorspace_t colorspace) {
-	render_target_t* target = memory_allocate(HASH_RENDER, sizeof(render_target_t), 0, MEMORY_PERSISTENT);
-	render_target_initialize(target, backend, width, height, pixelformat, colorspace);
-	return target;
-}
-
-void
-render_target_initialize(render_target_t* target, render_backend_t* backend, unsigned int width, unsigned int height,
-                         pixelformat_t pixelformat, colorspace_t colorspace) {
-	memset(target->backend_data, 0, sizeof(target->backend_data));
-	target->width = width;
-	target->height = height;
-	target->pixelformat = pixelformat;
-	target->colorspace = colorspace;
-	if (backend->vtable.allocate_target(backend, target))
-		target->backend = backend;
-	else
-		render_target_finalize(target);
-}
-
-void
-render_target_finalize(render_target_t* target) {
-	if (target->backend)
-		target->backend->vtable.deallocate_target(target->backend, target);
-	target->backend = 0;
+render_target_window_allocate(render_backend_t* backend, window_t* window, uint tag) {
+	return backend->vtable.target_window_allocate(backend, window, tag);
 }
 
 void
 render_target_deallocate(render_target_t* target) {
-	render_target_finalize(target);
-	memory_deallocate(target);
-}
-
-void
-render_target_initialize_framebuffer(render_target_t* target, render_backend_t* backend) {
-	memset(target->backend_data, 0, sizeof(target->backend_data));
-	target->backend = backend;
-	target->width = 0;
-	target->height = 0;
-	target->pixelformat = backend->pixelformat;
-	target->colorspace = backend->colorspace;
-}
-
-bool
-render_target_resize(render_target_t* target, unsigned int width, unsigned int height) {
-	bool success = target->backend->vtable.resize_target(target->backend, target, width, height);
-	if (success) {
-		target->width = width;
-		target->height = height;
-	}
-	return success;
+	if (target && target->backend)
+		target->backend->vtable.target_deallocate(target->backend, target);
 }

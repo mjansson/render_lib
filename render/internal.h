@@ -35,27 +35,3 @@ RENDER_EXTERN render_config_t render_config;
 RENDER_EXTERN render_backend_t** render_backends_current;
 
 // INTERNAL FUNCTIONS
-
-RENDER_EXTERN void
-render_target_initialize_framebuffer(render_target_t* target, render_backend_t* backend);
-
-RENDER_EXTERN void
-render_buffer_deallocate(render_buffer_t* buffer);
-
-RENDER_EXTERN void
-render_buffer_upload(render_buffer_t* buffer);
-
-RENDER_EXTERN void
-render_buffer_lock(render_buffer_t* buffer, unsigned int lock);
-
-RENDER_EXTERN void
-render_buffer_unlock(render_buffer_t* buffer);
-
-RENDER_EXTERN render_shader_t*
-render_shader_load_raw(render_backend_t* backend, const uuid_t uuid);
-
-RENDER_EXTERN render_program_t*
-render_program_load_raw(render_backend_t* backend, const uuid_t uuid);
-
-RENDER_EXTERN render_texture_t*
-render_texture_load_raw(render_backend_t* backend, const uuid_t uuid);

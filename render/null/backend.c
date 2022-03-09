@@ -49,175 +49,98 @@ rb_null_enumerate_modes(render_backend_t* backend, unsigned int adapter, render_
 	FOUNDATION_UNUSED(backend);
 	FOUNDATION_UNUSED(adapter);
 	if (capacity) {
-		render_resolution_t mode = {0, 800, 600, PIXELFORMAT_R8G8B8A8, COLORSPACE_LINEAR, 60};
+		render_resolution_t mode = {0, 800, 600, PIXELFORMAT_R8G8B8A8, 60};
 		store[0] = mode;
 	}
 	return 1;
 }
 
-static bool
-rb_null_set_drawable(render_backend_t* backend, const render_drawable_t* drawable) {
+static render_target_t*
+rb_null_target_window_allocate(render_backend_t* backend, window_t* window, uint tag) {
+	FOUNDATION_UNUSED(tag);
+	render_target_t* target = memory_allocate(HASH_RENDER, sizeof(render_target_t), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	target->backend = backend;
+	target->width = window_width(window);
+	target->height = window_height(window);
+	target->type = RENDERTARGET_WINDOW;
+	target->pixelformat = PIXELFORMAT_R8G8B8A8;
+	target->colorspace = COLORSPACE_sRGB;
+	return target;
+}
+
+static void
+rb_null_target_deallocate(render_backend_t* backend, render_target_t* target) {
 	FOUNDATION_UNUSED(backend);
-	FOUNDATION_UNUSED(drawable);
+	memory_deallocate(target);
+}
+
+static render_pipeline_t*
+rb_null_pipeline_allocate(render_backend_t* backend) {
+	render_pipeline_t* pipeline = memory_allocate(HASH_RENDER, sizeof(render_pipeline_t), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	pipeline->backend = backend;
+	return pipeline;
+}
+
+static void
+rb_null_pipeline_deallocate(render_backend_t* backend, render_pipeline_t* pipeline) {
+	FOUNDATION_UNUSED(backend);
+	memory_deallocate(pipeline);
+}
+
+static void
+rb_null_pipeline_set_color_attachment(render_backend_t* backend, render_pipeline_t* pipeline, uint slot, render_target_t* target) {
+	FOUNDATION_UNUSED(backend);
+	if (slot < RENDER_TARGET_COLOR_ATTACHMENT_COUNT)
+		pipeline->color_attachment[slot] = target;
+}
+
+static void
+rb_null_pipeline_set_depth_attachment(render_backend_t* backend, render_pipeline_t* pipeline, render_target_t* target) {
+	FOUNDATION_UNUSED(backend);
+	pipeline->depth_attachment = target;
+}
+
+static void
+rb_null_pipeline_set_color_clear(render_backend_t* backend, render_pipeline_t* pipeline, uint slot, render_clear_action_t action, vector_t color) {
+	FOUNDATION_UNUSED(backend, pipeline, slot, action, color);
+}
+
+static void
+rb_null_pipeline_set_depth_clear(render_backend_t* backend, render_pipeline_t* pipeline, render_clear_action_t action, vector_t color) {
+	FOUNDATION_UNUSED(backend, pipeline, action, color);
+}
+
+static void
+rb_null_pipeline_flush(render_backend_t* backend, render_pipeline_t* pipeline) {
+	FOUNDATION_UNUSED(backend, pipeline);
+}
+
+static bool
+rb_null_shader_upload(render_backend_t* backend, render_shader_t* shader, const void* buffer, size_t size) {
+	FOUNDATION_UNUSED(backend, shader, buffer, size);
 	return true;
 }
 
 static void
-rb_null_dispatch(render_backend_t* backend, render_target_t* target, render_context_t** contexts,
-                 size_t contexts_count) {
-	FOUNDATION_UNUSED(backend);
-	FOUNDATION_UNUSED(target);
-	FOUNDATION_UNUSED(contexts);
-	FOUNDATION_UNUSED(contexts_count);
-}
-
-static void
-rb_null_flip(render_backend_t* backend) {
-	++backend->framecount;
-}
-
-static void*
-rb_null_allocate_buffer(render_backend_t* backend, render_buffer_t* buffer) {
-	FOUNDATION_UNUSED(backend);
-	return memory_allocate(HASH_RENDER, buffer->buffersize, 16, MEMORY_PERSISTENT);
-}
-
-static void
-rb_null_deallocate_buffer(render_backend_t* backend, render_buffer_t* buffer, bool sys, bool aux) {
-	FOUNDATION_UNUSED(backend);
-	FOUNDATION_UNUSED(aux);
-	if (sys)
-		memory_deallocate(buffer->store);
-}
-
-static bool
-rb_null_upload_buffer(render_backend_t* backend, render_buffer_t* buffer) {
-	FOUNDATION_UNUSED(backend);
-	FOUNDATION_UNUSED(buffer);
-	return true;
-}
-
-static bool
-rb_null_upload_shader(render_backend_t* backend, render_shader_t* shader, const void* buffer, size_t size) {
-	FOUNDATION_UNUSED(backend);
-	FOUNDATION_UNUSED(shader);
-	FOUNDATION_UNUSED(buffer);
-	FOUNDATION_UNUSED(size);
-	return true;
-}
-
-static bool
-rb_null_upload_program(render_backend_t* backend, render_program_t* program) {
-	FOUNDATION_UNUSED(backend);
-	FOUNDATION_UNUSED(program);
-	return true;
-}
-
-static bool
-rb_null_upload_texture(render_backend_t* backend, render_texture_t* texture, const void* buffer, size_t size) {
-	FOUNDATION_UNUSED(backend);
-	FOUNDATION_UNUSED(texture);
-	FOUNDATION_UNUSED(buffer);
-	FOUNDATION_UNUSED(size);
-	return true;
-}
-
-static void
-rb_null_deallocate_texture(render_backend_t* backend, render_texture_t* texture) {
-	FOUNDATION_UNUSED(backend);
-	FOUNDATION_UNUSED(texture);
-}
-
-static void
-rb_null_parameter_bind_texture(render_backend_t* backend, void* buffer, render_texture_t* texture) {
-	FOUNDATION_UNUSED(backend);
-	FOUNDATION_UNUSED(buffer);
-	FOUNDATION_UNUSED(texture);
-}
-
-static void
-rb_null_parameter_bind_target(render_backend_t* backend, void* buffer, render_target_t* target) {
-	FOUNDATION_UNUSED(backend);
-	FOUNDATION_UNUSED(buffer);
-	FOUNDATION_UNUSED(target);
-}
-
-static void
-rb_null_link_buffer(render_backend_t* backend, render_buffer_t* buffer, render_program_t* program) {
-	FOUNDATION_UNUSED(backend);
-	FOUNDATION_UNUSED(buffer);
-	FOUNDATION_UNUSED(program);
-}
-
-static void
-rb_null_deallocate_shader(render_backend_t* backend, render_shader_t* shader) {
-	FOUNDATION_UNUSED(backend);
-	FOUNDATION_UNUSED(shader);
-}
-
-static void
-rb_null_deallocate_program(render_backend_t* backend, render_program_t* program) {
-	FOUNDATION_UNUSED(backend);
-	FOUNDATION_UNUSED(program);
-}
-
-static bool
-rb_null_allocate_target(render_backend_t* backend, render_target_t* target) {
-	FOUNDATION_UNUSED(backend);
-	FOUNDATION_UNUSED(target);
-	return true;
-}
-
-static bool
-rb_null_resize_target(render_backend_t* backend, render_target_t* target, unsigned int width, unsigned int height) {
-	FOUNDATION_UNUSED(backend);
-	if (target) {
-		target->width = width;
-		target->height = height;
-	}
-	return true;
-}
-
-static void
-rb_null_deallocate_target(render_backend_t* backend, render_target_t* target) {
-	FOUNDATION_UNUSED(backend);
-	FOUNDATION_UNUSED(target);
-}
-
-static void
-rb_null_enable_thread(render_backend_t* backend) {
-	FOUNDATION_UNUSED(backend);
-}
-
-static void
-rb_null_disable_thread(render_backend_t* backend) {
-	FOUNDATION_UNUSED(backend);
+rb_null_shader_finalize(render_backend_t* backend, render_shader_t* shader) {
+	FOUNDATION_UNUSED(backend, shader);
 }
 
 static render_backend_vtable_t render_backend_vtable_null = {.construct = rb_null_construct,
                                                              .destruct = rb_null_destruct,
                                                              .enumerate_adapters = rb_null_enumerate_adapters,
                                                              .enumerate_modes = rb_null_enumerate_modes,
-                                                             .set_drawable = rb_null_set_drawable,
-                                                             .enable_thread = rb_null_enable_thread,
-                                                             .disable_thread = rb_null_disable_thread,
-                                                             .dispatch = rb_null_dispatch,
-                                                             .flip = rb_null_flip,
-                                                             .allocate_buffer = rb_null_allocate_buffer,
-                                                             .upload_buffer = rb_null_upload_buffer,
-                                                             .upload_shader = rb_null_upload_shader,
-                                                             .upload_program = rb_null_upload_program,
-                                                             .upload_texture = rb_null_upload_texture,
-                                                             .parameter_bind_texture = rb_null_parameter_bind_texture,
-                                                             .parameter_bind_target = rb_null_parameter_bind_target,
-                                                             .link_buffer = rb_null_link_buffer,
-                                                             .deallocate_buffer = rb_null_deallocate_buffer,
-                                                             .deallocate_shader = rb_null_deallocate_shader,
-                                                             .deallocate_program = rb_null_deallocate_program,
-                                                             .deallocate_texture = rb_null_deallocate_texture,
-                                                             .allocate_target = rb_null_allocate_target,
-                                                             .resize_target = rb_null_resize_target,
-                                                             .deallocate_target = rb_null_deallocate_target};
+                                                             .target_window_allocate = rb_null_target_window_allocate,
+                                                             .target_deallocate = rb_null_target_deallocate,
+                                                             .pipeline_allocate = rb_null_pipeline_allocate,
+                                                             .pipeline_deallocate = rb_null_pipeline_deallocate,
+                                                             .pipeline_set_color_attachment = rb_null_pipeline_set_color_attachment,
+                                                             .pipeline_set_depth_attachment = rb_null_pipeline_set_depth_attachment,
+                                                             .pipeline_set_color_clear = rb_null_pipeline_set_color_clear,
+                                                             .pipeline_set_depth_clear = rb_null_pipeline_set_depth_clear,
+                                                             .pipeline_flush = rb_null_pipeline_flush,
+                                                             .shader_upload = rb_null_shader_upload,
+                                                             .shader_finalize = rb_null_shader_finalize};
 
 render_backend_t*
 render_backend_null_allocate(void) {

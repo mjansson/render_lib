@@ -21,8 +21,8 @@
 #include <resource/compile.h>
 
 #include <render/render.h>
-#include <render/compile.h>
-#include <render/import.h>
+//#include <render/compile.h>
+//#include <render/import.h>
 #include <render/internal.h>
 
 static bool render_initialized;
@@ -37,17 +37,11 @@ render_module_initialize(render_config_t config) {
 	if (render_initialized)
 		return 0;
 
-	render_config.target_max = config.target_max ? config.target_max : 32;
-
-	render_config.buffer_max = config.buffer_max ? config.buffer_max : 1024;
-
-	render_config.program_max = config.program_max ? config.program_max : 128;
+	FOUNDATION_UNUSED(config);
 
 	render_api_disabled[RENDERAPI_UNKNOWN] = true;
 	render_api_disabled[RENDERAPI_DEFAULT] = true;
-	render_api_disabled[RENDERAPI_OPENGL] = true;
 	render_api_disabled[RENDERAPI_DIRECTX] = true;
-	render_api_disabled[RENDERAPI_GLES] = true;
 
 	resource_import_register(render_import);
 	resource_compile_register(render_compile);
@@ -76,7 +70,8 @@ void
 render_api_enable(const render_api_t* api, size_t count) {
 	for (size_t i = 0; i < count; ++i) {
 		if ((api[i] > RENDERAPI_DEFAULT) && (api[i] < RENDERAPI_COUNT)) {
-			if ((api[i] != RENDERAPI_OPENGL) && (api[i] != RENDERAPI_DIRECTX) && (api[i] != RENDERAPI_GLES))
+			// Don't enable the proxies
+			if (api[i] != RENDERAPI_DIRECTX)
 				render_api_disabled[api[i]] = false;
 		}
 	}
@@ -93,10 +88,5 @@ render_api_disable(const render_api_t* api, size_t count) {
 void
 render_module_parse_config(const char* path, size_t path_size, const char* buffer, size_t size,
                            const json_token_t* tokens, size_t tokens_count) {
-	FOUNDATION_UNUSED(path);
-	FOUNDATION_UNUSED(path_size);
-	FOUNDATION_UNUSED(buffer);
-	FOUNDATION_UNUSED(size);
-	FOUNDATION_UNUSED(tokens);
-	FOUNDATION_UNUSED(tokens_count);
+	FOUNDATION_UNUSED(path, path_size, buffer, size, tokens, tokens_count);
 }

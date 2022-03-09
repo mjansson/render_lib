@@ -25,18 +25,28 @@
 
 #include <render/types.h>
 
-render_pipeline_t*
+RENDER_API render_pipeline_t*
 render_pipeline_allocate(render_backend_t* backend);
 
-void
-render_pipeline_initialize(render_pipeline_t* pipeline, render_backend_t* backend);
-
-void
-render_pipeline_finalize(render_pipeline_t* pipeline);
-
-void
+RENDER_API void
 render_pipeline_deallocate(render_pipeline_t* pipeline);
 
+RENDER_API void
+render_pipeline_set_color_attachment(render_pipeline_t* pipeline, uint slot, render_target_t* target);
+
+RENDER_API void
+render_pipeline_set_depth_attachment(render_pipeline_t* pipeline, render_target_t* target);
+
+RENDER_API void
+render_pipeline_set_color_clear(render_pipeline_t* pipeline, uint slot, render_clear_action_t action, vector_t color);
+
+RENDER_API void
+render_pipeline_set_depth_clear(render_pipeline_t* pipeline, render_clear_action_t action, vector_t color);
+
+RENDER_API void
+render_pipeline_flush(render_pipeline_t* pipeline);
+
+#if 0
 void
 render_pipeline_execute(render_pipeline_t* pipeline);
 
@@ -53,3 +63,4 @@ render_pipeline_step_finalize(render_pipeline_step_t* step);
 void
 render_pipeline_step_blit_initialize(render_pipeline_step_t* step, render_target_t* target_source,
                                      render_target_t* target_destination);
+#endif

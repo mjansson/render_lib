@@ -41,53 +41,11 @@ RENDER_API size_t
 render_backend_enumerate_modes(render_backend_t* backend, unsigned int adapter, render_resolution_t* store,
                                size_t capacity);
 
-RENDER_API void
-render_backend_set_format(render_backend_t* backend, const pixelformat_t format, const colorspace_t space);
-
-//! Set maximum number of extra threads that can call render backend functions beyond the
-//  main thread. Must be called prior to render_backend_set_drawable call.
-RENDER_API void
-render_backend_set_max_concurrency(render_backend_t* backend, size_t thread_count);
-
-RENDER_API bool
-render_backend_set_drawable(render_backend_t* backend, const render_drawable_t* drawable);
-
-RENDER_API render_drawable_t*
-render_backend_drawable(render_backend_t* backend);
-
-RENDER_API render_target_t*
-render_backend_target_framebuffer(render_backend_t* backend);
-
-RENDER_API void
-render_backend_dispatch(render_backend_t* backend, render_target_t* target, render_context_t** contexts,
-                        size_t contexts_count);
-
-RENDER_API void
-render_backend_flip(render_backend_t* backend);
-
 RENDER_API uint64_t
 render_backend_frame_count(render_backend_t* backend);
 
-RENDER_API void
-render_backend_enable_thread(render_backend_t* backend);
-
-RENDER_API void
-render_backend_disable_thread(render_backend_t* backend);
-
-RENDER_API size_t
-render_backend_max_concurrency(render_backend_t* backend);
-
 RENDER_API render_backend_t*
 render_backend_thread(void);
-
-RENDER_API bool
-render_backend_try_enter_exclusive(render_backend_t* backend);
-
-RENDER_API void
-render_backend_enter_exclusive(render_backend_t* backend);
-
-RENDER_API void
-render_backend_leave_exclusive(render_backend_t* backend);
 
 RENDER_API uint64_t
 render_backend_resource_platform(render_backend_t* backend);
@@ -95,29 +53,13 @@ render_backend_resource_platform(render_backend_t* backend);
 RENDER_API void
 render_backend_set_resource_platform(render_backend_t* backend, uint64_t platform);
 
+RENDER_API render_backend_t**
+render_backends(void);
+
 RENDER_API bool
 render_backend_shader_upload(render_backend_t* backend, render_shader_t* shader, const void* buffer, size_t size);
 
-RENDER_API uuidmap_t*
-render_backend_shader_table(render_backend_t* backend);
-
-RENDER_API bool
-render_backend_program_upload(render_backend_t* backend, render_program_t* program);
-
-RENDER_API uuidmap_t*
-render_backend_program_table(render_backend_t* backend);
-
-RENDER_API bool
-render_backend_texture_upload(render_backend_t* backend, render_texture_t* texture, const void* buffer, size_t size);
-
 RENDER_API void
-render_backend_parameter_bind_texture(render_backend_t* backend, void* buffer, render_texture_t* texture);
+render_backend_shader_finalize(render_backend_t* backend, render_shader_t* shader);
 
-RENDER_API void
-render_backend_parameter_bind_target(render_backend_t* backend, void* buffer, render_target_t* target);
-
-RENDER_API uuidmap_t*
-render_backend_texture_table(render_backend_t* backend);
-
-RENDER_API render_backend_t**
-render_backends(void);
+#define render_backend_shader_table(backend) ((uuidmap_t*)&((backend)->shadertable))

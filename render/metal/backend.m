@@ -18,6 +18,7 @@
 
 #include <foundation/foundation.h>
 #include <window/window.h>
+#include <vector/vector.h>
 #include <render/render.h>
 #include <render/internal.h>
 
@@ -30,13 +31,32 @@
 #import <QuartzCore/QuartzCore.h>
 
 typedef struct render_backend_metal_t {
-	RENDER_DECLARE_BACKEND;
+	render_backend_t backend;
 
 	id<MTLDevice> device;
-	CAMetalLayer* metal_layer;
-	id<MTLCommandQueue> command_queue;
-	MTLRenderPassDescriptor* render_pass_descriptor;
+	//id<MTLCommandQueue> command_queue;
+	//MTLRenderPassDescriptor* render_pass_descriptor;
 } render_backend_metal_t;
+
+typedef struct render_target_window_metal_t {
+	render_target_t target;
+	CAMetalLayer* metal_layer;
+} render_target_window_metal_t;
+
+typedef struct render_pipeline_metal_t {
+	render_pipeline_t pipeline;
+	MTLRenderPassDescriptor* descriptor;
+	id<MTLCommandQueue> command_queue;
+} render_pipeline_metal_t;
+
+static void
+rb_metal_destruct(render_backend_t* backend) {
+	render_backend_metal_t* backend_metal = (render_backend_metal_t*)backend;
+	@autoreleasepool {
+		backend_metal->device = 0;
+	}
+	log_info(HASH_RENDER, STRING_CONST("Destructed metal render backend"));
+}
 
 static bool
 rb_metal_construct(render_backend_t* backend) {
@@ -48,15 +68,15 @@ rb_metal_construct(render_backend_t* backend) {
 		return false;
 	}
 
+	MTLArgumentBuffersTier argument_buffers_tier = [backend_metal->device argumentBuffersSupport];
+	if (argument_buffers_tier == MTLArgumentBuffersTier1) {
+		rb_metal_destruct(backend);
+		log_error(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Required Metal argument buffers tier 2 not supported by device"));
+		return false;
+	}
+
 	log_info(HASH_RENDER, STRING_CONST("Constructed metal render backend"));
 	return true;
-}
-
-static void
-rb_metal_destruct(render_backend_t* backend) {
-	render_backend_metal_t* backend_metal = (render_backend_metal_t*)backend;
-	backend_metal->device = 0;
-	log_info(HASH_RENDER, STRING_CONST("Destructed metal render backend"));
 }
 
 static size_t
@@ -72,51 +92,186 @@ rb_metal_enumerate_modes(render_backend_t* backend, unsigned int adapter, render
 	FOUNDATION_UNUSED(backend);
 	FOUNDATION_UNUSED(adapter);
 	if (capacity) {
-		render_resolution_t mode = {0, 800, 600, PIXELFORMAT_R8G8B8A8, COLORSPACE_LINEAR, 60};
+		render_resolution_t mode = {0, 800, 600, PIXELFORMAT_R8G8B8A8, 60};
 		store[0] = mode;
 	}
 	return 1;
 }
 
-static bool
-rb_metal_set_drawable(render_backend_t* backend, const render_drawable_t* drawable) {
+static render_target_t* 
+rb_metal_target_window_allocate(render_backend_t* backend, window_t* window, uint tag) {
+	void* view = window_view(window, tag);
+	if (!view)
+		return 0;
+
 	render_backend_metal_t* backend_metal = (render_backend_metal_t*)backend;
-	if (!drawable || !drawable->view)
-		return false;
+
+	render_target_window_metal_t* target_metal = memory_allocate(HASH_RENDER, sizeof(render_target_window_metal_t), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	render_target_t* target = (render_target_t*)target_metal;
+	target->backend = backend;
+	target->width = window_width(window);
+	target->height = window_height(window);
+	target->type = RENDERTARGET_WINDOW;
+	target->pixelformat = PIXELFORMAT_R8G8B8A8;
+	target->colorspace = COLORSPACE_sRGB;
 
 	dispatch_sync(dispatch_get_main_queue(), ^{
-	  backend_metal->metal_layer = (CAMetalLayer*)((__bridge NSView*)drawable->view).layer;
+	  target_metal->metal_layer = (CAMetalLayer*)((__bridge NSView*)view).layer;
 	});
-	if (!backend_metal->metal_layer)
-		return false;
+	if (!target_metal->metal_layer) {
+		log_error(HASH_RENDER, ERROR_INVALID_VALUE, STRING_CONST("Unable to create Metal render target for window, view has no Metal layer"));
+		memory_deallocate(target_metal);
+		return 0;
+	}
 
-	backend_metal->metal_layer.device = backend_metal->device;
-	if (backend->colorspace == COLORSPACE_LINEAR)
-		backend_metal->metal_layer.pixelFormat = MTLPixelFormatBGRA8Unorm;
-	else
-		backend_metal->metal_layer.pixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
+	target_metal->metal_layer.device = backend_metal->device;
+	target_metal->metal_layer.pixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
 
-	backend_metal->command_queue = [backend_metal->device newCommandQueue];
-	backend_metal->render_pass_descriptor = [MTLRenderPassDescriptor new];
-	if (!backend_metal->render_pass_descriptor)
-		return false;
+	return target;
+}
 
-	MTLRenderPassDescriptor* pass_desc = backend_metal->render_pass_descriptor;
-	pass_desc.colorAttachments[0].loadAction = MTLLoadActionDontCare;
-	pass_desc.colorAttachments[0].storeAction = MTLStoreActionStore;
-	pass_desc.depthAttachment.loadAction = MTLLoadActionDontCare;
-	pass_desc.depthAttachment.storeAction = MTLStoreActionDontCare;
+static void
+rb_metal_target_deallocate(render_backend_t* backend, render_target_t* target) {
+	if (!target || (target->backend != backend))
+		return;
 
-	MTLTextureDescriptor* depth_target_descriptor = [MTLTextureDescriptor new];
-	depth_target_descriptor.width = drawable->width;
-	depth_target_descriptor.height = drawable->height;
-	depth_target_descriptor.pixelFormat = MTLPixelFormatDepth32Float;
-	depth_target_descriptor.storageMode = MTLStorageModePrivate;
-	depth_target_descriptor.usage = MTLTextureUsageRenderTarget;
+	if (target->type == RENDERTARGET_WINDOW) {
+		// Window target
+	}
 
-	pass_desc.depthAttachment.texture = [backend_metal->device newTextureWithDescriptor:depth_target_descriptor];
+	memory_deallocate(target);
+}
 
+static render_pipeline_t*
+rb_metal_pipeline_allocate(render_backend_t* backend) {
+	render_backend_metal_t* backend_metal = (render_backend_metal_t*)backend;
+	render_pipeline_metal_t* pipeline_metal = memory_allocate(HASH_RENDER, sizeof(render_pipeline_metal_t), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	
+	render_pipeline_t* pipeline = (render_pipeline_t*)pipeline_metal;
+	pipeline->backend = backend;
+
+	pipeline_metal->descriptor = [MTLRenderPassDescriptor new];
+	if (!pipeline_metal->descriptor) {
+		log_error(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Unable to create Metal render pass descriptor"));
+		memory_deallocate(pipeline_metal);
+		return 0;
+	}
+
+	pipeline_metal->command_queue = [backend_metal->device newCommandQueue];
+	if (!pipeline_metal->command_queue) {
+		log_error(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Unable to create Metal render pass command queue"));
+		memory_deallocate(pipeline_metal);
+		return 0;
+	}
+
+	return pipeline;
+}
+
+static void
+rb_metal_pipeline_deallocate(render_backend_t* backend, render_pipeline_t* pipeline) {
+	FOUNDATION_UNUSED(backend);
+	render_pipeline_metal_t* pipeline_metal = (render_pipeline_metal_t*)pipeline;
+	@autoreleasepool {
+		pipeline_metal->descriptor = 0;
+		pipeline_metal->command_queue = 0;
+	}
+	memory_deallocate(pipeline);
+}
+
+static void
+rb_metal_pipeline_set_color_attachment(render_backend_t* backend, render_pipeline_t* pipeline, uint slot, render_target_t* target) {
+	FOUNDATION_UNUSED(backend);
+	if (slot < RENDER_TARGET_COLOR_ATTACHMENT_COUNT)
+		pipeline->color_attachment[slot] = target;
+}
+
+static void
+rb_metal_pipeline_set_depth_attachment(render_backend_t* backend, render_pipeline_t* pipeline, render_target_t* target) {
+	FOUNDATION_UNUSED(backend);
+	pipeline->depth_attachment = target;
+}
+
+static void
+rb_metal_pipeline_set_color_clear(render_backend_t* backend, render_pipeline_t* pipeline, uint slot, render_clear_action_t action, vector_t color) {
+	FOUNDATION_UNUSED(backend);
+	render_pipeline_metal_t* pipeline_metal = (render_pipeline_metal_t*)pipeline;
+	if (slot < RENDER_TARGET_COLOR_ATTACHMENT_COUNT) {
+		if (action == RENDERCLEAR_CLEAR) {
+			pipeline_metal->descriptor.colorAttachments[slot].loadAction = MTLLoadActionClear;
+			pipeline_metal->descriptor.colorAttachments[slot].clearColor = MTLClearColorMake((double)vector_x(color), (double)vector_y(color), (double)vector_z(color), (double)vector_w(color));
+		} else if (action == RENDERCLEAR_PRESERVE) {
+			pipeline_metal->descriptor.colorAttachments[slot].loadAction = MTLLoadActionLoad;
+		} else {
+			pipeline_metal->descriptor.colorAttachments[slot].loadAction = MTLLoadActionDontCare;
+		}
+	}
+}
+
+static void
+rb_metal_pipeline_set_depth_clear(render_backend_t* backend, render_pipeline_t* pipeline, render_clear_action_t action, vector_t color) {
+	FOUNDATION_UNUSED(backend);
+	render_pipeline_metal_t* pipeline_metal = (render_pipeline_metal_t*)pipeline;
+	if (action == RENDERCLEAR_CLEAR) {
+		pipeline_metal->descriptor.depthAttachment.loadAction = MTLLoadActionClear;
+		pipeline_metal->descriptor.depthAttachment.clearDepth = (double)vector_x(color);
+	} else if (action == RENDERCLEAR_PRESERVE) {
+		pipeline_metal->descriptor.depthAttachment.loadAction = MTLLoadActionLoad;
+	} else {
+		pipeline_metal->descriptor.depthAttachment.loadAction = MTLLoadActionDontCare;
+	}
+}
+
+static void
+rb_metal_pipeline_flush(render_backend_t* backend, render_pipeline_t* pipeline) {
+	FOUNDATION_UNUSED(backend);
+	render_pipeline_metal_t* pipeline_metal = (render_pipeline_metal_t*)pipeline;
+
+	@autoreleasepool {
+		id<CAMetalDrawable> current_drawable = 0;
+
+		render_target_t* target = pipeline->color_attachment[0];
+		if (target && (target->type == RENDERTARGET_WINDOW)) {
+			render_target_window_metal_t* target_window = (render_target_window_metal_t*)pipeline->color_attachment[0];
+			current_drawable = [target_window->metal_layer nextDrawable];
+		}
+
+		MTLRenderPassDescriptor* desc = pipeline_metal->descriptor;
+		desc.colorAttachments[0].texture = current_drawable.texture;
+
+		id<MTLCommandBuffer> command_buffer = [pipeline_metal->command_queue commandBuffer];
+
+		id<MTLRenderCommandEncoder> render_encoder = [command_buffer renderCommandEncoderWithDescriptor:desc];
+
+		MTLViewport viewport;
+		viewport.originX = 0;
+		viewport.originY = 0;
+		viewport.width = 100;
+		viewport.height = 100;
+		viewport.znear = 0;
+		viewport.zfar = 1;
+		[render_encoder setViewport:viewport];
+
+		[render_encoder endEncoding];
+
+		[command_buffer presentDrawable:current_drawable];
+		[command_buffer commit];
+	}
+}
+
+static bool
+rb_metal_shader_upload(render_backend_t* backend, render_shader_t* shader, const void* buffer, size_t size) {
+	FOUNDATION_UNUSED(backend, shader, buffer, size);
 	return true;
+}
+
+static void
+rb_metal_shader_finalize(render_backend_t* backend, render_shader_t* shader) {
+	FOUNDATION_UNUSED(backend, shader);
+}
+
+#if 0
+static bool
+rb_metal_set_drawable(render_backend_t* backend, const render_drawable_t* drawable) {
 }
 
 static void
@@ -332,29 +487,6 @@ rb_metal_deallocate_program(render_backend_t* backend, render_program_t* program
 	FOUNDATION_UNUSED(program);
 }
 
-static bool
-rb_metal_allocate_target(render_backend_t* backend, render_target_t* target) {
-	FOUNDATION_UNUSED(backend);
-	FOUNDATION_UNUSED(target);
-	return true;
-}
-
-static bool
-rb_metal_resize_target(render_backend_t* backend, render_target_t* target, unsigned int width, unsigned int height) {
-	FOUNDATION_UNUSED(backend);
-	if (target) {
-		target->width = width;
-		target->height = height;
-	}
-	return true;
-}
-
-static void
-rb_metal_deallocate_target(render_backend_t* backend, render_target_t* target) {
-	FOUNDATION_UNUSED(backend);
-	FOUNDATION_UNUSED(target);
-}
-
 static void
 rb_metal_enable_thread(render_backend_t* backend) {
 	FOUNDATION_UNUSED(backend);
@@ -364,31 +496,23 @@ static void
 rb_metal_disable_thread(render_backend_t* backend) {
 	FOUNDATION_UNUSED(backend);
 }
+#endif
 
 static render_backend_vtable_t render_backend_vtable_metal = {.construct = rb_metal_construct,
                                                               .destruct = rb_metal_destruct,
                                                               .enumerate_adapters = rb_metal_enumerate_adapters,
                                                               .enumerate_modes = rb_metal_enumerate_modes,
-                                                              .set_drawable = rb_metal_set_drawable,
-                                                              .enable_thread = rb_metal_enable_thread,
-                                                              .disable_thread = rb_metal_disable_thread,
-                                                              .dispatch = rb_metal_dispatch,
-                                                              .flip = rb_metal_flip,
-                                                              .allocate_buffer = rb_metal_allocate_buffer,
-                                                              .upload_buffer = rb_metal_upload_buffer,
-                                                              .upload_shader = rb_metal_upload_shader,
-                                                              .upload_program = rb_metal_upload_program,
-                                                              .upload_texture = rb_metal_upload_texture,
-                                                              .parameter_bind_texture = rb_metal_parameter_bind_texture,
-                                                              .parameter_bind_target = rb_metal_parameter_bind_target,
-                                                              .link_buffer = rb_metal_link_buffer,
-                                                              .deallocate_buffer = rb_metal_deallocate_buffer,
-                                                              .deallocate_shader = rb_metal_deallocate_shader,
-                                                              .deallocate_program = rb_metal_deallocate_program,
-                                                              .deallocate_texture = rb_metal_deallocate_texture,
-                                                              .allocate_target = rb_metal_allocate_target,
-                                                              .resize_target = rb_metal_resize_target,
-                                                              .deallocate_target = rb_metal_deallocate_target};
+                                                              .target_window_allocate = rb_metal_target_window_allocate,
+                                                              .target_deallocate = rb_metal_target_deallocate,
+                                                              .pipeline_allocate = rb_metal_pipeline_allocate,
+                                                              .pipeline_deallocate = rb_metal_pipeline_deallocate,
+                                                              .pipeline_set_color_attachment = rb_metal_pipeline_set_color_attachment,
+                                                              .pipeline_set_depth_attachment = rb_metal_pipeline_set_depth_attachment,
+                                                              .pipeline_set_color_clear = rb_metal_pipeline_set_color_clear,
+                                                              .pipeline_set_depth_clear = rb_metal_pipeline_set_depth_clear,
+                                                              .pipeline_flush = rb_metal_pipeline_flush,
+                                                              .shader_upload = rb_metal_shader_upload,
+                                                              .shader_finalize = rb_metal_shader_finalize};
 
 render_backend_t*
 render_backend_metal_allocate(void) {

@@ -25,21 +25,9 @@
 #include <render/types.h>
 #include <render/hashstrings.h>
 #include <render/backend.h>
-#include <render/context.h>
-#include <render/drawable.h>
-#include <render/target.h>
-#include <render/command.h>
-#include <render/sort.h>
-#include <render/indexbuffer.h>
-#include <render/vertexbuffer.h>
-#include <render/parameter.h>
-#include <render/shader.h>
 #include <render/pipeline.h>
-#include <render/program.h>
-#include <render/projection.h>
-#include <render/state.h>
-#include <render/texture.h>
-
+#include <render/shader.h>
+#include <render/target.h>
 #include <render/import.h>
 #include <render/compile.h>
 

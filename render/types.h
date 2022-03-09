@@ -27,6 +27,7 @@
 #include <window/types.h>
 #include <resource/types.h>
 #include <task/types.h>
+#include <vector/types.h>
 
 #include <render/build.h>
 
@@ -34,187 +35,34 @@ typedef enum render_api_t {
 	RENDERAPI_UNKNOWN = 0,
 	RENDERAPI_DEFAULT,
 	RENDERAPI_NULL,
-	RENDERAPI_OPENGL,
-	RENDERAPI_OPENGL2,
-	RENDERAPI_OPENGL4,
 	RENDERAPI_DIRECTX,
 	RENDERAPI_DIRECTX12,
 	RENDERAPI_METAL,
 	RENDERAPI_VULKAN,
-	RENDERAPI_GLES,
-	RENDERAPI_GLES2,
-	RENDERAPI_GLES3,
 
 	RENDERAPI_COUNT
 } render_api_t;
 
 typedef enum render_api_group_t {
 	RENDERAPIGROUP_NONE = 0,
-	RENDERAPIGROUP_OPENGL,
 	RENDERAPIGROUP_DIRECTX,
-	RENDERAPIGROUP_GLES,
 	RENDERAPIGROUP_METAL,
 	RENDERAPIGROUP_VULKAN,
 
 	RENDERAPIGROUP_COUNT
 } render_api_group_t;
 
-typedef enum render_drawable_type_t {
-	RENDERDRAWABLE_INVALID = 0,
-	RENDERDRAWABLE_WINDOW,
-	RENDERDRAWABLE_FULLSCREEN
-} render_drawable_type_t;
+typedef enum render_target_type_t {
+	RENDERTARGET_INVALID = 0,
+	RENDERTARGET_WINDOW,
+	RENDERTARGET_FULLSCREEN,
+	RENDERTARGET_TEXTURE,
 
-typedef enum render_usage_t {
-	RENDERUSAGE_INVALID = 0,
-	RENDERUSAGE_NORENDER,
-	RENDERUSAGE_DYNAMIC,
-	RENDERUSAGE_STATIC,
-	RENDERUSAGE_TARGET
-} render_usage_t;
+	RENDERTARGET_TYPECOUNT,
+	RENDERTARGET_UNKNOWN = 0x7FFFFFFF
+} render_target_type_t;
 
-typedef enum render_buffer_type_t {
-	RENDERBUFFER_COLOR = 0x01,
-	RENDERBUFFER_DEPTH = 0x02,
-	RENDERBUFFER_STENCIL = 0x04,
-
-	RENDERBUFFER_VERTEX = 0x10,
-	RENDERBUFFER_INDEX = 0x20,
-	RENDERBUFFER_PARAMETER = 0x40,
-	RENDERBUFFER_STATE = 0x80
-} render_buffer_type_t;
-
-typedef enum render_buffer_uploadpolicy_t {
-	RENDERBUFFER_UPLOAD_ONUNLOCK = 0,
-	RENDERBUFFER_UPLOAD_ONRENDER,
-	RENDERBUFFER_UPLOAD_ONDISPATCH
-} render_buffer_uploadpolicy_t;
-
-typedef enum render_buffer_flag_t {
-	RENDERBUFFER_DIRTY = 0x01,
-	RENDERBUFFER_LOST = 0x02,
-
-	RENDERBUFFER_LOCK_READ = 0x10,
-	RENDERBUFFER_LOCK_WRITE = 0x20,
-	RENDERBUFFER_LOCK_NOUPLOAD = 0x40,
-	RENDERBUFFER_LOCK_FORCEUPLOAD = 0x80,
-	RENDERBUFFER_LOCK_BITS = 0xF0
-} render_buffer_flag_t;
-
-typedef enum render_vertex_format_t {
-	// Never change order, code may rely on enum values being constant for optimization purposes
-	VERTEXFORMAT_FLOAT = 0,
-	VERTEXFORMAT_FLOAT2,
-	VERTEXFORMAT_FLOAT3,
-	VERTEXFORMAT_FLOAT4,
-
-	//! Unsigned normalized
-	VERTEXFORMAT_UBYTE4_UNORM,
-	//! Signed normalized
-	VERTEXFORMAT_UBYTE4_SNORM,
-
-	VERTEXFORMAT_SHORT,
-	VERTEXFORMAT_SHORT2,
-	VERTEXFORMAT_SHORT4,
-
-	VERTEXFORMAT_INT,
-	VERTEXFORMAT_INT2,
-	VERTEXFORMAT_INT4,
-
-	VERTEXFORMAT_COUNT,
-	VERTEXFORMAT_UNUSED = 255
-} render_vertex_format_t;
-
-typedef enum render_index_format_t {
-	INDEXFORMAT_UBYTE = 0,
-	INDEXFORMAT_USHORT,
-	INDEXFORMAT_UINT,
-	INDEXFORMAT_COUNT
-} render_index_format_t;
-
-#define RENDER_MAX_ATTRIBUTES 16
-
-typedef enum render_vertex_attribute_id {
-	VERTEXATTRIBUTE_POSITION = 0,
-	VERTEXATTRIBUTE_WEIGHT = 1,
-	VERTEXATTRIBUTE_NORMAL = 2,
-	VERTEXATTRIBUTE_PRIMARYCOLOR = 3,
-	VERTEXATTRIBUTE_SECONDARYCOLOR = 4,
-	VERTEXATTRIBUTE_INDEX = 7,
-	VERTEXATTRIBUTE_TEXCOORD0 = 8,
-	VERTEXATTRIBUTE_TEXCOORD1 = 9,
-	VERTEXATTRIBUTE_TEXCOORD2 = 10,
-	VERTEXATTRIBUTE_TEXCOORD3 = 11,
-	VERTEXATTRIBUTE_TEXCOORD4 = 12,
-	VERTEXATTRIBUTE_TEXCOORD5 = 13,
-	VERTEXATTRIBUTE_TANGENT = 14,
-	VERTEXATTRIBUTE_BITANGENT = 15,
-	VERTEXATTRIBUTE_COUNT = 16
-} render_vertex_attribute_id;
-
-typedef enum render_shader_type_t {
-	SHADER_COMPUTE = 1,
-	SHADER_GEOMETRY = 2,
-	SHADER_VERTEX = 4,
-	SHADER_PIXEL = 8
-} render_shader_type_t;
-
-typedef enum render_parameter_type_t {
-	RENDERPARAMETER_FLOAT4 = 0,
-	RENDERPARAMETER_INT4,
-	RENDERPARAMETER_MATRIX,
-	RENDERPARAMETER_TEXTURE,
-	RENDERPARAMETER_ATTRIBUTE,
-	RENDERPARAMETER_FLOAT
-} render_parameter_type_t;
-
-typedef enum render_texture_type_t {
-	RENDERTEXTURE_1D = 0,
-	RENDERTEXTURE_2D,
-	RENDERTEXTURE_3D,
-	RENDERTEXTURE_CUBE
-} render_texture_type_t;
-
-typedef enum render_texture_flag_t { RENDERTEXTURE_FLAG_AUTOGENERATE_MIPMAPS = 1 } render_texture_flag_t;
-
-typedef enum render_blend_factor_t {
-	BLEND_ZERO = 0,
-	BLEND_ONE,
-	BLEND_SRCCOLOR,
-	BLEND_INVSRCCOLOR,
-	BLEND_DESTCOLOR,
-	BLEND_INVDESTCOLOR,
-	BLEND_SRCALPHA,
-	BLEND_INVSRCALPHA,
-	BLEND_DESTALPHA,
-	BLEND_INVDESTALPHA,
-	BLEND_FACTOR,
-	BLEND_INVFACTOR,
-	BLEND_SRCALPHASAT
-} render_blend_factor_t;
-
-typedef enum render_blend_op_t {
-	BLEND_OP_ADD = 0,
-	BLEND_OP_SUBTRACT,
-	BLEND_OP_REV_SUBTRACT,
-	BLEND_OP_MIN,
-	BLEND_OP_MAX
-} render_blend_op_t;
-
-typedef enum render_compare_func_t {
-	RENDER_CMP_NEVER = 0,
-	RENDER_CMP_LESS,
-	RENDER_CMP_LESSEQUAL,
-	RENDER_CMP_EQUAL,
-	RENDER_CMP_NOTEQUAL,
-	RENDER_CMP_GREATEREQUAL,
-	RENDER_CMP_GREATER,
-	RENDER_CMP_ALWAYS
-} render_compare_func_t;
-
-typedef enum render_cull_mode_t { RENDER_CULL_CW = 0, RENDER_CULL_CCW = 1, RENDER_CULL_NONE = 2 } render_cull_mode_t;
-
-typedef enum pixelformat_t {
+typedef enum render_pixelformat_t {
 	PIXELFORMAT_INVALID = 0,
 
 	PIXELFORMAT_R8G8B8,
@@ -231,98 +79,58 @@ typedef enum pixelformat_t {
 	PIXELFORMAT_PVRTC_2,
 	PIXELFORMAT_PVRTC_4,
 
-	PIXELFORMAT_COUNT
-} pixelformat_t;
+	PIXELFORMAT_COUNT,
+	PIXELFORMAT_UNKNOWN = 0x7FFFFFFF
+} render_pixelformat_t;
 
-typedef enum colorspace_t {
+typedef enum render_colorspace_t {
 	COLORSPACE_INVALID = 0,
 
 	COLORSPACE_LINEAR,
 	COLORSPACE_sRGB,
 
-	COLORSPACE_COUNT
-} colorspace_t;
+	COLORSPACE_COUNT,
+	COLORSPACE_UNKNOWN = 0x7fffffff
+} render_colorspace_t;
 
-typedef enum render_primitive_t {
-	RENDERPRIMITIVE_INVALID = 0,
+typedef enum render_clear_action_t {
+	//! Let driver decide, content is undefined
+	RENDERCLEAR_DONTCARE = 0,
+	//! Preserve previous content
+	RENDERCLEAR_PRESERVE,
+	//! Clear to set color value
+	RENDERCLEAR_CLEAR
+} render_clear_action_t;
 
-	RENDERPRIMITIVE_TRIANGLELIST,
-	RENDERPRIMITIVE_LINELIST,
+#define RENDER_TARGET_COLOR_ATTACHMENT_COUNT 4
 
-	RENDERPRIMITIVE_COUNT
-} render_primitive_t;
-
-typedef enum render_command_id {
-	RENDERCOMMAND_INVALID = 0,
-	RENDERCOMMAND_CLEAR,
-	RENDERCOMMAND_VIEWPORT,
-	RENDERCOMMAND_RENDER_TRIANGLELIST,
-	RENDERCOMMAND_RENDER_LINELIST
-} render_command_id;
-
+typedef struct render_config_t render_config_t;
 typedef struct render_backend_vtable_t render_backend_vtable_t;
 typedef struct render_backend_t render_backend_t;
-typedef struct render_drawable_t render_drawable_t;
-typedef struct render_target_t render_target_t;
-typedef struct render_context_t render_context_t;
-typedef struct render_command_clear_t render_command_clear_t;
-typedef struct render_command_viewport_t render_command_viewport_t;
-typedef struct render_command_render_t render_command_render_t;
-typedef struct render_command_t render_command_t;
-typedef struct render_vertex_attribute_t render_vertex_attribute_t;
-typedef struct render_vertex_decl_t render_vertex_decl_t;
-typedef struct render_buffer_t render_buffer_t;
-typedef struct render_vertexbuffer_t render_vertexbuffer_t;
-typedef struct render_indexbuffer_t render_indexbuffer_t;
-typedef struct render_shader_t render_shader_t;
-typedef struct render_vertexshader_t render_vertexshader_t;
-typedef struct render_pixelshader_t render_pixelshader_t;
-typedef struct render_program_t render_program_t;
-typedef struct render_program_attribute_t render_program_attribute_t;
-typedef struct render_texture_t render_texture_t;
-typedef struct render_state_t render_state_t;
 typedef struct render_resolution_t render_resolution_t;
-typedef struct render_vertex_decl_element_t render_vertex_decl_element_t;
-typedef struct render_parameter_t render_parameter_t;
-typedef struct render_parameterbuffer_t render_parameterbuffer_t;
-typedef struct render_statebuffer_t render_statebuffer_t;
+typedef struct render_target_t render_target_t;
 typedef struct render_pipeline_t render_pipeline_t;
-typedef struct render_pipeline_step_t render_pipeline_step_t;
-typedef struct render_config_t render_config_t;
+typedef struct render_shader_t render_shader_t;
 
 typedef bool (*render_backend_construct_fn)(render_backend_t*);
 typedef void (*render_backend_destruct_fn)(render_backend_t*);
-typedef size_t (*render_backend_enumerate_adapters_fn)(render_backend_t*, unsigned int*, size_t);
-typedef size_t (*render_backend_enumerate_modes_fn)(render_backend_t*, unsigned int, render_resolution_t*, size_t);
-typedef void (*render_backend_enable_thread_fn)(render_backend_t*);
-typedef void (*render_backend_disable_thread_fn)(render_backend_t*);
-typedef bool (*render_backend_set_drawable_fn)(render_backend_t*, const render_drawable_t*);
-typedef void (*render_backend_dispatch_fn)(render_backend_t*, render_target_t*, render_context_t**, size_t);
-typedef void (*render_backend_flip_fn)(render_backend_t*);
-typedef void* (*render_backend_allocate_buffer_fn)(render_backend_t*, render_buffer_t*);
-typedef void (*render_backend_deallocate_buffer_fn)(render_backend_t*, render_buffer_t*, bool, bool);
-typedef bool (*render_backend_upload_buffer_fn)(render_backend_t*, render_buffer_t*);
-typedef bool (*render_backend_upload_shader_fn)(render_backend_t*, render_shader_t*, const void*, size_t);
-typedef bool (*render_backend_upload_program_fn)(render_backend_t*, render_program_t*);
-typedef bool (*render_backend_upload_texture_fn)(render_backend_t*, render_texture_t*, const void*, size_t);
-typedef void (*render_backend_parameter_bind_texture_fn)(render_backend_t*, void*, render_texture_t*);
-typedef void (*render_backend_parameter_bind_target_fn)(render_backend_t*, void*, render_target_t*);
-typedef void (*render_backend_deallocate_shader_fn)(render_backend_t*, render_shader_t*);
-typedef void (*render_backend_deallocate_program_fn)(render_backend_t*, render_program_t*);
-typedef void (*render_backend_deallocate_texture_fn)(render_backend_t*, render_texture_t*);
-typedef void (*render_backend_link_buffer_fn)(render_backend_t*, render_buffer_t*, render_program_t* program);
-typedef bool (*render_backend_allocate_target_fn)(render_backend_t*, render_target_t*);
-typedef bool (*render_backend_resize_target_fn)(render_backend_t*, render_target_t*, unsigned int, unsigned int);
-typedef void (*render_backend_deallocate_target_fn)(render_backend_t*, render_target_t*);
-typedef void (*render_pipeline_execute_fn)(render_backend_t*, render_target_t* target, render_context_t**, size_t);
+typedef size_t (*render_backend_enumerate_adapters_fn)(render_backend_t*, uint*, size_t);
+typedef size_t (*render_backend_enumerate_modes_fn)(render_backend_t*, uint, render_resolution_t*, size_t);
+typedef render_target_t* (*render_backend_target_window_allocate_fn)(render_backend_t*, window_t*, uint);
+//typedef render_target_t* (*render_backend_target_fullscreen_allocate_fn)(render_backend_t*);
+typedef void (*render_backend_target_deallocate_fn)(render_backend_t*, render_target_t*);
+typedef render_pipeline_t* (*render_backend_pipeline_allocate_fn)(render_backend_t*);
+typedef void (*render_backend_pipeline_deallocate_fn)(render_backend_t*, render_pipeline_t*);
+typedef void (*render_backend_pipeline_set_color_attachment_fn)(render_backend_t*, render_pipeline_t*, uint, render_target_t*);
+typedef void (*render_backend_pipeline_set_depth_attachment_fn)(render_backend_t*, render_pipeline_t*, render_target_t*);
+typedef void (*render_backend_pipeline_set_color_clear_fn)(render_backend_t*, render_pipeline_t*, uint, render_clear_action_t, vector_t);
+typedef void (*render_backend_pipeline_set_depth_clear_fn)(render_backend_t*, render_pipeline_t*, render_clear_action_t, vector_t);
+typedef void (*render_backend_pipeline_flush_fn)(render_backend_t*, render_pipeline_t*);
+typedef bool (*render_backend_shader_upload_fn)(render_backend_t*, render_shader_t*, const void*, size_t);
+typedef void (*render_backend_shader_finalize_fn)(render_backend_t*, render_shader_t*);
 
 struct render_config_t {
-	/*! Maximum number of concurrently allocated render targets */
-	size_t target_max;
-	/*! Maximum number of concurrently allocated buffers */
-	size_t buffer_max;
-	/*! Maximum number of concurrently allocated programs */
-	size_t program_max;
+	uint unused;
 };
 
 struct render_backend_vtable_t {
@@ -330,57 +138,17 @@ struct render_backend_vtable_t {
 	render_backend_destruct_fn destruct;
 	render_backend_enumerate_adapters_fn enumerate_adapters;
 	render_backend_enumerate_modes_fn enumerate_modes;
-	render_backend_enable_thread_fn enable_thread;
-	render_backend_disable_thread_fn disable_thread;
-	render_backend_set_drawable_fn set_drawable;
-	render_backend_dispatch_fn dispatch;
-	render_backend_flip_fn flip;
-	render_backend_allocate_buffer_fn allocate_buffer;
-	render_backend_upload_buffer_fn upload_buffer;
-	render_backend_upload_shader_fn upload_shader;
-	render_backend_upload_program_fn upload_program;
-	render_backend_upload_texture_fn upload_texture;
-	render_backend_parameter_bind_texture_fn parameter_bind_texture;
-	render_backend_parameter_bind_target_fn parameter_bind_target;
-	render_backend_link_buffer_fn link_buffer;
-	render_backend_deallocate_buffer_fn deallocate_buffer;
-	render_backend_deallocate_shader_fn deallocate_shader;
-	render_backend_deallocate_program_fn deallocate_program;
-	render_backend_deallocate_texture_fn deallocate_texture;
-	render_backend_allocate_target_fn allocate_target;
-	render_backend_resize_target_fn resize_target;
-	render_backend_deallocate_target_fn deallocate_target;
-};
-
-struct render_drawable_t {
-	render_drawable_type_t type;
-	unsigned int adapter;
-	window_t* window;
-	unsigned int tag;
-#if FOUNDATION_PLATFORM_WINDOWS
-	void* hwnd;
-	void* hdc;
-#elif FOUNDATION_PLATFORM_LINUX_RASPBERRYPI
-	void* native;  // EGL_DISPMANX_WINDOW_T*
-	void* display;
-#elif FOUNDATION_PLATFORM_LINUX
-	void* display;
-	int screen;
-	unsigned long drawable;
-#elif FOUNDATION_PLATFORM_MACOS
-	void* view;
-#elif FOUNDATION_PLATFORM_IOS
-	void* view;
-	void* drawable;  // CAEAGLLayer*
-#elif FOUNDATION_PLATFORM_ANDROID
-	void* native;
-	void* display;
-#else
-#error Not implemented
-#endif
-	unsigned int width;
-	unsigned int height;
-	unsigned int refresh;
+	render_backend_target_window_allocate_fn target_window_allocate;
+	render_backend_target_deallocate_fn target_deallocate;
+	render_backend_pipeline_allocate_fn pipeline_allocate;
+	render_backend_pipeline_deallocate_fn pipeline_deallocate;
+	render_backend_pipeline_set_color_attachment_fn pipeline_set_color_attachment;
+	render_backend_pipeline_set_depth_attachment_fn pipeline_set_depth_attachment;
+	render_backend_pipeline_set_color_clear_fn pipeline_set_color_clear;
+	render_backend_pipeline_set_depth_clear_fn pipeline_set_depth_clear;
+	render_backend_pipeline_flush_fn pipeline_flush;
+	render_backend_shader_upload_fn shader_upload;
+	render_backend_shader_finalize_fn shader_finalize;
 };
 
 #if FOUNDATION_SIZE_POINTER == 4
@@ -391,263 +159,47 @@ struct render_drawable_t {
 #define RENDER_32BIT_PADDING_ARR(...)
 #endif
 
+struct render_backend_t {
+	render_api_t api;
+	render_api_group_t api_group;
+	render_backend_vtable_t vtable;
+	uint64_t framecount;
+	uint64_t platform;
+	uuidmap_fixed_t shadertable;
+};
+
+struct render_resolution_t {
+	uint id;
+	uint width;
+	uint height;
+	render_pixelformat_t pixelformat;
+	uint refresh;
+};
+
 struct render_target_t {
 	render_backend_t* backend;
-	RENDER_32BIT_PADDING(backendptr)
-	unsigned int width;
-	unsigned int height;
-	pixelformat_t pixelformat;
-	colorspace_t colorspace;
-	uintptr_t backend_data[4];
+	render_target_type_t type;
+	uint width;
+	uint height;
+	render_pixelformat_t pixelformat;
+	render_colorspace_t colorspace;
 };
 
-#define RENDER_DECLARE_BACKEND      \
-	render_api_t api;               \
-	render_api_group_t api_group;   \
-	render_backend_vtable_t vtable; \
-	render_drawable_t drawable;     \
-	pixelformat_t pixelformat;      \
-	colorspace_t colorspace;        \
-	render_target_t framebuffer;    \
-	uint64_t concurrency;           \
-	uint64_t framecount;            \
-	uint64_t platform;              \
-	mutex_t* exclusive;             \
-	uuidmap_fixed_t shadertable;    \
-	uuidmap_fixed_t programtable;   \
-	uuidmap_fixed_t texturetable
-
-struct render_backend_t {
-	RENDER_DECLARE_BACKEND;
-};
-
-struct render_context_t {
-	atomic32_t reserved;
-	int32_t allocated;
-
-	atomic64_t key;
-
-	render_command_t* commands;
-	uint64_t* keys;
-	radixsort_t* sort;
-	uint32_t group;
-
-	const void* order;
-};
-
-struct render_state_t {
-	render_blend_factor_t blend_source_color;
-	render_blend_factor_t blend_dest_color;
-	render_blend_op_t blend_op_color;
-	render_blend_factor_t blend_source_alpha;
-	render_blend_factor_t blend_dest_alpha;
-	render_blend_op_t blend_op_alpha;
-	render_compare_func_t depth_func;
-	render_cull_mode_t cull_mode;
-	bool blend_enable[8];
-	bool target_write[8];
-	bool depth_write;
-	bool alpha_to_coverage;
-	uint32_t _padding;
-};
-
-struct render_command_clear_t {
-	unsigned int buffer_mask;
-	uint32_t color;
-	unsigned int color_mask;
-	float depth;
-	uint32_t stencil;
-};
-
-struct render_command_viewport_t {
-	int x;
-	int y;
-	int width;
-	int height;
-	real min_z;
-	real max_z;
-};
-
-struct render_command_render_t {
-	render_program_t* program;
-	render_vertexbuffer_t* vertexbuffer;
-	render_indexbuffer_t* indexbuffer;
-	render_parameterbuffer_t* parameterbuffer;
-	render_statebuffer_t* statebuffer;
-};
-
-struct render_command_t {
-	unsigned int type : 16;
-	unsigned int reserved : 16;
-	unsigned int count;
-
-	union {
-		render_command_clear_t clear;
-		render_command_viewport_t viewport;
-		render_command_render_t render;
-	} data;
-};
-
-struct render_vertex_attribute_t {
-	//! Data format of attribute
-	uint8_t format;
-	//! Binding identifier (used by backend)
-	uint8_t binding;
-	//! Stride in bytes between consecutive elements of this attribute (0 means tightly packed)
-	uint16_t stride;
-	//! Offset from start of buffer to first element of this attribute
-	uint32_t offset;
-};
-
-struct render_vertex_decl_t {
-	//! Attribute definitions
-	render_vertex_attribute_t attribute[RENDER_MAX_ATTRIBUTES];
-};
-
-struct render_parameter_t {
-	hash_t name;
-	render_parameter_type_t type;
-	uint16_t dim;
-	uint16_t offset;
-	unsigned int stages;
-	unsigned int location;
-};
-
-#define RENDER_DECLARE_BUFFER        \
-	render_backend_t* backend;       \
-	RENDER_32BIT_PADDING(backendptr) \
-	uint8_t usage;                   \
-	uint8_t buffertype;              \
-	uint8_t policy;                  \
-	uint8_t flags;                   \
-	uint32_t locks;                  \
-	size_t allocated;                \
-	size_t used;                     \
-	size_t buffersize;               \
-	void* store;                     \
-	void* access;                    \
-	uintptr_t backend_data[4];       \
-	semaphore_t lock
-
-struct render_buffer_t {
-	RENDER_DECLARE_BUFFER;
-};
-
-struct render_vertexbuffer_t {
-	RENDER_DECLARE_BUFFER;
-	render_vertex_decl_t decl;
-};
-
-struct render_indexbuffer_t {
-	RENDER_DECLARE_BUFFER;
-	render_index_format_t format;
-};
-
-#define RENDER_DECLARE_PARAMETERBUFFER(_parameter_count) \
-	RENDER_DECLARE_BUFFER;                               \
-	unsigned int parameter_count;                        \
-	render_parameter_t parameters[_parameter_count]
-
-struct render_parameterbuffer_t {
-	RENDER_DECLARE_PARAMETERBUFFER(FOUNDATION_FLEXIBLE_ARRAY);
-};
-
-struct render_statebuffer_t {
-	RENDER_DECLARE_BUFFER;
-	render_state_t state;
+struct render_pipeline_t {
+	render_backend_t* backend;
+	render_target_t* color_attachment[RENDER_TARGET_COLOR_ATTACHMENT_COUNT];
+	render_target_t* depth_attachment;
 };
 
 #define RENDER_DECLARE_SHADER                 \
 	render_backend_t* backend;                \
 	RENDER_32BIT_PADDING(backendptr)          \
-	unsigned int shadertype : 8;              \
-	unsigned int unused : 24;                 \
 	atomic32_t ref;                           \
-	uintptr_t backend_data[4];                \
-	RENDER_32BIT_PADDING_ARR(backend_data, 4) \
-	uuid_t uuid
-
-FOUNDATION_ALIGNED_STRUCT(render_shader_t, 8) {
-	RENDER_DECLARE_SHADER;
-};
-
-struct render_program_attribute_t {
-	//! Data format of attribute
-	uint16_t format;
-	//! Binding identifier (used by backend)
-	uint16_t binding;
-};
-
-FOUNDATION_ALIGNED_STRUCT(render_program_t, 8) {
-	render_backend_t* backend;
-	RENDER_32BIT_PADDING(backendptr)
-	render_shader_t* vertexshader;
-	RENDER_32BIT_PADDING_ARR(vshaderptr)
-	render_shader_t* pixelshader;
-	RENDER_32BIT_PADDING_ARR(pshaderptr)
-	uintptr_t backend_data[4];
-	RENDER_32BIT_PADDING_ARR(data, 4)
-	atomic32_t ref;
-	uint32_t size_parameterdata;
-	uint32_t parameters_count;
-	uint32_t unused;
-	uuid_t uuid;
-	uint32_t attributes_count;
-	render_program_attribute_t attribute[RENDER_MAX_ATTRIBUTES];
-	hash_t attribute_name[RENDER_MAX_ATTRIBUTES];
-	render_parameter_t* parameters;
-	RENDER_32BIT_PADDING_ARR(paramsptr, 4)
-	render_parameter_t inline_parameters[FOUNDATION_FLEXIBLE_ARRAY];
-};
-
-#define RENDER_DECLARE_TEXTURE                \
-	render_backend_t* backend;                \
-	RENDER_32BIT_PADDING(backendptr)          \
-	unsigned int texturetype : 8;             \
-	unsigned int usage : 8;                   \
-	unsigned int textureflags : 16;           \
-	atomic32_t ref;                           \
-	pixelformat_t pixelformat;                \
-	colorspace_t colorspace;                  \
-	unsigned int width;                       \
-	unsigned int height;                      \
-	unsigned int depth;                       \
-	unsigned int levels;                      \
 	uint32_t unused;                          \
-	uintptr_t backend_data[4];                \
-	RENDER_32BIT_PADDING_ARR(backend_data, 4) \
 	uuid_t uuid
 
-FOUNDATION_ALIGNED_STRUCT(render_texture_t, 8) {
-	RENDER_DECLARE_TEXTURE;
-};
-
-struct render_pipeline_step_t {
-	render_backend_t* backend;
-	render_target_t* target;
-	render_pipeline_execute_fn executor;
-	render_context_t** contexts;
-};
-
-struct render_pipeline_t {
-	render_backend_t* backend;
-	render_pipeline_step_t* steps;
-	task_scheduler_t* scheduler;
-	task_t* step_task;
-	task_context_t step_context;
-	atomic32_t step_counter;
-};
-
-struct render_resolution_t {
-	unsigned int id;
-	int width;
-	int height;
-	pixelformat_t pixelformat;
-	colorspace_t colorspace;
-	unsigned int refresh;
-};
-
-struct render_vertex_decl_element_t {
-	render_vertex_format_t format;
-	render_vertex_attribute_id attribute;
+struct render_shader_t {
+	RENDER_DECLARE_SHADER;
+	uintptr_t backend_data[4];
+	RENDER_32BIT_PADDING_ARR(backend_data, 4)
 };

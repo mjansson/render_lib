@@ -26,18 +26,7 @@
 #include <render/types.h>
 
 RENDER_API render_target_t*
-render_target_allocate(render_backend_t* backend, unsigned int width, unsigned int height, pixelformat_t pixelformat,
-                       colorspace_t colorspace);
-
-RENDER_API void
-render_target_initialize(render_target_t* target, render_backend_t* backend, unsigned int width, unsigned int height,
-                         pixelformat_t pixelformat, colorspace_t colorspace);
-
-RENDER_API void
-render_target_finalize(render_target_t* target);
+render_target_window_allocate(render_backend_t* backend, window_t* window, uint tag);
 
 RENDER_API void
 render_target_deallocate(render_target_t* target);
-
-RENDER_API bool
-render_target_resize(render_target_t* target, unsigned int width, unsigned int height);

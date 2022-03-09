@@ -17,107 +17,46 @@
  */
 
 #include <render/pipeline.h>
-#include <render/context.h>
-#include <render/sort.h>
 #include <render/backend.h>
 #include <render/hashstrings.h>
 
-#include <foundation/memory.h>
-#include <foundation/array.h>
-#include <foundation/atomic.h>
-#include <foundation/thread.h>
-
-#include <task/task.h>
-
 render_pipeline_t*
 render_pipeline_allocate(render_backend_t* backend) {
-	render_pipeline_t* pipeline = memory_allocate(HASH_RENDER, sizeof(render_pipeline_t), 0, MEMORY_PERSISTENT);
-	render_pipeline_initialize(pipeline, backend);
-	return pipeline;
-}
-
-void
-render_pipeline_initialize(render_pipeline_t* pipeline, render_backend_t* backend) {
-	memset(pipeline, 0, sizeof(render_pipeline_t));
-	pipeline->backend = backend;
-}
-
-void
-render_pipeline_finalize(render_pipeline_t* pipeline) {
-	if (pipeline) {
-		array_deallocate(pipeline->step_task);
-		for (size_t istep = 0, ssize = array_size(pipeline->steps); istep < ssize; ++istep)
-			render_pipeline_step_finalize(pipeline->steps + istep);
-		array_deallocate(pipeline->steps);
-	}
+	return backend->vtable.pipeline_allocate(backend);
 }
 
 void
 render_pipeline_deallocate(render_pipeline_t* pipeline) {
-	render_pipeline_finalize(pipeline);
-	memory_deallocate(pipeline);
-}
-
-static void
-render_pipeline_execute_step(task_context_t context) {
-	render_pipeline_step_t* step = context;
-
-	size_t context_count = array_size(step->contexts);
-	step->executor(step->backend, step->target, step->contexts, context_count);
-
-	render_sort_merge(step->contexts, context_count);
+	if (pipeline && pipeline->backend)
+		pipeline->backend->vtable.pipeline_deallocate(pipeline->backend, pipeline);
 }
 
 void
-render_pipeline_execute(render_pipeline_t* pipeline) {
-	size_t step_count = array_size(pipeline->steps);
-	array_resize(pipeline->step_task, step_count);
-	atomic_store32(&pipeline->step_counter, (int32_t)step_count, memory_order_release);
-	for (size_t istep = 0; istep < step_count; ++istep) {
-		render_pipeline_step_t* step = pipeline->steps + istep;
-		step->backend = pipeline->backend;
-
-		pipeline->step_task[istep].function = render_pipeline_execute_step;
-		pipeline->step_task[istep].context = step;
-		pipeline->step_task[istep].counter = &pipeline->step_counter;
-		// pipeline->step_task[istep].name = string_const(STRING_CONST("render_pipeline_execute_step"));
-	}
-	task_scheduler_multiqueue(pipeline->scheduler, pipeline->step_task, step_count);
-	task_yield_and_wait(&pipeline->step_counter);
+render_pipeline_set_color_attachment(render_pipeline_t* pipeline, uint slot, render_target_t* target) {
+	if (pipeline && pipeline->backend)
+		pipeline->backend->vtable.pipeline_set_color_attachment(pipeline->backend, pipeline, slot, target);
 }
 
 void
-render_pipeline_dispatch(render_pipeline_t* pipeline) {
-	for (size_t istep = 0, ssize = array_size(pipeline->steps); istep < ssize; ++istep) {
-		render_pipeline_step_t* step = pipeline->steps + istep;
-		size_t context_count = array_size(step->contexts);
-		render_backend_dispatch(pipeline->backend, step->target, step->contexts, context_count);
-	}
+render_pipeline_set_depth_attachment(render_pipeline_t* pipeline, render_target_t* target) {
+	if (pipeline && pipeline->backend)
+		pipeline->backend->vtable.pipeline_set_depth_attachment(pipeline->backend, pipeline, target);
 }
 
 void
-render_pipeline_step_initialize(render_pipeline_step_t* step, render_target_t* target,
-                                render_pipeline_execute_fn executor) {
-	memset(step, 0, sizeof(render_pipeline_step_t));
-	step->target = target;
-	step->contexts = nullptr;
-	step->executor = executor;
+render_pipeline_set_color_clear(render_pipeline_t* pipeline, uint slot, render_clear_action_t action, vector_t color) {
+	if (pipeline && pipeline->backend)
+		pipeline->backend->vtable.pipeline_set_color_clear(pipeline->backend, pipeline, slot, action, color);
 }
 
 void
-render_pipeline_step_finalize(render_pipeline_step_t* step) {
-	for (size_t icontext = 0, csize = array_size(step->contexts); icontext < csize; ++icontext)
-		render_context_deallocate(step->contexts[icontext]);
-	array_deallocate(step->contexts);
+render_pipeline_set_depth_clear(render_pipeline_t* pipeline, render_clear_action_t action, vector_t color) {
+	if (pipeline && pipeline->backend)
+		pipeline->backend->vtable.pipeline_set_depth_clear(pipeline->backend, pipeline, action, color);
 }
 
 void
-render_pipeline_step_blit_initialize(render_pipeline_step_t* step, render_target_t* target_source,
-                                     render_target_t* target_destination) {
-	memset(step, 0, sizeof(render_pipeline_step_t));
-	step->target = target_destination;
-	// step->contexts = nullptr;
-	// step->executor = executor;
-
-	FOUNDATION_UNUSED(target_source);
+render_pipeline_flush(render_pipeline_t* pipeline) {
+	if (pipeline && pipeline->backend)
+		pipeline->backend->vtable.pipeline_flush(pipeline->backend, pipeline);
 }

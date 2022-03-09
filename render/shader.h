@@ -25,16 +25,10 @@
 #include <render/types.h>
 
 RENDER_API render_shader_t*
-render_pixelshader_allocate(void);
-
-RENDER_API render_shader_t*
-render_vertexshader_allocate(void);
+render_shader_allocate(void);
 
 RENDER_API void
-render_pixelshader_initialize(render_shader_t* shader);
-
-RENDER_API void
-render_vertexshader_initialize(render_shader_t* shader);
+render_shader_initialize(render_shader_t* shader);
 
 RENDER_API void
 render_shader_finalize(render_shader_t* shader);
