@@ -20,10 +20,25 @@
 #include <render/render.h>
 #include <render/internal.h>
 
+render_buffer_t*
+render_buffer_allocate(render_backend_t* backend, render_usage_t usage, size_t buffer_size,
+                       const void* data, size_t data_size) {
+	render_buffer_t* buffer =
+	    memory_allocate(HASH_RENDER, sizeof(render_buffer_t), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	buffer->backend = backend;
+	buffer->usage = (uint8_t)usage;
+	semaphore_initialize(&buffer->lock, 1);
+	memset(buffer->backend_data, 0, sizeof(buffer->backend_data));
+
+	backend->vtable.buffer_allocate(backend, buffer, buffer_size, data, data_size);
+
+	return buffer;	
+}
+
 void
 render_buffer_deallocate(render_buffer_t* buffer) {
 	if (buffer) {
-		buffer->backend->vtable.deallocate_buffer(buffer->backend, buffer, true, true);
+		buffer->backend->vtable.buffer_deallocate(buffer->backend, buffer, true, true);
 		semaphore_finalize(&buffer->lock);
 		memory_deallocate(buffer);
 	}
@@ -32,7 +47,7 @@ render_buffer_deallocate(render_buffer_t* buffer) {
 void
 render_buffer_upload(render_buffer_t* buffer) {
 	if (buffer->flags & RENDERBUFFER_DIRTY)
-		buffer->backend->vtable.upload_buffer(buffer->backend, (render_buffer_t*)buffer);
+		buffer->backend->vtable.buffer_upload(buffer->backend, buffer);
 }
 
 void
@@ -54,10 +69,9 @@ render_buffer_unlock(render_buffer_t* buffer) {
 			--buffer->locks;
 			if (!buffer->locks) {
 				buffer->access = nullptr;
-				if ((buffer->flags & RENDERBUFFER_LOCK_WRITE) && !(buffer->flags & RENDERBUFFER_LOCK_NOUPLOAD)) {
+				if (buffer->flags & RENDERBUFFER_LOCK_WRITE) {
 					buffer->flags |= RENDERBUFFER_DIRTY;
-					if ((buffer->policy == RENDERBUFFER_UPLOAD_ONUNLOCK) ||
-					    (buffer->flags & RENDERBUFFER_LOCK_FORCEUPLOAD))
+					if (!(buffer->flags & RENDERBUFFER_LOCK_NOUPLOAD))
 						render_buffer_upload(buffer);
 				}
 				buffer->flags &= ~(uint32_t)RENDERBUFFER_LOCK_BITS;

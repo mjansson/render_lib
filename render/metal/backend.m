@@ -62,6 +62,8 @@ static bool
 rb_metal_construct(render_backend_t* backend) {
 	render_backend_metal_t* backend_metal = (render_backend_metal_t*)backend;
 
+	backend->shader_type = HASH_SHADER_METAL;
+
 	backend_metal->device = MTLCreateSystemDefaultDevice();
 	if (!backend_metal->device) {
 		log_error(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Unable to create default system metal device"));

@@ -62,4 +62,4 @@ render_backend_shader_upload(render_backend_t* backend, render_shader_t* shader,
 RENDER_API void
 render_backend_shader_finalize(render_backend_t* backend, render_shader_t* shader);
 
-#define render_backend_shader_table(backend) ((uuidmap_t*)&((backend)->shadertable))
+#define render_backend_shader_table(backend) ((uuidmap_t*)&((backend)->shader_table))

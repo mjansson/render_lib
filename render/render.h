@@ -25,6 +25,7 @@
 #include <render/types.h>
 #include <render/hashstrings.h>
 #include <render/backend.h>
+#include <render/buffer.h>
 #include <render/pipeline.h>
 #include <render/shader.h>
 #include <render/target.h>

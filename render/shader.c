@@ -84,7 +84,7 @@ retry:
 	if (stream) {
 		header = resource_stream_read_header(stream);
 		if (header.version == RENDER_SHADER_RESOURCE_VERSION) {
-			if (header.type == HASH_SHADER)
+			if (header.type == backend->shader_type)
 				shader = render_shader_allocate();
 			if (shader) {
 				stream_read(stream, shader, sizeof(render_shader_t));

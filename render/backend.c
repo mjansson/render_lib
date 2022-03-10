@@ -136,8 +136,8 @@ render_backend_allocate(render_api_t api, bool allow_fallback) {
 
 	backend->framecount = 1;
 
-	uuidmap_initialize((uuidmap_t*)&backend->shadertable,
-	                   sizeof(backend->shadertable.bucket) / sizeof(backend->shadertable.bucket[0]), 0);
+	uuidmap_initialize((uuidmap_t*)&backend->shader_table,
+	                   sizeof(backend->shader_table.bucket) / sizeof(backend->shader_table.bucket[0]), 0);
 
 	render_backend_set_resource_platform(backend, 0);
 

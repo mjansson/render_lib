@@ -25,7 +25,7 @@
 
 static bool
 rb_null_construct(render_backend_t* backend) {
-	FOUNDATION_UNUSED(backend);
+	backend->shader_type = HASH_SHADER;
 	log_debug(HASH_RENDER, STRING_CONST("Constructed NULL render backend"));
 	return true;
 }
@@ -126,6 +126,33 @@ rb_null_shader_finalize(render_backend_t* backend, render_shader_t* shader) {
 	FOUNDATION_UNUSED(backend, shader);
 }
 
+static void
+rb_null_buffer_allocate(render_backend_t* backend, render_buffer_t* buffer, size_t buffer_size, const void* data, size_t data_size) {
+	FOUNDATION_UNUSED(backend);
+	if (buffer->usage == RENDERUSAGE_GPUONLY)
+		return;
+	buffer->store = memory_allocate(HASH_RENDER, buffer_size, 0, MEMORY_PERSISTENT);
+	buffer->allocated = buffer_size;
+	if (data_size && buffer->store) {
+		memcpy(buffer->store, data, data_size);
+		buffer->used = data_size;
+	}
+}
+
+static void
+rb_null_buffer_deallocate(render_backend_t* backend, render_buffer_t* buffer, bool cpu, bool gpu) {
+	FOUNDATION_UNUSED(backend, gpu);
+	if (cpu && buffer->store) {
+		memory_deallocate(buffer->store);
+		buffer->store = nullptr;
+	}
+}
+
+static void
+rb_null_buffer_upload(render_backend_t* backend, render_buffer_t* buffer) {
+	FOUNDATION_UNUSED(backend, buffer);	
+}
+
 static render_backend_vtable_t render_backend_vtable_null = {.construct = rb_null_construct,
                                                              .destruct = rb_null_destruct,
                                                              .enumerate_adapters = rb_null_enumerate_adapters,
@@ -140,7 +167,10 @@ static render_backend_vtable_t render_backend_vtable_null = {.construct = rb_nul
                                                              .pipeline_set_depth_clear = rb_null_pipeline_set_depth_clear,
                                                              .pipeline_flush = rb_null_pipeline_flush,
                                                              .shader_upload = rb_null_shader_upload,
-                                                             .shader_finalize = rb_null_shader_finalize};
+                                                             .shader_finalize = rb_null_shader_finalize,
+                                                             .buffer_allocate = rb_null_buffer_allocate,
+                                                             .buffer_deallocate = rb_null_buffer_deallocate,
+                                                             .buffer_upload = rb_null_buffer_upload};
 
 render_backend_t*
 render_backend_null_allocate(void) {

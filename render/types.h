@@ -102,6 +102,26 @@ typedef enum render_clear_action_t {
 	RENDERCLEAR_CLEAR
 } render_clear_action_t;
 
+typedef enum render_usage_t {
+	RENDERUSAGE_INVALID = 0,
+	RENDERUSAGE_CPUONLY,
+	RENDERUSAGE_GPUONLY,
+	RENDERUSAGE_DYNAMIC,
+	RENDERUSAGE_STATIC,
+	RENDERUSAGE_TARGET
+} render_usage_t;
+
+typedef enum render_buffer_flag_t {
+	RENDERBUFFER_DIRTY = 0x01,
+	RENDERBUFFER_LOST = 0x02,
+
+	RENDERBUFFER_LOCK_READ = 0x10,
+	RENDERBUFFER_LOCK_WRITE = 0x20,
+	RENDERBUFFER_LOCK_NOUPLOAD = 0x40,
+	RENDERBUFFER_LOCK_FORCEUPLOAD = 0x80,
+	RENDERBUFFER_LOCK_BITS = 0xF0
+} render_buffer_flag_t;
+
 #define RENDER_TARGET_COLOR_ATTACHMENT_COUNT 4
 
 typedef struct render_config_t render_config_t;
@@ -111,6 +131,7 @@ typedef struct render_resolution_t render_resolution_t;
 typedef struct render_target_t render_target_t;
 typedef struct render_pipeline_t render_pipeline_t;
 typedef struct render_shader_t render_shader_t;
+typedef struct render_buffer_t render_buffer_t;
 
 typedef bool (*render_backend_construct_fn)(render_backend_t*);
 typedef void (*render_backend_destruct_fn)(render_backend_t*);
@@ -128,6 +149,9 @@ typedef void (*render_backend_pipeline_set_depth_clear_fn)(render_backend_t*, re
 typedef void (*render_backend_pipeline_flush_fn)(render_backend_t*, render_pipeline_t*);
 typedef bool (*render_backend_shader_upload_fn)(render_backend_t*, render_shader_t*, const void*, size_t);
 typedef void (*render_backend_shader_finalize_fn)(render_backend_t*, render_shader_t*);
+typedef void (*render_backend_buffer_allocate_fn)(render_backend_t*, render_buffer_t*, size_t, const void*, size_t);
+typedef void (*render_backend_buffer_deallocate_fn)(render_backend_t*, render_buffer_t*, bool, bool);
+typedef void (*render_backend_buffer_upload_fn)(render_backend_t*, render_buffer_t*);
 
 struct render_config_t {
 	uint unused;
@@ -149,6 +173,9 @@ struct render_backend_vtable_t {
 	render_backend_pipeline_flush_fn pipeline_flush;
 	render_backend_shader_upload_fn shader_upload;
 	render_backend_shader_finalize_fn shader_finalize;
+	render_backend_buffer_allocate_fn buffer_allocate;
+	render_backend_buffer_deallocate_fn buffer_deallocate;
+	render_backend_buffer_upload_fn buffer_upload;
 };
 
 #if FOUNDATION_SIZE_POINTER == 4
@@ -165,7 +192,8 @@ struct render_backend_t {
 	render_backend_vtable_t vtable;
 	uint64_t framecount;
 	uint64_t platform;
-	uuidmap_fixed_t shadertable;
+	uuidmap_fixed_t shader_table;
+	hash_t shader_type;
 };
 
 struct render_resolution_t {
@@ -191,15 +219,28 @@ struct render_pipeline_t {
 	render_target_t* depth_attachment;
 };
 
-#define RENDER_DECLARE_SHADER                 \
-	render_backend_t* backend;                \
-	RENDER_32BIT_PADDING(backendptr)          \
-	atomic32_t ref;                           \
-	uint32_t unused;                          \
-	uuid_t uuid
-
 struct render_shader_t {
-	RENDER_DECLARE_SHADER;
+	render_backend_t* backend;
+	RENDER_32BIT_PADDING(backendptr)
+	atomic32_t ref;
+	uint32_t unused;
+	uuid_t uuid;
 	uintptr_t backend_data[4];
 	RENDER_32BIT_PADDING_ARR(backend_data, 4)
+};
+
+struct render_buffer_t {
+	render_backend_t* backend;
+	RENDER_32BIT_PADDING(backendptr)
+	uint8_t usage;
+	uint8_t buffertype;
+	uint8_t flags;
+	uint8_t unused_byte;
+	uint32_t locks;
+	size_t allocated;
+	size_t used;
+	void* store;
+	void* access;
+	uintptr_t backend_data[4];
+	semaphore_t lock;
 };
