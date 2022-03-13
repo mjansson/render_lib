@@ -122,6 +122,14 @@ typedef enum render_buffer_flag_t {
 	RENDERBUFFER_LOCK_BITS = 0xF0
 } render_buffer_flag_t;
 
+typedef enum render_primitive_type {
+	RENDERPRIMITIVE_TRIANGLELIST = 0
+} render_primitive_type;
+
+typedef enum render_argument_data_type {
+	RENDERARGUMENT_POINTER
+} render_argument_data_type;
+
 #define RENDER_TARGET_COLOR_ATTACHMENT_COUNT 4
 
 typedef struct render_config_t render_config_t;
@@ -130,8 +138,11 @@ typedef struct render_backend_t render_backend_t;
 typedef struct render_resolution_t render_resolution_t;
 typedef struct render_target_t render_target_t;
 typedef struct render_pipeline_t render_pipeline_t;
+typedef struct render_pipeline_state_t render_pipeline_state_t;
 typedef struct render_shader_t render_shader_t;
 typedef struct render_buffer_t render_buffer_t;
+typedef struct render_primitive_t render_primitive_t;
+typedef struct render_buffer_argument_t render_buffer_argument_t;
 
 typedef bool (*render_backend_construct_fn)(render_backend_t*);
 typedef void (*render_backend_destruct_fn)(render_backend_t*);
@@ -152,6 +163,8 @@ typedef void (*render_backend_shader_finalize_fn)(render_backend_t*, render_shad
 typedef void (*render_backend_buffer_allocate_fn)(render_backend_t*, render_buffer_t*, size_t, const void*, size_t);
 typedef void (*render_backend_buffer_deallocate_fn)(render_backend_t*, render_buffer_t*, bool, bool);
 typedef void (*render_backend_buffer_upload_fn)(render_backend_t*, render_buffer_t*);
+typedef void (*render_backend_buffer_argument_declare_fn)(render_backend_t*, render_buffer_t*, const render_buffer_argument_t*, size_t);
+typedef void (*render_backend_buffer_argument_encode_buffer_fn)(render_backend_t*, render_buffer_t*, uint, render_buffer_t*, uint);
 
 struct render_config_t {
 	uint unused;
@@ -176,6 +189,8 @@ struct render_backend_vtable_t {
 	render_backend_buffer_allocate_fn buffer_allocate;
 	render_backend_buffer_deallocate_fn buffer_deallocate;
 	render_backend_buffer_upload_fn buffer_upload;
+	render_backend_buffer_argument_declare_fn buffer_argument_declare;
+	render_backend_buffer_argument_encode_buffer_fn buffer_argument_encode_buffer;
 };
 
 #if FOUNDATION_SIZE_POINTER == 4
@@ -217,6 +232,7 @@ struct render_pipeline_t {
 	render_backend_t* backend;
 	render_target_t* color_attachment[RENDER_TARGET_COLOR_ATTACHMENT_COUNT];
 	render_target_t* depth_attachment;
+	render_primitive_t* primitive;
 };
 
 struct render_shader_t {
@@ -227,6 +243,10 @@ struct render_shader_t {
 	uuid_t uuid;
 	uintptr_t backend_data[4];
 	RENDER_32BIT_PADDING_ARR(backend_data, 4)
+};
+
+struct render_pipeline_state_t {
+	render_shader_t* shader;
 };
 
 struct render_buffer_t {
@@ -243,4 +263,15 @@ struct render_buffer_t {
 	void* access;
 	uintptr_t backend_data[4];
 	semaphore_t lock;
+};
+
+struct render_buffer_argument_t {
+	uint index;
+	render_argument_data_type data_type;
+};
+
+struct render_primitive_t {
+	render_pipeline_state_t* pipeline_state;
+	render_buffer_t* index_buffer;
+	render_buffer_t* descriptor[4];
 };

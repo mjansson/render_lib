@@ -52,6 +52,8 @@ render_buffer_upload(render_buffer_t* buffer) {
 
 void
 render_buffer_lock(render_buffer_t* buffer, unsigned int lock) {
+	if (buffer->usage == RENDERUSAGE_GPUONLY)
+		return;
 	semaphore_wait(&buffer->lock);
 	{
 		buffer->locks++;
@@ -64,19 +66,28 @@ render_buffer_lock(render_buffer_t* buffer, unsigned int lock) {
 void
 render_buffer_unlock(render_buffer_t* buffer) {
 	semaphore_wait(&buffer->lock);
-	{
-		if (buffer->locks) {
-			--buffer->locks;
-			if (!buffer->locks) {
-				buffer->access = nullptr;
-				if (buffer->flags & RENDERBUFFER_LOCK_WRITE) {
-					buffer->flags |= RENDERBUFFER_DIRTY;
-					if (!(buffer->flags & RENDERBUFFER_LOCK_NOUPLOAD))
-						render_buffer_upload(buffer);
-				}
-				buffer->flags &= ~(uint32_t)RENDERBUFFER_LOCK_BITS;
+	if (buffer->locks) {
+		--buffer->locks;
+		if (!buffer->locks) {
+			buffer->access = nullptr;
+			if (buffer->flags & RENDERBUFFER_LOCK_WRITE) {
+				buffer->flags |= RENDERBUFFER_DIRTY;
+				if (!(buffer->flags & RENDERBUFFER_LOCK_NOUPLOAD))
+					render_buffer_upload(buffer);
 			}
+			buffer->flags &= ~(uint32_t)RENDERBUFFER_LOCK_BITS;
 		}
 	}
 	semaphore_post(&buffer->lock);
+}
+
+void
+render_buffer_argument_declare(render_buffer_t* buffer, const render_buffer_argument_t* argument, size_t count) {
+	buffer->backend->vtable.buffer_argument_declare(buffer->backend, buffer, argument, count);
+
+}
+
+void
+render_buffer_argument_encode_buffer(render_buffer_t* buffer, uint index, render_buffer_t* source, uint offset) {
+	buffer->backend->vtable.buffer_argument_encode_buffer(buffer->backend, buffer, index, source, offset);
 }

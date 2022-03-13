@@ -20,6 +20,8 @@
 #include <render/backend.h>
 #include <render/hashstrings.h>
 
+#include <foundation/array.h>
+
 render_pipeline_t*
 render_pipeline_allocate(render_backend_t* backend) {
 	return backend->vtable.pipeline_allocate(backend);
@@ -27,6 +29,7 @@ render_pipeline_allocate(render_backend_t* backend) {
 
 void
 render_pipeline_deallocate(render_pipeline_t* pipeline) {
+	array_deallocate(pipeline->primitive);
 	if (pipeline && pipeline->backend)
 		pipeline->backend->vtable.pipeline_deallocate(pipeline->backend, pipeline);
 }
@@ -59,4 +62,11 @@ void
 render_pipeline_flush(render_pipeline_t* pipeline) {
 	if (pipeline && pipeline->backend)
 		pipeline->backend->vtable.pipeline_flush(pipeline->backend, pipeline);
+	array_clear(pipeline->primitive);
+}
+
+void
+render_pipeline_queue(render_pipeline_t* pipeline, render_primitive_type type, const render_primitive_t* primitive) {
+	FOUNDATION_UNUSED(type);
+	array_push(pipeline->primitive, *primitive);
 }

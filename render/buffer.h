@@ -45,3 +45,9 @@ render_buffer_free(render_buffer_t* buffer, bool sys, bool aux);
 
 RENDER_API void
 render_buffer_restore(render_buffer_t* buffer);
+
+RENDER_API void
+render_buffer_argument_declare(render_buffer_t* buffer, const render_buffer_argument_t* argument, size_t count);
+
+RENDER_API void
+render_buffer_argument_encode_buffer(render_buffer_t* buffer, uint index, render_buffer_t* source, uint offset);

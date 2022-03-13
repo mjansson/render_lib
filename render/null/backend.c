@@ -153,6 +153,17 @@ rb_null_buffer_upload(render_backend_t* backend, render_buffer_t* buffer) {
 	FOUNDATION_UNUSED(backend, buffer);	
 }
 
+static void
+rb_null_buffer_argument_declare(render_backend_t* backend, render_buffer_t* buffer, const render_buffer_argument_t* argument, size_t count) {
+	FOUNDATION_UNUSED(backend, buffer, argument, count);
+}
+
+static void
+rb_null_buffer_argument_encode_buffer(render_backend_t* backend, render_buffer_t* buffer, uint index, render_buffer_t* source, uint offset) {
+	FOUNDATION_UNUSED(backend, buffer, index, source, offset);
+
+}
+
 static render_backend_vtable_t render_backend_vtable_null = {.construct = rb_null_construct,
                                                              .destruct = rb_null_destruct,
                                                              .enumerate_adapters = rb_null_enumerate_adapters,
@@ -170,7 +181,9 @@ static render_backend_vtable_t render_backend_vtable_null = {.construct = rb_nul
                                                              .shader_finalize = rb_null_shader_finalize,
                                                              .buffer_allocate = rb_null_buffer_allocate,
                                                              .buffer_deallocate = rb_null_buffer_deallocate,
-                                                             .buffer_upload = rb_null_buffer_upload};
+                                                             .buffer_upload = rb_null_buffer_upload,
+                                                             .buffer_argument_declare = rb_null_buffer_argument_declare,
+                                                             .buffer_argument_encode_buffer = rb_null_buffer_argument_encode_buffer};
 
 render_backend_t*
 render_backend_null_allocate(void) {

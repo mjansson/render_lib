@@ -202,53 +202,8 @@ _test_render_clear(render_api_t api) {
 
 	render_pipeline_flush(pipeline);
 
-	render_shader_t* shader = render_shader_load(backend, uuid_decl(a7a465ed, 9fcb, 4383, 9494, abadc9b80eb9));
-	EXPECT_NE(shader, 0);
-
-	thread_sleep(30000);
-
-#if 0
-	render_backend_set_format(backend, PIXELFORMAT_R8G8B8, COLORSPACE_LINEAR);
-	render_backend_set_drawable(backend, drawable);
-
-	framebuffer = render_backend_target_framebuffer(backend);
-	context = render_context_allocate(32);
-
-	render_sort_reset(context);
-
-	render_command_viewport(render_context_reserve(context, render_sort_sequential_key(context)), 0, 0,
-	                        framebuffer->width, framebuffer->height, 0, 1);
-	render_command_clear(render_context_reserve(context, render_sort_sequential_key(context)),
-	                     RENDERBUFFER_COLOR | RENDERBUFFER_DEPTH | RENDERBUFFER_STENCIL, 0x00000000, 0xF, 1, 0);
-
-	render_command_viewport(render_context_reserve(context, render_sort_sequential_key(context)), 0, 0,
-	                        framebuffer->width / 2, framebuffer->height / 2, 0, 1);
-	render_command_clear(render_context_reserve(context, render_sort_sequential_key(context)),
-	                     RENDERBUFFER_COLOR | RENDERBUFFER_DEPTH | RENDERBUFFER_STENCIL, 0xFFFFFFFF, 0x1, 1, 0);
-
-	render_command_viewport(render_context_reserve(context, render_sort_sequential_key(context)),
-	                        framebuffer->width / 2, 0, framebuffer->height / 2, framebuffer->height / 2, 0, 1);
-	render_command_clear(render_context_reserve(context, render_sort_sequential_key(context)),
-	                     RENDERBUFFER_COLOR | RENDERBUFFER_DEPTH | RENDERBUFFER_STENCIL, 0xFFFFFFFF, 0x2, 1, 0);
-
-	render_command_viewport(render_context_reserve(context, render_sort_sequential_key(context)), 0,
-	                        framebuffer->height / 2, framebuffer->width / 2, framebuffer->height / 2, 0, 1);
-	render_command_clear(render_context_reserve(context, render_sort_sequential_key(context)),
-	                     RENDERBUFFER_COLOR | RENDERBUFFER_DEPTH | RENDERBUFFER_STENCIL, 0xFFFFFFFF, 0x4, 1, 0);
-
-	render_command_viewport(render_context_reserve(context, render_sort_sequential_key(context)),
-	                        framebuffer->width / 2, framebuffer->height / 2, framebuffer->width / 2,
-	                        framebuffer->height / 2, 0, 1);
-	render_command_clear(render_context_reserve(context, render_sort_sequential_key(context)),
-	                     RENDERBUFFER_COLOR | RENDERBUFFER_DEPTH | RENDERBUFFER_STENCIL, 0xFFFFFFFF, 0xF, 1, 0);
-
-	render_sort_merge(&context, 1);
-	render_backend_dispatch(backend, framebuffer, &context, 1);
-	render_backend_flip(backend);
-
 	// TODO: Verify framebuffer
-	thread_sleep(2000);
-#endif
+	thread_sleep(5000);
 
 	render_pipeline_deallocate(pipeline);
 	render_target_deallocate(target);
@@ -261,29 +216,13 @@ ignore_test:
 
 	return 0;
 }
-#if 0
+
 static void*
 _test_render_box(render_api_t api) {
 	render_backend_t* backend = 0;
 	window_t window;
-	render_drawable_t* drawable = 0;
-	render_target_t* framebuffer = 0;
-	render_parameterbuffer_t* parameterbuffer = 0;
-	render_vertexbuffer_t* vertexbuffer = 0;
-	render_indexbuffer_t* indexbuffer = 0;
-	render_context_t* context = 0;
-	render_program_t* program = nullptr;
-	render_vertex_decl_t* vertex_decl = 0;
-	matrix_t mvp;
-
-	float32_t vertexdata[8 * 7] = {-0.5f, 0.5f,  0.5f,  1, 1, 1, 1, -0.5f, -0.5f, 0.5f,  0, 1, 0, 1,
-	                               0.5f,  -0.5f, 0.5f,  0, 0, 1, 1, 0.5f,  0.5f,  0.5f,  1, 0, 0, 1,
-
-	                               -0.5f, 0.5f,  -0.5f, 1, 1, 0, 1, -0.5f, -0.5f, -0.5f, 1, 0, 1, 1,
-	                               0.5f,  -0.5f, -0.5f, 0, 1, 1, 1, 0.5f,  0.5f,  -0.5f, 0, 0, 0, 1};
-
-	uint16_t indexdata[6 * 6] = {0, 1, 2, 0, 2, 3, 1, 5, 6, 1, 6, 2, 3, 2, 6, 3, 6, 7,
-	                             7, 6, 5, 7, 5, 4, 4, 3, 1, 4, 1, 0, 4, 0, 3, 4, 3, 7};
+	render_target_t* target = 0;
+	render_pipeline_t* pipeline = 0;
 
 #if FOUNDATION_PLATFORM_MACOS || FOUNDATION_PLATFORM_IOS
 	window_initialize(&window, delegate_window());
@@ -293,95 +232,80 @@ _test_render_box(render_api_t api) {
 #error Not implemented
 #endif
 
-	backend = (api != RENDERAPI_NULL) ? render_backend_allocate(api, false) : nullptr;
-
+	backend = render_backend_allocate(api, false);
 	if (!backend)
 		goto ignore_test;
 
-	drawable = render_drawable_allocate();
+	target = render_target_window_allocate(backend, &window, 0);
+	pipeline = render_pipeline_allocate(backend);
 
-	render_drawable_initialize_window(drawable, &window, 0);
+	render_pipeline_set_color_attachment(pipeline, 0, target);
+	render_pipeline_set_color_clear(pipeline, 0, RENDERCLEAR_CLEAR, vector(1, 0, 0, 0));
+	render_pipeline_set_depth_clear(pipeline, RENDERCLEAR_CLEAR, vector(0, 0, 0, 0));
 
-	render_backend_set_format(backend, PIXELFORMAT_R8G8B8, COLORSPACE_LINEAR);
-	render_backend_set_drawable(backend, drawable);
+	render_shader_t* shader = nullptr;
+	if (api != RENDERAPI_NULL) {
+		shader = render_shader_load(backend, uuid_decl(a7a465ed, 9fcb, 4383, 9494, abadc9b80eb9));
+		EXPECT_NE(shader, 0);
+	}
 
-	framebuffer = render_backend_target_framebuffer(backend);
-	context = render_context_allocate(32);
+	const float32_t vertexdata[4 * 8] = { 0.5f,  0.5f,  0.0f, 1.0f, 1, 1, 1, 1,
+	                                      0.5f, -0.5f,  0.0f, 1.0f, 0, 1, 0, 1,
+	                                     -0.5f, -0.5f,  0.0f, 1.0f, 0, 0, 1, 1,
+	                                     -0.5f,  0.5f,  0.0f, 1.0f, 1, 0, 0, 1};
+	render_buffer_t* vertexbuffer = render_buffer_allocate(backend, RENDERUSAGE_STATIC, sizeof(vertexdata), vertexdata, sizeof(vertexdata));
 
-	render_sort_reset(context);
+	const uint16_t indexdata[2 * 3] = {0, 1, 2, 0, 2, 3};
+	render_buffer_t* indexbuffer = render_buffer_allocate(backend, RENDERUSAGE_STATIC, sizeof(indexdata), indexdata, sizeof(indexdata));
+	
+	render_buffer_t* descriptor = render_buffer_allocate(backend, RENDERUSAGE_STATIC, 8, 0, 0);
+	render_buffer_argument_t argument = {
+		.index = 0,
+		.data_type = RENDERARGUMENT_POINTER
+	};
+	render_buffer_argument_declare(descriptor, &argument, 1);
+	render_buffer_argument_encode_buffer(descriptor, 0, vertexbuffer, 0);
 
-	render_command_viewport(render_context_reserve(context, render_sort_sequential_key(context)), 0, 0,
-	                        framebuffer->width, framebuffer->height, 0, 1);
-	render_command_clear(render_context_reserve(context, render_sort_sequential_key(context)),
-	                     RENDERBUFFER_COLOR | RENDERBUFFER_DEPTH | RENDERBUFFER_STENCIL, 0x00000000, 0xFFFFFFFF, 1, 0);
+	render_pipeline_set_color_attachment(pipeline, 0, target);
+	render_pipeline_set_color_clear(pipeline, 0, RENDERCLEAR_CLEAR, vector(1, 0, 0, 0));
+	render_pipeline_set_depth_clear(pipeline, RENDERCLEAR_CLEAR, vector(0, 0, 0, 0));
 
-	render_sort_merge(&context, 1);
-	render_backend_dispatch(backend, framebuffer, &context, 1);
-	render_backend_flip(backend);
+	render_pipeline_state_t pipeline_state;
+	pipeline_state.shader = shader;
 
-	// color.program : 1ab9bba8-3f2f-4649-86bb-8b8b07e99af2
-	uuid_t program_uuid = uuid_make(0x46493f2f1ab9bba8, 0xf29ae9078b8bbb86);
-	program = render_program_load(backend, program_uuid);
-	EXPECT_NE(program, nullptr);
+	render_primitive_t primitive;
+	primitive.pipeline_state = &pipeline_state;
+	primitive.index_buffer = indexbuffer;
+	primitive.descriptor[0] = descriptor;
 
-	mvp = matrix_identity();
+	render_pipeline_queue(pipeline, RENDERPRIMITIVE_TRIANGLELIST, &primitive);
 
-	parameterbuffer = render_parameterbuffer_allocate(backend, RENDERUSAGE_DYNAMIC, program->parameters,
-	                                                  program->parameters_count, &mvp, sizeof(mvp));
-	EXPECT_NE(parameterbuffer, 0);
+	render_pipeline_flush(pipeline);
 
-	render_parameterbuffer_link(parameterbuffer, program);
+	thread_sleep(5000);
 
-	vertex_decl = render_vertex_decl_allocate_varg(VERTEXFORMAT_FLOAT3, VERTEXATTRIBUTE_POSITION, VERTEXFORMAT_FLOAT4,
-	                                               VERTEXATTRIBUTE_PRIMARYCOLOR, VERTEXFORMAT_UNUSED);
+	render_buffer_deallocate(descriptor);
+	render_buffer_deallocate(indexbuffer);
+	render_buffer_deallocate(vertexbuffer);
 
-	vertexbuffer = render_vertexbuffer_allocate(backend, RENDERUSAGE_STATIC, 8, sizeof(vertexdata), vertex_decl,
-	                                            vertexdata, sizeof(vertexdata));
-	EXPECT_NE(vertexbuffer, 0);
+	render_shader_unload(shader);
 
-	indexbuffer = render_indexbuffer_allocate(backend, RENDERUSAGE_STATIC, 36, sizeof(indexdata), INDEXFORMAT_USHORT,
-	                                          indexdata, sizeof(indexdata));
-	EXPECT_NE(indexbuffer, 0);
-
-	render_sort_reset(context);
-
-	render_command_viewport(render_context_reserve(context, render_sort_sequential_key(context)), 0, 0,
-	                        framebuffer->width, framebuffer->height, 0, 1);
-	render_command_clear(render_context_reserve(context, render_sort_sequential_key(context)),
-	                     RENDERBUFFER_COLOR | RENDERBUFFER_DEPTH | RENDERBUFFER_STENCIL, 0x00000000, 0xFFFFFFFF, 1, 0);
-	render_command_render(render_context_reserve(context, render_sort_sequential_key(context)),
-	                      RENDERPRIMITIVE_TRIANGLELIST, 12, program, vertexbuffer, indexbuffer, parameterbuffer, 0);
-
-	render_sort_merge(&context, 1);
-	render_backend_dispatch(backend, framebuffer, &context, 1);
-	render_backend_flip(backend);
-
-	// TODO: Verify framebuffer
-
-	thread_sleep(2000);
+	render_pipeline_deallocate(pipeline);
+	render_target_deallocate(target);
 
 ignore_test:
 
-	render_indexbuffer_deallocate(indexbuffer);
-	render_vertexbuffer_deallocate(vertexbuffer);
-	render_vertex_decl_deallocate(vertex_decl);
-	render_parameterbuffer_deallocate(parameterbuffer);
-	render_program_unload(program);
-	render_context_deallocate(context);
 	render_backend_deallocate(backend);
-	render_drawable_deallocate(drawable);
 
 	window_finalize(&window);
 
 	return 0;
 }
-#endif
 
 DECLARE_TEST(render, null) {
 	return _test_render_api(RENDERAPI_NULL);
 }
 
-#if 0
 DECLARE_TEST(render, null_clear) {
 	return _test_render_clear(RENDERAPI_NULL);
 }
@@ -389,7 +313,6 @@ DECLARE_TEST(render, null_clear) {
 DECLARE_TEST(render, null_box) {
 	return _test_render_box(RENDERAPI_NULL);
 }
-#endif
 
 #if FOUNDATION_PLATFORM_APPLE
 
@@ -401,11 +324,9 @@ DECLARE_TEST(render, metal_clear) {
 	return _test_render_clear(RENDERAPI_METAL);
 }
 
-#if 0
 DECLARE_TEST(render, metal_box) {
 	return _test_render_box(RENDERAPI_METAL);
 }
-#endif
 
 #endif
 
@@ -413,12 +334,12 @@ static void
 test_render_declare(void) {
 	ADD_TEST(render, initialize);
 	ADD_TEST(render, null);
-	//ADD_TEST(render, null_clear);
-	//ADD_TEST(render, null_box);
+	ADD_TEST(render, null_clear);
+	ADD_TEST(render, null_box);
 #if FOUNDATION_PLATFORM_APPLE
 	ADD_TEST(render, metal);
 	ADD_TEST(render, metal_clear);
-	//ADD_TEST(render, metal_box);
+	ADD_TEST(render, metal_box);
 #endif
 }
 

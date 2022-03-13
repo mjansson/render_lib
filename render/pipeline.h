@@ -46,6 +46,9 @@ render_pipeline_set_depth_clear(render_pipeline_t* pipeline, render_clear_action
 RENDER_API void
 render_pipeline_flush(render_pipeline_t* pipeline);
 
+RENDER_API void
+render_pipeline_queue(render_pipeline_t* pipeline, render_primitive_type type, const render_primitive_t* primitive);
+
 #if 0
 void
 render_pipeline_execute(render_pipeline_t* pipeline);

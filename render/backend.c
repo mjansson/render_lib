@@ -157,6 +157,8 @@ render_backend_deallocate(render_backend_t* backend) {
 
 	backend->vtable.destruct(backend);
 
+	uuidmap_finalize((uuidmap_t*)&backend->shader_table);
+
 	for (size_t ib = 0, bsize = array_size(render_backends_current); ib < bsize; ++ib) {
 		if (render_backends_current[ib] == backend) {
 			array_erase(render_backends_current, ib);
