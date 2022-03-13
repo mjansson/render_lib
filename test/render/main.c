@@ -258,13 +258,24 @@ _test_render_box(render_api_t api) {
 	const uint16_t indexdata[2 * 3] = {0, 1, 2, 0, 2, 3};
 	render_buffer_t* indexbuffer = render_buffer_allocate(backend, RENDERUSAGE_STATIC, sizeof(indexdata), indexdata, sizeof(indexdata));
 	
-	render_buffer_t* descriptor = render_buffer_allocate(backend, RENDERUSAGE_STATIC, 8, 0, 0);
-	render_buffer_argument_t argument = {
+	matrix_t mvp = matrix_identity();
+
+	render_buffer_t* descriptor = render_buffer_allocate(backend, RENDERUSAGE_STATIC, sizeof(void*) + sizeof(matrix_t), 0, 0);
+	// Vertex buffer
+	render_buffer_argument_t argument[2] = {{
 		.index = 0,
-		.data_type = RENDERARGUMENT_POINTER
-	};
-	render_buffer_argument_declare(descriptor, &argument, 1);
+		.data_type = RENDERARGUMENT_POINTER,
+		.size = 1
+	},
+	// Model-view-projection matrix
+	{
+		.index = 1,
+		.data_type = RENDERARGUMENT_MATRIX4X4,
+		.size = sizeof(matrix_t)
+	}};
+	render_buffer_argument_declare(descriptor, argument, 2);
 	render_buffer_argument_encode_buffer(descriptor, 0, vertexbuffer, 0);
+	render_buffer_argument_encode_constant(descriptor, 1, &mvp, sizeof(matrix_t));
 
 	render_pipeline_set_color_attachment(pipeline, 0, target);
 	render_pipeline_set_color_clear(pipeline, 0, RENDERCLEAR_CLEAR, vector(1, 0, 0, 0));

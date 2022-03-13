@@ -91,3 +91,8 @@ void
 render_buffer_argument_encode_buffer(render_buffer_t* buffer, uint index, render_buffer_t* source, uint offset) {
 	buffer->backend->vtable.buffer_argument_encode_buffer(buffer->backend, buffer, index, source, offset);
 }
+
+void
+render_buffer_argument_encode_constant(render_buffer_t* buffer, uint index, const void* data, uint size) {
+	buffer->backend->vtable.buffer_argument_encode_constant(buffer->backend, buffer, index, data, size);
+}

@@ -437,8 +437,9 @@ rb_metal_buffer_argument_declare(render_backend_t* backend, render_buffer_t* buf
 			argument_descriptor.index = iarg;
 			if (argument[iarg].data_type == RENDERARGUMENT_POINTER) {
 				argument_descriptor.dataType = MTLDataTypePointer;
-			}
-			else {
+			} else if (argument[iarg].data_type == RENDERARGUMENT_MATRIX4X4) {
+				argument_descriptor.dataType = MTLDataTypeFloat4x4;
+			} else {
 				log_error(HASH_RENDER, ERROR_INVALID_VALUE, STRING_CONST("Invalid argument buffer data type"));
 				return;
 			}
@@ -460,7 +461,7 @@ rb_metal_buffer_argument_declare(render_backend_t* backend, render_buffer_t* buf
 
 static void
 rb_metal_buffer_argument_encode_buffer(render_backend_t* backend, render_buffer_t* buffer, uint index, render_buffer_t* source, uint offset) {
-	FOUNDATION_UNUSED(backend, buffer, index, source, offset);
+	FOUNDATION_UNUSED(backend);
 	if (!buffer->backend_data[1]) {
 		log_error(HASH_RENDER, ERROR_INVALID_VALUE, STRING_CONST("Unable to encode argument buffer without previous data layout declaration"));
 		return;
@@ -470,6 +471,22 @@ rb_metal_buffer_argument_encode_buffer(render_backend_t* backend, render_buffer_
 	id<MTLBuffer> metal_buffer = (__bridge id<MTLBuffer>)((void*)source->backend_data[0]);
 
 	[encoder setBuffer:metal_buffer offset:offset atIndex:index];
+}
+
+static void
+rb_metal_buffer_argument_encode_constant(render_backend_t* backend, render_buffer_t* buffer, uint index, const void* data, uint size) {
+	FOUNDATION_UNUSED(backend);
+	if (!buffer->backend_data[1]) {
+		log_error(HASH_RENDER, ERROR_INVALID_VALUE, STRING_CONST("Unable to encode argument buffer without previous data layout declaration"));
+		return;
+	}
+
+	id<MTLArgumentEncoder> encoder = (__bridge id<MTLArgumentEncoder>)((void*)buffer->backend_data[1]);
+
+	void* buffer_data = [encoder constantDataAtIndex:index];
+	if (buffer_data) {
+		memcpy(buffer_data, data, size);
+	}
 }
 
 #if 0
@@ -720,7 +737,8 @@ static render_backend_vtable_t render_backend_vtable_metal = {.construct = rb_me
                                                               .buffer_deallocate = rb_metal_buffer_deallocate,
                                                               .buffer_upload = rb_metal_buffer_upload,
                                                               .buffer_argument_declare = rb_metal_buffer_argument_declare,
-                                                              .buffer_argument_encode_buffer = rb_metal_buffer_argument_encode_buffer};
+                                                              .buffer_argument_encode_buffer = rb_metal_buffer_argument_encode_buffer,
+                                                              .buffer_argument_encode_constant = rb_metal_buffer_argument_encode_constant};
 
 render_backend_t*
 render_backend_metal_allocate(void) {

@@ -51,3 +51,6 @@ render_buffer_argument_declare(render_buffer_t* buffer, const render_buffer_argu
 
 RENDER_API void
 render_buffer_argument_encode_buffer(render_buffer_t* buffer, uint index, render_buffer_t* source, uint offset);
+
+RENDER_API void
+render_buffer_argument_encode_constant(render_buffer_t* buffer, uint index, const void* data, uint size);

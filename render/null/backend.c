@@ -164,6 +164,12 @@ rb_null_buffer_argument_encode_buffer(render_backend_t* backend, render_buffer_t
 
 }
 
+static void
+rb_null_buffer_argument_encode_constant(render_backend_t* backend, render_buffer_t* buffer, uint index, const void* data, uint size) {
+	FOUNDATION_UNUSED(backend, buffer, index, data, size);
+
+}
+
 static render_backend_vtable_t render_backend_vtable_null = {.construct = rb_null_construct,
                                                              .destruct = rb_null_destruct,
                                                              .enumerate_adapters = rb_null_enumerate_adapters,
@@ -183,7 +189,8 @@ static render_backend_vtable_t render_backend_vtable_null = {.construct = rb_nul
                                                              .buffer_deallocate = rb_null_buffer_deallocate,
                                                              .buffer_upload = rb_null_buffer_upload,
                                                              .buffer_argument_declare = rb_null_buffer_argument_declare,
-                                                             .buffer_argument_encode_buffer = rb_null_buffer_argument_encode_buffer};
+                                                             .buffer_argument_encode_buffer = rb_null_buffer_argument_encode_buffer,
+                                                             .buffer_argument_encode_constant = rb_null_buffer_argument_encode_constant};
 
 render_backend_t*
 render_backend_null_allocate(void) {

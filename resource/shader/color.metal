@@ -11,7 +11,8 @@ typedef struct vertex_t {
 
 // Vertex shader argument buffer
 struct vertex_shader_arg_t {
-	const device vertex_t* vertices [[ buffer(0) ]];
+	const device vertex_t* vertices [[ id(0) ]];
+	const float4x4 mvp [[ id(1) ]];
 };
 
 // Vertex shader to pixel shader data exchange
@@ -25,7 +26,7 @@ vertex_shader(uint vid [[ vertex_id ]],
               const device vertex_shader_arg_t* arg [[ buffer(0) ]]) {
 	rasterizer_data_t out;
 
-	float4 position = arg->vertices[vid].position;
+	float4 position = arg->vertices[vid].position * arg->mvp;
 
 	out.position.xy = position.xy;
 	out.position.z  = 0.0;

@@ -127,7 +127,8 @@ typedef enum render_primitive_type {
 } render_primitive_type;
 
 typedef enum render_argument_data_type {
-	RENDERARGUMENT_POINTER
+	RENDERARGUMENT_POINTER,
+	RENDERARGUMENT_MATRIX4X4
 } render_argument_data_type;
 
 #define RENDER_TARGET_COLOR_ATTACHMENT_COUNT 4
@@ -165,6 +166,7 @@ typedef void (*render_backend_buffer_deallocate_fn)(render_backend_t*, render_bu
 typedef void (*render_backend_buffer_upload_fn)(render_backend_t*, render_buffer_t*);
 typedef void (*render_backend_buffer_argument_declare_fn)(render_backend_t*, render_buffer_t*, const render_buffer_argument_t*, size_t);
 typedef void (*render_backend_buffer_argument_encode_buffer_fn)(render_backend_t*, render_buffer_t*, uint, render_buffer_t*, uint);
+typedef void (*render_backend_buffer_argument_encode_constant_fn)(render_backend_t*, render_buffer_t*, uint, const void*, uint);
 
 struct render_config_t {
 	uint unused;
@@ -191,6 +193,7 @@ struct render_backend_vtable_t {
 	render_backend_buffer_upload_fn buffer_upload;
 	render_backend_buffer_argument_declare_fn buffer_argument_declare;
 	render_backend_buffer_argument_encode_buffer_fn buffer_argument_encode_buffer;
+	render_backend_buffer_argument_encode_constant_fn buffer_argument_encode_constant;
 };
 
 #if FOUNDATION_SIZE_POINTER == 4
@@ -268,6 +271,7 @@ struct render_buffer_t {
 struct render_buffer_argument_t {
 	uint index;
 	render_argument_data_type data_type;
+	uint size;
 };
 
 struct render_primitive_t {
