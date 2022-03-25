@@ -93,6 +93,11 @@ render_buffer_argument_encode_buffer(render_buffer_t* buffer, uint index, render
 }
 
 void
+render_buffer_argument_encode_matrix(render_buffer_t* buffer, uint index, const matrix_t* matrix) {
+	buffer->backend->vtable.buffer_argument_encode_matrix(buffer->backend, buffer, index, matrix);
+}
+
+void
 render_buffer_argument_encode_constant(render_buffer_t* buffer, uint index, const void* data, uint size) {
 	buffer->backend->vtable.buffer_argument_encode_constant(buffer->backend, buffer, index, data, size);
 }

@@ -18,8 +18,8 @@ writer = generator.writer
 toolchain = generator.toolchain
 
 render_lib = generator.lib(module='render', sources=[
-    'backend.c', 'buffer.c', 'compile.c', 'import.c', 'pipeline.c', 'render.c', 'shader.c',
-    'target.c', 'version.c',
+    'backend.c', 'buffer.c', 'compile.c', 'import.c', 'pipeline.c', 'projection.c', 'render.c',
+    'shader.c', 'target.c', 'version.c',
     os.path.join('metal', 'backend.m'),
     os.path.join('null', 'backend.c')
 ])

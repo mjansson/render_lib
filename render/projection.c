@@ -25,7 +25,8 @@ render_projection_perspective(real near, real far, real fov, real aspect) {
 	float32_aligned128_t matrix[4][4];
 	memset(matrix, 0, sizeof(float32_t) * 16);
 
-	real height = 2.0f * (near * math_tan(fov * 0.5f));
+	real tanfov = math_tan(fov * 0.5f);
+	real height = 2.0f * (near * tanfov);
 	real width = height * aspect;
 
 	matrix[0][0] = 2.0f * near / width;

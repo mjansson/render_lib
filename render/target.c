@@ -27,6 +27,11 @@ render_target_window_allocate(render_backend_t* backend, window_t* window, uint 
 	return backend->vtable.target_window_allocate(backend, window, tag);
 }
 
+render_target_t*
+render_target_texture_allocate(render_backend_t* backend, uint width, uint height, render_pixelformat_t format) {
+    return backend->vtable.target_texture_allocate(backend, width, height, format);
+}
+
 void
 render_target_deallocate(render_target_t* target) {
 	if (target && target->backend)

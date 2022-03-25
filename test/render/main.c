@@ -24,6 +24,10 @@
 #include <network/network.h>
 #include <test/test.h>
 
+#if FOUNDATION_COMPILER_CLANG
+#pragma clang diagnostic ignored "-Wunused-function"
+#endif
+
 static application_t
 test_render_application(void) {
 	application_t app;
@@ -222,6 +226,7 @@ _test_render_box(render_api_t api) {
 	render_backend_t* backend = 0;
 	window_t window;
 	render_target_t* target = 0;
+	render_target_t* depth = 0;
 	render_pipeline_t* pipeline = 0;
 
 #if FOUNDATION_PLATFORM_MACOS || FOUNDATION_PLATFORM_IOS
@@ -232,16 +237,25 @@ _test_render_box(render_api_t api) {
 #error Not implemented
 #endif
 
+	log_set_suppress(HASH_RENDER, ERRORLEVEL_NONE);
+	log_set_suppress(HASH_RESOURCE, ERRORLEVEL_NONE);
+
 	backend = render_backend_allocate(api, false);
 	if (!backend)
 		goto ignore_test;
 
-	target = render_target_window_allocate(backend, &window, 0);
+	uint width = window_width(&window);
+	uint height = window_height(&window);
+
 	pipeline = render_pipeline_allocate(backend);
 
+	target = render_target_window_allocate(backend, &window, 0);
 	render_pipeline_set_color_attachment(pipeline, 0, target);
-	render_pipeline_set_color_clear(pipeline, 0, RENDERCLEAR_CLEAR, vector(1, 0, 0, 0));
-	render_pipeline_set_depth_clear(pipeline, RENDERCLEAR_CLEAR, vector(0, 0, 0, 0));
+	render_pipeline_set_color_clear(pipeline, 0, RENDERCLEAR_CLEAR, vector(0, 0, 0, 0));
+
+	depth = render_target_texture_allocate(backend, width, height, PIXELFORMAT_DEPTH32F);
+	render_pipeline_set_depth_attachment(pipeline, depth);
+	render_pipeline_set_depth_clear(pipeline, RENDERCLEAR_CLEAR, vector(1, 1, 1, 1));
 
 	render_shader_t* shader = nullptr;
 	if (api != RENDERAPI_NULL) {
@@ -249,16 +263,29 @@ _test_render_box(render_api_t api) {
 		EXPECT_NE(shader, 0);
 	}
 
-	const float32_t vertexdata[4 * 8] = { 0.5f,  0.5f,  0.0f, 1.0f, 1, 1, 1, 1,
-	                                      0.5f, -0.5f,  0.0f, 1.0f, 0, 1, 0, 1,
-	                                     -0.5f, -0.5f,  0.0f, 1.0f, 0, 0, 1, 1,
-	                                     -0.5f,  0.5f,  0.0f, 1.0f, 1, 0, 0, 1};
+	const float32_t vertexdata[8 * 8] = { 0.1f,  0.1f,  0.1f, 1.0f, 1, 1, 1, 1,
+	                                      0.1f, -0.1f,  0.1f, 1.0f, 0, 1, 0, 1,
+	                                     -0.1f, -0.1f,  0.1f, 1.0f, 0, 0, 1, 1,
+	                                     -0.1f,  0.1f,  0.1f, 1.0f, 1, 0, 0, 1,
+ 	                                      0.1f,  0.1f, -0.1f, 1.0f, 0, 1, 1, 1,
+	                                      0.1f, -0.1f, -0.1f, 1.0f, 1, 0, 1, 1,
+	                                     -0.1f, -0.1f, -0.1f, 1.0f, 1, 1, 0, 1,
+	                                     -0.1f,  0.1f, -0.1f, 1.0f, 1, 1, 1, 1};
 	render_buffer_t* vertexbuffer = render_buffer_allocate(backend, RENDERUSAGE_STATIC, sizeof(vertexdata), vertexdata, sizeof(vertexdata));
 
-	const uint16_t indexdata[2 * 3] = {0, 1, 2, 0, 2, 3};
+	const uint16_t indexdata[12 * 3] = {0, 3, 2, 0, 2, 1,
+	                                    4, 0, 1, 4, 1, 5,
+	                                    7, 4, 5, 7, 5, 6,
+	                                    3, 7, 6, 3, 6, 2,
+	                                    4, 7, 3, 4, 3, 0,
+	                                    1, 2, 6, 1, 6, 5};
 	render_buffer_t* indexbuffer = render_buffer_allocate(backend, RENDERUSAGE_STATIC, sizeof(indexdata), indexdata, sizeof(indexdata));
 	
-	matrix_t mvp = matrix_identity();
+	real aspect_ratio = (real)width / (real)height;
+	matrix_t view_to_projection = render_projection_perspective(0.1f, 10.0f, REAL_HALFPI, aspect_ratio);
+	matrix_t world_to_view = matrix_translation(vector(0, 0, -0.2f, 0));
+	matrix_t model_to_world = matrix_translation(vector(0, 0, -0.3f, 0));
+	matrix_t mvp = matrix_mul(matrix_mul(model_to_world, world_to_view), view_to_projection);
 
 	render_buffer_t* descriptor = render_buffer_allocate(backend, RENDERUSAGE_STATIC, sizeof(void*) + sizeof(matrix_t), 0, 0);
 	// Vertex buffer
@@ -274,12 +301,10 @@ _test_render_box(render_api_t api) {
 		.size = sizeof(matrix_t)
 	}};
 	render_buffer_argument_declare(descriptor, argument, 2);
-	render_buffer_argument_encode_buffer(descriptor, 0, vertexbuffer, 0);
-	render_buffer_argument_encode_constant(descriptor, 1, &mvp, sizeof(matrix_t));
 
 	render_pipeline_set_color_attachment(pipeline, 0, target);
-	render_pipeline_set_color_clear(pipeline, 0, RENDERCLEAR_CLEAR, vector(1, 0, 0, 0));
-	render_pipeline_set_depth_clear(pipeline, RENDERCLEAR_CLEAR, vector(0, 0, 0, 0));
+	render_pipeline_set_color_clear(pipeline, 0, RENDERCLEAR_CLEAR, vector(0, 0, 0, 0));
+	render_pipeline_set_depth_clear(pipeline, RENDERCLEAR_CLEAR, vector(1, 1, 1, 1));
 
 	render_pipeline_state_t pipeline_state;
 	pipeline_state.shader = shader;
@@ -289,11 +314,25 @@ _test_render_box(render_api_t api) {
 	primitive.index_buffer = indexbuffer;
 	primitive.descriptor[0] = descriptor;
 
-	render_pipeline_queue(pipeline, RENDERPRIMITIVE_TRIANGLELIST, &primitive);
+	double dt = 0;
+	tick_t start = time_current();
 
-	render_pipeline_flush(pipeline);
+	while ((dt = time_elapsed(start)) < 15.0f) {
+		matrix_t translate = matrix_translation(vector(0, 0, -0.3f, 0));
+		matrix_t rotate = matrix_from_quaternion(euler_angles_to_quaternion(euler_angles((real)(dt * 0.31), (real)(dt * 0.57), (real)(dt * 0.73), EULER_XYZs)));
+		matrix_t scale = matrix_scaling(vector(1.0f, 1.0f, 1.0f, 1.0f));
+		model_to_world = matrix_mul(scale, matrix_mul(rotate, translate));
+		mvp = matrix_mul(matrix_mul(model_to_world, world_to_view), view_to_projection);
 
-	thread_sleep(5000);
+		render_buffer_lock(descriptor, RENDERBUFFER_LOCK_WRITE);
+		render_buffer_argument_encode_buffer(descriptor, 0, vertexbuffer, 0);
+		render_buffer_argument_encode_matrix(descriptor, 1, &mvp);
+		render_buffer_unlock(descriptor);
+
+		render_pipeline_queue(pipeline, RENDERPRIMITIVE_TRIANGLELIST, &primitive);
+
+		render_pipeline_flush(pipeline);
+	}
 
 	render_buffer_deallocate(descriptor);
 	render_buffer_deallocate(indexbuffer);
@@ -302,6 +341,7 @@ _test_render_box(render_api_t api) {
 	render_shader_unload(shader);
 
 	render_pipeline_deallocate(pipeline);
+	render_target_deallocate(depth);
 	render_target_deallocate(target);
 
 ignore_test:
@@ -343,13 +383,13 @@ DECLARE_TEST(render, metal_box) {
 
 static void
 test_render_declare(void) {
-	ADD_TEST(render, initialize);
-	ADD_TEST(render, null);
-	ADD_TEST(render, null_clear);
-	ADD_TEST(render, null_box);
+	//ADD_TEST(render, initialize);
+	//ADD_TEST(render, null);
+	//ADD_TEST(render, null_clear);
+	//ADD_TEST(render, null_box);
 #if FOUNDATION_PLATFORM_APPLE
-	ADD_TEST(render, metal);
-	ADD_TEST(render, metal_clear);
+	//ADD_TEST(render, metal);
+	//ADD_TEST(render, metal_clear);
 	ADD_TEST(render, metal_box);
 #endif
 }

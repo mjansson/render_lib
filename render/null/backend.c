@@ -68,6 +68,18 @@ rb_null_target_window_allocate(render_backend_t* backend, window_t* window, uint
 	return target;
 }
 
+static render_target_t*
+rb_null_target_texture_allocate(render_backend_t* backend, uint width, uint height, render_pixelformat_t format) {
+	render_target_t* target = memory_allocate(HASH_RENDER, sizeof(render_target_t), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	target->backend = backend;
+	target->width = width;
+	target->height = height;
+	target->type = RENDERTARGET_TEXTURE;
+	target->pixelformat = format;
+	target->colorspace = COLORSPACE_sRGB;
+	return target;
+}
+
 static void
 rb_null_target_deallocate(render_backend_t* backend, render_target_t* target) {
 	FOUNDATION_UNUSED(backend);
@@ -170,11 +182,18 @@ rb_null_buffer_argument_encode_constant(render_backend_t* backend, render_buffer
 
 }
 
+static void
+rb_null_buffer_argument_encode_matrix(render_backend_t* backend, render_buffer_t* buffer, uint index, const matrix_t* matrix) {
+	FOUNDATION_UNUSED(backend, buffer, index, matrix);
+
+}
+
 static render_backend_vtable_t render_backend_vtable_null = {.construct = rb_null_construct,
                                                              .destruct = rb_null_destruct,
                                                              .enumerate_adapters = rb_null_enumerate_adapters,
                                                              .enumerate_modes = rb_null_enumerate_modes,
                                                              .target_window_allocate = rb_null_target_window_allocate,
+                                                             .target_texture_allocate = rb_null_target_texture_allocate,
                                                              .target_deallocate = rb_null_target_deallocate,
                                                              .pipeline_allocate = rb_null_pipeline_allocate,
                                                              .pipeline_deallocate = rb_null_pipeline_deallocate,
@@ -190,6 +209,7 @@ static render_backend_vtable_t render_backend_vtable_null = {.construct = rb_nul
                                                              .buffer_upload = rb_null_buffer_upload,
                                                              .buffer_argument_declare = rb_null_buffer_argument_declare,
                                                              .buffer_argument_encode_buffer = rb_null_buffer_argument_encode_buffer,
+                                                             .buffer_argument_encode_matrix = rb_null_buffer_argument_encode_matrix,
                                                              .buffer_argument_encode_constant = rb_null_buffer_argument_encode_constant};
 
 render_backend_t*

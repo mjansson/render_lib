@@ -26,12 +26,7 @@ vertex_shader(uint vid [[ vertex_id ]],
               const device vertex_shader_arg_t* arg [[ buffer(0) ]]) {
 	rasterizer_data_t out;
 
-	float4 position = arg->vertices[vid].position * arg->mvp;
-
-	out.position.xy = position.xy;
-	out.position.z  = 0.0;
-	out.position.w  = 1.0;
-
+	out.position = arg->vertices[vid].position * arg->mvp;
 	out.color = (half4)arg->vertices[vid].color;
 
 	return out;

@@ -27,6 +27,7 @@
 #include <render/backend.h>
 #include <render/buffer.h>
 #include <render/pipeline.h>
+#include <render/projection.h>
 #include <render/shader.h>
 #include <render/target.h>
 #include <render/import.h>

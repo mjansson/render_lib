@@ -28,5 +28,8 @@
 RENDER_API render_target_t*
 render_target_window_allocate(render_backend_t* backend, window_t* window, uint tag);
 
+RENDER_API render_target_t*
+render_target_texture_allocate(render_backend_t* backend, uint width, uint height, render_pixelformat_t format);
+
 RENDER_API void
 render_target_deallocate(render_target_t* target);
