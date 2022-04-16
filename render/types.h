@@ -122,15 +122,9 @@ typedef enum render_buffer_flag_t {
 	RENDERBUFFER_LOCK_BITS = 0xF0
 } render_buffer_flag_t;
 
-typedef enum render_primitive_type {
-	RENDERPRIMITIVE_TRIANGLELIST = 0
-} render_primitive_type;
+typedef enum render_primitive_type { RENDERPRIMITIVE_TRIANGLELIST = 0 } render_primitive_type;
 
-typedef enum render_data_type {
-	RENDERDATA_POINTER,
-	RENDERDATA_FLOAT4,
-	RENDERDATA_MATRIX4X4
-} render_data_type;
+typedef enum render_data_type { RENDERDATA_POINTER, RENDERDATA_FLOAT4, RENDERDATA_MATRIX4X4 } render_data_type;
 
 #define RENDER_TARGET_COLOR_ATTACHMENT_COUNT 4
 
@@ -156,16 +150,23 @@ typedef void (*render_backend_destruct_fn)(render_backend_t*);
 typedef size_t (*render_backend_enumerate_adapters_fn)(render_backend_t*, uint*, size_t);
 typedef size_t (*render_backend_enumerate_modes_fn)(render_backend_t*, uint, render_resolution_t*, size_t);
 typedef render_target_t* (*render_backend_target_window_allocate_fn)(render_backend_t*, window_t*, uint);
-typedef render_target_t* (*render_backend_target_texture_allocate_fn)(render_backend_t*, uint, uint, render_pixelformat_t);
+typedef render_target_t* (*render_backend_target_texture_allocate_fn)(render_backend_t*, uint, uint,
+                                                                      render_pixelformat_t);
 typedef void (*render_backend_target_deallocate_fn)(render_backend_t*, render_target_t*);
 typedef render_pipeline_t* (*render_backend_pipeline_allocate_fn)(render_backend_t*, uint);
 typedef void (*render_backend_pipeline_deallocate_fn)(render_backend_t*, render_pipeline_t*);
-typedef void (*render_backend_pipeline_set_color_attachment_fn)(render_backend_t*, render_pipeline_t*, uint, render_target_t*);
-typedef void (*render_backend_pipeline_set_depth_attachment_fn)(render_backend_t*, render_pipeline_t*, render_target_t*);
-typedef void (*render_backend_pipeline_set_color_clear_fn)(render_backend_t*, render_pipeline_t*, uint, render_clear_action_t, vector_t);
-typedef void (*render_backend_pipeline_set_depth_clear_fn)(render_backend_t*, render_pipeline_t*, render_clear_action_t, vector_t);
-typedef render_pipeline_state_t (*render_backend_pipeline_state_allocate_fn)(render_backend_t*, render_pipeline_t*, render_shader_t*);
-typedef void (*render_backend_pipeline_state_deallocate_fn)(render_backend_t*, render_pipeline_t*, render_pipeline_state_t);
+typedef void (*render_backend_pipeline_set_color_attachment_fn)(render_backend_t*, render_pipeline_t*, uint,
+                                                                render_target_t*);
+typedef void (*render_backend_pipeline_set_depth_attachment_fn)(render_backend_t*, render_pipeline_t*,
+                                                                render_target_t*);
+typedef void (*render_backend_pipeline_set_color_clear_fn)(render_backend_t*, render_pipeline_t*, uint,
+                                                           render_clear_action_t, vector_t);
+typedef void (*render_backend_pipeline_set_depth_clear_fn)(render_backend_t*, render_pipeline_t*, render_clear_action_t,
+                                                           vector_t);
+typedef render_pipeline_state_t (*render_backend_pipeline_state_allocate_fn)(render_backend_t*, render_pipeline_t*,
+                                                                             render_shader_t*);
+typedef void (*render_backend_pipeline_state_deallocate_fn)(render_backend_t*, render_pipeline_t*,
+                                                            render_pipeline_state_t);
 typedef void (*render_backend_pipeline_flush_fn)(render_backend_t*, render_pipeline_t*);
 typedef void (*render_backend_pipeline_use_buffer_fn)(render_backend_t*, render_pipeline_t*, render_buffer_index_t);
 typedef bool (*render_backend_shader_upload_fn)(render_backend_t*, render_shader_t*, const void*, size_t);
@@ -173,11 +174,14 @@ typedef void (*render_backend_shader_finalize_fn)(render_backend_t*, render_shad
 typedef void (*render_backend_buffer_allocate_fn)(render_backend_t*, render_buffer_t*, size_t, const void*, size_t);
 typedef void (*render_backend_buffer_deallocate_fn)(render_backend_t*, render_buffer_t*, bool, bool);
 typedef void (*render_backend_buffer_upload_fn)(render_backend_t*, render_buffer_t*);
-typedef void (*render_backend_buffer_data_declare_fn)(render_backend_t*, render_buffer_t*, const render_buffer_data_t*, size_t, size_t);
-typedef void (*render_backend_buffer_data_set_instance_fn)(render_backend_t*, render_buffer_t*, uint);
-typedef void (*render_backend_buffer_data_encode_buffer_fn)(render_backend_t*, render_buffer_t*, uint, render_buffer_t*, uint);
-typedef void (*render_backend_buffer_data_encode_matrix_fn)(render_backend_t*, render_buffer_t*, uint, const matrix_t*);
-typedef void (*render_backend_buffer_data_encode_constant_fn)(render_backend_t*, render_buffer_t*, uint, const void*, uint);
+typedef void (*render_backend_buffer_data_declare_fn)(render_backend_t*, render_buffer_t*, const render_buffer_data_t*,
+                                                      size_t, size_t);
+typedef void (*render_backend_buffer_data_encode_buffer_fn)(render_backend_t*, render_buffer_t*, uint, uint,
+                                                            render_buffer_t*, uint);
+typedef void (*render_backend_buffer_data_encode_matrix_fn)(render_backend_t*, render_buffer_t*, uint, uint,
+                                                            const matrix_t*);
+typedef void (*render_backend_buffer_data_encode_constant_fn)(render_backend_t*, render_buffer_t*, uint, uint,
+                                                              const void*, uint);
 
 struct render_config_t {
 	uint unused;
@@ -207,7 +211,6 @@ struct render_backend_vtable_t {
 	render_backend_buffer_deallocate_fn buffer_deallocate;
 	render_backend_buffer_upload_fn buffer_upload;
 	render_backend_buffer_data_declare_fn buffer_data_declare;
-	render_backend_buffer_data_set_instance_fn buffer_data_set_instance;
 	render_backend_buffer_data_encode_buffer_fn buffer_data_encode_buffer;
 	render_backend_buffer_data_encode_matrix_fn buffer_data_encode_matrix;
 	render_backend_buffer_data_encode_constant_fn buffer_data_encode_constant;

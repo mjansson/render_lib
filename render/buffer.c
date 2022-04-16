@@ -21,8 +21,8 @@
 #include <render/internal.h>
 
 render_buffer_t*
-render_buffer_allocate(render_backend_t* backend, render_usage_t usage, size_t buffer_size,
-                       const void* data, size_t data_size) {
+render_buffer_allocate(render_backend_t* backend, render_usage_t usage, size_t buffer_size, const void* data,
+                       size_t data_size) {
 	render_buffer_t* buffer =
 	    memory_allocate(HASH_RENDER, sizeof(render_buffer_t), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 	buffer->backend = backend;
@@ -31,7 +31,7 @@ render_buffer_allocate(render_backend_t* backend, render_usage_t usage, size_t b
 	memset(buffer->backend_data, 0, sizeof(buffer->backend_data));
 	if (buffer_size)
 		backend->vtable.buffer_allocate(backend, buffer, buffer_size, data, data_size);
-	return buffer;	
+	return buffer;
 }
 
 void
@@ -81,26 +81,23 @@ render_buffer_unlock(render_buffer_t* buffer) {
 }
 
 void
-render_buffer_data_declare(render_buffer_t* buffer, const render_buffer_data_t* data, size_t data_count, size_t instance_count) {
+render_buffer_data_declare(render_buffer_t* buffer, const render_buffer_data_t* data, size_t data_count,
+                           size_t instance_count) {
 	buffer->backend->vtable.buffer_data_declare(buffer->backend, buffer, data, data_count, instance_count);
 }
 
 void
-render_buffer_data_set_instance(render_buffer_t* buffer, uint instance) {
-	buffer->backend->vtable.buffer_data_set_instance(buffer->backend, buffer, instance);
+render_buffer_data_encode_buffer(render_buffer_t* buffer, uint instance, uint index, render_buffer_t* source,
+                                 uint offset) {
+	buffer->backend->vtable.buffer_data_encode_buffer(buffer->backend, buffer, instance, index, source, offset);
 }
 
 void
-render_buffer_data_encode_buffer(render_buffer_t* buffer, uint index, render_buffer_t* source, uint offset) {
-	buffer->backend->vtable.buffer_data_encode_buffer(buffer->backend, buffer, index, source, offset);
+render_buffer_data_encode_matrix(render_buffer_t* buffer, uint instance, uint index, const matrix_t* matrix) {
+	buffer->backend->vtable.buffer_data_encode_matrix(buffer->backend, buffer, instance, index, matrix);
 }
 
 void
-render_buffer_data_encode_matrix(render_buffer_t* buffer, uint index, const matrix_t* matrix) {
-	buffer->backend->vtable.buffer_data_encode_matrix(buffer->backend, buffer, index, matrix);
-}
-
-void
-render_buffer_data_encode_constant(render_buffer_t* buffer, uint index, const void* data, uint size) {
-	buffer->backend->vtable.buffer_data_encode_constant(buffer->backend, buffer, index, data, size);
+render_buffer_data_encode_constant(render_buffer_t* buffer, uint instance, uint index, const void* data, uint size) {
+	buffer->backend->vtable.buffer_data_encode_constant(buffer->backend, buffer, instance, index, data, size);
 }

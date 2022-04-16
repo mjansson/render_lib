@@ -25,8 +25,7 @@
 #include <render/types.h>
 
 RENDER_API render_buffer_t*
-render_buffer_allocate(render_backend_t* backend, uint usage, size_t buffer_size,
-                       const void* data, size_t data_size);
+render_buffer_allocate(render_backend_t* backend, uint usage, size_t buffer_size, const void* data, size_t data_size);
 
 RENDER_API void
 render_buffer_deallocate(render_buffer_t* buffer);
@@ -47,16 +46,15 @@ RENDER_API void
 render_buffer_restore(render_buffer_t* buffer);
 
 RENDER_API void
-render_buffer_data_declare(render_buffer_t* buffer, const render_buffer_data_t* data, size_t data_count, size_t instance_count);
+render_buffer_data_declare(render_buffer_t* buffer, const render_buffer_data_t* data, size_t data_count,
+                           size_t instance_count);
 
 RENDER_API void
-render_buffer_data_set_instance(render_buffer_t* buffer, uint instance);
+render_buffer_data_encode_buffer(render_buffer_t* buffer, uint instance, uint index, render_buffer_t* source,
+                                 uint offset);
 
 RENDER_API void
-render_buffer_data_encode_buffer(render_buffer_t* buffer, uint index, render_buffer_t* source, uint offset);
+render_buffer_data_encode_matrix(render_buffer_t* buffer, uint instance, uint index, const matrix_t* data);
 
 RENDER_API void
-render_buffer_data_encode_matrix(render_buffer_t* buffer, uint index, const matrix_t* data);
-
-RENDER_API void
-render_buffer_data_encode_constant(render_buffer_t* buffer, uint index, const void* data, uint size);
+render_buffer_data_encode_constant(render_buffer_t* buffer, uint instance, uint index, const void* data, uint size);

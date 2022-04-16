@@ -58,7 +58,8 @@ rb_null_enumerate_modes(render_backend_t* backend, unsigned int adapter, render_
 static render_target_t*
 rb_null_target_window_allocate(render_backend_t* backend, window_t* window, uint tag) {
 	FOUNDATION_UNUSED(tag);
-	render_target_t* target = memory_allocate(HASH_RENDER, sizeof(render_target_t), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	render_target_t* target =
+	    memory_allocate(HASH_RENDER, sizeof(render_target_t), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 	target->backend = backend;
 	target->width = window_width(window);
 	target->height = window_height(window);
@@ -70,7 +71,8 @@ rb_null_target_window_allocate(render_backend_t* backend, window_t* window, uint
 
 static render_target_t*
 rb_null_target_texture_allocate(render_backend_t* backend, uint width, uint height, render_pixelformat_t format) {
-	render_target_t* target = memory_allocate(HASH_RENDER, sizeof(render_target_t), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	render_target_t* target =
+	    memory_allocate(HASH_RENDER, sizeof(render_target_t), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 	target->backend = backend;
 	target->width = width;
 	target->height = height;
@@ -88,10 +90,11 @@ rb_null_target_deallocate(render_backend_t* backend, render_target_t* target) {
 
 static render_pipeline_t*
 rb_null_pipeline_allocate(render_backend_t* backend, uint capacity) {
-	render_pipeline_t* pipeline = memory_allocate(HASH_RENDER, sizeof(render_pipeline_t), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	render_pipeline_t* pipeline =
+	    memory_allocate(HASH_RENDER, sizeof(render_pipeline_t), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 	pipeline->backend = backend;
 	pipeline->primitive_buffer = render_buffer_allocate(backend, RENDERUSAGE_DYNAMIC | RENDERUSAGE_RENDER,
-		sizeof(render_primitive_t) * capacity, 0, 0);	
+	                                                    sizeof(render_primitive_t) * capacity, 0, 0);
 	return pipeline;
 }
 
@@ -104,7 +107,8 @@ rb_null_pipeline_deallocate(render_backend_t* backend, render_pipeline_t* pipeli
 }
 
 static void
-rb_null_pipeline_set_color_attachment(render_backend_t* backend, render_pipeline_t* pipeline, uint slot, render_target_t* target) {
+rb_null_pipeline_set_color_attachment(render_backend_t* backend, render_pipeline_t* pipeline, uint slot,
+                                      render_target_t* target) {
 	FOUNDATION_UNUSED(backend);
 	if (slot < RENDER_TARGET_COLOR_ATTACHMENT_COUNT)
 		pipeline->color_attachment[slot] = target;
@@ -117,12 +121,14 @@ rb_null_pipeline_set_depth_attachment(render_backend_t* backend, render_pipeline
 }
 
 static void
-rb_null_pipeline_set_color_clear(render_backend_t* backend, render_pipeline_t* pipeline, uint slot, render_clear_action_t action, vector_t color) {
+rb_null_pipeline_set_color_clear(render_backend_t* backend, render_pipeline_t* pipeline, uint slot,
+                                 render_clear_action_t action, vector_t color) {
 	FOUNDATION_UNUSED(backend, pipeline, slot, action, color);
 }
 
 static void
-rb_null_pipeline_set_depth_clear(render_backend_t* backend, render_pipeline_t* pipeline, render_clear_action_t action, vector_t color) {
+rb_null_pipeline_set_depth_clear(render_backend_t* backend, render_pipeline_t* pipeline, render_clear_action_t action,
+                                 vector_t color) {
 	FOUNDATION_UNUSED(backend, pipeline, action, color);
 }
 
@@ -143,7 +149,8 @@ rb_null_pipeline_state_allocate(render_backend_t* backend, render_pipeline_t* pi
 }
 
 static void
-rb_null_pipeline_state_deallocate(render_backend_t* backend, render_pipeline_t* pipeline, render_pipeline_state_t state) {
+rb_null_pipeline_state_deallocate(render_backend_t* backend, render_pipeline_t* pipeline,
+                                  render_pipeline_state_t state) {
 	FOUNDATION_UNUSED(backend, pipeline, state);
 }
 
@@ -159,7 +166,8 @@ rb_null_shader_finalize(render_backend_t* backend, render_shader_t* shader) {
 }
 
 static void
-rb_null_buffer_allocate(render_backend_t* backend, render_buffer_t* buffer, size_t buffer_size, const void* data, size_t data_size) {
+rb_null_buffer_allocate(render_backend_t* backend, render_buffer_t* buffer, size_t buffer_size, const void* data,
+                        size_t data_size) {
 	FOUNDATION_UNUSED(backend);
 	if (buffer->usage == RENDERUSAGE_GPUONLY)
 		return;
@@ -182,61 +190,60 @@ rb_null_buffer_deallocate(render_backend_t* backend, render_buffer_t* buffer, bo
 
 static void
 rb_null_buffer_upload(render_backend_t* backend, render_buffer_t* buffer) {
-	FOUNDATION_UNUSED(backend, buffer);	
+	FOUNDATION_UNUSED(backend, buffer);
 }
 
 static void
-rb_null_buffer_data_declare(render_backend_t* backend, render_buffer_t* buffer, const render_buffer_data_t* data, size_t count) {
-	FOUNDATION_UNUSED(backend, buffer, data, count);
+rb_null_buffer_data_declare(render_backend_t* backend, render_buffer_t* buffer, const render_buffer_data_t* data,
+                            size_t data_count, size_t instance_count) {
+	FOUNDATION_UNUSED(backend, buffer, data, data_count, instance_count);
 }
 
 static void
-rb_null_buffer_data_set_instance(render_backend_t* backend, render_buffer_t* buffer, uint instance) {
-	FOUNDATION_UNUSED(backend, buffer, instance);
+rb_null_buffer_data_encode_buffer(render_backend_t* backend, render_buffer_t* buffer, uint instance, uint index,
+                                  render_buffer_t* source, uint offset) {
+	FOUNDATION_UNUSED(backend, buffer, instance, index, source, offset);
 }
 
 static void
-rb_null_buffer_data_encode_buffer(render_backend_t* backend, render_buffer_t* buffer, uint index, render_buffer_t* source, uint offset) {
-	FOUNDATION_UNUSED(backend, buffer, index, source, offset);
+rb_null_buffer_data_encode_constant(render_backend_t* backend, render_buffer_t* buffer, uint instance, uint index,
+                                    const void* data, uint size) {
+	FOUNDATION_UNUSED(backend, buffer, instance, index, data, size);
 }
 
 static void
-rb_null_buffer_data_encode_constant(render_backend_t* backend, render_buffer_t* buffer, uint index, const void* data, uint size) {
-	FOUNDATION_UNUSED(backend, buffer, index, data, size);
+rb_null_buffer_data_encode_matrix(render_backend_t* backend, render_buffer_t* buffer, uint instance, uint index,
+                                  const matrix_t* matrix) {
+	FOUNDATION_UNUSED(backend, buffer, instance, index, matrix);
 }
 
-static void
-rb_null_buffer_data_encode_matrix(render_backend_t* backend, render_buffer_t* buffer, uint index, const matrix_t* matrix) {
-	FOUNDATION_UNUSED(backend, buffer, index, matrix);
-}
-
-static render_backend_vtable_t render_backend_vtable_null = {.construct = rb_null_construct,
-                                                             .destruct = rb_null_destruct,
-                                                             .enumerate_adapters = rb_null_enumerate_adapters,
-                                                             .enumerate_modes = rb_null_enumerate_modes,
-                                                             .target_window_allocate = rb_null_target_window_allocate,
-                                                             .target_texture_allocate = rb_null_target_texture_allocate,
-                                                             .target_deallocate = rb_null_target_deallocate,
-                                                             .pipeline_allocate = rb_null_pipeline_allocate,
-                                                             .pipeline_deallocate = rb_null_pipeline_deallocate,
-                                                             .pipeline_set_color_attachment = rb_null_pipeline_set_color_attachment,
-                                                             .pipeline_set_depth_attachment = rb_null_pipeline_set_depth_attachment,
-                                                             .pipeline_set_color_clear = rb_null_pipeline_set_color_clear,
-                                                             .pipeline_set_depth_clear = rb_null_pipeline_set_depth_clear,
-                                                             .pipeline_flush = rb_null_pipeline_flush,
-															 .pipeline_use_buffer = rb_null_pipeline_use_buffer,
-                                                             .pipeline_state_allocate = rb_null_pipeline_state_allocate,
-                                                             .pipeline_state_deallocate = rb_null_pipeline_state_deallocate,
-                                                             .shader_upload = rb_null_shader_upload,
-                                                             .shader_finalize = rb_null_shader_finalize,
-                                                             .buffer_allocate = rb_null_buffer_allocate,
-                                                             .buffer_deallocate = rb_null_buffer_deallocate,
-                                                             .buffer_upload = rb_null_buffer_upload,
-                                                             .buffer_data_declare = rb_null_buffer_data_declare,
-															 .buffer_data_set_instance = rb_null_buffer_data_set_instance,
-                                                             .buffer_data_encode_buffer = rb_null_buffer_data_encode_buffer,
-                                                             .buffer_data_encode_matrix = rb_null_buffer_data_encode_matrix,
-                                                             .buffer_data_encode_constant = rb_null_buffer_data_encode_constant};
+static render_backend_vtable_t render_backend_vtable_null = {
+    .construct = rb_null_construct,
+    .destruct = rb_null_destruct,
+    .enumerate_adapters = rb_null_enumerate_adapters,
+    .enumerate_modes = rb_null_enumerate_modes,
+    .target_window_allocate = rb_null_target_window_allocate,
+    .target_texture_allocate = rb_null_target_texture_allocate,
+    .target_deallocate = rb_null_target_deallocate,
+    .pipeline_allocate = rb_null_pipeline_allocate,
+    .pipeline_deallocate = rb_null_pipeline_deallocate,
+    .pipeline_set_color_attachment = rb_null_pipeline_set_color_attachment,
+    .pipeline_set_depth_attachment = rb_null_pipeline_set_depth_attachment,
+    .pipeline_set_color_clear = rb_null_pipeline_set_color_clear,
+    .pipeline_set_depth_clear = rb_null_pipeline_set_depth_clear,
+    .pipeline_flush = rb_null_pipeline_flush,
+    .pipeline_use_buffer = rb_null_pipeline_use_buffer,
+    .pipeline_state_allocate = rb_null_pipeline_state_allocate,
+    .pipeline_state_deallocate = rb_null_pipeline_state_deallocate,
+    .shader_upload = rb_null_shader_upload,
+    .shader_finalize = rb_null_shader_finalize,
+    .buffer_allocate = rb_null_buffer_allocate,
+    .buffer_deallocate = rb_null_buffer_deallocate,
+    .buffer_upload = rb_null_buffer_upload,
+    .buffer_data_declare = rb_null_buffer_data_declare,
+    .buffer_data_encode_buffer = rb_null_buffer_data_encode_buffer,
+    .buffer_data_encode_matrix = rb_null_buffer_data_encode_matrix,
+    .buffer_data_encode_constant = rb_null_buffer_data_encode_constant};
 
 render_backend_t*
 render_backend_null_allocate(void) {

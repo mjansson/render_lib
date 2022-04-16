@@ -18,7 +18,6 @@
 #include <render/event.h>
 #include <render/backend.h>
 #include <render/shader.h>
-#include <render/program.h>
 #include <render/hashstrings.h>
 
 #include <foundation/array.h>
@@ -44,17 +43,6 @@ render_event_handle_resource(const event_t* event) {
 
 			render_shader_reload(shader, uuid);
 			render_shader_unload(shader);
-			continue;
-		}
-
-		render_program_t* program = render_program_lookup(backend, uuid);
-		if (program) {
-			string_const_t uuidstr = string_from_uuid_static(uuid);
-			log_debugf(HASH_RENDER, STRING_CONST("Resource event trigger program reload: %.*s"),
-			           STRING_FORMAT(uuidstr));
-
-			render_program_reload(program, uuid);
-			render_program_unload(program);
 			continue;
 		}
 	}
