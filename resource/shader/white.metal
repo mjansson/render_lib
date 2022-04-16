@@ -26,26 +26,21 @@ struct vertex_shader_instance_arg_t {
 // Vertex shader to pixel shader data exchange
 struct rasterizer_data_t {
 	float4 position [[position]];
-	half4  color;
 };
 
 vertex rasterizer_data_t
 vertex_shader(uint vid [[ vertex_id ]],
-              uint iid [[ instance_id ]],
               const device vertex_shader_global_arg_t* global [[ buffer(0) ]],
               const device vertex_shader_material_arg_t* material [[ buffer(1) ]],
               const device vertex_shader_instance_arg_t* instance [[ buffer(2) ]]) {
 	rasterizer_data_t out;
 
-	instance += iid;
-
 	out.position = (instance->vertices[vid].position * instance->model_to_world) * global->world_to_clip;
-	out.color = (half4)(instance->vertices[vid].color * material->color);
 
 	return out;
 }
 
 fragment float4
 pixel_shader(rasterizer_data_t in [[ stage_in ]]) {
-	return (float4)in.color;
+	return (float4){1.0, 1.0, 1.0, 1.0};
 }

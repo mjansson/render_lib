@@ -334,6 +334,7 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 							stream_read(lib_stream, compiled_blob, compiled_size);
 							stream_deallocate(lib_stream);
 							result = 0;
+							log_infof(HASH_RENDER, STRING_CONST("Compiled metal shader: %u bytes"), (uint)compiled_size);
 						} else {
 							log_error(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
 							          STRING_CONST("Failed to read compiled Metal lib after compile"));
@@ -376,6 +377,7 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 				stream = resource_local_create_dynamic(uuid, subplatform);
 				if (stream) {
 					stream_write_uint32(stream, version);
+					stream_write_uint32(stream, 0);
 					stream_write_uint64(stream, compiled_size);
 					stream_write(stream, compiled_blob, compiled_size);
 					stream_deallocate(stream);

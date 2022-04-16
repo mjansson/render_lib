@@ -29,9 +29,8 @@ render_buffer_allocate(render_backend_t* backend, render_usage_t usage, size_t b
 	buffer->usage = (uint8_t)usage;
 	semaphore_initialize(&buffer->lock, 1);
 	memset(buffer->backend_data, 0, sizeof(buffer->backend_data));
-
-	backend->vtable.buffer_allocate(backend, buffer, buffer_size, data, data_size);
-
+	if (buffer_size)
+		backend->vtable.buffer_allocate(backend, buffer, buffer_size, data, data_size);
 	return buffer;	
 }
 
@@ -82,22 +81,26 @@ render_buffer_unlock(render_buffer_t* buffer) {
 }
 
 void
-render_buffer_argument_declare(render_buffer_t* buffer, const render_buffer_argument_t* argument, size_t count) {
-	buffer->backend->vtable.buffer_argument_declare(buffer->backend, buffer, argument, count);
-
+render_buffer_data_declare(render_buffer_t* buffer, const render_buffer_data_t* data, size_t data_count, size_t instance_count) {
+	buffer->backend->vtable.buffer_data_declare(buffer->backend, buffer, data, data_count, instance_count);
 }
 
 void
-render_buffer_argument_encode_buffer(render_buffer_t* buffer, uint index, render_buffer_t* source, uint offset) {
-	buffer->backend->vtable.buffer_argument_encode_buffer(buffer->backend, buffer, index, source, offset);
+render_buffer_data_set_instance(render_buffer_t* buffer, uint instance) {
+	buffer->backend->vtable.buffer_data_set_instance(buffer->backend, buffer, instance);
 }
 
 void
-render_buffer_argument_encode_matrix(render_buffer_t* buffer, uint index, const matrix_t* matrix) {
-	buffer->backend->vtable.buffer_argument_encode_matrix(buffer->backend, buffer, index, matrix);
+render_buffer_data_encode_buffer(render_buffer_t* buffer, uint index, render_buffer_t* source, uint offset) {
+	buffer->backend->vtable.buffer_data_encode_buffer(buffer->backend, buffer, index, source, offset);
 }
 
 void
-render_buffer_argument_encode_constant(render_buffer_t* buffer, uint index, const void* data, uint size) {
-	buffer->backend->vtable.buffer_argument_encode_constant(buffer->backend, buffer, index, data, size);
+render_buffer_data_encode_matrix(render_buffer_t* buffer, uint index, const matrix_t* matrix) {
+	buffer->backend->vtable.buffer_data_encode_matrix(buffer->backend, buffer, index, matrix);
+}
+
+void
+render_buffer_data_encode_constant(render_buffer_t* buffer, uint index, const void* data, uint size) {
+	buffer->backend->vtable.buffer_data_encode_constant(buffer->backend, buffer, index, data, size);
 }

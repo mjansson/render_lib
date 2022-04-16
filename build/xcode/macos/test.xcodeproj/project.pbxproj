@@ -12,13 +12,15 @@
 		4513867B193A73DF00BA2092 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 4513867A193A73DF00BA2092 /* main.c */; };
 		45138683193A746000BA2092 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 45138682193A746000BA2092 /* Cocoa.framework */; };
 		451386B6193A749500BA2092 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 451386B5193A749500BA2092 /* main.c */; };
-		451386BA193A753D00BA2092 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 451386B7193A753D00BA2092 /* Images.xcassets */; };
-		451386BC193A753D00BA2092 /* test-render.xib in Resources */ = {isa = PBXBuildFile; fileRef = 451386B9193A753D00BA2092 /* test-render.xib */; };
 		451386BD193A75DA00BA2092 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 45138670193A5C2E00BA2092 /* Carbon.framework */; };
 		451386BE193A75DB00BA2092 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 45138672193A5C2E00BA2092 /* CoreFoundation.framework */; };
 		451386C0193A75DB00BA2092 /* librender.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 451386BF193A75DB00BA2092 /* librender.a */; };
 		451386C1193A761900BA2092 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 45138682193A746000BA2092 /* Cocoa.framework */; };
-		45BB33581A59728200D30F3E /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 45BB33571A59728200D30F3E /* OpenGL.framework */; };
+		CD845DD028032D3C00E1052C /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CD845DCF28032D3C00E1052C /* Images.xcassets */; };
+		CD845DE028032ECC00E1052C /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CD845DDF28032ECC00E1052C /* Metal.framework */; };
+		CD845DE228032F7E00E1052C /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CD845DE128032F7E00E1052C /* CoreGraphics.framework */; };
+		CD845DE42803302200E1052C /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CD845DE32803302200E1052C /* QuartzCore.framework */; };
+		CD845DE72803306900E1052C /* test-render.xib in Resources */ = {isa = PBXBuildFile; fileRef = CD845DE62803306900E1052C /* test-render.xib */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -51,12 +53,15 @@
 		45138680193A746000BA2092 /* test-render.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "test-render.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		45138682193A746000BA2092 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		451386B5193A749500BA2092 /* main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = main.c; path = ../../../test/render/main.c; sourceTree = "<group>"; };
-		451386B7193A753D00BA2092 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = ../../../test/render/osx/Images.xcassets; sourceTree = "<group>"; };
-		451386B8193A753D00BA2092 /* test-render.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "test-render.plist"; path = "../../../test/render/osx/test-render.plist"; sourceTree = "<group>"; };
-		451386B9193A753D00BA2092 /* test-render.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = "test-render.xib"; path = "../../../test/render/osx/test-render.xib"; sourceTree = "<group>"; };
 		451386BF193A75DB00BA2092 /* librender.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = librender.a; path = ../../../lib/macos/debug/librender.a; sourceTree = "<group>"; };
 		45BB33551A59726E00D30F3E /* OpenCL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenCL.framework; path = System/Library/Frameworks/OpenCL.framework; sourceTree = SDKROOT; };
 		45BB33571A59728200D30F3E /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
+		CD845DCD28032CE400E1052C /* test-render.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "test-render.plist"; path = "../../../test/render/macos/test-render.plist"; sourceTree = "<group>"; };
+		CD845DCF28032D3C00E1052C /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = ../../../test/render/macos/Images.xcassets; sourceTree = "<group>"; };
+		CD845DDF28032ECC00E1052C /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
+		CD845DE128032F7E00E1052C /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
+		CD845DE32803302200E1052C /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
+		CD845DE62803306900E1052C /* test-render.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = "test-render.xib"; path = "../../../test/render/macos/test-render.xib"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -75,7 +80,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				451386C0193A75DB00BA2092 /* librender.a in Frameworks */,
-				45BB33581A59728200D30F3E /* OpenGL.framework in Frameworks */,
+				CD845DE028032ECC00E1052C /* Metal.framework in Frameworks */,
+				CD845DE228032F7E00E1052C /* CoreGraphics.framework in Frameworks */,
+				CD845DE42803302200E1052C /* QuartzCore.framework in Frameworks */,
 				451386BD193A75DA00BA2092 /* Carbon.framework in Frameworks */,
 				45138683193A746000BA2092 /* Cocoa.framework in Frameworks */,
 				451386BE193A75DB00BA2092 /* CoreFoundation.framework in Frameworks */,
@@ -93,6 +100,7 @@
 				45138666193A58B300BA2092 /* bin */,
 				45138678193A73C500BA2092 /* lib */,
 				45138677193A73BB00BA2092 /* framework */,
+				CD845DDE28032ECC00E1052C /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -136,12 +144,22 @@
 		451386B4193A748300BA2092 /* render */ = {
 			isa = PBXGroup;
 			children = (
-				451386B7193A753D00BA2092 /* Images.xcassets */,
-				451386B8193A753D00BA2092 /* test-render.plist */,
-				451386B9193A753D00BA2092 /* test-render.xib */,
+				CD845DE62803306900E1052C /* test-render.xib */,
+				CD845DCF28032D3C00E1052C /* Images.xcassets */,
+				CD845DCD28032CE400E1052C /* test-render.plist */,
 				451386B5193A749500BA2092 /* main.c */,
 			);
 			name = render;
+			sourceTree = "<group>";
+		};
+		CD845DDE28032ECC00E1052C /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				CD845DE32803302200E1052C /* QuartzCore.framework */,
+				CD845DE128032F7E00E1052C /* CoreGraphics.framework */,
+				CD845DDF28032ECC00E1052C /* Metal.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -189,12 +207,18 @@
 			isa = PBXProject;
 			attributes = {
 				LastUpgradeCheck = 0830;
+				TargetAttributes = {
+					4513867F193A746000BA2092 = {
+						DevelopmentTeam = ZH3P4M69TA;
+					};
+				};
 			};
 			buildConfigurationList = 4513865E193A580400BA2092 /* Build configuration list for PBXProject "test" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
 			knownRegions = (
+				English,
 				en,
 				Base,
 			);
@@ -214,8 +238,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				451386BC193A753D00BA2092 /* test-render.xib in Resources */,
-				451386BA193A753D00BA2092 /* Images.xcassets in Resources */,
+				CD845DD028032D3C00E1052C /* Images.xcassets in Resources */,
+				CD845DE72803306900E1052C /* test-render.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -416,10 +440,24 @@
 		451386AF193A746100BA2092 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = "AppIcon-2";
+				CODE_SIGN_IDENTITY = "-";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
-				INFOPLIST_FILE = "../../../test/render/osx/test-render.plist";
+				DEVELOPMENT_TEAM = ZH3P4M69TA;
+				HEADER_SEARCH_PATHS = (
+					../../..,
+					../../../../foundation_lib,
+					../../../../window_lib,
+					../../../../network_lib,
+					../../../../vector_lib,
+					../../../../resource_lib,
+					../../../../task_lib,
+					../../../../foundation_lib/test,
+					"$(inherited)",
+				);
+				INFOPLIST_FILE = "$(SRCROOT)/../../../test/render/macos/test-render.plist";
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
 				OTHER_LDFLAGS = (
 					"-lvector",
 					"-lresource",
@@ -430,6 +468,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.maniccoder.render.test.render;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -437,10 +476,24 @@
 		451386B0193A746100BA2092 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = "AppIcon-2";
+				CODE_SIGN_IDENTITY = "-";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
-				INFOPLIST_FILE = "../../../test/render/osx/test-render.plist";
+				DEVELOPMENT_TEAM = ZH3P4M69TA;
+				HEADER_SEARCH_PATHS = (
+					../../..,
+					../../../../foundation_lib,
+					../../../../window_lib,
+					../../../../network_lib,
+					../../../../vector_lib,
+					../../../../resource_lib,
+					../../../../task_lib,
+					../../../../foundation_lib/test,
+					"$(inherited)",
+				);
+				INFOPLIST_FILE = "$(SRCROOT)/../../../test/render/macos/test-render.plist";
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
 				OTHER_LDFLAGS = (
 					"-lvector",
 					"-lresource",
@@ -451,6 +504,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.maniccoder.render.test.render;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Release;
@@ -541,10 +595,24 @@
 		451386C6193A77B900BA2092 /* Profile */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = "AppIcon-2";
+				CODE_SIGN_IDENTITY = "-";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
-				INFOPLIST_FILE = "../../../test/render/osx/test-render.plist";
+				DEVELOPMENT_TEAM = ZH3P4M69TA;
+				HEADER_SEARCH_PATHS = (
+					../../..,
+					../../../../foundation_lib,
+					../../../../window_lib,
+					../../../../network_lib,
+					../../../../vector_lib,
+					../../../../resource_lib,
+					../../../../task_lib,
+					../../../../foundation_lib/test,
+					"$(inherited)",
+				);
+				INFOPLIST_FILE = "$(SRCROOT)/../../../test/render/macos/test-render.plist";
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
 				OTHER_LDFLAGS = (
 					"-lvector",
 					"-lresource",
@@ -555,6 +623,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.maniccoder.render.test.render;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Profile;
@@ -645,10 +714,23 @@
 		451386C9193A77BE00BA2092 /* Deploy */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = "AppIcon-2";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
-				INFOPLIST_FILE = "../../../test/render/osx/test-render.plist";
+				DEVELOPMENT_TEAM = ZH3P4M69TA;
+				HEADER_SEARCH_PATHS = (
+					../../..,
+					../../../../foundation_lib,
+					../../../../window_lib,
+					../../../../network_lib,
+					../../../../vector_lib,
+					../../../../resource_lib,
+					../../../../task_lib,
+					../../../../foundation_lib/test,
+					"$(inherited)",
+				);
+				INFOPLIST_FILE = "$(SRCROOT)/../../../test/render/macos/test-render.plist";
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
 				OTHER_LDFLAGS = (
 					"-lvector",
 					"-lresource",
@@ -659,6 +741,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.maniccoder.render.test.render;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Deploy;

@@ -26,7 +26,7 @@
 #include <render/types.h>
 
 RENDER_API render_pipeline_t*
-render_pipeline_allocate(render_backend_t* backend);
+render_pipeline_allocate(render_backend_t* backend, uint capacity);
 
 RENDER_API void
 render_pipeline_deallocate(render_pipeline_t* pipeline);
@@ -49,21 +49,11 @@ render_pipeline_flush(render_pipeline_t* pipeline);
 RENDER_API void
 render_pipeline_queue(render_pipeline_t* pipeline, render_primitive_type type, const render_primitive_t* primitive);
 
-#if 0
-void
-render_pipeline_execute(render_pipeline_t* pipeline);
+RENDER_API render_pipeline_state_t
+render_pipeline_state_allocate(render_pipeline_t* pipeline, render_shader_t* shader);
 
-void
-render_pipeline_dispatch(render_pipeline_t* pipeline);
+RENDER_API void
+render_pipeline_state_deallocate(render_pipeline_t* pipeline, render_pipeline_state_t state);
 
-void
-render_pipeline_step_initialize(render_pipeline_step_t* step, render_target_t* target,
-                                render_pipeline_execute_fn executor);
-
-void
-render_pipeline_step_finalize(render_pipeline_step_t* step);
-
-void
-render_pipeline_step_blit_initialize(render_pipeline_step_t* step, render_target_t* target_source,
-                                     render_target_t* target_destination);
-#endif
+RENDER_API void
+render_pipeline_use_buffer(render_pipeline_t* pipeline, render_buffer_index_t buffer);

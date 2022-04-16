@@ -198,7 +198,7 @@ _test_render_clear(render_api_t api) {
 		goto ignore_test;
 
 	target = render_target_window_allocate(backend, &window, 0);
-	pipeline = render_pipeline_allocate(backend);
+	pipeline = render_pipeline_allocate(backend, 1024);
 
 	render_pipeline_set_color_attachment(pipeline, 0, target);
 	render_pipeline_set_color_clear(pipeline, 0, RENDERCLEAR_CLEAR, vector(1, 0, 0, 0));
@@ -247,7 +247,7 @@ _test_render_box(render_api_t api) {
 	uint width = window_width(&window);
 	uint height = window_height(&window);
 
-	pipeline = render_pipeline_allocate(backend);
+	pipeline = render_pipeline_allocate(backend, 1024);
 
 	target = render_target_window_allocate(backend, &window, 0);
 	render_pipeline_set_color_attachment(pipeline, 0, target);
@@ -257,10 +257,16 @@ _test_render_box(render_api_t api) {
 	render_pipeline_set_depth_attachment(pipeline, depth);
 	render_pipeline_set_depth_clear(pipeline, RENDERCLEAR_CLEAR, vector(1, 1, 1, 1));
 
-	render_shader_t* shader = nullptr;
+	render_shader_t* shader_color = nullptr;
 	if (api != RENDERAPI_NULL) {
-		shader = render_shader_load(backend, uuid_decl(a7a465ed, 9fcb, 4383, 9494, abadc9b80eb9));
-		EXPECT_NE(shader, 0);
+		shader_color = render_shader_load(backend, uuid_decl(a7a465ed, 9fcb, 4383, 9494, abadc9b80eb9));
+		EXPECT_NE(shader_color, 0);
+	}
+
+	render_shader_t* shader_white = nullptr;
+	if (api != RENDERAPI_NULL) {
+		shader_white = render_shader_load(backend, uuid_decl(3ba6e39a, c3f0, 497c, a908, 49c41f446f31));
+		EXPECT_NE(shader_white, 0);
 	}
 
 	const float32_t vertexdata[8 * 8] = { 0.1f,  0.1f,  0.1f, 1.0f, 1, 1, 1, 1,
@@ -271,7 +277,7 @@ _test_render_box(render_api_t api) {
 	                                      0.1f, -0.1f, -0.1f, 1.0f, 1, 0, 1, 1,
 	                                     -0.1f, -0.1f, -0.1f, 1.0f, 1, 1, 0, 1,
 	                                     -0.1f,  0.1f, -0.1f, 1.0f, 1, 1, 1, 1};
-	render_buffer_t* vertexbuffer = render_buffer_allocate(backend, RENDERUSAGE_STATIC, sizeof(vertexdata), vertexdata, sizeof(vertexdata));
+	render_buffer_t* vertexbuffer = render_buffer_allocate(backend, RENDERUSAGE_STATIC | RENDERUSAGE_RENDER, sizeof(vertexdata), vertexdata, sizeof(vertexdata));
 
 	const uint16_t indexdata[12 * 3] = {0, 3, 2, 0, 2, 1,
 	                                    4, 0, 1, 4, 1, 5,
@@ -279,66 +285,127 @@ _test_render_box(render_api_t api) {
 	                                    3, 7, 6, 3, 6, 2,
 	                                    4, 7, 3, 4, 3, 0,
 	                                    1, 2, 6, 1, 6, 5};
-	render_buffer_t* indexbuffer = render_buffer_allocate(backend, RENDERUSAGE_STATIC, sizeof(indexdata), indexdata, sizeof(indexdata));
+	render_buffer_t* indexbuffer = render_buffer_allocate(backend, RENDERUSAGE_STATIC | RENDERUSAGE_RENDER, sizeof(indexdata), indexdata, sizeof(indexdata));
 	
 	real aspect_ratio = (real)width / (real)height;
-	matrix_t view_to_projection = render_projection_perspective(0.1f, 10.0f, REAL_HALFPI, aspect_ratio);
+	matrix_t view_to_clip = render_projection_perspective(0.1f, 10.0f, REAL_PI * REAL_C(0.3), aspect_ratio);
 	matrix_t world_to_view = matrix_translation(vector(0, 0, -0.2f, 0));
 	matrix_t model_to_world = matrix_translation(vector(0, 0, -0.3f, 0));
-	matrix_t mvp = matrix_mul(matrix_mul(model_to_world, world_to_view), view_to_projection);
+	matrix_t world_to_clip = matrix_mul(world_to_view, view_to_clip);
 
-	render_buffer_t* descriptor = render_buffer_allocate(backend, RENDERUSAGE_STATIC, sizeof(void*) + sizeof(matrix_t), 0, 0);
-	// Vertex buffer
-	render_buffer_argument_t argument[2] = {{
+	render_buffer_t* global_descriptor = render_buffer_allocate(backend, RENDERUSAGE_STATIC | RENDERUSAGE_RENDER, 0, 0, 0);
+	// View-to-clip transform matrix
+	render_buffer_data_t global_data[1] = {{
 		.index = 0,
-		.data_type = RENDERARGUMENT_POINTER,
-		.size = 1
-	},
-	// Model-view-projection matrix
-	{
-		.index = 1,
-		.data_type = RENDERARGUMENT_MATRIX4X4,
+		.data_type = RENDERDATA_MATRIX4X4,
 		.size = sizeof(matrix_t)
 	}};
-	render_buffer_argument_declare(descriptor, argument, 2);
+	render_buffer_data_declare(global_descriptor, global_data, 1, 1);
+
+	render_buffer_t* material_descriptor = render_buffer_allocate(backend, RENDERUSAGE_STATIC | RENDERUSAGE_RENDER, 0, 0, 0);
+	// Material color
+	render_buffer_data_t material_data[1] = {{
+		.index = 0,
+		.data_type = RENDERDATA_FLOAT4,
+		.size = sizeof(vector_t)
+	}};
+	render_buffer_data_declare(material_descriptor, material_data, 1, 1);
+
+	render_buffer_t* instance_descriptor = render_buffer_allocate(backend, RENDERUSAGE_STATIC | RENDERUSAGE_RENDER, 0, 0, 0);
+	render_buffer_data_t instance_data[2] = {
+	// Model-view-projection matrix
+	{
+		.index = 0,
+		.data_type = RENDERDATA_MATRIX4X4,
+		.size = sizeof(matrix_t)
+	},
+	// Vertex buffer
+	{
+		.index = 1,
+		.data_type = RENDERDATA_POINTER,
+		.size = sizeof(uintptr_t)
+	}};
+	render_buffer_data_declare(instance_descriptor, instance_data, 2, 2);
+
+	render_buffer_t* argument_buffer = render_buffer_allocate(backend, RENDERUSAGE_STATIC | RENDERUSAGE_RENDER, sizeof(render_argument_t) * 32, 0, 0);
+	render_buffer_lock(argument_buffer, RENDERBUFFER_LOCK_WRITE);
+	render_argument_t* argument = argument_buffer->access;
+	memset(argument, 0, sizeof(render_argument_t));
+	argument->index_count = 36;
+	argument->instance_count = 2;
+	render_buffer_unlock(argument_buffer);
 
 	render_pipeline_set_color_attachment(pipeline, 0, target);
 	render_pipeline_set_color_clear(pipeline, 0, RENDERCLEAR_CLEAR, vector(0, 0, 0, 0));
 	render_pipeline_set_depth_clear(pipeline, RENDERCLEAR_CLEAR, vector(1, 1, 1, 1));
 
-	render_pipeline_state_t pipeline_state;
-	pipeline_state.shader = shader;
+	render_pipeline_state_t pipeline_color_state = render_pipeline_state_allocate(pipeline, shader_color);
+	render_pipeline_state_t pipeline_white_state = render_pipeline_state_allocate(pipeline, shader_white);
+
+	world_to_clip = matrix_mul(world_to_view, view_to_clip);
+	render_buffer_lock(global_descriptor, RENDERBUFFER_LOCK_WRITE);
+	render_buffer_data_encode_matrix(global_descriptor, 0, &world_to_clip);
+	render_buffer_unlock(global_descriptor);
+
+	vector_t material_color = vector(1, 1, 1, 1);
+	render_buffer_lock(material_descriptor, RENDERBUFFER_LOCK_WRITE);
+	render_buffer_data_encode_constant(material_descriptor, 0, &material_color, sizeof(vector_t));
+	render_buffer_unlock(material_descriptor);	
 
 	render_primitive_t primitive;
-	primitive.pipeline_state = &pipeline_state;
-	primitive.index_buffer = indexbuffer;
-	primitive.descriptor[0] = descriptor;
+	primitive.argument_buffer = argument_buffer->render_index;
+	primitive.argument_offset = 0;
+	primitive.index_buffer = indexbuffer->render_index;
+	primitive.descriptor[0] = global_descriptor->render_index;
+	primitive.descriptor[1] = material_descriptor->render_index;
+	primitive.descriptor[2] = instance_descriptor->render_index;
 
 	double dt = 0;
 	tick_t start = time_current();
 
 	while ((dt = time_elapsed(start)) < 15.0f) {
-		matrix_t translate = matrix_translation(vector(0, 0, -0.3f, 0));
+		render_buffer_lock(instance_descriptor, RENDERBUFFER_LOCK_WRITE);
+
+		matrix_t translate = matrix_translation(vector(0.3, -0.25, -0.75f, 0));
 		matrix_t rotate = matrix_from_quaternion(euler_angles_to_quaternion(euler_angles((real)(dt * 0.31), (real)(dt * 0.57), (real)(dt * 0.73), EULER_XYZs)));
 		matrix_t scale = matrix_scaling(vector(1.0f, 1.0f, 1.0f, 1.0f));
 		model_to_world = matrix_mul(scale, matrix_mul(rotate, translate));
-		mvp = matrix_mul(matrix_mul(model_to_world, world_to_view), view_to_projection);
 
-		render_buffer_lock(descriptor, RENDERBUFFER_LOCK_WRITE);
-		render_buffer_argument_encode_buffer(descriptor, 0, vertexbuffer, 0);
-		render_buffer_argument_encode_matrix(descriptor, 1, &mvp);
-		render_buffer_unlock(descriptor);
+		render_buffer_data_set_instance(instance_descriptor, 0);
+		render_buffer_data_encode_matrix(instance_descriptor, 0, &model_to_world);
+		render_buffer_data_encode_buffer(instance_descriptor, 1, vertexbuffer, 0);
 
+		translate = matrix_translation(vector(-0.3, 0.25, -0.75f, 0));
+		rotate = matrix_from_quaternion(euler_angles_to_quaternion(euler_angles((real)(dt * 0.57), (real)(dt * 0.73), (real)(dt * 0.31), EULER_XYZs)));
+		scale = matrix_scaling(vector(1.0f, 1.0f, 1.0f, 1.0f));
+		model_to_world = matrix_mul(scale, matrix_mul(rotate, translate));
+
+		render_buffer_data_set_instance(instance_descriptor, 1);
+		render_buffer_data_encode_matrix(instance_descriptor, 0, &model_to_world);
+		render_buffer_data_encode_buffer(instance_descriptor, 1, vertexbuffer, 0);
+
+		render_buffer_unlock(instance_descriptor);
+
+		primitive.pipeline_state = pipeline_color_state;
+
+		render_pipeline_use_buffer(pipeline, vertexbuffer->render_index);
 		render_pipeline_queue(pipeline, RENDERPRIMITIVE_TRIANGLELIST, &primitive);
 
 		render_pipeline_flush(pipeline);
 	}
 
-	render_buffer_deallocate(descriptor);
+	render_pipeline_state_deallocate(pipeline, pipeline_color_state);
+	render_pipeline_state_deallocate(pipeline, pipeline_white_state);
+
+	render_buffer_deallocate(argument_buffer);
+	render_buffer_deallocate(instance_descriptor);
+	render_buffer_deallocate(material_descriptor);
+	render_buffer_deallocate(global_descriptor);
 	render_buffer_deallocate(indexbuffer);
 	render_buffer_deallocate(vertexbuffer);
 
-	render_shader_unload(shader);
+	render_shader_unload(shader_color);
+	render_shader_unload(shader_white);
 
 	render_pipeline_deallocate(pipeline);
 	render_target_deallocate(depth);

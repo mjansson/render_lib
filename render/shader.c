@@ -104,6 +104,7 @@ retry:
 	if (stream) {
 		char* buffer;
 		uint32_t version = stream_read_uint32(stream);
+		/*uint32_t unused =*/ stream_read_uint32(stream);
 		size_t size = (size_t)stream_read_uint64(stream);
 		if ((version == RENDER_SHADER_RESOURCE_VERSION) && (size < 128 * 1024)) {
 			buffer = memory_allocate(HASH_RENDER, size + 1, 0, MEMORY_TEMPORARY);

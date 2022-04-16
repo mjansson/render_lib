@@ -102,12 +102,13 @@ typedef enum render_clear_action_t {
 } render_clear_action_t;
 
 typedef enum render_usage_t {
-	RENDERUSAGE_INVALID = 0,
-	RENDERUSAGE_CPUONLY,
-	RENDERUSAGE_GPUONLY,
-	RENDERUSAGE_DYNAMIC,
-	RENDERUSAGE_STATIC,
-	RENDERUSAGE_TARGET
+	RENDERUSAGE_DEFAULT = 0,
+	RENDERUSAGE_CPUONLY = 0x01,
+	RENDERUSAGE_GPUONLY = 0x02,
+	RENDERUSAGE_DYNAMIC = 0x04,
+	RENDERUSAGE_STATIC = 0,
+	RENDERUSAGE_TARGET = 0x08,
+	RENDERUSAGE_RENDER = 0x10
 } render_usage_t;
 
 typedef enum render_buffer_flag_t {
@@ -125,10 +126,11 @@ typedef enum render_primitive_type {
 	RENDERPRIMITIVE_TRIANGLELIST = 0
 } render_primitive_type;
 
-typedef enum render_argument_data_type {
-	RENDERARGUMENT_POINTER,
-	RENDERARGUMENT_MATRIX4X4
-} render_argument_data_type;
+typedef enum render_data_type {
+	RENDERDATA_POINTER,
+	RENDERDATA_FLOAT4,
+	RENDERDATA_MATRIX4X4
+} render_data_type;
 
 #define RENDER_TARGET_COLOR_ATTACHMENT_COUNT 4
 
@@ -138,11 +140,16 @@ typedef struct render_backend_t render_backend_t;
 typedef struct render_resolution_t render_resolution_t;
 typedef struct render_target_t render_target_t;
 typedef struct render_pipeline_t render_pipeline_t;
-typedef struct render_pipeline_state_t render_pipeline_state_t;
 typedef struct render_shader_t render_shader_t;
 typedef struct render_buffer_t render_buffer_t;
 typedef struct render_primitive_t render_primitive_t;
-typedef struct render_buffer_argument_t render_buffer_argument_t;
+typedef struct render_buffer_data_t render_buffer_data_t;
+typedef struct render_argument_t render_argument_t;
+
+typedef uint32_t render_pipeline_state_t;
+typedef uint32_t render_buffer_index_t;
+typedef uint32_t render_count_t;
+typedef uint32_t render_offset_t;
 
 typedef bool (*render_backend_construct_fn)(render_backend_t*);
 typedef void (*render_backend_destruct_fn)(render_backend_t*);
@@ -151,22 +158,26 @@ typedef size_t (*render_backend_enumerate_modes_fn)(render_backend_t*, uint, ren
 typedef render_target_t* (*render_backend_target_window_allocate_fn)(render_backend_t*, window_t*, uint);
 typedef render_target_t* (*render_backend_target_texture_allocate_fn)(render_backend_t*, uint, uint, render_pixelformat_t);
 typedef void (*render_backend_target_deallocate_fn)(render_backend_t*, render_target_t*);
-typedef render_pipeline_t* (*render_backend_pipeline_allocate_fn)(render_backend_t*);
+typedef render_pipeline_t* (*render_backend_pipeline_allocate_fn)(render_backend_t*, uint);
 typedef void (*render_backend_pipeline_deallocate_fn)(render_backend_t*, render_pipeline_t*);
 typedef void (*render_backend_pipeline_set_color_attachment_fn)(render_backend_t*, render_pipeline_t*, uint, render_target_t*);
 typedef void (*render_backend_pipeline_set_depth_attachment_fn)(render_backend_t*, render_pipeline_t*, render_target_t*);
 typedef void (*render_backend_pipeline_set_color_clear_fn)(render_backend_t*, render_pipeline_t*, uint, render_clear_action_t, vector_t);
 typedef void (*render_backend_pipeline_set_depth_clear_fn)(render_backend_t*, render_pipeline_t*, render_clear_action_t, vector_t);
+typedef render_pipeline_state_t (*render_backend_pipeline_state_allocate_fn)(render_backend_t*, render_pipeline_t*, render_shader_t*);
+typedef void (*render_backend_pipeline_state_deallocate_fn)(render_backend_t*, render_pipeline_t*, render_pipeline_state_t);
 typedef void (*render_backend_pipeline_flush_fn)(render_backend_t*, render_pipeline_t*);
+typedef void (*render_backend_pipeline_use_buffer_fn)(render_backend_t*, render_pipeline_t*, render_buffer_index_t);
 typedef bool (*render_backend_shader_upload_fn)(render_backend_t*, render_shader_t*, const void*, size_t);
 typedef void (*render_backend_shader_finalize_fn)(render_backend_t*, render_shader_t*);
 typedef void (*render_backend_buffer_allocate_fn)(render_backend_t*, render_buffer_t*, size_t, const void*, size_t);
 typedef void (*render_backend_buffer_deallocate_fn)(render_backend_t*, render_buffer_t*, bool, bool);
 typedef void (*render_backend_buffer_upload_fn)(render_backend_t*, render_buffer_t*);
-typedef void (*render_backend_buffer_argument_declare_fn)(render_backend_t*, render_buffer_t*, const render_buffer_argument_t*, size_t);
-typedef void (*render_backend_buffer_argument_encode_buffer_fn)(render_backend_t*, render_buffer_t*, uint, render_buffer_t*, uint);
-typedef void (*render_backend_buffer_argument_encode_matrix_fn)(render_backend_t*, render_buffer_t*, uint, const matrix_t*);
-typedef void (*render_backend_buffer_argument_encode_constant_fn)(render_backend_t*, render_buffer_t*, uint, const void*, uint);
+typedef void (*render_backend_buffer_data_declare_fn)(render_backend_t*, render_buffer_t*, const render_buffer_data_t*, size_t, size_t);
+typedef void (*render_backend_buffer_data_set_instance_fn)(render_backend_t*, render_buffer_t*, uint);
+typedef void (*render_backend_buffer_data_encode_buffer_fn)(render_backend_t*, render_buffer_t*, uint, render_buffer_t*, uint);
+typedef void (*render_backend_buffer_data_encode_matrix_fn)(render_backend_t*, render_buffer_t*, uint, const matrix_t*);
+typedef void (*render_backend_buffer_data_encode_constant_fn)(render_backend_t*, render_buffer_t*, uint, const void*, uint);
 
 struct render_config_t {
 	uint unused;
@@ -187,15 +198,19 @@ struct render_backend_vtable_t {
 	render_backend_pipeline_set_color_clear_fn pipeline_set_color_clear;
 	render_backend_pipeline_set_depth_clear_fn pipeline_set_depth_clear;
 	render_backend_pipeline_flush_fn pipeline_flush;
+	render_backend_pipeline_use_buffer_fn pipeline_use_buffer;
+	render_backend_pipeline_state_allocate_fn pipeline_state_allocate;
+	render_backend_pipeline_state_deallocate_fn pipeline_state_deallocate;
 	render_backend_shader_upload_fn shader_upload;
 	render_backend_shader_finalize_fn shader_finalize;
 	render_backend_buffer_allocate_fn buffer_allocate;
 	render_backend_buffer_deallocate_fn buffer_deallocate;
 	render_backend_buffer_upload_fn buffer_upload;
-	render_backend_buffer_argument_declare_fn buffer_argument_declare;
-	render_backend_buffer_argument_encode_buffer_fn buffer_argument_encode_buffer;
-	render_backend_buffer_argument_encode_matrix_fn buffer_argument_encode_matrix;
-	render_backend_buffer_argument_encode_constant_fn buffer_argument_encode_constant;
+	render_backend_buffer_data_declare_fn buffer_data_declare;
+	render_backend_buffer_data_set_instance_fn buffer_data_set_instance;
+	render_backend_buffer_data_encode_buffer_fn buffer_data_encode_buffer;
+	render_backend_buffer_data_encode_matrix_fn buffer_data_encode_matrix;
+	render_backend_buffer_data_encode_constant_fn buffer_data_encode_constant;
 };
 
 #if FOUNDATION_SIZE_POINTER == 4
@@ -237,7 +252,7 @@ struct render_pipeline_t {
 	render_backend_t* backend;
 	render_target_t* color_attachment[RENDER_TARGET_COLOR_ATTACHMENT_COUNT];
 	render_target_t* depth_attachment;
-	render_primitive_t* primitive;
+	render_buffer_t* primitive_buffer;
 };
 
 struct render_shader_t {
@@ -250,13 +265,10 @@ struct render_shader_t {
 	RENDER_32BIT_PADDING_ARR(backend_data, 4)
 };
 
-struct render_pipeline_state_t {
-	render_shader_t* shader;
-};
-
 struct render_buffer_t {
 	render_backend_t* backend;
 	RENDER_32BIT_PADDING(backendptr)
+	render_buffer_index_t render_index;
 	uint8_t usage;
 	uint8_t buffertype;
 	uint8_t flags;
@@ -270,14 +282,25 @@ struct render_buffer_t {
 	semaphore_t lock;
 };
 
-struct render_buffer_argument_t {
+//! Buffer structured data
+struct render_buffer_data_t {
 	uint index;
-	render_argument_data_type data_type;
+	render_data_type data_type;
 	uint size;
 };
 
+struct render_argument_t {
+	render_count_t index_count;
+	render_count_t instance_count;
+	render_offset_t index_offset;
+	render_offset_t vertex_offset;
+	render_offset_t instance_offset;
+};
+
 struct render_primitive_t {
-	render_pipeline_state_t* pipeline_state;
-	render_buffer_t* index_buffer;
-	render_buffer_t* descriptor[4];
+	render_pipeline_state_t pipeline_state;
+	render_buffer_index_t argument_buffer;
+	render_offset_t argument_offset;
+	render_buffer_index_t index_buffer;
+	render_buffer_index_t descriptor[4];
 };

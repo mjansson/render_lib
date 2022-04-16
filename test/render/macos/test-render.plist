@@ -28,5 +28,7 @@
 	<string>test-render</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>MetalCaptureEnabled</key>
+	<true/>
 </dict>
 </plist>

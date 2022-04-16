@@ -61,7 +61,7 @@ render_shader_reload(render_shader_t* shader, const uuid_t uuid);
 RENDER_API void
 render_shader_unload(render_shader_t* shader);
 
-#define RENDER_SHADER_RESOURCE_VERSION 3
+#define RENDER_SHADER_RESOURCE_VERSION 4
 
 #if RESOURCE_ENABLE_LOCAL_SOURCE
 
