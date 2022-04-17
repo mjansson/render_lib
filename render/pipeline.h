@@ -26,7 +26,7 @@
 #include <render/types.h>
 
 RENDER_API render_pipeline_t*
-render_pipeline_allocate(render_backend_t* backend, uint capacity);
+render_pipeline_allocate(render_backend_t* backend, render_indexformat_t index_format, uint capacity);
 
 RENDER_API void
 render_pipeline_deallocate(render_pipeline_t* pipeline);

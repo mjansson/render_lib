@@ -92,6 +92,8 @@ typedef enum render_colorspace_t {
 	COLORSPACE_UNKNOWN = 0x7fffffff
 } render_colorspace_t;
 
+typedef enum render_indexformat_t { RENDER_INDEXFORMAT_UINT16 = 0, RENDER_INDEXFORMAT_UINT32 = 1 } render_indexformat_t;
+
 typedef enum render_clear_action_t {
 	//! Let driver decide, content is undefined
 	RENDERCLEAR_DONTCARE = 0,
@@ -153,7 +155,7 @@ typedef render_target_t* (*render_backend_target_window_allocate_fn)(render_back
 typedef render_target_t* (*render_backend_target_texture_allocate_fn)(render_backend_t*, uint, uint,
                                                                       render_pixelformat_t);
 typedef void (*render_backend_target_deallocate_fn)(render_backend_t*, render_target_t*);
-typedef render_pipeline_t* (*render_backend_pipeline_allocate_fn)(render_backend_t*, uint);
+typedef render_pipeline_t* (*render_backend_pipeline_allocate_fn)(render_backend_t*, render_indexformat_t, uint);
 typedef void (*render_backend_pipeline_deallocate_fn)(render_backend_t*, render_pipeline_t*);
 typedef void (*render_backend_pipeline_set_color_attachment_fn)(render_backend_t*, render_pipeline_t*, uint,
                                                                 render_target_t*);
@@ -256,6 +258,7 @@ struct render_pipeline_t {
 	render_target_t* color_attachment[RENDER_TARGET_COLOR_ATTACHMENT_COUNT];
 	render_target_t* depth_attachment;
 	render_buffer_t* primitive_buffer;
+	render_indexformat_t index_format;
 };
 
 struct render_shader_t {

@@ -39,7 +39,7 @@ struct encode_data_t {
 };
 
 kernel void
-compute_shader(uint command_index [[ thread_position_in_grid ]],
+encoding_kernel_index16(uint command_index [[ thread_position_in_grid ]],
                const constant render_command_t*         commands [[ buffer(0) ]],
                const device   render_buffer_storage_t*  buffer_storage [[ buffer(1) ]],
                const device   pipeline_state_storage_t* state_storage [[ buffer(2) ]],
@@ -60,6 +60,33 @@ compute_shader(uint command_index [[ thread_position_in_grid ]],
     cmd.draw_indexed_primitives(primitive_type::triangle,
                                 argument->index_count,
                                 (device ushort*)buffer_storage->buffers[command->index_buffer] + argument->index_offset,
+                                argument->instance_count,
+                                argument->vertex_offset,
+                                argument->instance_offset);
+}
+
+kernel void
+encoding_kernel_index32(uint command_index [[ thread_position_in_grid ]],
+               const constant render_command_t*         commands [[ buffer(0) ]],
+               const device   render_buffer_storage_t*  buffer_storage [[ buffer(1) ]],
+               const device   pipeline_state_storage_t* state_storage [[ buffer(2) ]],
+               device         encode_data_t*            encode [[ buffer(3) ]])
+{
+    constant render_command_t* command = &commands[command_index];
+
+    render_command cmd(encode->indirect_buffer, command_index);
+
+    cmd.set_render_pipeline_state(state_storage->pipeline_state[command->pipeline_state]);
+
+    const device render_argument_t* argument = (const device render_argument_t*)buffer_storage->buffers[command->argument_buffer] + command->argument_offset;
+
+    cmd.set_vertex_buffer(buffer_storage->buffers[command->descriptor[0]], 0); 
+    cmd.set_vertex_buffer(buffer_storage->buffers[command->descriptor[1]], 1);
+    cmd.set_vertex_buffer(buffer_storage->buffers[command->descriptor[2]], 2);
+
+    cmd.draw_indexed_primitives(primitive_type::triangle,
+                                argument->index_count,
+                                (device uint*)buffer_storage->buffers[command->index_buffer] + argument->index_offset,
                                 argument->instance_count,
                                 argument->vertex_offset,
                                 argument->instance_offset);

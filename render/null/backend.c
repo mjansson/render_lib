@@ -89,12 +89,13 @@ rb_null_target_deallocate(render_backend_t* backend, render_target_t* target) {
 }
 
 static render_pipeline_t*
-rb_null_pipeline_allocate(render_backend_t* backend, uint capacity) {
+rb_null_pipeline_allocate(render_backend_t* backend, render_indexformat_t index_format, uint capacity) {
 	render_pipeline_t* pipeline =
 	    memory_allocate(HASH_RENDER, sizeof(render_pipeline_t), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 	pipeline->backend = backend;
 	pipeline->primitive_buffer = render_buffer_allocate(backend, RENDERUSAGE_DYNAMIC | RENDERUSAGE_RENDER,
 	                                                    sizeof(render_primitive_t) * capacity, 0, 0);
+	pipeline->index_format = index_format;
 	return pipeline;
 }
 

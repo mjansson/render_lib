@@ -73,7 +73,7 @@ typedef struct render_pipeline_metal_t {
 	MTLRenderPassDescriptor* descriptor;
 	id<MTLCommandQueue> command_queue;
 	render_shader_t* render_compute_shader;
-	id<MTLComputePipelineState> compute_pipeline_state;
+	id<MTLComputePipelineState> compute_pipeline_state[2];
 	id<MTLIndirectCommandBuffer> indirect_command_buffer;
 	id<MTLBuffer> compute_data;
 	render_buffer_index_t* buffer_used;
@@ -365,13 +365,14 @@ rb_metal_target_deallocate(render_backend_t* backend, render_target_t* target) {
 }
 
 static render_pipeline_t*
-rb_metal_pipeline_allocate(render_backend_t* backend, uint capacity) {
+rb_metal_pipeline_allocate(render_backend_t* backend, render_indexformat_t index_format, uint capacity) {
 	render_backend_metal_t* backend_metal = (render_backend_metal_t*)backend;
 	render_pipeline_metal_t* pipeline_metal =
 	    memory_allocate(HASH_RENDER, sizeof(render_pipeline_metal_t), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 
 	render_pipeline_t* pipeline = (render_pipeline_t*)pipeline_metal;
 	pipeline->backend = backend;
+	pipeline->index_format = index_format;
 
 	pipeline_metal->descriptor = [MTLRenderPassDescriptor new];
 	if (!pipeline_metal->descriptor) {
@@ -394,13 +395,18 @@ rb_metal_pipeline_allocate(render_backend_t* backend, uint capacity) {
 	pipeline_metal->render_compute_shader =
 	    render_shader_load(backend, uuid_decl(df075392, 1934, 4c89, a45c, 2139d64d9c92));
 
-	NSError* error = 0;
-	id<MTLFunction> encoding_kernel =
-	    (__bridge id<MTLFunction>)((void*)pipeline_metal->render_compute_shader->backend_data[3]);
-	pipeline_metal->compute_pipeline_state = [backend_metal->device newComputePipelineStateWithFunction:encoding_kernel
-	                                                                                              error:&error];
+	id<MTLLibrary> library = (__bridge id<MTLLibrary>)((void*)pipeline_metal->render_compute_shader->backend_data[0]);
 
 	@autoreleasepool {
+		NSError* error = 0;
+		id<MTLFunction> encoding_kernel = [library newFunctionWithName:@"encoding_kernel_index16"];
+		pipeline_metal->compute_pipeline_state[0] =
+		    [backend_metal->device newComputePipelineStateWithFunction:encoding_kernel error:&error];
+
+		encoding_kernel = [library newFunctionWithName:@"encoding_kernel_index32"];
+		pipeline_metal->compute_pipeline_state[1] =
+		    [backend_metal->device newComputePipelineStateWithFunction:encoding_kernel error:&error];
+
 		MTLIndirectCommandBufferDescriptor* indirect_descriptor = [MTLIndirectCommandBufferDescriptor new];
 		indirect_descriptor.commandTypes = MTLIndirectCommandTypeDrawIndexed;
 		indirect_descriptor.inheritBuffers = NO;
@@ -436,7 +442,8 @@ rb_metal_pipeline_deallocate(render_backend_t* backend, render_pipeline_t* pipel
 	@autoreleasepool {
 		pipeline_metal->descriptor = nil;
 		pipeline_metal->command_queue = nil;
-		pipeline_metal->compute_pipeline_state = nil;
+		pipeline_metal->compute_pipeline_state[0] = nil;
+		pipeline_metal->compute_pipeline_state[1] = nil;
 		pipeline_metal->indirect_command_buffer = nil;
 		pipeline_metal->compute_data = nil;
 	}
@@ -578,7 +585,7 @@ rb_metal_pipeline_flush(render_backend_t* backend, render_pipeline_t* pipeline) 
 			id<MTLComputeCommandEncoder> compute_encoder = [command_buffer computeCommandEncoder];
 			compute_encoder.label = @"Compute encoder";
 
-			[compute_encoder setComputePipelineState:pipeline_metal->compute_pipeline_state];
+			[compute_encoder setComputePipelineState:pipeline_metal->compute_pipeline_state[pipeline->index_format]];
 
 			[compute_encoder setBuffer:primitive_buffer offset:0 atIndex:0];
 			[compute_encoder setBuffer:backend_metal->buffer_storage offset:0 atIndex:1];
@@ -587,7 +594,8 @@ rb_metal_pipeline_flush(render_backend_t* backend, render_pipeline_t* pipeline) 
 
 			[compute_encoder useResource:pipeline_metal->indirect_command_buffer usage:MTLResourceUsageWrite];
 
-			NSUInteger thread_execution_width = pipeline_metal->compute_pipeline_state.threadExecutionWidth;
+			NSUInteger thread_execution_width =
+			    pipeline_metal->compute_pipeline_state[pipeline->index_format].threadExecutionWidth;
 			[compute_encoder dispatchThreads:MTLSizeMake(pipeline->primitive_buffer->used, 1, 1)
 			           threadsPerThreadgroup:MTLSizeMake(thread_execution_width, 1, 1)];
 
@@ -745,10 +753,6 @@ rb_metal_shader_upload(render_backend_t* backend, render_shader_t* shader, const
 		id<MTLFunction> pixel_function = [library newFunctionWithName:@"pixel_shader"];
 		if (pixel_function)
 			shader->backend_data[2] = (uintptr_t)((__bridge_retained void*)pixel_function);
-
-		id<MTLFunction> compute_function = [library newFunctionWithName:@"compute_shader"];
-		if (compute_function)
-			shader->backend_data[3] = (uintptr_t)((__bridge_retained void*)compute_function);
 	}
 
 	return true;

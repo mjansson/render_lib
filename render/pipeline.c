@@ -23,8 +23,8 @@
 #include <foundation/array.h>
 
 render_pipeline_t*
-render_pipeline_allocate(render_backend_t* backend, uint capacity) {
-	return backend->vtable.pipeline_allocate(backend, capacity);
+render_pipeline_allocate(render_backend_t* backend, render_indexformat_t index_format, uint capacity) {
+	return backend->vtable.pipeline_allocate(backend, index_format, capacity);
 }
 
 void
