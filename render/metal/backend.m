@@ -89,6 +89,16 @@ typedef struct render_pipeline_state_metal_t {
 	uintptr_t pipeline_state;
 } render_pipeline_state_metal_t;
 
+static bool do_capture;
+
+extern void
+rb_metal_do_capture(void);
+
+extern void
+rb_metal_do_capture(void) {
+	do_capture = true;
+}
+
 static void
 rb_metal_destruct(render_backend_t* backend) {
 	render_backend_metal_t* backend_metal = (render_backend_metal_t*)backend;
@@ -532,25 +542,26 @@ rb_metal_pipeline_flush(render_backend_t* backend, render_pipeline_t* pipeline) 
 		desc.colorAttachments[0].texture = current_drawable.texture;
 		if (pipeline->depth_attachment)
 			desc.depthAttachment.texture = ((render_target_texture_metal_t*)pipeline->depth_attachment)->texture;
-		/*
-		        MTLCaptureManager* capture_manager = [MTLCaptureManager sharedCaptureManager];
-		        static uint first_frame = 0;
-		        if (first_frame == 10) {
-		            MTLCaptureDescriptor* capture_descriptor = [[MTLCaptureDescriptor alloc] init];
-		            capture_descriptor.captureObject = backend_metal->device;
-		            capture_descriptor.outputURL = [NSURL fileURLWithPath:@"render.gputrace"];
-		            capture_descriptor.destination = MTLCaptureDestinationGPUTraceDocument;
 
-		            fs_remove_directory(STRING_CONST("render.gputrace"));
+		MTLCaptureManager* capture_manager = nil;
+		if (do_capture) {
+			do_capture = false;
+			capture_manager = [MTLCaptureManager sharedCaptureManager];
+			MTLCaptureDescriptor* capture_descriptor = [[MTLCaptureDescriptor alloc] init];
+			capture_descriptor.captureObject = backend_metal->device;
+			capture_descriptor.outputURL = [NSURL fileURLWithPath:@"render.gputrace"];
+			capture_descriptor.destination = MTLCaptureDestinationGPUTraceDocument;
 
-		            dispatch_sync(dispatch_get_main_queue(), ^{
-		                NSError* error = 0;
-		                if (![capture_manager startCaptureWithDescriptor:capture_descriptor error:&error]) {
-		                    NSLog(@"Failed to start capture, error %@", error);
-		                }
-		            });
-		        }
-		*/
+			fs_remove_directory(STRING_CONST("render.gputrace"));
+
+			dispatch_sync(dispatch_get_main_queue(), ^{
+			  NSError* error = 0;
+			  if (![capture_manager startCaptureWithDescriptor:capture_descriptor error:&error]) {
+				  NSLog(@"Failed to start capture, error %@", error);
+			  }
+			});
+		}
+
 		id<MTLCommandBuffer> command_buffer = [pipeline_metal->command_queue commandBuffer];
 		command_buffer.label = @"Command buffer";
 
@@ -612,17 +623,17 @@ rb_metal_pipeline_flush(render_backend_t* backend, render_pipeline_t* pipeline) 
 
 		[command_buffer presentDrawable:current_drawable afterMinimumDuration:0.008333];
 		[command_buffer commit];
-		/*
-		        if (first_frame == 10) {
-		            log_infof(HASH_RENDER, STRING_CONST("Rendered %u primitives"),
-		   (uint)pipeline->primitive_buffer->used); [command_buffer waitUntilCompleted];
-		            dispatch_sync(dispatch_get_main_queue(), ^{
-		                [capture_manager stopCapture];
-		            });
-		            log_info(HASH_RENDER, STRING_CONST("Capture frame complete"));
-		        }
-		        ++first_frame;
-		 */
+
+		if (capture_manager) {
+			log_infof(HASH_RENDER, STRING_CONST("Rendered %u primitives"), (uint)pipeline->primitive_buffer->used);
+			[command_buffer waitUntilCompleted];
+			dispatch_sync(dispatch_get_main_queue(), ^{
+			  [capture_manager stopCapture];
+			});
+			string_const_t current_path = environment_current_working_directory();
+			log_infof(HASH_RENDER, STRING_CONST("Capture frame complete: %.*s"), STRING_FORMAT(current_path));
+			capture_manager = nil;
+		}
 	}
 
 	array_clear(pipeline_metal->buffer_used);
