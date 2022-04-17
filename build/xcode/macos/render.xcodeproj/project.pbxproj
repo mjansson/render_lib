@@ -22,6 +22,8 @@
 		45BB33511A5971B100D30F3E /* target.c in Sources */ = {isa = PBXBuildFile; fileRef = 45BB33431A5971B100D30F3E /* target.c */; };
 		45BB33521A5971B100D30F3E /* target.h in Headers */ = {isa = PBXBuildFile; fileRef = 45BB33441A5971B100D30F3E /* target.h */; };
 		CD3368352809F0CD00173B89 /* buffer.h in Headers */ = {isa = PBXBuildFile; fileRef = CD3368342809F0CD00173B89 /* buffer.h */; };
+		CD336838280B645000173B89 /* event.h in Headers */ = {isa = PBXBuildFile; fileRef = CD336836280B645000173B89 /* event.h */; };
+		CD336839280B645000173B89 /* event.c in Sources */ = {isa = PBXBuildFile; fileRef = CD336837280B645000173B89 /* event.c */; };
 		CD7342891E4DBC020030B5B1 /* buffer.c in Sources */ = {isa = PBXBuildFile; fileRef = CD73427B1E4DBC020030B5B1 /* buffer.c */; };
 		CD73428A1E4DBC020030B5B1 /* compile.c in Sources */ = {isa = PBXBuildFile; fileRef = CD73427C1E4DBC020030B5B1 /* compile.c */; };
 		CD73428B1E4DBC020030B5B1 /* compile.h in Headers */ = {isa = PBXBuildFile; fileRef = CD73427D1E4DBC020030B5B1 /* compile.h */; };
@@ -57,6 +59,8 @@
 		45BB33431A5971B100D30F3E /* target.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = target.c; path = ../../../render/target.c; sourceTree = "<group>"; };
 		45BB33441A5971B100D30F3E /* target.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = target.h; path = ../../../render/target.h; sourceTree = "<group>"; };
 		CD3368342809F0CD00173B89 /* buffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = buffer.h; path = ../../../render/buffer.h; sourceTree = "<group>"; };
+		CD336836280B645000173B89 /* event.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = event.h; path = ../../../render/event.h; sourceTree = "<group>"; };
+		CD336837280B645000173B89 /* event.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = event.c; path = ../../../render/event.c; sourceTree = "<group>"; };
 		CD73427B1E4DBC020030B5B1 /* buffer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = buffer.c; path = ../../../render/buffer.c; sourceTree = "<group>"; };
 		CD73427C1E4DBC020030B5B1 /* compile.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = compile.c; path = ../../../render/compile.c; sourceTree = "<group>"; };
 		CD73427D1E4DBC020030B5B1 /* compile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = compile.h; path = ../../../render/compile.h; sourceTree = "<group>"; };
@@ -112,6 +116,8 @@
 				455515421934686800CF089B /* build.h */,
 				CD73427C1E4DBC020030B5B1 /* compile.c */,
 				CD73427D1E4DBC020030B5B1 /* compile.h */,
+				CD336837280B645000173B89 /* event.c */,
+				CD336836280B645000173B89 /* event.h */,
 				455515431934686800CF089B /* hashstrings.h */,
 				CD7342801E4DBC020030B5B1 /* import.c */,
 				CD7342811E4DBC020030B5B1 /* import.h */,
@@ -183,6 +189,7 @@
 				455515491934686800CF089B /* hashstrings.h in Headers */,
 				45BB33521A5971B100D30F3E /* target.h in Headers */,
 				455515E51934ACB000CF089B /* backend.h in Headers */,
+				CD336838280B645000173B89 /* event.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -246,6 +253,7 @@
 				CD73428E1E4DBC020030B5B1 /* import.c in Sources */,
 				455515E41934ACB000CF089B /* backend.c in Sources */,
 				CD7342961E4DBC020030B5B1 /* version.c in Sources */,
+				CD336839280B645000173B89 /* event.c in Sources */,
 				45BB33511A5971B100D30F3E /* target.c in Sources */,
 				45BB334D1A5971B100D30F3E /* shader.c in Sources */,
 				CD845DD428032E7000E1052C /* backend.m in Sources */,

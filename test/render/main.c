@@ -254,8 +254,6 @@ _test_render_box(render_api_t api) {
 	render_pipeline_set_color_clear(pipeline, 0, RENDERCLEAR_CLEAR, vector(0, 0, 0, 0));
 
 	depth = render_target_texture_allocate(backend, width, height, PIXELFORMAT_DEPTH32F);
-	render_pipeline_set_depth_attachment(pipeline, depth);
-	render_pipeline_set_depth_clear(pipeline, RENDERCLEAR_CLEAR, vector(1, 1, 1, 1));
 
 	render_shader_t* shader_color = nullptr;
 	if (api != RENDERAPI_NULL) {
@@ -344,12 +342,12 @@ _test_render_box(render_api_t api) {
 
 	world_to_clip = matrix_mul(world_to_view, view_to_clip);
 	render_buffer_lock(global_descriptor, RENDERBUFFER_LOCK_WRITE);
-	render_buffer_data_encode_matrix(global_descriptor, 0, &world_to_clip);
+	render_buffer_data_encode_matrix(global_descriptor, 0, 0, &world_to_clip);
 	render_buffer_unlock(global_descriptor);
 
 	vector_t material_color = vector(1, 1, 1, 1);
 	render_buffer_lock(material_descriptor, RENDERBUFFER_LOCK_WRITE);
-	render_buffer_data_encode_constant(material_descriptor, 0, &material_color, sizeof(vector_t));
+	render_buffer_data_encode_constant(material_descriptor, 0, 0, &material_color, sizeof(vector_t));
 	render_buffer_unlock(material_descriptor);	
 
 	render_primitive_t primitive;
@@ -371,18 +369,16 @@ _test_render_box(render_api_t api) {
 		matrix_t scale = matrix_scaling(vector(1.0f, 1.0f, 1.0f, 1.0f));
 		model_to_world = matrix_mul(scale, matrix_mul(rotate, translate));
 
-		render_buffer_data_set_instance(instance_descriptor, 0);
-		render_buffer_data_encode_matrix(instance_descriptor, 0, &model_to_world);
-		render_buffer_data_encode_buffer(instance_descriptor, 1, vertexbuffer, 0);
+		render_buffer_data_encode_matrix(instance_descriptor, 0, 0, &model_to_world);
+		render_buffer_data_encode_buffer(instance_descriptor, 0, 1, vertexbuffer, 0);
 
 		translate = matrix_translation(vector(-0.3, 0.25, -0.75f, 0));
 		rotate = matrix_from_quaternion(euler_angles_to_quaternion(euler_angles((real)(dt * 0.57), (real)(dt * 0.73), (real)(dt * 0.31), EULER_XYZs)));
 		scale = matrix_scaling(vector(1.0f, 1.0f, 1.0f, 1.0f));
 		model_to_world = matrix_mul(scale, matrix_mul(rotate, translate));
 
-		render_buffer_data_set_instance(instance_descriptor, 1);
-		render_buffer_data_encode_matrix(instance_descriptor, 0, &model_to_world);
-		render_buffer_data_encode_buffer(instance_descriptor, 1, vertexbuffer, 0);
+		render_buffer_data_encode_matrix(instance_descriptor, 1, 0, &model_to_world);
+		render_buffer_data_encode_buffer(instance_descriptor, 1, 1, vertexbuffer, 0);
 
 		render_buffer_unlock(instance_descriptor);
 
