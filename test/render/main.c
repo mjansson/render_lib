@@ -198,7 +198,7 @@ _test_render_clear(render_api_t api) {
 		goto ignore_test;
 
 	target = render_target_window_allocate(backend, &window, 0);
-	pipeline = render_pipeline_allocate(backend, 1024);
+	pipeline = render_pipeline_allocate(backend, RENDER_INDEXFORMAT_UINT16, 1024);
 
 	render_pipeline_set_color_attachment(pipeline, 0, target);
 	render_pipeline_set_color_clear(pipeline, 0, RENDERCLEAR_CLEAR, vector(1, 0, 0, 0));
@@ -247,7 +247,7 @@ _test_render_box(render_api_t api) {
 	uint width = window_width(&window);
 	uint height = window_height(&window);
 
-	pipeline = render_pipeline_allocate(backend, 1024);
+	pipeline = render_pipeline_allocate(backend, RENDER_INDEXFORMAT_UINT16, 1024);
 
 	target = render_target_window_allocate(backend, &window, 0);
 	render_pipeline_set_color_attachment(pipeline, 0, target);
@@ -337,8 +337,8 @@ _test_render_box(render_api_t api) {
 	render_pipeline_set_color_clear(pipeline, 0, RENDERCLEAR_CLEAR, vector(0, 0, 0, 0));
 	render_pipeline_set_depth_clear(pipeline, RENDERCLEAR_CLEAR, vector(1, 1, 1, 1));
 
-	render_pipeline_state_t pipeline_color_state = render_pipeline_state_allocate(pipeline, shader_color);
-	render_pipeline_state_t pipeline_white_state = render_pipeline_state_allocate(pipeline, shader_white);
+	render_pipeline_state_t pipeline_color_state = render_pipeline_state_allocate(backend, pipeline, shader_color);
+	render_pipeline_state_t pipeline_white_state = render_pipeline_state_allocate(backend, pipeline, shader_white);
 
 	world_to_clip = matrix_mul(world_to_view, view_to_clip);
 	render_buffer_lock(global_descriptor, RENDERBUFFER_LOCK_WRITE);
@@ -364,7 +364,7 @@ _test_render_box(render_api_t api) {
 	while ((dt = time_elapsed(start)) < 15.0f) {
 		render_buffer_lock(instance_descriptor, RENDERBUFFER_LOCK_WRITE);
 
-		matrix_t translate = matrix_translation(vector(0.3, -0.25, -0.75f, 0));
+		matrix_t translate = matrix_translation(vector(0.3f, -0.25f, -0.75f, 0));
 		matrix_t rotate = matrix_from_quaternion(euler_angles_to_quaternion(euler_angles((real)(dt * 0.31), (real)(dt * 0.57), (real)(dt * 0.73), EULER_XYZs)));
 		matrix_t scale = matrix_scaling(vector(1.0f, 1.0f, 1.0f, 1.0f));
 		model_to_world = matrix_mul(scale, matrix_mul(rotate, translate));
@@ -372,7 +372,7 @@ _test_render_box(render_api_t api) {
 		render_buffer_data_encode_matrix(instance_descriptor, 0, 0, &model_to_world);
 		render_buffer_data_encode_buffer(instance_descriptor, 0, 1, vertexbuffer, 0);
 
-		translate = matrix_translation(vector(-0.3, 0.25, -0.75f, 0));
+		translate = matrix_translation(vector(-0.3f, 0.25f, -0.75f, 0));
 		rotate = matrix_from_quaternion(euler_angles_to_quaternion(euler_angles((real)(dt * 0.57), (real)(dt * 0.73), (real)(dt * 0.31), EULER_XYZs)));
 		scale = matrix_scaling(vector(1.0f, 1.0f, 1.0f, 1.0f));
 		model_to_world = matrix_mul(scale, matrix_mul(rotate, translate));
@@ -384,14 +384,14 @@ _test_render_box(render_api_t api) {
 
 		primitive.pipeline_state = pipeline_color_state;
 
-		render_pipeline_use_buffer(pipeline, vertexbuffer->render_index);
+		render_pipeline_use_render_buffer(pipeline, vertexbuffer->render_index);
 		render_pipeline_queue(pipeline, RENDERPRIMITIVE_TRIANGLELIST, &primitive);
 
 		render_pipeline_flush(pipeline);
 	}
 
-	render_pipeline_state_deallocate(pipeline, pipeline_color_state);
-	render_pipeline_state_deallocate(pipeline, pipeline_white_state);
+	render_pipeline_state_deallocate(backend, pipeline_color_state);
+	render_pipeline_state_deallocate(backend, pipeline_white_state);
 
 	render_buffer_deallocate(argument_buffer);
 	render_buffer_deallocate(instance_descriptor);
