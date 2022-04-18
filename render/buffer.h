@@ -58,3 +58,6 @@ render_buffer_data_encode_matrix(render_buffer_t* buffer, uint instance, uint in
 
 RENDER_API void
 render_buffer_data_encode_constant(render_buffer_t* buffer, uint instance, uint index, const void* data, uint size);
+
+RENDER_API void
+render_buffer_set_label(render_buffer_t* buffer, const char* name, size_t length);

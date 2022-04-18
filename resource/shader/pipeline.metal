@@ -56,6 +56,7 @@ encoding_kernel_index16(uint command_index [[ thread_position_in_grid ]],
     cmd.set_vertex_buffer(buffer_storage->buffers[command->descriptor[0]], 0); 
     cmd.set_vertex_buffer(buffer_storage->buffers[command->descriptor[1]], 1);
     cmd.set_vertex_buffer(buffer_storage->buffers[command->descriptor[2]], 2);
+    cmd.set_vertex_buffer(buffer_storage->buffers[command->descriptor[3]], 3);
 
     cmd.draw_indexed_primitives(primitive_type::triangle,
                                 argument->index_count,
@@ -83,6 +84,7 @@ encoding_kernel_index32(uint command_index [[ thread_position_in_grid ]],
     cmd.set_vertex_buffer(buffer_storage->buffers[command->descriptor[0]], 0); 
     cmd.set_vertex_buffer(buffer_storage->buffers[command->descriptor[1]], 1);
     cmd.set_vertex_buffer(buffer_storage->buffers[command->descriptor[2]], 2);
+    cmd.set_vertex_buffer(buffer_storage->buffers[command->descriptor[3]], 3);
 
     cmd.draw_indexed_primitives(primitive_type::triangle,
                                 argument->index_count,

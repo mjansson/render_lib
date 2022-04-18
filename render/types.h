@@ -167,8 +167,7 @@ typedef void (*render_backend_pipeline_set_depth_clear_fn)(render_backend_t*, re
                                                            vector_t);
 typedef render_pipeline_state_t (*render_backend_pipeline_state_allocate_fn)(render_backend_t*, render_pipeline_t*,
                                                                              render_shader_t*);
-typedef void (*render_backend_pipeline_state_deallocate_fn)(render_backend_t*, render_pipeline_t*,
-                                                            render_pipeline_state_t);
+typedef void (*render_backend_pipeline_state_deallocate_fn)(render_backend_t*, render_pipeline_state_t);
 typedef void (*render_backend_pipeline_flush_fn)(render_backend_t*, render_pipeline_t*);
 typedef void (*render_backend_pipeline_use_buffer_fn)(render_backend_t*, render_pipeline_t*, render_buffer_index_t);
 typedef bool (*render_backend_shader_upload_fn)(render_backend_t*, render_shader_t*, const void*, size_t);
@@ -176,6 +175,7 @@ typedef void (*render_backend_shader_finalize_fn)(render_backend_t*, render_shad
 typedef void (*render_backend_buffer_allocate_fn)(render_backend_t*, render_buffer_t*, size_t, const void*, size_t);
 typedef void (*render_backend_buffer_deallocate_fn)(render_backend_t*, render_buffer_t*, bool, bool);
 typedef void (*render_backend_buffer_upload_fn)(render_backend_t*, render_buffer_t*);
+typedef void (*render_backend_buffer_set_label_fn)(render_backend_t*, render_buffer_t*, const char*, size_t);
 typedef void (*render_backend_buffer_data_declare_fn)(render_backend_t*, render_buffer_t*, const render_buffer_data_t*,
                                                       size_t, size_t);
 typedef void (*render_backend_buffer_data_encode_buffer_fn)(render_backend_t*, render_buffer_t*, uint, uint,
@@ -204,7 +204,8 @@ struct render_backend_vtable_t {
 	render_backend_pipeline_set_color_clear_fn pipeline_set_color_clear;
 	render_backend_pipeline_set_depth_clear_fn pipeline_set_depth_clear;
 	render_backend_pipeline_flush_fn pipeline_flush;
-	render_backend_pipeline_use_buffer_fn pipeline_use_buffer;
+	render_backend_pipeline_use_buffer_fn pipeline_use_argument_buffer;
+	render_backend_pipeline_use_buffer_fn pipeline_use_render_buffer;
 	render_backend_pipeline_state_allocate_fn pipeline_state_allocate;
 	render_backend_pipeline_state_deallocate_fn pipeline_state_deallocate;
 	render_backend_shader_upload_fn shader_upload;
@@ -212,6 +213,7 @@ struct render_backend_vtable_t {
 	render_backend_buffer_allocate_fn buffer_allocate;
 	render_backend_buffer_deallocate_fn buffer_deallocate;
 	render_backend_buffer_upload_fn buffer_upload;
+	render_backend_buffer_set_label_fn buffer_set_label;
 	render_backend_buffer_data_declare_fn buffer_data_declare;
 	render_backend_buffer_data_encode_buffer_fn buffer_data_encode_buffer;
 	render_backend_buffer_data_encode_matrix_fn buffer_data_encode_matrix;

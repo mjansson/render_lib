@@ -76,7 +76,8 @@ typedef struct render_pipeline_metal_t {
 	id<MTLComputePipelineState> compute_pipeline_state[2];
 	id<MTLIndirectCommandBuffer> indirect_command_buffer;
 	id<MTLBuffer> compute_data;
-	render_buffer_index_t* buffer_used;
+	render_buffer_index_t* argument_buffer_used;
+	render_buffer_index_t* render_buffer_used;
 	uint command_capacity;
 	uint last_primitive_count;
 } render_pipeline_metal_t;
@@ -422,7 +423,7 @@ rb_metal_pipeline_allocate(render_backend_t* backend, render_indexformat_t index
 
 		pipeline_metal->compute_data = [backend_metal->device newBufferWithLength:compute_encoder.encodedLength
 		                                                                  options:MTLResourceStorageModeShared];
-		pipeline_metal->compute_data.label = @"Indirect command buffer argument buffer";
+		pipeline_metal->compute_data.label = @"Indirect command buffer container";
 
 		[compute_encoder setArgumentBuffer:pipeline_metal->compute_data offset:0];
 		[compute_encoder setIndirectCommandBuffer:pipeline_metal->indirect_command_buffer atIndex:0];
@@ -448,7 +449,8 @@ rb_metal_pipeline_deallocate(render_backend_t* backend, render_pipeline_t* pipel
 		pipeline_metal->compute_data = nil;
 	}
 
-	array_deallocate(pipeline_metal->buffer_used);
+	array_deallocate(pipeline_metal->argument_buffer_used);
+	array_deallocate(pipeline_metal->render_buffer_used);
 
 	render_shader_unload(pipeline_metal->render_compute_shader);
 	pipeline_metal->render_compute_shader = nullptr;
@@ -523,10 +525,19 @@ rb_metal_pipeline_state_from_index(render_backend_metal_t* backend, uint index) 
 }
 */
 static void
-rb_metal_pipeline_use_buffer(render_backend_t* backend, render_pipeline_t* pipeline, render_buffer_index_t buffer) {
+rb_metal_pipeline_use_argument_buffer(render_backend_t* backend, render_pipeline_t* pipeline,
+                                      render_buffer_index_t buffer) {
 	FOUNDATION_UNUSED(backend);
 	render_pipeline_metal_t* pipeline_metal = (render_pipeline_metal_t*)pipeline;
-	array_push(pipeline_metal->buffer_used, buffer);
+	array_push(pipeline_metal->argument_buffer_used, buffer);
+}
+
+static void
+rb_metal_pipeline_use_render_buffer(render_backend_t* backend, render_pipeline_t* pipeline,
+                                    render_buffer_index_t buffer) {
+	FOUNDATION_UNUSED(backend);
+	render_pipeline_metal_t* pipeline_metal = (render_pipeline_metal_t*)pipeline;
+	array_push(pipeline_metal->render_buffer_used, buffer);
 }
 
 static void
@@ -594,6 +605,12 @@ rb_metal_pipeline_flush(render_backend_t* backend, render_pipeline_t* pipeline) 
 
 			[compute_encoder useResource:pipeline_metal->indirect_command_buffer usage:MTLResourceUsageWrite];
 
+			for (size_t ibuf = 0, bcount = array_count(pipeline_metal->argument_buffer_used); ibuf < bcount; ++ibuf) {
+				id<MTLBuffer> buffer =
+				    rb_metal_buffer_from_index(backend_metal, pipeline_metal->argument_buffer_used[ibuf]);
+				[compute_encoder useResource:buffer usage:MTLResourceUsageRead];
+			}
+
 			NSUInteger thread_execution_width =
 			    pipeline_metal->compute_pipeline_state[pipeline->index_format].threadExecutionWidth;
 			[compute_encoder dispatchThreads:MTLSizeMake(pipeline->primitive_buffer->used, 1, 1)
@@ -619,8 +636,8 @@ rb_metal_pipeline_flush(render_backend_t* backend, render_pipeline_t* pipeline) 
 		if (pipeline->depth_attachment)
 			[render_encoder setDepthStencilState:backend_metal->depth_state];
 
-		for (size_t ibuf = 0, bcount = array_count(pipeline_metal->buffer_used); ibuf < bcount; ++ibuf) {
-			id<MTLBuffer> buffer = rb_metal_buffer_from_index(backend_metal, pipeline_metal->buffer_used[ibuf]);
+		for (size_t ibuf = 0, bcount = array_count(pipeline_metal->render_buffer_used); ibuf < bcount; ++ibuf) {
+			id<MTLBuffer> buffer = rb_metal_buffer_from_index(backend_metal, pipeline_metal->render_buffer_used[ibuf]);
 			[render_encoder useResource:buffer usage:MTLResourceUsageRead];
 		}
 
@@ -644,7 +661,8 @@ rb_metal_pipeline_flush(render_backend_t* backend, render_pipeline_t* pipeline) 
 		}
 	}
 
-	array_clear(pipeline_metal->buffer_used);
+	array_clear(pipeline_metal->argument_buffer_used);
+	array_clear(pipeline_metal->render_buffer_used);
 }
 
 static render_pipeline_state_t
@@ -707,9 +725,7 @@ rb_metal_pipeline_state_allocate(render_backend_t* backend, render_pipeline_t* p
 }
 
 static void
-rb_metal_pipeline_state_deallocate(render_backend_t* backend, render_pipeline_t* pipeline,
-                                   render_pipeline_state_t state) {
-	FOUNDATION_UNUSED(pipeline);
+rb_metal_pipeline_state_deallocate(render_backend_t* backend, render_pipeline_state_t state) {
 	render_backend_metal_t* backend_metal = (render_backend_metal_t*)backend;
 	if (!state || (state >= array_count(backend_metal->pipeline_state)))
 		return;
@@ -881,7 +897,7 @@ rb_metal_buffer_deallocate(render_backend_t* backend, render_buffer_t* buffer, b
 
 static void
 rb_metal_buffer_upload(render_backend_t* backend, render_buffer_t* buffer) {
-	FOUNDATION_UNUSED(backend, buffer);
+	FOUNDATION_UNUSED(backend);
 	if ((buffer->usage == RENDERUSAGE_CPUONLY) || (buffer->usage == RENDERUSAGE_GPUONLY) || !buffer->backend_data[0])
 		return;
 
@@ -892,6 +908,13 @@ rb_metal_buffer_upload(render_backend_t* backend, render_buffer_t* buffer) {
 	range.length = buffer->allocated;
 	[metal_buffer didModifyRange:range];
 	*/
+}
+
+static void
+rb_metal_buffer_set_label(render_backend_t* backend, render_buffer_t* buffer, const char* name, size_t length) {
+	FOUNDATION_UNUSED(backend, length);
+	id<MTLBuffer> metal_buffer = (__bridge id<MTLBuffer>)((void*)buffer->backend_data[0]);
+	[metal_buffer setLabel:[NSString stringWithUTF8String:name]];
 }
 
 static void
@@ -1015,7 +1038,8 @@ static render_backend_vtable_t render_backend_vtable_metal = {
     .pipeline_set_color_clear = rb_metal_pipeline_set_color_clear,
     .pipeline_set_depth_clear = rb_metal_pipeline_set_depth_clear,
     .pipeline_flush = rb_metal_pipeline_flush,
-    .pipeline_use_buffer = rb_metal_pipeline_use_buffer,
+    .pipeline_use_argument_buffer = rb_metal_pipeline_use_argument_buffer,
+    .pipeline_use_render_buffer = rb_metal_pipeline_use_render_buffer,
     .pipeline_state_allocate = rb_metal_pipeline_state_allocate,
     .pipeline_state_deallocate = rb_metal_pipeline_state_deallocate,
     .shader_upload = rb_metal_shader_upload,
@@ -1023,6 +1047,7 @@ static render_backend_vtable_t render_backend_vtable_metal = {
     .buffer_allocate = rb_metal_buffer_allocate,
     .buffer_deallocate = rb_metal_buffer_deallocate,
     .buffer_upload = rb_metal_buffer_upload,
+    .buffer_set_label = rb_metal_buffer_set_label,
     .buffer_data_declare = rb_metal_buffer_data_declare,
     .buffer_data_encode_buffer = rb_metal_buffer_data_encode_buffer,
     .buffer_data_encode_matrix = rb_metal_buffer_data_encode_matrix,

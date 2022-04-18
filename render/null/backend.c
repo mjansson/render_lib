@@ -139,7 +139,14 @@ rb_null_pipeline_flush(render_backend_t* backend, render_pipeline_t* pipeline) {
 }
 
 static void
-rb_null_pipeline_use_buffer(render_backend_t* backend, render_pipeline_t* pipeline, render_buffer_index_t buffer) {
+rb_null_pipeline_use_argument_buffer(render_backend_t* backend, render_pipeline_t* pipeline,
+                                     render_buffer_index_t buffer) {
+	FOUNDATION_UNUSED(backend, pipeline, buffer);
+}
+
+static void
+rb_null_pipeline_use_render_buffer(render_backend_t* backend, render_pipeline_t* pipeline,
+                                   render_buffer_index_t buffer) {
 	FOUNDATION_UNUSED(backend, pipeline, buffer);
 }
 
@@ -150,9 +157,8 @@ rb_null_pipeline_state_allocate(render_backend_t* backend, render_pipeline_t* pi
 }
 
 static void
-rb_null_pipeline_state_deallocate(render_backend_t* backend, render_pipeline_t* pipeline,
-                                  render_pipeline_state_t state) {
-	FOUNDATION_UNUSED(backend, pipeline, state);
+rb_null_pipeline_state_deallocate(render_backend_t* backend, render_pipeline_state_t state) {
+	FOUNDATION_UNUSED(backend, state);
 }
 
 static bool
@@ -218,6 +224,11 @@ rb_null_buffer_data_encode_matrix(render_backend_t* backend, render_buffer_t* bu
 	FOUNDATION_UNUSED(backend, buffer, instance, index, matrix);
 }
 
+static void
+rb_null_buffer_set_label(render_backend_t* backend, render_buffer_t* buffer, const char* name, size_t length) {
+	FOUNDATION_UNUSED(backend, buffer, name, length);
+}
+
 static render_backend_vtable_t render_backend_vtable_null = {
     .construct = rb_null_construct,
     .destruct = rb_null_destruct,
@@ -233,7 +244,8 @@ static render_backend_vtable_t render_backend_vtable_null = {
     .pipeline_set_color_clear = rb_null_pipeline_set_color_clear,
     .pipeline_set_depth_clear = rb_null_pipeline_set_depth_clear,
     .pipeline_flush = rb_null_pipeline_flush,
-    .pipeline_use_buffer = rb_null_pipeline_use_buffer,
+    .pipeline_use_argument_buffer = rb_null_pipeline_use_argument_buffer,
+    .pipeline_use_render_buffer = rb_null_pipeline_use_render_buffer,
     .pipeline_state_allocate = rb_null_pipeline_state_allocate,
     .pipeline_state_deallocate = rb_null_pipeline_state_deallocate,
     .shader_upload = rb_null_shader_upload,
@@ -241,6 +253,7 @@ static render_backend_vtable_t render_backend_vtable_null = {
     .buffer_allocate = rb_null_buffer_allocate,
     .buffer_deallocate = rb_null_buffer_deallocate,
     .buffer_upload = rb_null_buffer_upload,
+    .buffer_set_label = rb_null_buffer_set_label,
     .buffer_data_declare = rb_null_buffer_data_declare,
     .buffer_data_encode_buffer = rb_null_buffer_data_encode_buffer,
     .buffer_data_encode_matrix = rb_null_buffer_data_encode_matrix,

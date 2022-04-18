@@ -68,17 +68,22 @@ render_pipeline_queue(render_pipeline_t* pipeline, render_primitive_type type, c
 	}
 }
 
+void
+render_pipeline_use_argument_buffer(render_pipeline_t* pipeline, render_buffer_index_t buffer) {
+	pipeline->backend->vtable.pipeline_use_argument_buffer(pipeline->backend, pipeline, buffer);
+}
+
+void
+render_pipeline_use_render_buffer(render_pipeline_t* pipeline, render_buffer_index_t buffer) {
+	pipeline->backend->vtable.pipeline_use_render_buffer(pipeline->backend, pipeline, buffer);
+}
+
 render_pipeline_state_t
-render_pipeline_state_allocate(render_pipeline_t* pipeline, render_shader_t* shader) {
-	return pipeline->backend->vtable.pipeline_state_allocate(pipeline->backend, pipeline, shader);
+render_pipeline_state_allocate(render_backend_t* backend, render_pipeline_t* pipeline, render_shader_t* shader) {
+	return backend->vtable.pipeline_state_allocate(backend, pipeline, shader);
 }
 
 void
-render_pipeline_state_deallocate(render_pipeline_t* pipeline, render_pipeline_state_t state) {
-	pipeline->backend->vtable.pipeline_state_deallocate(pipeline->backend, pipeline, state);
-}
-
-void
-render_pipeline_use_buffer(render_pipeline_t* pipeline, render_buffer_index_t buffer) {
-	pipeline->backend->vtable.pipeline_use_buffer(pipeline->backend, pipeline, buffer);
+render_pipeline_state_deallocate(render_backend_t* backend, render_pipeline_state_t state) {
+	backend->vtable.pipeline_state_deallocate(backend, state);
 }

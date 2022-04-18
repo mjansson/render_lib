@@ -49,11 +49,14 @@ render_pipeline_flush(render_pipeline_t* pipeline);
 RENDER_API void
 render_pipeline_queue(render_pipeline_t* pipeline, render_primitive_type type, const render_primitive_t* primitive);
 
+RENDER_API void
+render_pipeline_use_argument_buffer(render_pipeline_t* pipeline, render_buffer_index_t buffer);
+
+RENDER_API void
+render_pipeline_use_render_buffer(render_pipeline_t* pipeline, render_buffer_index_t buffer);
+
 RENDER_API render_pipeline_state_t
-render_pipeline_state_allocate(render_pipeline_t* pipeline, render_shader_t* shader);
+render_pipeline_state_allocate(render_backend_t* backend, render_pipeline_t* pipeline, render_shader_t* shader);
 
 RENDER_API void
-render_pipeline_state_deallocate(render_pipeline_t* pipeline, render_pipeline_state_t state);
-
-RENDER_API void
-render_pipeline_use_buffer(render_pipeline_t* pipeline, render_buffer_index_t buffer);
+render_pipeline_state_deallocate(render_backend_t* backend, render_pipeline_state_t state);

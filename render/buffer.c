@@ -101,3 +101,11 @@ void
 render_buffer_data_encode_constant(render_buffer_t* buffer, uint instance, uint index, const void* data, uint size) {
 	buffer->backend->vtable.buffer_data_encode_constant(buffer->backend, buffer, instance, index, data, size);
 }
+
+void
+render_buffer_set_label(render_buffer_t* buffer, const char* name, size_t length) {
+#if BUILD_DEBUG || BUILD_RELEASE
+	buffer->backend->vtable.buffer_set_label(buffer->backend, buffer, name, length);
+#endif
+	FOUNDATION_UNUSED(buffer, name, length);
+}
