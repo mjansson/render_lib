@@ -168,6 +168,7 @@ rb_metal_construct(render_backend_t* backend) {
 	size_t buffer_size = backend_metal->buffer_capacity * sizeof(void*);
 	backend_metal->buffer_storage = [backend_metal->device newBufferWithLength:buffer_size
 	                                                                   options:MTLResourceStorageModeShared];
+	backend_metal->buffer_storage.label = @"Buffer storage";
 	array_resize(backend_metal->buffer_array, 1024);
 
 	@autoreleasepool {
@@ -199,6 +200,7 @@ rb_metal_construct(render_backend_t* backend) {
 		buffer_size = backend_metal->pipeline_state_encoder.encodedLength;
 		backend_metal->pipeline_state_storage =
 		    [backend_metal->device newBufferWithLength:buffer_size options:MTLResourceStorageModeShared];
+		backend_metal->pipeline_state_storage.label = @"Pipeline state storage";
 		[backend_metal->pipeline_state_encoder setArgumentBuffer:backend_metal->pipeline_state_storage offset:0];
 
 		MTLDepthStencilDescriptor* depth_state_descriptor = [[MTLDepthStencilDescriptor alloc] init];
@@ -392,6 +394,7 @@ rb_metal_pipeline_allocate(render_backend_t* backend, render_indexformat_t index
 
 	pipeline->primitive_buffer = render_buffer_allocate(backend, RENDERUSAGE_DYNAMIC | RENDERUSAGE_RENDER,
 	                                                    sizeof(render_primitive_t) * capacity, 0, 0);
+	render_buffer_set_label(pipeline->primitive_buffer, STRING_CONST("Pipeline primitive buffer"));
 
 	pipeline_metal->render_compute_shader =
 	    render_shader_load(backend, uuid_decl(df075392, 1934, 4c89, a45c, 2139d64d9c92));
@@ -418,6 +421,7 @@ rb_metal_pipeline_allocate(render_backend_t* backend, render_indexformat_t index
 		    [backend_metal->device newIndirectCommandBufferWithDescriptor:indirect_descriptor
 		                                                  maxCommandCount:capacity
 		                                                          options:MTLResourceStorageModeShared];
+		pipeline_metal->indirect_command_buffer.label = @"Indirect command buffer";
 
 		id<MTLArgumentEncoder> compute_encoder = [encoding_kernel newArgumentEncoderWithBufferIndex:3];
 
