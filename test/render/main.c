@@ -28,6 +28,8 @@
 #pragma clang diagnostic ignored "-Wunused-function"
 #endif
 
+extern void rb_metal_do_capture(void);
+
 static application_t
 test_render_application(void) {
 	application_t app;
@@ -247,7 +249,7 @@ _test_render_box(render_api_t api) {
 	uint width = window_width(&window);
 	uint height = window_height(&window);
 
-	pipeline = render_pipeline_allocate(backend, RENDER_INDEXFORMAT_UINT16, 1024);
+	pipeline = render_pipeline_allocate(backend, RENDER_INDEXFORMAT_UINT32, 1024 * 1024);
 
 	target = render_target_window_allocate(backend, &window, 0);
 	render_pipeline_set_color_attachment(pipeline, 0, target);
@@ -275,15 +277,21 @@ _test_render_box(render_api_t api) {
 	                                      0.1f, -0.1f, -0.1f, 1.0f, 1, 0, 1, 1,
 	                                     -0.1f, -0.1f, -0.1f, 1.0f, 1, 1, 0, 1,
 	                                     -0.1f,  0.1f, -0.1f, 1.0f, 1, 1, 1, 1};
-	render_buffer_t* vertexbuffer = render_buffer_allocate(backend, RENDERUSAGE_STATIC | RENDERUSAGE_RENDER, sizeof(vertexdata), vertexdata, sizeof(vertexdata));
+	render_buffer_t* vertexbuffer = render_buffer_allocate(backend, RENDERUSAGE_STATIC | RENDERUSAGE_RENDER, sizeof(float32_t) * 8 * 1024, 0, 0);
+	render_buffer_lock(vertexbuffer, RENDERBUFFER_LOCK_WRITE);
+	memcpy(vertexbuffer->access, vertexdata, sizeof(vertexdata));
+	render_buffer_unlock(vertexbuffer);
 
-	const uint16_t indexdata[12 * 3] = {0, 3, 2, 0, 2, 1,
+	const uint32_t indexdata[12 * 3] = {0, 3, 2, 0, 2, 1,
 	                                    4, 0, 1, 4, 1, 5,
 	                                    7, 4, 5, 7, 5, 6,
 	                                    3, 7, 6, 3, 6, 2,
 	                                    4, 7, 3, 4, 3, 0,
 	                                    1, 2, 6, 1, 6, 5};
-	render_buffer_t* indexbuffer = render_buffer_allocate(backend, RENDERUSAGE_STATIC | RENDERUSAGE_RENDER, sizeof(indexdata), indexdata, sizeof(indexdata));
+	render_buffer_t* indexbuffer = render_buffer_allocate(backend, RENDERUSAGE_STATIC | RENDERUSAGE_RENDER, sizeof(uint32_t) * 1024, 0, 0);
+	render_buffer_lock(indexbuffer, RENDERBUFFER_LOCK_WRITE);
+	memcpy(indexbuffer->access, indexdata, sizeof(indexdata));
+	render_buffer_unlock(indexbuffer);
 	
 	real aspect_ratio = (real)width / (real)height;
 	matrix_t view_to_clip = render_projection_perspective(0.1f, 10.0f, REAL_PI * REAL_C(0.3), aspect_ratio);
@@ -310,22 +318,16 @@ _test_render_box(render_api_t api) {
 	render_buffer_data_declare(material_descriptor, material_data, 1, 1);
 
 	render_buffer_t* instance_descriptor = render_buffer_allocate(backend, RENDERUSAGE_STATIC | RENDERUSAGE_RENDER, 0, 0, 0);
-	render_buffer_data_t instance_data[2] = {
+	render_buffer_data_t instance_data[1] = {
 	// Model-view-projection matrix
 	{
 		.index = 0,
 		.data_type = RENDERDATA_MATRIX4X4,
 		.size = sizeof(matrix_t)
-	},
-	// Vertex buffer
-	{
-		.index = 1,
-		.data_type = RENDERDATA_POINTER,
-		.size = sizeof(uintptr_t)
 	}};
-	render_buffer_data_declare(instance_descriptor, instance_data, 2, 2);
+	render_buffer_data_declare(instance_descriptor, instance_data, 1, 2);
 
-	render_buffer_t* argument_buffer = render_buffer_allocate(backend, RENDERUSAGE_STATIC | RENDERUSAGE_RENDER, sizeof(render_argument_t) * 32, 0, 0);
+	render_buffer_t* argument_buffer = render_buffer_allocate(backend, RENDERUSAGE_STATIC | RENDERUSAGE_RENDER, sizeof(render_argument_t) * 500, 0, 0);
 	render_buffer_lock(argument_buffer, RENDERBUFFER_LOCK_WRITE);
 	render_argument_t* argument = argument_buffer->access;
 	memset(argument, 0, sizeof(render_argument_t));
@@ -357,9 +359,11 @@ _test_render_box(render_api_t api) {
 	primitive.descriptor[0] = global_descriptor->render_index;
 	primitive.descriptor[1] = material_descriptor->render_index;
 	primitive.descriptor[2] = instance_descriptor->render_index;
+	primitive.descriptor[3] = vertexbuffer->render_index;
 
 	double dt = 0;
 	tick_t start = time_current();
+	bool has_captured = false;
 
 	while ((dt = time_elapsed(start)) < 15.0f) {
 		render_buffer_lock(instance_descriptor, RENDERBUFFER_LOCK_WRITE);
@@ -368,17 +372,13 @@ _test_render_box(render_api_t api) {
 		matrix_t rotate = matrix_from_quaternion(euler_angles_to_quaternion(euler_angles((real)(dt * 0.31), (real)(dt * 0.57), (real)(dt * 0.73), EULER_XYZs)));
 		matrix_t scale = matrix_scaling(vector(1.0f, 1.0f, 1.0f, 1.0f));
 		model_to_world = matrix_mul(scale, matrix_mul(rotate, translate));
-
 		render_buffer_data_encode_matrix(instance_descriptor, 0, 0, &model_to_world);
-		render_buffer_data_encode_buffer(instance_descriptor, 0, 1, vertexbuffer, 0);
 
 		translate = matrix_translation(vector(-0.3f, 0.25f, -0.75f, 0));
 		rotate = matrix_from_quaternion(euler_angles_to_quaternion(euler_angles((real)(dt * 0.57), (real)(dt * 0.73), (real)(dt * 0.31), EULER_XYZs)));
 		scale = matrix_scaling(vector(1.0f, 1.0f, 1.0f, 1.0f));
 		model_to_world = matrix_mul(scale, matrix_mul(rotate, translate));
-
 		render_buffer_data_encode_matrix(instance_descriptor, 1, 0, &model_to_world);
-		render_buffer_data_encode_buffer(instance_descriptor, 1, 1, vertexbuffer, 0);
 
 		render_buffer_unlock(instance_descriptor);
 
@@ -388,6 +388,11 @@ _test_render_box(render_api_t api) {
 		render_pipeline_queue(pipeline, RENDERPRIMITIVE_TRIANGLELIST, &primitive);
 
 		render_pipeline_flush(pipeline);
+
+		if (!has_captured && (time_elapsed(start) > 5.0)) {
+			has_captured = true;
+			rb_metal_do_capture();
+		}
 	}
 
 	render_pipeline_state_deallocate(backend, pipeline_color_state);

@@ -303,6 +303,7 @@ struct render_argument_t {
 	render_offset_t index_offset;
 	render_offset_t vertex_offset;
 	render_offset_t instance_offset;
+	//render_offset_t padding[3];
 };
 
 struct render_primitive_t {

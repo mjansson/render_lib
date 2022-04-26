@@ -20,7 +20,6 @@ struct vertex_shader_material_arg_t {
 
 struct vertex_shader_instance_arg_t {
 	const float4x4 model_to_world [[ id(0) ]];
-	const device vertex_t* vertices [[ id(1) ]];
 };
 
 // Vertex shader to pixel shader data exchange
@@ -32,10 +31,11 @@ vertex rasterizer_data_t
 vertex_shader(uint vid [[ vertex_id ]],
               const device vertex_shader_global_arg_t* global [[ buffer(0) ]],
               const device vertex_shader_material_arg_t* material [[ buffer(1) ]],
-              const device vertex_shader_instance_arg_t* instance [[ buffer(2) ]]) {
+              const device vertex_shader_instance_arg_t* instance [[ buffer(2) ]],
+              const device vertex_t* vertices [[ buffer(3) ]]) {
 	rasterizer_data_t out;
 
-	out.position = (instance->vertices[vid].position * instance->model_to_world) * global->world_to_clip;
+	out.position = (vertices[vid].position * instance->model_to_world) * global->world_to_clip;
 
 	return out;
 }
