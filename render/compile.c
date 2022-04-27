@@ -290,7 +290,7 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 
 				process_t* compile_process = process_allocate();
 
-				string_const_t proc_args[7];
+				string_const_t proc_args[8];
 				size_t proc_args_count = sizeof(proc_args) / sizeof(proc_args[0]);
 
 				proc_args[0] = string_const(STRING_CONST("-sdk"));
@@ -300,6 +300,13 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 				proc_args[4] = path_strip_protocol(STRING_ARGS(source_file));
 				proc_args[5] = string_const(STRING_CONST("-o"));
 				proc_args[6] = path_strip_protocol(STRING_ARGS(air_file));
+				// Include source
+				bool embed_source = true;
+				if (embed_source) {
+					proc_args[7] = string_const(STRING_CONST("-frecord-sources"));
+				} else {
+					--proc_args_count;
+				}
 
 				log_infof(HASH_RENDER, STRING_CONST("Compiling Metal source: %.*s -> %.*s"),
 				          STRING_FORMAT(proc_args[4]), STRING_FORMAT(proc_args[6]));
@@ -334,7 +341,8 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 							stream_read(lib_stream, compiled_blob, compiled_size);
 							stream_deallocate(lib_stream);
 							result = 0;
-							log_infof(HASH_RENDER, STRING_CONST("Compiled metal shader: %u bytes"), (uint)compiled_size);
+							log_infof(HASH_RENDER, STRING_CONST("Compiled metal shader: %u bytes"),
+							          (uint)compiled_size);
 						} else {
 							log_error(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
 							          STRING_CONST("Failed to read compiled Metal lib after compile"));
