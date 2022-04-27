@@ -401,7 +401,7 @@ rb_metal_pipeline_allocate(render_backend_t* backend, render_indexformat_t index
 
 	pipeline_metal->render_compute_shader =
 	    render_shader_load(backend, uuid_decl(df075392, 1934, 4c89, a45c, 2139d64d9c92));
-
+#if 0
 	id<MTLLibrary> library = (__bridge id<MTLLibrary>)((void*)pipeline_metal->render_compute_shader->backend_data[0]);
 
 	@autoreleasepool {
@@ -435,7 +435,7 @@ rb_metal_pipeline_allocate(render_backend_t* backend, render_indexformat_t index
 		[compute_encoder setArgumentBuffer:pipeline_metal->compute_data offset:0];
 		[compute_encoder setIndirectCommandBuffer:pipeline_metal->indirect_command_buffer atIndex:0];
 	}
-
+#endif
 	pipeline_metal->command_capacity = capacity;
 	pipeline_metal->last_primitive_count = 0;
 
