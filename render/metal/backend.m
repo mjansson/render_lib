@@ -527,8 +527,8 @@ rb_metal_buffer_from_index(render_backend_metal_t* backend, uint index) {
 
 static inline id<MTLRenderPipelineState>
 rb_metal_pipeline_state_from_index(render_backend_metal_t* backend, uint index) {
-    render_pipeline_state_metal_t* pipeline_state = backend->pipeline_state + index;
-    return (__bridge id<MTLRenderPipelineState>)((void*)pipeline_state->pipeline_state);
+	render_pipeline_state_metal_t* pipeline_state = backend->pipeline_state + index;
+	return (__bridge id<MTLRenderPipelineState>)((void*)pipeline_state->pipeline_state);
 }
 
 static void
@@ -652,31 +652,33 @@ rb_metal_pipeline_flush(render_backend_t* backend, render_pipeline_t* pipeline) 
 		[render_encoder executeCommandsInBuffer:pipeline_metal->indirect_command_buffer
 		                              withRange:NSMakeRange(0, pipeline->primitive_buffer->used)];
 		[render_encoder endEncoding];
-		
+
 #else
-		
+		FOUNDATION_UNUSED(primitive_buffer);
 		id<MTLRenderCommandEncoder> render_encoder = [command_buffer renderCommandEncoderWithDescriptor:desc];
 
 		[render_encoder setCullMode:MTLCullModeBack];
 		[render_encoder setFrontFacingWinding:MTLWindingCounterClockwise];
 		if (pipeline->depth_attachment)
 			[render_encoder setDepthStencilState:backend_metal->depth_state];
-		
+
 		for (size_t ibuf = 0, bcount = array_count(pipeline_metal->render_buffer_used); ibuf < bcount; ++ibuf) {
 			id<MTLBuffer> buffer = rb_metal_buffer_from_index(backend_metal, pipeline_metal->render_buffer_used[ibuf]);
 			[render_encoder useResource:buffer usage:MTLResourceUsageRead];
 		}
-		
+
 		render_buffer_lock(pipeline->primitive_buffer, RENDERBUFFER_LOCK_READ);
 		render_primitive_t* primitives = pipeline->primitive_buffer->access;
 		render_pipeline_state_t current_state = 0;
 		render_buffer_index_t current_argument = 0;
 		render_buffer_t* argument_buffer = 0;
-		for (size_t iprim = 0, pcount = pipeline->primitive_buffer->used; iprim < pcount; ++iprim) {
+		size_t primitive_count = pipeline->primitive_buffer->used;
+		for (size_t iprim = 0; iprim < primitive_count; ++iprim) {
 			render_primitive_t* primitive = primitives + iprim;
 			if (primitive->pipeline_state != current_state) {
 				current_state = primitive->pipeline_state;
-				id<MTLRenderPipelineState> pipeline_state = rb_metal_pipeline_state_from_index(backend_metal, current_state);
+				id<MTLRenderPipelineState> pipeline_state =
+				    rb_metal_pipeline_state_from_index(backend_metal, current_state);
 				[render_encoder setRenderPipelineState:pipeline_state];
 			}
 			if (primitive->argument_buffer != current_argument) {
@@ -685,16 +687,33 @@ rb_metal_pipeline_flush(render_backend_t* backend, render_pipeline_t* pipeline) 
 				argument_buffer = backend_metal->buffer_lookup[primitive->argument_buffer];
 				render_buffer_lock(argument_buffer, RENDERBUFFER_LOCK_READ);
 			}
-			
-			[render_encoder setVertexBuffer:rb_metal_buffer_from_index(backend_metal, primitive->descriptor[0]) offset:0 atIndex:0];
-			[render_encoder setVertexBuffer:rb_metal_buffer_from_index(backend_metal, primitive->descriptor[1]) offset:0 atIndex:1];
-			[render_encoder setVertexBuffer:rb_metal_buffer_from_index(backend_metal, primitive->descriptor[2]) offset:0 atIndex:2];
-			[render_encoder setVertexBuffer:rb_metal_buffer_from_index(backend_metal, primitive->descriptor[3]) offset:0 atIndex:3];
 
-			render_argument_t* argument = (render_argument_t*)argument_buffer->access + primitive->argument_offset;
-			MTLIndexType index_type = (pipeline->index_format == RENDER_INDEXFORMAT_UINT16) ? MTLIndexTypeUInt16 : MTLIndexTypeUInt32;
+			[render_encoder setVertexBuffer:rb_metal_buffer_from_index(backend_metal, primitive->descriptor[0])
+			                         offset:0
+			                        atIndex:0];
+			[render_encoder setVertexBuffer:rb_metal_buffer_from_index(backend_metal, primitive->descriptor[1])
+			                         offset:0
+			                        atIndex:1];
+			[render_encoder setVertexBuffer:rb_metal_buffer_from_index(backend_metal, primitive->descriptor[2])
+			                         offset:0
+			                        atIndex:2];
+			[render_encoder setVertexBuffer:rb_metal_buffer_from_index(backend_metal, primitive->descriptor[3])
+			                         offset:0
+			                        atIndex:3];
+
+			render_argument_t* argument =
+			    (render_argument_t*)pointer_offset(argument_buffer->access, primitive->argument_offset);
+			MTLIndexType index_type =
+			    (pipeline->index_format == RENDER_INDEXFORMAT_UINT16) ? MTLIndexTypeUInt16 : MTLIndexTypeUInt32;
 			id<MTLBuffer> index_buffer = rb_metal_buffer_from_index(backend_metal, primitive->index_buffer);
-			[render_encoder drawIndexedPrimitives:MTLPrimitiveTypeTriangle indexCount:argument->index_count indexType:index_type indexBuffer:index_buffer indexBufferOffset:argument->index_offset instanceCount:argument->instance_count baseVertex:argument->vertex_offset baseInstance:argument->instance_offset];
+			[render_encoder drawIndexedPrimitives:MTLPrimitiveTypeTriangle
+			                           indexCount:argument->index_count
+			                            indexType:index_type
+			                          indexBuffer:index_buffer
+			                    indexBufferOffset:argument->index_offset
+			                        instanceCount:argument->instance_count
+			                           baseVertex:argument->vertex_offset
+			                         baseInstance:argument->instance_offset];
 		}
 		if (argument_buffer)
 			render_buffer_unlock(argument_buffer);
