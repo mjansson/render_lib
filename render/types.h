@@ -176,8 +176,8 @@ typedef void (*render_backend_buffer_allocate_fn)(render_backend_t*, render_buff
 typedef void (*render_backend_buffer_deallocate_fn)(render_backend_t*, render_buffer_t*, bool, bool);
 typedef void (*render_backend_buffer_upload_fn)(render_backend_t*, render_buffer_t*);
 typedef void (*render_backend_buffer_set_label_fn)(render_backend_t*, render_buffer_t*, const char*, size_t);
-typedef void (*render_backend_buffer_data_declare_fn)(render_backend_t*, render_buffer_t*, const render_buffer_data_t*,
-                                                      size_t, size_t);
+typedef void (*render_backend_buffer_data_declare_fn)(render_backend_t*, render_buffer_t*, size_t,
+                                                      const render_buffer_data_t*, size_t);
 typedef void (*render_backend_buffer_data_encode_buffer_fn)(render_backend_t*, render_buffer_t*, uint, uint,
                                                             render_buffer_t*, uint);
 typedef void (*render_backend_buffer_data_encode_matrix_fn)(render_backend_t*, render_buffer_t*, uint, uint,
@@ -294,16 +294,16 @@ struct render_buffer_t {
 struct render_buffer_data_t {
 	uint index;
 	render_data_type data_type;
-	uint size;
+	uint array_count;
 };
 
 struct render_argument_t {
 	render_count_t index_count;
 	render_count_t instance_count;
 	render_offset_t index_offset;
-	render_offset_t vertex_offset;
-	render_offset_t instance_offset;
-	//render_offset_t padding[3];
+	render_offset_t vertex_base;
+	render_offset_t instance_base;
+	// render_offset_t padding[3];
 };
 
 struct render_primitive_t {

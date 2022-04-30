@@ -81,9 +81,9 @@ render_buffer_unlock(render_buffer_t* buffer) {
 }
 
 void
-render_buffer_data_declare(render_buffer_t* buffer, const render_buffer_data_t* data, size_t data_count,
-                           size_t instance_count) {
-	buffer->backend->vtable.buffer_data_declare(buffer->backend, buffer, data, data_count, instance_count);
+render_buffer_data_declare(render_buffer_t* buffer, size_t instance_count, const render_buffer_data_t* data,
+                           size_t data_count) {
+	buffer->backend->vtable.buffer_data_declare(buffer->backend, buffer, instance_count, data, data_count);
 }
 
 void

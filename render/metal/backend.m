@@ -47,6 +47,7 @@ typedef struct render_backend_metal_t {
 	id<MTLArgumentEncoder> pipeline_state_encoder;
 
 	//! Buffer of buffer objects used for rendering
+	mutex_t* buffer_lock;
 	uintptr_t* buffer_array;
 	render_buffer_t** buffer_lookup;
 	id<MTLBuffer> buffer_storage;
@@ -124,6 +125,8 @@ rb_metal_destruct(render_backend_t* backend) {
 	array_deallocate(backend_metal->buffer_array);
 	array_deallocate(backend_metal->buffer_lookup);
 
+	mutex_deallocate(backend_metal->buffer_lock);
+
 	log_info(HASH_RENDER, STRING_CONST("Destructed metal render backend"));
 }
 
@@ -163,16 +166,18 @@ rb_metal_construct(render_backend_t* backend) {
 	render_pipeline_state_metal_t default_state = {0};
 	array_push(backend_metal->pipeline_state, default_state);
 
-	array_reserve(backend_metal->buffer_free, 1024);
+	backend_metal->buffer_lock = mutex_allocate(STRING_CONST("Buffer store"));
+
 	backend_metal->buffer_count = 1;
-	backend_metal->buffer_capacity = 1024;
+	backend_metal->buffer_capacity = 32 * 1024;
+	array_reserve(backend_metal->buffer_free, backend_metal->buffer_capacity);
 
 	size_t buffer_size = backend_metal->buffer_capacity * sizeof(void*);
 	backend_metal->buffer_storage = [backend_metal->device newBufferWithLength:buffer_size
 	                                                                   options:MTLResourceStorageModeShared];
 	backend_metal->buffer_storage.label = @"Buffer storage";
-	array_resize(backend_metal->buffer_array, 1024);
-	array_resize(backend_metal->buffer_lookup, 1024);
+	array_resize(backend_metal->buffer_array, backend_metal->buffer_capacity);
+	array_resize(backend_metal->buffer_lookup, backend_metal->buffer_capacity);
 
 	@autoreleasepool {
 		NSMutableArray<MTLArgumentDescriptor*>* argument_descriptor_array = [[NSMutableArray alloc] init];
@@ -667,6 +672,8 @@ rb_metal_pipeline_flush(render_backend_t* backend, render_pipeline_t* pipeline) 
 			[render_encoder useResource:buffer usage:MTLResourceUsageRead];
 		}
 
+		id<MTLBuffer> descriptor_buffer[4];
+
 		render_buffer_lock(pipeline->primitive_buffer, RENDERBUFFER_LOCK_READ);
 		render_primitive_t* primitives = pipeline->primitive_buffer->access;
 		render_pipeline_state_t current_state = 0;
@@ -684,22 +691,20 @@ rb_metal_pipeline_flush(render_backend_t* backend, render_pipeline_t* pipeline) 
 			if (primitive->argument_buffer != current_argument) {
 				if (argument_buffer)
 					render_buffer_unlock(argument_buffer);
-				argument_buffer = backend_metal->buffer_lookup[primitive->argument_buffer];
+				current_argument = primitive->argument_buffer;
+				argument_buffer = backend_metal->buffer_lookup[current_argument];
 				render_buffer_lock(argument_buffer, RENDERBUFFER_LOCK_READ);
 			}
 
-			[render_encoder setVertexBuffer:rb_metal_buffer_from_index(backend_metal, primitive->descriptor[0])
-			                         offset:0
-			                        atIndex:0];
-			[render_encoder setVertexBuffer:rb_metal_buffer_from_index(backend_metal, primitive->descriptor[1])
-			                         offset:0
-			                        atIndex:1];
-			[render_encoder setVertexBuffer:rb_metal_buffer_from_index(backend_metal, primitive->descriptor[2])
-			                         offset:0
-			                        atIndex:2];
-			[render_encoder setVertexBuffer:rb_metal_buffer_from_index(backend_metal, primitive->descriptor[3])
-			                         offset:0
-			                        atIndex:3];
+			descriptor_buffer[0] = rb_metal_buffer_from_index(backend_metal, primitive->descriptor[0]);
+			descriptor_buffer[1] = rb_metal_buffer_from_index(backend_metal, primitive->descriptor[1]);
+			descriptor_buffer[2] = rb_metal_buffer_from_index(backend_metal, primitive->descriptor[2]);
+			descriptor_buffer[3] = rb_metal_buffer_from_index(backend_metal, primitive->descriptor[3]);
+
+			[render_encoder setVertexBuffer:descriptor_buffer[0] offset:0 atIndex:0];
+			[render_encoder setVertexBuffer:descriptor_buffer[1] offset:0 atIndex:1];
+			[render_encoder setVertexBuffer:descriptor_buffer[2] offset:0 atIndex:2];
+			[render_encoder setVertexBuffer:descriptor_buffer[3] offset:0 atIndex:3];
 
 			render_argument_t* argument =
 			    (render_argument_t*)pointer_offset(argument_buffer->access, primitive->argument_offset);
@@ -712,8 +717,8 @@ rb_metal_pipeline_flush(render_backend_t* backend, render_pipeline_t* pipeline) 
 			                          indexBuffer:index_buffer
 			                    indexBufferOffset:argument->index_offset
 			                        instanceCount:argument->instance_count
-			                           baseVertex:argument->vertex_offset
-			                         baseInstance:argument->instance_offset];
+			                           baseVertex:argument->vertex_base
+			                         baseInstance:argument->instance_base];
 		}
 		if (argument_buffer)
 			render_buffer_unlock(argument_buffer);
@@ -922,6 +927,8 @@ storage_mode =*/MTLResourceStorageModeShared;
 			buffer->backend_data[0] = (uintptr_t)((__bridge_retained void*)metal_buffer);
 
 			if ((buffer->usage & RENDERUSAGE_RENDER) && (!buffer->render_index)) {
+				mutex_lock(backend_metal->buffer_lock);
+
 				uint render_index = 0;
 				uint buffer_free_count = array_count(backend_metal->buffer_free);
 				if (buffer_free_count) {
@@ -944,6 +951,8 @@ storage_mode =*/MTLResourceStorageModeShared;
 					backend_metal->buffer_array[render_index] = buffer->backend_data[0];
 					backend_metal->buffer_lookup[render_index] = buffer;
 				}
+
+				mutex_unlock(backend_metal->buffer_lock);
 			}
 		}
 	}
@@ -995,8 +1004,8 @@ rb_metal_buffer_set_label(render_backend_t* backend, render_buffer_t* buffer, co
 }
 
 static void
-rb_metal_buffer_data_declare(render_backend_t* backend, render_buffer_t* buffer, const render_buffer_data_t* data,
-                             size_t data_count, size_t instance_count) {
+rb_metal_buffer_data_declare(render_backend_t* backend, render_buffer_t* buffer, size_t instance_count,
+                             const render_buffer_data_t* data, size_t data_count) {
 	render_backend_metal_t* backend_metal = (render_backend_metal_t*)backend;
 
 	@autoreleasepool {
@@ -1014,6 +1023,7 @@ rb_metal_buffer_data_declare(render_backend_t* backend, render_buffer_t* buffer,
 				log_error(HASH_RENDER, ERROR_INVALID_VALUE, STRING_CONST("Invalid buffer structured data type"));
 				return;
 			}
+			argument_descriptor.arrayLength = data[iarg].array_count;
 			argument_descriptor.access = MTLArgumentAccessReadOnly;
 			[argument_descriptor_array addObject:argument_descriptor];
 		}

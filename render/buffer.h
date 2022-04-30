@@ -46,8 +46,8 @@ RENDER_API void
 render_buffer_restore(render_buffer_t* buffer);
 
 RENDER_API void
-render_buffer_data_declare(render_buffer_t* buffer, const render_buffer_data_t* data, size_t data_count,
-                           size_t instance_count);
+render_buffer_data_declare(render_buffer_t* buffer, size_t instance_count, const render_buffer_data_t* data,
+                           size_t data_count);
 
 RENDER_API void
 render_buffer_data_encode_buffer(render_buffer_t* buffer, uint instance, uint index, render_buffer_t* source,

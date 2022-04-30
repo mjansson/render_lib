@@ -201,8 +201,8 @@ rb_null_buffer_upload(render_backend_t* backend, render_buffer_t* buffer) {
 }
 
 static void
-rb_null_buffer_data_declare(render_backend_t* backend, render_buffer_t* buffer, const render_buffer_data_t* data,
-                            size_t data_count, size_t instance_count) {
+rb_null_buffer_data_declare(render_backend_t* backend, render_buffer_t* buffer, size_t instance_count,
+                            const render_buffer_data_t* data, size_t data_count) {
 	FOUNDATION_UNUSED(backend, buffer, data, data_count, instance_count);
 }
 
