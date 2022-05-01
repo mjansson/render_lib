@@ -10,7 +10,6 @@ struct render_argument_t {
     uint index_offset;
     uint vertex_offset;
     uint instance_offset;
-    //uint padding[3];
 };
 
 // Queued render command

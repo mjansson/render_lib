@@ -179,6 +179,9 @@ rb_metal_construct(render_backend_t* backend) {
 	array_resize(backend_metal->buffer_array, backend_metal->buffer_capacity);
 	array_resize(backend_metal->buffer_lookup, backend_metal->buffer_capacity);
 
+	backend_metal->buffer_array[0] = 0;
+	backend_metal->buffer_lookup[0] = 0;
+
 	@autoreleasepool {
 		NSMutableArray<MTLArgumentDescriptor*>* argument_descriptor_array = [[NSMutableArray alloc] init];
 		for (uint idx = 0; idx < backend_metal->buffer_capacity; ++idx) {
@@ -527,6 +530,13 @@ rb_metal_pipeline_set_depth_clear(render_backend_t* backend, render_pipeline_t* 
 
 static inline id<MTLBuffer>
 rb_metal_buffer_from_index(render_backend_metal_t* backend, uint index) {
+#if BUILD_DEBUG
+	render_buffer_t* buffer = backend->buffer_lookup[index];
+	if (index && (buffer->render_index != index)) {
+		log_errorf(0, ERROR_INVALID_VALUE, STRING_CONST("Invalid buffer render index for buffer %u"), index);
+		return 0;
+	}
+#endif
 	return (__bridge id<MTLBuffer>)((void*)backend->buffer_array[index]);
 }
 
@@ -558,6 +568,19 @@ rb_metal_pipeline_flush(render_backend_t* backend, render_pipeline_t* pipeline) 
 	render_pipeline_metal_t* pipeline_metal = (render_pipeline_metal_t*)pipeline;
 
 	id<MTLBuffer> primitive_buffer = (__bridge id<MTLBuffer>)((void*)pipeline->primitive_buffer->backend_data[0]);
+	id<MTLBuffer> descriptor_buffer[4];
+
+#if BUILD_DEBUG
+	mutex_lock(backend_metal->buffer_lock);
+	for (uint ibuf = 1; ibuf < backend_metal->buffer_count; ++ibuf) {
+		if (backend_metal->buffer_lookup[ibuf] && (backend_metal->buffer_lookup[ibuf]->render_index != ibuf)) {
+			log_errorf(0, ERROR_INVALID_VALUE, STRING_CONST("Buffer render index mismatch when flushing: %u %u"), ibuf,
+			           backend_metal->buffer_lookup[ibuf]->render_index);
+			exception_raise_abort();
+		}
+	}
+	mutex_unlock(backend_metal->buffer_lock);
+#endif
 
 	@autoreleasepool {
 		id<CAMetalDrawable> current_drawable = 0;
@@ -671,8 +694,6 @@ rb_metal_pipeline_flush(render_backend_t* backend, render_pipeline_t* pipeline) 
 			id<MTLBuffer> buffer = rb_metal_buffer_from_index(backend_metal, pipeline_metal->render_buffer_used[ibuf]);
 			[render_encoder useResource:buffer usage:MTLResourceUsageRead];
 		}
-
-		id<MTLBuffer> descriptor_buffer[4];
 
 		render_buffer_lock(pipeline->primitive_buffer, RENDERBUFFER_LOCK_READ);
 		render_primitive_t* primitives = pipeline->primitive_buffer->access;
@@ -924,8 +945,7 @@ storage_mode =*/MTLResourceStorageModeShared;
 		}
 
 		if (metal_buffer) {
-			buffer->backend_data[0] = (uintptr_t)((__bridge_retained void*)metal_buffer);
-
+			uintptr_t buffer_handle = (uintptr_t)((__bridge_retained void*)metal_buffer);
 			if ((buffer->usage & RENDERUSAGE_RENDER) && (!buffer->render_index)) {
 				mutex_lock(backend_metal->buffer_lock);
 
@@ -948,12 +968,28 @@ storage_mode =*/MTLResourceStorageModeShared;
 				if (render_index) {
 					// Store the buffer in the array of buffers
 					[backend_metal->buffer_encoder setBuffer:metal_buffer offset:0 atIndex:render_index];
-					backend_metal->buffer_array[render_index] = buffer->backend_data[0];
+					backend_metal->buffer_array[render_index] = buffer_handle;
 					backend_metal->buffer_lookup[render_index] = buffer;
+				} else {
+					log_error(HASH_RENDER, ERROR_INVALID_VALUE, STRING_CONST("Failed to get buffer render index"));
+					exception_raise_abort();
 				}
+
+#if BUILD_DEBUG
+				for (uint ibuf = 1; ibuf < backend_metal->buffer_count; ++ibuf) {
+					if (backend_metal->buffer_lookup[ibuf] &&
+					    (backend_metal->buffer_lookup[ibuf]->render_index != ibuf)) {
+						log_errorf(0, ERROR_INVALID_VALUE,
+						           STRING_CONST("Buffer render index mismatch after creating buffer %u: %u %u"),
+						           render_index, ibuf, backend_metal->buffer_lookup[ibuf]->render_index);
+						exception_raise_abort();
+					}
+				}
+#endif
 
 				mutex_unlock(backend_metal->buffer_lock);
 			}
+			buffer->backend_data[0] = buffer_handle;
 		}
 	}
 }
@@ -974,9 +1010,15 @@ rb_metal_buffer_deallocate(render_backend_t* backend, render_buffer_t* buffer, b
 		rb_metal_release_metal_argument_encoder(buffer->backend_data[1]);
 		buffer->backend_data[1] = 0;
 
-		if (buffer->render_index) {
-			array_push(backend_metal->buffer_free, buffer->render_index);
-			buffer->render_index = 0;
+		uint render_index = buffer->render_index;
+		if (render_index) {
+			backend_metal->buffer_lookup[render_index] = 0;
+		}
+		buffer->render_index = 0;
+		if (render_index) {
+			mutex_lock(backend_metal->buffer_lock);
+			array_push(backend_metal->buffer_free, render_index);
+			mutex_unlock(backend_metal->buffer_lock);
 		}
 	}
 }
@@ -1052,7 +1094,7 @@ rb_metal_buffer_data_encode_buffer(render_backend_t* backend, render_buffer_t* b
 	if (!buffer->backend_data[1]) {
 		log_error(HASH_RENDER, ERROR_INVALID_VALUE,
 		          STRING_CONST("Unable to encode buffer structured data without previous data layout declaration"));
-		return;
+		exception_raise_abort();
 	}
 
 	id<MTLArgumentEncoder> encoder = (__bridge id<MTLArgumentEncoder>)((void*)buffer->backend_data[1]);
