@@ -304,18 +304,18 @@ _test_render_box(render_api_t api) {
 	render_buffer_data_t global_data[1] = {{
 		.index = 0,
 		.data_type = RENDERDATA_MATRIX4X4,
-		.size = sizeof(matrix_t)
+		.array_count = 0
 	}};
-	render_buffer_data_declare(global_descriptor, global_data, 1, 1);
+	render_buffer_data_declare(global_descriptor, 1, global_data, 1);
 
 	render_buffer_t* material_descriptor = render_buffer_allocate(backend, RENDERUSAGE_STATIC | RENDERUSAGE_RENDER, 0, 0, 0);
 	// Material color
 	render_buffer_data_t material_data[1] = {{
 		.index = 0,
 		.data_type = RENDERDATA_FLOAT4,
-		.size = sizeof(vector_t)
+		.array_count = 0
 	}};
-	render_buffer_data_declare(material_descriptor, material_data, 1, 1);
+	render_buffer_data_declare(material_descriptor, 1, material_data, 1);
 
 	render_buffer_t* instance_descriptor = render_buffer_allocate(backend, RENDERUSAGE_STATIC | RENDERUSAGE_RENDER, 0, 0, 0);
 	render_buffer_data_t instance_data[1] = {
@@ -323,9 +323,9 @@ _test_render_box(render_api_t api) {
 	{
 		.index = 0,
 		.data_type = RENDERDATA_MATRIX4X4,
-		.size = sizeof(matrix_t)
+		.array_count = 0
 	}};
-	render_buffer_data_declare(instance_descriptor, instance_data, 1, 2);
+	render_buffer_data_declare(instance_descriptor, 2, instance_data, 1);
 
 	render_buffer_t* argument_buffer = render_buffer_allocate(backend, RENDERUSAGE_STATIC | RENDERUSAGE_RENDER, sizeof(render_argument_t) * 500, 0, 0);
 	render_buffer_lock(argument_buffer, RENDERBUFFER_LOCK_WRITE);
