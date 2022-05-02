@@ -403,8 +403,7 @@ rb_metal_pipeline_allocate(render_backend_t* backend, render_indexformat_t index
 		return 0;
 	}
 
-	pipeline->primitive_buffer = render_buffer_allocate(backend, RENDERUSAGE_DYNAMIC | RENDERUSAGE_RENDER,
-	                                                    sizeof(render_primitive_t) * capacity, 0, 0);
+	pipeline->primitive_buffer = render_buffer_allocate(backend, RENDERUSAGE_RENDER, sizeof(render_primitive_t) * capacity, 0, 0);
 	render_buffer_set_label(pipeline->primitive_buffer, STRING_CONST("Pipeline primitive buffer"));
 
 	pipeline_metal->render_compute_shader =
@@ -926,9 +925,11 @@ rb_metal_buffer_allocate(render_backend_t* backend, render_buffer_t* buffer, siz
 			}
 			buffer->usage &= ~(uint8_t)RENDERUSAGE_RENDER;
 		} else {
+#if FOUNDATION_PLATFORM_MACOS
 			uint storage_mode = MTLResourceStorageModeManaged;
-			if (buffer->usage & RENDERUSAGE_DYNAMIC)
-				storage_mode = MTLResourceStorageModeShared;
+#else
+			uint storage_mode = MTLResourceStorageModeShared;
+#endif
 			metal_buffer = [backend_metal->device newBufferWithLength:buffer_size options:storage_mode];
 			if (!metal_buffer) {
 				log_error(HASH_RENDER, ERROR_INVALID_VALUE, STRING_CONST("Unable to allocate GPU only Metal buffer"));
@@ -1029,18 +1030,24 @@ rb_metal_buffer_deallocate(render_backend_t* backend, render_buffer_t* buffer, b
 }
 
 static void
-rb_metal_buffer_upload(render_backend_t* backend, render_buffer_t* buffer) {
+rb_metal_buffer_upload(render_backend_t* backend, render_buffer_t* buffer, size_t offset, size_t size) {
 	FOUNDATION_UNUSED(backend);
 	if ((buffer->usage & RENDERUSAGE_CPUONLY) || (buffer->usage & RENDERUSAGE_GPUONLY) || !buffer->backend_data[0])
 		return;
 
-	if (!(buffer->usage & RENDERUSAGE_DYNAMIC)) {
-		id<MTLBuffer> metal_buffer = (__bridge id<MTLBuffer>)((void*)buffer->backend_data[0]);
-		NSRange range;
-		range.location = 0;
-		range.length = buffer->allocated;
-		[metal_buffer didModifyRange:range];
-	}
+#if FOUNDATION_PLATFORM_MACOS
+	if (offset > buffer->allocated)
+		offset = buffer->allocated;
+	if (!size)
+		size = buffer->allocated;
+	if ((offset + size) > buffer->allocated)
+		size = buffer->allocated - offset;
+	id<MTLBuffer> metal_buffer = (__bridge id<MTLBuffer>)((void*)buffer->backend_data[0]);
+	NSRange range;
+	range.location = offset;
+	range.length = size;
+	[metal_buffer didModifyRange:range];
+#endif
 }
 
 static void

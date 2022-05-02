@@ -93,8 +93,7 @@ rb_null_pipeline_allocate(render_backend_t* backend, render_indexformat_t index_
 	render_pipeline_t* pipeline =
 	    memory_allocate(HASH_RENDER, sizeof(render_pipeline_t), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 	pipeline->backend = backend;
-	pipeline->primitive_buffer = render_buffer_allocate(backend, RENDERUSAGE_DYNAMIC | RENDERUSAGE_RENDER,
-	                                                    sizeof(render_primitive_t) * capacity, 0, 0);
+	pipeline->primitive_buffer = render_buffer_allocate(backend, RENDERUSAGE_RENDER, sizeof(render_primitive_t) * capacity, 0, 0);
 	pipeline->index_format = index_format;
 	return pipeline;
 }
@@ -196,8 +195,8 @@ rb_null_buffer_deallocate(render_backend_t* backend, render_buffer_t* buffer, bo
 }
 
 static void
-rb_null_buffer_upload(render_backend_t* backend, render_buffer_t* buffer) {
-	FOUNDATION_UNUSED(backend, buffer);
+rb_null_buffer_upload(render_backend_t* backend, render_buffer_t* buffer, size_t offset, size_t size) {
+	FOUNDATION_UNUSED(backend, buffer, offset, size);
 }
 
 static void

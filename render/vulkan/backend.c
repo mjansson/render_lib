@@ -500,8 +500,8 @@ rb_vulkan_buffer_deallocate(render_backend_t* backend, render_buffer_t* buffer, 
 }
 
 static void
-rb_vulkan_buffer_upload(render_backend_t* backend, render_buffer_t* buffer) {
-	FOUNDATION_UNUSED(backend, buffer);
+rb_vulkan_buffer_upload(render_backend_t* backend, render_buffer_t* buffer, size_t offset, size_t size) {
+	FOUNDATION_UNUSED(backend, buffer, offset, size);
 }
 
 static void

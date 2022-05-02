@@ -44,9 +44,11 @@ render_buffer_deallocate(render_buffer_t* buffer) {
 }
 
 void
-render_buffer_upload(render_buffer_t* buffer) {
-	if (buffer->flags & RENDERBUFFER_DIRTY)
-		buffer->backend->vtable.buffer_upload(buffer->backend, buffer);
+render_buffer_upload(render_buffer_t* buffer, size_t offset, size_t size) {
+	if (buffer->flags & RENDERBUFFER_DIRTY) {
+		buffer->backend->vtable.buffer_upload(buffer->backend, buffer, offset, size);
+		buffer->flags &= ~(uint)RENDERBUFFER_DIRTY;
+	}
 }
 
 void
@@ -71,8 +73,8 @@ render_buffer_unlock(render_buffer_t* buffer) {
 			buffer->access = nullptr;
 			if (buffer->flags & RENDERBUFFER_LOCK_WRITE) {
 				buffer->flags |= RENDERBUFFER_DIRTY;
-				if (!(buffer->flags & RENDERBUFFER_LOCK_NOUPLOAD))
-					render_buffer_upload(buffer);
+				if ((buffer->flags & RENDERBUFFER_LOCK_WRITE_ALL) == RENDERBUFFER_LOCK_WRITE_ALL)
+					render_buffer_upload(buffer, 0, 0);
 			}
 			buffer->flags &= ~(uint32_t)RENDERBUFFER_LOCK_BITS;
 		}

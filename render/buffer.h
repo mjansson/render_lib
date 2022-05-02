@@ -40,7 +40,7 @@ RENDER_API void
 render_buffer_unlock(render_buffer_t* buffer);
 
 RENDER_API void
-render_buffer_upload(render_buffer_t* buffer);
+render_buffer_upload(render_buffer_t* buffer, size_t offset, size_t size);
 
 RENDER_API void
 render_buffer_free(render_buffer_t* buffer, bool sys, bool aux);

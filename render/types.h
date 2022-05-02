@@ -107,10 +107,8 @@ typedef enum render_usage_t {
 	RENDERUSAGE_DEFAULT = 0,
 	RENDERUSAGE_CPUONLY = 0x01,
 	RENDERUSAGE_GPUONLY = 0x02,
-	RENDERUSAGE_DYNAMIC = 0x04,
-	RENDERUSAGE_STATIC = 0,
-	RENDERUSAGE_TARGET = 0x08,
-	RENDERUSAGE_RENDER = 0x10
+	RENDERUSAGE_TARGET = 0x04,
+	RENDERUSAGE_RENDER = 0x08
 } render_usage_t;
 
 typedef enum render_buffer_flag_t {
@@ -119,8 +117,8 @@ typedef enum render_buffer_flag_t {
 
 	RENDERBUFFER_LOCK_READ = 0x10,
 	RENDERBUFFER_LOCK_WRITE = 0x20,
-	RENDERBUFFER_LOCK_NOUPLOAD = 0x40,
-	RENDERBUFFER_LOCK_FORCEUPLOAD = 0x80,
+	RENDERBUFFER_LOCK_DISCARD = 0x40,
+	RENDERBUFFER_LOCK_WRITE_ALL = 0x60,
 	RENDERBUFFER_LOCK_BITS = 0xF0
 } render_buffer_flag_t;
 
@@ -174,7 +172,7 @@ typedef bool (*render_backend_shader_upload_fn)(render_backend_t*, render_shader
 typedef void (*render_backend_shader_finalize_fn)(render_backend_t*, render_shader_t*);
 typedef void (*render_backend_buffer_allocate_fn)(render_backend_t*, render_buffer_t*, size_t, const void*, size_t);
 typedef void (*render_backend_buffer_deallocate_fn)(render_backend_t*, render_buffer_t*, bool, bool);
-typedef void (*render_backend_buffer_upload_fn)(render_backend_t*, render_buffer_t*);
+typedef void (*render_backend_buffer_upload_fn)(render_backend_t*, render_buffer_t*, size_t, size_t);
 typedef void (*render_backend_buffer_set_label_fn)(render_backend_t*, render_buffer_t*, const char*, size_t);
 typedef void (*render_backend_buffer_data_declare_fn)(render_backend_t*, render_buffer_t*, size_t,
                                                       const render_buffer_data_t*, size_t);

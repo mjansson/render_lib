@@ -275,8 +275,8 @@ _test_render_box(render_api_t api) {
 	                                      0.1f, -0.1f, -0.1f, 1.0f, 1, 0, 1, 1,
 	                                     -0.1f, -0.1f, -0.1f, 1.0f, 1, 1, 0, 1,
 	                                     -0.1f,  0.1f, -0.1f, 1.0f, 1, 1, 1, 1};
-	render_buffer_t* vertexbuffer = render_buffer_allocate(backend, RENDERUSAGE_STATIC | RENDERUSAGE_RENDER, sizeof(float32_t) * 8 * 1024, 0, 0);
-	render_buffer_lock(vertexbuffer, RENDERBUFFER_LOCK_WRITE);
+	render_buffer_t* vertexbuffer = render_buffer_allocate(backend, RENDERUSAGE_RENDER, sizeof(float32_t) * 8 * 1024, 0, 0);
+	render_buffer_lock(vertexbuffer, RENDERBUFFER_LOCK_WRITE_ALL);
 	memcpy(vertexbuffer->access, vertexdata, sizeof(vertexdata));
 	render_buffer_unlock(vertexbuffer);
 
@@ -286,8 +286,8 @@ _test_render_box(render_api_t api) {
 	                                    3, 7, 6, 3, 6, 2,
 	                                    4, 7, 3, 4, 3, 0,
 	                                    1, 2, 6, 1, 6, 5};
-	render_buffer_t* indexbuffer = render_buffer_allocate(backend, RENDERUSAGE_STATIC | RENDERUSAGE_RENDER, sizeof(uint32_t) * 1024, 0, 0);
-	render_buffer_lock(indexbuffer, RENDERBUFFER_LOCK_WRITE);
+	render_buffer_t* indexbuffer = render_buffer_allocate(backend, RENDERUSAGE_RENDER, sizeof(uint32_t) * 1024, 0, 0);
+	render_buffer_lock(indexbuffer, RENDERBUFFER_LOCK_WRITE_ALL);
 	memcpy(indexbuffer->access, indexdata, sizeof(indexdata));
 	render_buffer_unlock(indexbuffer);
 	
@@ -297,7 +297,7 @@ _test_render_box(render_api_t api) {
 	matrix_t model_to_world = matrix_translation(vector(0, 0, -0.3f, 0));
 	matrix_t world_to_clip = matrix_mul(world_to_view, view_to_clip);
 
-	render_buffer_t* global_descriptor = render_buffer_allocate(backend, RENDERUSAGE_STATIC | RENDERUSAGE_RENDER, 0, 0, 0);
+	render_buffer_t* global_descriptor = render_buffer_allocate(backend, RENDERUSAGE_RENDER, 0, 0, 0);
 	// View-to-clip transform matrix
 	render_buffer_data_t global_data[1] = {{
 		.index = 0,
@@ -306,7 +306,7 @@ _test_render_box(render_api_t api) {
 	}};
 	render_buffer_data_declare(global_descriptor, 1, global_data, 1);
 
-	render_buffer_t* material_descriptor = render_buffer_allocate(backend, RENDERUSAGE_STATIC | RENDERUSAGE_RENDER, 0, 0, 0);
+	render_buffer_t* material_descriptor = render_buffer_allocate(backend, RENDERUSAGE_RENDER, 0, 0, 0);
 	// Material color
 	render_buffer_data_t material_data[1] = {{
 		.index = 0,
@@ -315,7 +315,7 @@ _test_render_box(render_api_t api) {
 	}};
 	render_buffer_data_declare(material_descriptor, 1, material_data, 1);
 
-	render_buffer_t* instance_descriptor = render_buffer_allocate(backend, RENDERUSAGE_STATIC | RENDERUSAGE_RENDER, 0, 0, 0);
+	render_buffer_t* instance_descriptor = render_buffer_allocate(backend, RENDERUSAGE_RENDER, 0, 0, 0);
 	render_buffer_data_t instance_data[1] = {
 	// Model-view-projection matrix
 	{
@@ -325,8 +325,8 @@ _test_render_box(render_api_t api) {
 	}};
 	render_buffer_data_declare(instance_descriptor, 2, instance_data, 1);
 
-	render_buffer_t* argument_buffer = render_buffer_allocate(backend, RENDERUSAGE_STATIC | RENDERUSAGE_RENDER, sizeof(render_argument_t) * 500, 0, 0);
-	render_buffer_lock(argument_buffer, RENDERBUFFER_LOCK_WRITE);
+	render_buffer_t* argument_buffer = render_buffer_allocate(backend, RENDERUSAGE_RENDER, sizeof(render_argument_t) * 500, 0, 0);
+	render_buffer_lock(argument_buffer, RENDERBUFFER_LOCK_WRITE_ALL);
 	render_argument_t* argument = argument_buffer->access;
 	memset(argument, 0, sizeof(render_argument_t));
 	argument->index_count = 36;
@@ -341,12 +341,12 @@ _test_render_box(render_api_t api) {
 	render_pipeline_state_t pipeline_white_state = render_pipeline_state_allocate(backend, pipeline, shader_white);
 
 	world_to_clip = matrix_mul(world_to_view, view_to_clip);
-	render_buffer_lock(global_descriptor, RENDERBUFFER_LOCK_WRITE);
+	render_buffer_lock(global_descriptor, RENDERBUFFER_LOCK_WRITE_ALL);
 	render_buffer_data_encode_matrix(global_descriptor, 0, 0, &world_to_clip);
 	render_buffer_unlock(global_descriptor);
 
 	vector_t material_color = vector(1, 1, 1, 1);
-	render_buffer_lock(material_descriptor, RENDERBUFFER_LOCK_WRITE);
+	render_buffer_lock(material_descriptor, RENDERBUFFER_LOCK_WRITE_ALL);
 	render_buffer_data_encode_constant(material_descriptor, 0, 0, &material_color, sizeof(vector_t));
 	render_buffer_unlock(material_descriptor);	
 
@@ -363,7 +363,7 @@ _test_render_box(render_api_t api) {
 	tick_t start = time_current();
 
 	while ((dt = time_elapsed(start)) < 15.0f) {
-		render_buffer_lock(instance_descriptor, RENDERBUFFER_LOCK_WRITE);
+		render_buffer_lock(instance_descriptor, RENDERBUFFER_LOCK_WRITE_ALL);
 
 		matrix_t translate = matrix_translation(vector(0.3f, -0.25f, -0.75f, 0));
 		matrix_t rotate = matrix_from_quaternion(euler_angles_to_quaternion(euler_angles((real)(dt * 0.31), (real)(dt * 0.57), (real)(dt * 0.73), EULER_XYZs)));
