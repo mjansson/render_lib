@@ -215,6 +215,7 @@ build/scons/deploy*
 #XCode
 xcuserdata
 *.xccheckout
+xcshareddata
 
 #SublimeText local workspace
 *.sublime-workspace

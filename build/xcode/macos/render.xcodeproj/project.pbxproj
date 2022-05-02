@@ -36,6 +36,10 @@
 		CD845DD928032E8A00E1052C /* pipeline.c in Sources */ = {isa = PBXBuildFile; fileRef = CD845DD728032E8A00E1052C /* pipeline.c */; };
 		CD845DDC28032EAA00E1052C /* projection.h in Headers */ = {isa = PBXBuildFile; fileRef = CD845DDA28032EAA00E1052C /* projection.h */; };
 		CD845DDD28032EAA00E1052C /* projection.c in Sources */ = {isa = PBXBuildFile; fileRef = CD845DDB28032EAA00E1052C /* projection.c */; };
+		CDE1689D281FB5E6002690AD /* backend.h in Headers */ = {isa = PBXBuildFile; fileRef = CDE1689B281FB5E6002690AD /* backend.h */; };
+		CDE1689E281FB5E6002690AD /* backend.c in Sources */ = {isa = PBXBuildFile; fileRef = CDE1689C281FB5E6002690AD /* backend.c */; };
+		CDE168A2281FB5FE002690AD /* backend.h in Headers */ = {isa = PBXBuildFile; fileRef = CDE168A0281FB5FE002690AD /* backend.h */; };
+		CDE168A3281FB5FE002690AD /* backend.c in Sources */ = {isa = PBXBuildFile; fileRef = CDE168A1281FB5FE002690AD /* backend.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -73,6 +77,10 @@
 		CD845DD728032E8A00E1052C /* pipeline.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = pipeline.c; path = ../../../render/pipeline.c; sourceTree = "<group>"; };
 		CD845DDA28032EAA00E1052C /* projection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = projection.h; path = ../../../render/projection.h; sourceTree = "<group>"; };
 		CD845DDB28032EAA00E1052C /* projection.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = projection.c; path = ../../../render/projection.c; sourceTree = "<group>"; };
+		CDE1689B281FB5E6002690AD /* backend.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = backend.h; path = ../../../render/directx12/backend.h; sourceTree = "<group>"; };
+		CDE1689C281FB5E6002690AD /* backend.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = backend.c; path = ../../../render/directx12/backend.c; sourceTree = "<group>"; };
+		CDE168A0281FB5FE002690AD /* backend.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = backend.h; path = ../../../render/vulkan/backend.h; sourceTree = "<group>"; };
+		CDE168A1281FB5FE002690AD /* backend.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = backend.c; path = ../../../render/vulkan/backend.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -107,8 +115,10 @@
 		455515411934685500CF089B /* render */ = {
 			isa = PBXGroup;
 			children = (
+				CDE1689A281FB5D5002690AD /* directx12 */,
 				CD845DD128032E5C00E1052C /* metal */,
 				455515E11934ACA200CF089B /* null */,
+				CDE1689F281FB5EA002690AD /* vulkan */,
 				455515D91934961200CF089B /* backend.c */,
 				455515DA1934961200CF089B /* backend.h */,
 				CD73427B1E4DBC020030B5B1 /* buffer.c */,
@@ -167,6 +177,24 @@
 			name = metal;
 			sourceTree = "<group>";
 		};
+		CDE1689A281FB5D5002690AD /* directx12 */ = {
+			isa = PBXGroup;
+			children = (
+				CDE1689C281FB5E6002690AD /* backend.c */,
+				CDE1689B281FB5E6002690AD /* backend.h */,
+			);
+			name = directx12;
+			sourceTree = "<group>";
+		};
+		CDE1689F281FB5EA002690AD /* vulkan */ = {
+			isa = PBXGroup;
+			children = (
+				CDE168A1281FB5FE002690AD /* backend.c */,
+				CDE168A0281FB5FE002690AD /* backend.h */,
+			);
+			name = vulkan;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
@@ -177,11 +205,13 @@
 				CD73428B1E4DBC020030B5B1 /* compile.h in Headers */,
 				CD845DD828032E8A00E1052C /* pipeline.h in Headers */,
 				4555154A1934686800CF089B /* internal.h in Headers */,
+				CDE1689D281FB5E6002690AD /* backend.h in Headers */,
 				CD845DDC28032EAA00E1052C /* projection.h in Headers */,
 				455515481934686800CF089B /* build.h in Headers */,
 				CD845DD528032E7000E1052C /* backend.h in Headers */,
 				4555154C1934686800CF089B /* render.h in Headers */,
 				CD73428F1E4DBC020030B5B1 /* import.h in Headers */,
+				CDE168A2281FB5FE002690AD /* backend.h in Headers */,
 				CD3368352809F0CD00173B89 /* buffer.h in Headers */,
 				455515DC1934961200CF089B /* backend.h in Headers */,
 				4555154D1934686800CF089B /* types.h in Headers */,
@@ -219,15 +249,14 @@
 		4555153219345D4100CF089B /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0610;
+				LastUpgradeCheck = 1330;
 				ORGANIZATIONNAME = "";
 			};
 			buildConfigurationList = 4555153519345D4100CF089B /* Build configuration list for PBXProject "render" */;
 			compatibilityVersion = "Xcode 3.2";
-			developmentRegion = English;
+			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
-				English,
 				en,
 				Base,
 			);
@@ -249,6 +278,7 @@
 				CD845DD928032E8A00E1052C /* pipeline.c in Sources */,
 				CD7342891E4DBC020030B5B1 /* buffer.c in Sources */,
 				455515DB1934961200CF089B /* backend.c in Sources */,
+				CDE168A3281FB5FE002690AD /* backend.c in Sources */,
 				CD73428A1E4DBC020030B5B1 /* compile.c in Sources */,
 				CD73428E1E4DBC020030B5B1 /* import.c in Sources */,
 				455515E41934ACB000CF089B /* backend.c in Sources */,
@@ -258,6 +288,7 @@
 				45BB334D1A5971B100D30F3E /* shader.c in Sources */,
 				CD845DD428032E7000E1052C /* backend.m in Sources */,
 				CD845DDD28032EAA00E1052C /* projection.c in Sources */,
+				CDE1689E281FB5E6002690AD /* backend.c in Sources */,
 				4555154B1934686800CF089B /* render.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -270,27 +301,43 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD)";
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = NO;
 				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CONFIGURATION_BUILD_DIR = ../../../bin/macos/debug;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = c11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_CPP_EXCEPTIONS = NO;
 				GCC_ENABLE_CPP_RTTI = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = NO;
 				GCC_FAST_MATH = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"BUILD_DEBUG=1",
@@ -317,7 +364,7 @@
 					../../../../window_lib/lib/macos/debug,
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.7;
-				ONLY_ACTIVE_ARCH = NO;
+				ONLY_ACTIVE_ARCH = YES;
 				PRECOMPS_INCLUDE_HEADERS_FROM_BUILT_PRODUCTS_DIR = NO;
 				SDKROOT = macosx;
 				USE_HEADERMAP = NO;
@@ -329,27 +376,42 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD)";
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = NO;
 				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CONFIGURATION_BUILD_DIR = ../../../bin/macos/release;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = c11;
 				GCC_ENABLE_CPP_EXCEPTIONS = NO;
 				GCC_ENABLE_CPP_RTTI = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = NO;
 				GCC_FAST_MATH = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = fast;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"BUILD_RELEASE=1",
@@ -437,27 +499,42 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD)";
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = NO;
 				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CONFIGURATION_BUILD_DIR = ../../../bin/macos/profile;
 				COPY_PHASE_STRIP = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = c11;
 				GCC_ENABLE_CPP_EXCEPTIONS = NO;
 				GCC_ENABLE_CPP_RTTI = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = NO;
 				GCC_FAST_MATH = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = fast;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"BUILD_PROFILE=1",
@@ -521,27 +598,42 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD)";
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = NO;
 				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CONFIGURATION_BUILD_DIR = ../../../bin/macos/deploy;
 				COPY_PHASE_STRIP = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = c11;
 				GCC_ENABLE_CPP_EXCEPTIONS = NO;
 				GCC_ENABLE_CPP_RTTI = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = NO;
 				GCC_FAST_MATH = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = fast;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"BUILD_DEPLOY=1",

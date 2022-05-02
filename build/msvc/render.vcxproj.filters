@@ -10,6 +10,9 @@
     <Filter Include="metal">
       <UniqueIdentifier>{cafa6f9e-ee5c-40c8-b5c8-3eb75b6c875b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="vulkan">
+      <UniqueIdentifier>{d98cf1ad-a2ee-4414-9844-865ec75bac8d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\render\null\backend.c">
@@ -31,6 +34,9 @@
     </ClCompile>
     <ClCompile Include="..\..\render\metal\backend.c">
       <Filter>metal</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\render\vulkan\backend.c">
+      <Filter>vulkan</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -55,6 +61,9 @@
     </ClInclude>
     <ClInclude Include="..\..\render\metal\backend.h">
       <Filter>metal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\render\vulkan\backend.h">
+      <Filter>vulkan</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
