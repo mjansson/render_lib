@@ -26,6 +26,7 @@
 #include <render/gl4/backend.h>
 #include <render/gles2/backend.h>
 #include <render/metal/backend.h>
+#include <render/vulkan/backend.h>
 
 #include <resource/platform.h>
 
@@ -39,7 +40,7 @@ render_api_fallback(render_api_t api) {
 
 		case RENDERAPI_DEFAULT:
 #if FOUNDATION_PLATFORM_WINDOWS
-			return RENDERAPI_DIRECTX;
+			return RENDERAPI_VULKAN;
 #elif FOUNDATION_PLATFORM_APPLE
 			return RENDERAPI_METAL;
 #elif FOUNDATION_PLATFORM_IOS || FOUNDATION_PLATFORM_ANDROID || FOUNDATION_PLATFORM_LINUX_RASPBERRYPI
@@ -50,6 +51,13 @@ render_api_fallback(render_api_t api) {
 
 		case RENDERAPI_NULL:
 			return RENDERAPI_UNKNOWN;
+
+		case RENDERAPI_VULKAN:
+#if FOUNDATION_PLATFORM_WINDOWS
+			return RENDERAPI_DIRECTX;
+#else
+			return RENDERAPI_NULL;
+#endif
 
 		case RENDERAPI_OPENGL:
 			return RENDERAPI_OPENGL4;
@@ -70,7 +78,6 @@ render_api_fallback(render_api_t api) {
 			return RENDERAPI_NULL;
 
 		case RENDERAPI_METAL:
-		case RENDERAPI_VULKAN:
 		case RENDERAPI_COUNT:
 			return RENDERAPI_NULL;
 
@@ -155,6 +162,17 @@ render_backend_allocate(render_api_t api, bool allow_fallback) {
 #endif
 				break;
 
+			case RENDERAPI_VULKAN:
+#if !FOUNDATION_PLATFORM_APPLE
+				backend = render_backend_vulkan_allocate();
+				if (!backend || !backend->vtable.construct(backend)) {
+					log_info(HASH_RENDER, STRING_CONST("Failed to initialize Vulkan render backend"));
+					render_backend_deallocate(backend);
+					backend = nullptr;
+				}
+#endif
+				break;
+
 			case RENDERAPI_NULL:
 				backend = render_backend_null_allocate();
 				backend->vtable.construct(backend);
@@ -164,11 +182,6 @@ render_backend_allocate(render_api_t api, bool allow_fallback) {
 				log_warn(HASH_RENDER, WARNING_SUSPICIOUS,
 				         STRING_CONST("No supported and enabled render api found, giving up"));
 				return 0;
-
-			case RENDERAPI_VULKAN:
-				// Try loading dynamic library
-				log_warnf(HASH_RENDER, WARNING_SUSPICIOUS, STRING_CONST("Render API not yet implemented (%u)"), api);
-				break;
 
 			case RENDERAPI_COUNT:
 			case RENDERAPI_DEFAULT:

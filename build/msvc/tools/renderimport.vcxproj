@@ -32,7 +32,11 @@
       <AdditionalIncludeDirectories>$(ProjectDir)..\..\..;..\..\..\..\window_lib;..\..\..\..\window;..\..\..\..\network_lib;..\..\..\..\network;..\..\..\..\resource_lib;..\..\..\..\resource;..\..\..\..\task_lib;..\..\..\..\task;..\..\..\..\vector_lib;..\..\..\..\vector;..\..\..\..\foundation_lib;..\..\..\..\foundation;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>window.lib;resource.lib;network.lib;task.lib;vector.lib;foundation.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>vulkan-1.lib;window.lib;resource.lib;network.lib;task.lib;vector.lib;foundation.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(VK_SDK_PATH)\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories Condition="'$(Configuration)|$(Platform)'=='Deploy|x64'">$(VK_SDK_PATH)\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(VK_SDK_PATH)\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(VK_SDK_PATH)\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

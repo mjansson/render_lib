@@ -16,6 +16,9 @@
     <Filter Include="gles2">
       <UniqueIdentifier>{f1703671-9f43-4fb2-be55-908baa44f7b6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="vulkan">
+      <UniqueIdentifier>{d98cf1ad-a2ee-4414-9844-865ec75bac8d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\render\gl4\backend.c">
@@ -53,6 +56,9 @@
     <ClCompile Include="..\..\render\vertexbuffer.c" />
     <ClCompile Include="..\..\render\gles2\backend.c">
       <Filter>gles2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\render\vulkan\backend.c">
+      <Filter>vulkan</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -102,6 +108,9 @@
     <ClInclude Include="..\..\render\vertexbuffer.h" />
     <ClInclude Include="..\..\render\gles2\backend.h">
       <Filter>gles2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\render\vulkan\backend.h">
+      <Filter>vulkan</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
