@@ -38,19 +38,28 @@
 #endif
 
 typedef struct render_backend_vulkan_t {
-	RENDER_DECLARE_BACKEND;
+	render_backend_t backend;
 
 	VkInstance instance;
 	
 	VkPhysicalDevice* adapter_available;
 	uint adapter_count;
+} render_backend_vulkan_t;
+
+typedef struct render_target_window_vulkan_t {
+	render_target_t target;
+
 	VkPhysicalDevice adapter;
 	VkPhysicalDeviceProperties adapter_properties;
 	VkPhysicalDeviceFeatures adapter_features;
 
+	uint32_t queue_family_count;
+	VkQueueFamilyProperties* queue_props;
+	uint32_t queue_family_index;
+
 	VkDevice device;
 	VkSurfaceKHR surface;
-} render_backend_vulkan_t;
+} render_target_window_vulkan_t;
 
 static bool
 rb_vulkan_construct(render_backend_t* backend) {
@@ -63,10 +72,11 @@ rb_vulkan_construct(render_backend_t* backend) {
 	VkApplicationInfo vk_app_info = {0};
 	vk_app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 	vk_app_info.pApplicationName = app->name.str;
-	vk_app_info.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+	vk_app_info.applicationVersion =
+	    VK_MAKE_VERSION(app->version.sub.major, app->version.sub.minor, app->version.sub.revision);
 	vk_app_info.pEngineName = "Neoengine";
 	vk_app_info.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-	vk_app_info.apiVersion = VK_API_VERSION_1_0;
+	vk_app_info.apiVersion = VK_MAKE_API_VERSION(0, 1, 2, 0);
 
 	VkInstanceCreateInfo vk_create_info = {0};
 	vk_create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -146,7 +156,6 @@ rb_vulkan_destruct(render_backend_t* backend) {
 		memory_deallocate(backend_vulkan->adapter_available);
 	backend_vulkan->adapter_available = 0;
 	backend_vulkan->adapter_count = 0;
-	backend_vulkan->adapter = 0;
 
 	log_debug(HASH_RENDER, STRING_CONST("Destructed Vulkan render backend"));
 }
@@ -162,7 +171,6 @@ rb_vulkan_enumerate_adapters(render_backend_t* backend, unsigned int* store, siz
 	if (backend_vulkan->adapter_available)
 		memory_deallocate(backend_vulkan->adapter_available);
 
-	backend_vulkan->adapter = 0;
 	backend_vulkan->adapter_count = 0;
 	backend_vulkan->adapter_available = 0;
 
@@ -206,30 +214,37 @@ rb_vulkan_enumerate_modes(render_backend_t* backend, unsigned int adapter, rende
 	FOUNDATION_UNUSED(backend);
 	FOUNDATION_UNUSED(adapter);
 	if (capacity) {
-		render_resolution_t mode = {0, 800, 600, PIXELFORMAT_R8G8B8A8, COLORSPACE_LINEAR, 60};
+		render_resolution_t mode = {0, 800, 600, PIXELFORMAT_R8G8B8A8, 60};
 		store[0] = mode;
 	}
 	return 1;
 }
 
-static bool
-rb_vulkan_set_drawable(render_backend_t* backend, const render_drawable_t* drawable) {
-	render_backend_vulkan_t* backend_vulkan = (render_backend_vulkan_t*)backend;
+static render_target_t*
+rb_vulkan_target_window_allocate(render_backend_t* backend, window_t* window, uint tag) {
+	render_backend_vulkan_t* backend_vk = (render_backend_vulkan_t*)backend;
 
-	if (!backend_vulkan->adapter_available)
+	if (!backend_vk->adapter_available)
 		rb_vulkan_enumerate_adapters(backend, 0, 0);
-	if ((drawable->adapter != WINDOW_ADAPTER_DEFAULT) && (drawable->adapter  >= backend_vulkan->adapter_count)) {
-		log_error(HASH_RENDER, ERROR_INVALID_VALUE, STRING_CONST("Unable to set Vulkan drawable, bad adapter index"));
+	if ((window->adapter != WINDOW_ADAPTER_DEFAULT) && (window->adapter >= backend_vk->adapter_count)) {
+		log_error(HASH_RENDER, ERROR_INVALID_VALUE, STRING_CONST("Failed to create Vulkan window target, bad adapter index"));
 		return false;
 	}
 
-	uint adapter_index = (drawable->adapter != WINDOW_ADAPTER_DEFAULT) ? drawable->adapter : 0;
-	backend_vulkan->adapter = backend_vulkan->adapter_available[adapter_index];
+	uint adapter_index = (window->adapter != WINDOW_ADAPTER_DEFAULT) ? window->adapter : 0;
+	VkPhysicalDevice adapter = backend_vk->adapter_available[adapter_index];
 
 	VkPhysicalDeviceProperties properties;
-	vkGetPhysicalDeviceProperties(backend_vulkan->adapter, &properties);
-	log_infof(HASH_RENDER, STRING_CONST("Using Vulkan GPU %d: %s (type %u)"), adapter_index,
-	          properties.deviceName, properties.deviceType);
+	static const char* device_type[] = {
+	    "other",
+	    "integrated GPU",
+	    "discrete GPU",
+	    "virtual GPU",
+	    "CPU"
+	};
+	vkGetPhysicalDeviceProperties(adapter, &properties);
+	log_infof(HASH_RENDER, STRING_CONST("Using Vulkan GPU %d: %s (%s)"), adapter_index, properties.deviceName,
+	          device_type[math_clamp(properties.deviceType, 0, VK_PHYSICAL_DEVICE_TYPE_CPU + 1)]);
 
 	// Device extensions required
 	uint32_t extension_count = 0;
@@ -238,12 +253,12 @@ rb_vulkan_set_drawable(render_backend_t* backend, const render_drawable_t* drawa
 	const char* required_extension[MAX_EXTENSION_COUNT];
 	uint required_extension_count = 0;
 
-	VkResult result = vkEnumerateDeviceExtensionProperties(backend_vulkan->adapter, 0, &extension_count, 0);
+	VkResult result = vkEnumerateDeviceExtensionProperties(adapter, 0, &extension_count, 0);
 	if (extension_count > 0) {
 		VkExtensionProperties* device_extension =
 		    memory_allocate(HASH_RENDER, sizeof(VkExtensionProperties) * extension_count, 0,
 		                    MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
-		result = vkEnumerateDeviceExtensionProperties(backend_vulkan->adapter, 0, &extension_count, device_extension);
+		result = vkEnumerateDeviceExtensionProperties(adapter, 0, &extension_count, device_extension);
 		for (uint32_t iext = 0;
 		     (result == VK_SUCCESS) && (iext < extension_count) && (required_extension_count < MAX_EXTENSION_COUNT);
 		     ++iext) {
@@ -259,10 +274,22 @@ rb_vulkan_set_drawable(render_backend_t* backend, const render_drawable_t* drawa
 
 	if (!found_swapchain_ext) {
 		log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
-		           STRING_CONST("Failed to set Vulkan drawable, missing device extension %s"),
+		           STRING_CONST("Failed to create Vulkan window target, missing device extension %s"),
 		           VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 		return false;
 	}
+
+	render_target_window_vulkan_t* target_vk = memory_allocate(HASH_RENDER, sizeof(render_target_window_vulkan_t), 0,
+	                                                           MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	target_vk->adapter = adapter;
+
+	render_target_t* target = (render_target_t*)target_vk;
+	target->backend = backend;
+	target->width = window_width(window);
+	target->height = window_height(window);
+	target->type = RENDERTARGET_WINDOW;
+	target->pixelformat = PIXELFORMAT_R8G8B8A8;
+	target->colorspace = COLORSPACE_sRGB;
 
 	// Create surface
 #if FOUNDATION_PLATFORM_WINDOWS
@@ -270,87 +297,69 @@ rb_vulkan_set_drawable(render_backend_t* backend, const render_drawable_t* drawa
 	surface_info.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
 	surface_info.pNext = NULL;
 	surface_info.flags = 0;
-	surface_info.hinstance = drawable->connection;
-	surface_info.hwnd = drawable->hwnd;
+	surface_info.hinstance = window->instance;
+	surface_info.hwnd = window->hwnd;
 
-	result = vkCreateWin32SurfaceKHR(backend_vulkan->instance, &surface_info, NULL, &backend_vulkan->surface);
+	result = vkCreateWin32SurfaceKHR(backend_vk->instance, &surface_info, NULL, &target_vk->surface);
 #elif FOUNDATION_PLATFORM_LINUX
 	VkXcbSurfaceCreateInfoKHR createInfo;
-	createInfo.sType = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
-	createInfo.pNext = NULL;
-	createInfo.flags = 0;
-	createInfo.connection = drawable->connection;
-	createInfo.window = drawable->xcb_window;
+	surface_info.sType = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
+	surface_info.pNext = NULL;
+	surface_info.flags = 0;
+	surface_info.connection = window->connection;
+	surface_info.window = window->xcb_window;
 
-	result = vkCreateXcbSurfaceKHR(demo->inst, &createInfo, NULL, &demo->surface);
+	result = vkCreateXcbSurfaceKHR(backend_vk->inst, &surface_info, NULL, &target->surface);
 #endif
 	if (result != VK_SUCCESS) {
 		log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
-		           STRING_CONST("Failed to set Vulkan drawable, unable to create surface: %d"),
+		           STRING_CONST("Failed to create Vulkan window target, unable to create surface: %d"),
 		           (int)result);
+		memory_deallocate(target_vk);
 		return false;
 	}
 
 	// Initialize swapchain
-	vkGetPhysicalDeviceProperties(backend_vulkan->adapter, &backend_vulkan->adapter_properties);
-	vkGetPhysicalDeviceFeatures(backend_vulkan->adapter, &backend_vulkan->adapter_features);
+	vkGetPhysicalDeviceProperties(target_vk->adapter, &target_vk->adapter_properties);
+	vkGetPhysicalDeviceFeatures(target_vk->adapter, &target_vk->adapter_features);
 
-	vkGetPhysicalDeviceQueueFamilyProperties(backend_vulkan->adapter, &demo->queue_family_count, NULL);
-	assert(demo->queue_family_count >= 1);
-
-	demo->queue_props = (VkQueueFamilyProperties*)malloc(demo->queue_family_count * sizeof(VkQueueFamilyProperties));
-	vkGetPhysicalDeviceQueueFamilyProperties(demo->gpu, &demo->queue_family_count, demo->queue_props);
-
-	// Iterate over each queue to learn whether it supports presenting:
-	VkBool32* supportsPresent = (VkBool32*)malloc(demo->queue_family_count * sizeof(VkBool32));
-	for (uint32_t i = 0; i < demo->queue_family_count; i++) {
-		demo->fpGetPhysicalDeviceSurfaceSupportKHR(demo->gpu, i, demo->surface, &supportsPresent[i]);
+	vkGetPhysicalDeviceQueueFamilyProperties(target_vk->adapter, &target_vk->queue_family_count, NULL);
+	if ((int)target_vk->queue_family_count < 1) {
+		log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
+		           STRING_CONST("Failed to create Vulkan window target, invalid device queue count: %d"),
+		           (int)target_vk->queue_family_count);
+		render_target_deallocate(target);
+		return false;
 	}
 
-	// Search for a graphics and a present queue in the array of queue
-	// families, try to find one that supports both
-	uint32_t graphicsQueueFamilyIndex = UINT32_MAX;
-	uint32_t presentQueueFamilyIndex = UINT32_MAX;
-	for (uint32_t i = 0; i < demo->queue_family_count; i++) {
-		if ((demo->queue_props[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) != 0) {
-			if (graphicsQueueFamilyIndex == UINT32_MAX) {
-				graphicsQueueFamilyIndex = i;
-			}
+	target_vk->queue_props =
+	    memory_allocate(HASH_RENDER, target_vk->queue_family_count * sizeof(VkQueueFamilyProperties), 0,
+	                    MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	vkGetPhysicalDeviceQueueFamilyProperties(target_vk->adapter, &target_vk->queue_family_count,
+	                                         target_vk->queue_props);
 
-			if (supportsPresent[i] == VK_TRUE) {
-				graphicsQueueFamilyIndex = i;
-				presentQueueFamilyIndex = i;
-				break;
-			}
+	// Find most suitable queue
+	target_vk->queue_family_index = UINT32_MAX;
+	for (uint32_t iqueue = 0; iqueue < target_vk->queue_family_count; ++iqueue) {
+		VkBool32 supports_present = VK_FALSE;
+		vkGetPhysicalDeviceSurfaceSupportKHR(target_vk->adapter, iqueue, target_vk->surface, &supports_present);
+		if (((target_vk->queue_props[iqueue].queueFlags & VK_QUEUE_GRAPHICS_BIT) != 0) && supports_present) {
+			target_vk->queue_family_index = iqueue;
+			break;
 		}
 	}
-
-	if (presentQueueFamilyIndex == UINT32_MAX) {
-		// If didn't find a queue that supports both graphics and present, then
-		// find a separate present queue.
-		for (uint32_t i = 0; i < demo->queue_family_count; ++i) {
-			if (supportsPresent[i] == VK_TRUE) {
-				presentQueueFamilyIndex = i;
-				break;
-			}
-		}
+	if (target_vk->queue_family_index == UINT32_MAX) {
+		log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
+		           STRING_CONST("Failed to create Vulkan window target, unable to find queue supporting both graphics and present"));
+		render_target_deallocate(target);
+		return false;
 	}
-
-	// Generate error if could not find both a graphics and a present queue
-	if (graphicsQueueFamilyIndex == UINT32_MAX || presentQueueFamilyIndex == UINT32_MAX) {
-		ERR_EXIT("Could not find both graphics and present queues\n", "Swapchain Initialization Failure");
-	}
-
-	demo->graphics_queue_family_index = graphicsQueueFamilyIndex;
-	demo->present_queue_family_index = presentQueueFamilyIndex;
-	demo->separate_present_queue = (demo->graphics_queue_family_index != demo->present_queue_family_index);
-	free(supportsPresent);
 
     float queue_priorities[1] = {0.0};
 	VkDeviceQueueCreateInfo queues[2];
 	queues[0].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
 	queues[0].pNext = NULL;
-	queues[0].queueFamilyIndex = demo->graphics_queue_family_index;
+	queues[0].queueFamilyIndex = target_vk->queue_family_index;
 	queues[0].queueCount = 1;
 	queues[0].pQueuePriorities = queue_priorities;
 	queues[0].flags = 0;
@@ -362,172 +371,197 @@ rb_vulkan_set_drawable(render_backend_t* backend, const render_drawable_t* drawa
 	    .pQueueCreateInfos = queues,
 	    .enabledLayerCount = 0,
 	    .ppEnabledLayerNames = 0,
-	    .enabledExtensionCount = required_extension,
-	    .ppEnabledExtensionNames = required_extension_count,
+		.enabledExtensionCount = required_extension_count,
+	    .ppEnabledExtensionNames = required_extension,
 	    .pEnabledFeatures = 0
 	};
-	result = vkCreateDevice(backend_vulkan->adapter, &device_info, 0, &backend_vulkan->device);
+	result = vkCreateDevice(target_vk->adapter, &device_info, 0, &target_vk->device);
 
+	return target;
+}
 
+static render_target_t*
+rb_vulkan_target_texture_allocate(render_backend_t* backend, uint width, uint height, render_pixelformat_t format) {
+	FOUNDATION_UNUSED(backend, width, height, format);
+	return 0;
+}
+
+static void
+rb_vulkan_target_deallocate(render_backend_t* backend, render_target_t* target) {
+	FOUNDATION_UNUSED(backend);
+	memory_deallocate(target);
+}
+
+static render_pipeline_t*
+rb_vulkan_pipeline_allocate(render_backend_t* backend, render_indexformat_t index_format, uint capacity) {
+	render_pipeline_t* pipeline =
+	    memory_allocate(HASH_RENDER, sizeof(render_pipeline_t), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	pipeline->backend = backend;
+	pipeline->primitive_buffer = render_buffer_allocate(backend, RENDERUSAGE_DYNAMIC | RENDERUSAGE_RENDER,
+	                                                    sizeof(render_primitive_t) * capacity, 0, 0);
+	pipeline->index_format = index_format;
+	return pipeline;
+}
+
+static void
+rb_vulkan_pipeline_deallocate(render_backend_t* backend, render_pipeline_t* pipeline) {
+	FOUNDATION_UNUSED(backend);
+	if (pipeline)
+		render_buffer_deallocate(pipeline->primitive_buffer);
+	memory_deallocate(pipeline);
+}
+
+static void
+rb_vulkan_pipeline_set_color_attachment(render_backend_t* backend, render_pipeline_t* pipeline, uint slot,
+                                      render_target_t* target) {
+	FOUNDATION_UNUSED(backend);
+	if (slot < RENDER_TARGET_COLOR_ATTACHMENT_COUNT)
+		pipeline->color_attachment[slot] = target;
+}
+
+static void
+rb_vulkan_pipeline_set_depth_attachment(render_backend_t* backend, render_pipeline_t* pipeline, render_target_t* target) {
+	FOUNDATION_UNUSED(backend);
+	pipeline->depth_attachment = target;
+}
+
+static void
+rb_vulkan_pipeline_set_color_clear(render_backend_t* backend, render_pipeline_t* pipeline, uint slot,
+                                 render_clear_action_t action, vector_t color) {
+	FOUNDATION_UNUSED(backend, pipeline, slot, action, color);
+}
+
+static void
+rb_vulkan_pipeline_set_depth_clear(render_backend_t* backend, render_pipeline_t* pipeline, render_clear_action_t action,
+                                 vector_t color) {
+	FOUNDATION_UNUSED(backend, pipeline, action, color);
+}
+
+static void
+rb_vulkan_pipeline_flush(render_backend_t* backend, render_pipeline_t* pipeline) {
+	FOUNDATION_UNUSED(backend, pipeline);
+}
+
+static void
+rb_vulkan_pipeline_use_argument_buffer(render_backend_t* backend, render_pipeline_t* pipeline,
+                                     render_buffer_index_t buffer) {
+	FOUNDATION_UNUSED(backend, pipeline, buffer);
+}
+
+static void
+rb_vulkan_pipeline_use_render_buffer(render_backend_t* backend, render_pipeline_t* pipeline,
+                                   render_buffer_index_t buffer) {
+	FOUNDATION_UNUSED(backend, pipeline, buffer);
+}
+
+static render_pipeline_state_t
+rb_vulkan_pipeline_state_allocate(render_backend_t* backend, render_pipeline_t* pipeline, render_shader_t* shader) {
+	FOUNDATION_UNUSED(backend, pipeline, shader);
+	return 0;
+}
+
+static void
+rb_vulkan_pipeline_state_deallocate(render_backend_t* backend, render_pipeline_state_t state) {
+	FOUNDATION_UNUSED(backend, state);
+}
+
+static bool
+rb_vulkan_shader_upload(render_backend_t* backend, render_shader_t* shader, const void* buffer, size_t size) {
+	FOUNDATION_UNUSED(backend, shader, buffer, size);
 	return true;
 }
 
 static void
-rb_vulkan_dispatch(render_backend_t* backend, render_target_t* target, render_context_t** contexts,
-                   size_t contexts_count) {
-	FOUNDATION_UNUSED(backend);
-	FOUNDATION_UNUSED(target);
-	FOUNDATION_UNUSED(contexts);
-	FOUNDATION_UNUSED(contexts_count);
+rb_vulkan_shader_finalize(render_backend_t* backend, render_shader_t* shader) {
+	FOUNDATION_UNUSED(backend, shader);
 }
 
 static void
-rb_vulkan_flip(render_backend_t* backend) {
-	++backend->framecount;
-}
-
-static void*
-rb_vulkan_allocate_buffer(render_backend_t* backend, render_buffer_t* buffer) {
+rb_vulkan_buffer_allocate(render_backend_t* backend, render_buffer_t* buffer, size_t buffer_size, const void* data,
+                        size_t data_size) {
 	FOUNDATION_UNUSED(backend);
-	return memory_allocate(HASH_RENDER, buffer->buffersize, 16, MEMORY_PERSISTENT);
-}
-
-static void
-rb_vulkan_deallocate_buffer(render_backend_t* backend, render_buffer_t* buffer, bool sys, bool aux) {
-	FOUNDATION_UNUSED(backend);
-	FOUNDATION_UNUSED(aux);
-	if (sys)
-		memory_deallocate(buffer->store);
-}
-
-static bool
-rb_vulkan_upload_buffer(render_backend_t* backend, render_buffer_t* buffer) {
-	FOUNDATION_UNUSED(backend);
-	FOUNDATION_UNUSED(buffer);
-	return true;
-}
-
-static bool
-rb_vulkan_upload_shader(render_backend_t* backend, render_shader_t* shader, const void* buffer, size_t size) {
-	FOUNDATION_UNUSED(backend);
-	FOUNDATION_UNUSED(shader);
-	FOUNDATION_UNUSED(buffer);
-	FOUNDATION_UNUSED(size);
-	return true;
-}
-
-static bool
-rb_vulkan_upload_program(render_backend_t* backend, render_program_t* program) {
-	FOUNDATION_UNUSED(backend);
-	FOUNDATION_UNUSED(program);
-	return true;
-}
-
-static bool
-rb_vulkan_upload_texture(render_backend_t* backend, render_texture_t* texture, const void* buffer, size_t size) {
-	FOUNDATION_UNUSED(backend);
-	FOUNDATION_UNUSED(texture);
-	FOUNDATION_UNUSED(buffer);
-	FOUNDATION_UNUSED(size);
-	return true;
-}
-
-static void
-rb_vulkan_deallocate_texture(render_backend_t* backend, render_texture_t* texture) {
-	FOUNDATION_UNUSED(backend);
-	FOUNDATION_UNUSED(texture);
-}
-
-static void
-rb_vulkan_parameter_bind_texture(render_backend_t* backend, void* buffer, render_texture_t* texture) {
-	FOUNDATION_UNUSED(backend);
-	FOUNDATION_UNUSED(buffer);
-	FOUNDATION_UNUSED(texture);
-}
-
-static void
-rb_vulkan_parameter_bind_target(render_backend_t* backend, void* buffer, render_target_t* target) {
-	FOUNDATION_UNUSED(backend);
-	FOUNDATION_UNUSED(buffer);
-	FOUNDATION_UNUSED(target);
-}
-
-static void
-rb_vulkan_link_buffer(render_backend_t* backend, render_buffer_t* buffer, render_program_t* program) {
-	FOUNDATION_UNUSED(backend);
-	FOUNDATION_UNUSED(buffer);
-	FOUNDATION_UNUSED(program);
-}
-
-static void
-rb_vulkan_deallocate_shader(render_backend_t* backend, render_shader_t* shader) {
-	FOUNDATION_UNUSED(backend);
-	FOUNDATION_UNUSED(shader);
-}
-
-static void
-rb_vulkan_deallocate_program(render_backend_t* backend, render_program_t* program) {
-	FOUNDATION_UNUSED(backend);
-	FOUNDATION_UNUSED(program);
-}
-
-static bool
-rb_vulkan_allocate_target(render_backend_t* backend, render_target_t* target) {
-	FOUNDATION_UNUSED(backend);
-	FOUNDATION_UNUSED(target);
-	return true;
-}
-
-static bool
-rb_vulkan_resize_target(render_backend_t* backend, render_target_t* target, unsigned int width, unsigned int height) {
-	FOUNDATION_UNUSED(backend);
-	if (target) {
-		target->width = width;
-		target->height = height;
+	if (buffer->usage == RENDERUSAGE_GPUONLY)
+		return;
+	buffer->store = memory_allocate(HASH_RENDER, buffer_size, 0, MEMORY_PERSISTENT);
+	buffer->allocated = buffer_size;
+	if (data_size && buffer->store) {
+		memcpy(buffer->store, data, data_size);
+		buffer->used = data_size;
 	}
-	return true;
 }
 
 static void
-rb_vulkan_deallocate_target(render_backend_t* backend, render_target_t* target) {
-	FOUNDATION_UNUSED(backend);
-	FOUNDATION_UNUSED(target);
+rb_vulkan_buffer_deallocate(render_backend_t* backend, render_buffer_t* buffer, bool cpu, bool gpu) {
+	FOUNDATION_UNUSED(backend, gpu);
+	if (cpu && buffer->store) {
+		memory_deallocate(buffer->store);
+		buffer->store = nullptr;
+	}
 }
 
 static void
-rb_vulkan_enable_thread(render_backend_t* backend) {
-	FOUNDATION_UNUSED(backend);
+rb_vulkan_buffer_upload(render_backend_t* backend, render_buffer_t* buffer) {
+	FOUNDATION_UNUSED(backend, buffer);
 }
 
 static void
-rb_vulkan_disable_thread(render_backend_t* backend) {
-	FOUNDATION_UNUSED(backend);
+rb_vulkan_buffer_data_declare(render_backend_t* backend, render_buffer_t* buffer, size_t instance_count,
+                            const render_buffer_data_t* data, size_t data_count) {
+	FOUNDATION_UNUSED(backend, buffer, data, data_count, instance_count);
 }
 
-static render_backend_vtable_t render_backend_vtable_null = {.construct = rb_vulkan_construct,
-                                                             .destruct = rb_vulkan_destruct,
-                                                             .enumerate_adapters = rb_vulkan_enumerate_adapters,
-                                                             .enumerate_modes = rb_vulkan_enumerate_modes,
-                                                             .set_drawable = rb_vulkan_set_drawable,
-                                                             .enable_thread = rb_vulkan_enable_thread,
-                                                             .disable_thread = rb_vulkan_disable_thread,
-                                                             .dispatch = rb_vulkan_dispatch,
-                                                             .flip = rb_vulkan_flip,
-                                                             .allocate_buffer = rb_vulkan_allocate_buffer,
-                                                             .upload_buffer = rb_vulkan_upload_buffer,
-                                                             .upload_shader = rb_vulkan_upload_shader,
-                                                             .upload_program = rb_vulkan_upload_program,
-                                                             .upload_texture = rb_vulkan_upload_texture,
-                                                             .parameter_bind_texture = rb_vulkan_parameter_bind_texture,
-                                                             .parameter_bind_target = rb_vulkan_parameter_bind_target,
-                                                             .link_buffer = rb_vulkan_link_buffer,
-                                                             .deallocate_buffer = rb_vulkan_deallocate_buffer,
-                                                             .deallocate_shader = rb_vulkan_deallocate_shader,
-                                                             .deallocate_program = rb_vulkan_deallocate_program,
-                                                             .deallocate_texture = rb_vulkan_deallocate_texture,
-                                                             .allocate_target = rb_vulkan_allocate_target,
-                                                             .resize_target = rb_vulkan_resize_target,
-                                                             .deallocate_target = rb_vulkan_deallocate_target};
+static void
+rb_vulkan_buffer_data_encode_buffer(render_backend_t* backend, render_buffer_t* buffer, uint instance, uint index,
+                                  render_buffer_t* source, uint offset) {
+	FOUNDATION_UNUSED(backend, buffer, instance, index, source, offset);
+}
+
+static void
+rb_vulkan_buffer_data_encode_constant(render_backend_t* backend, render_buffer_t* buffer, uint instance, uint index,
+                                    const void* data, uint size) {
+	FOUNDATION_UNUSED(backend, buffer, instance, index, data, size);
+}
+
+static void
+rb_vulkan_buffer_data_encode_matrix(render_backend_t* backend, render_buffer_t* buffer, uint instance, uint index,
+                                  const matrix_t* matrix) {
+	FOUNDATION_UNUSED(backend, buffer, instance, index, matrix);
+}
+
+static void
+rb_vulkan_buffer_set_label(render_backend_t* backend, render_buffer_t* buffer, const char* name, size_t length) {
+	FOUNDATION_UNUSED(backend, buffer, name, length);
+}
+
+static render_backend_vtable_t render_backend_vtable_null = {
+	.construct = rb_vulkan_construct,
+	.destruct = rb_vulkan_destruct,
+	.enumerate_adapters = rb_vulkan_enumerate_adapters,
+	.enumerate_modes = rb_vulkan_enumerate_modes,
+	.target_window_allocate = rb_vulkan_target_window_allocate,
+	.target_texture_allocate = rb_vulkan_target_texture_allocate,
+	.target_deallocate = rb_vulkan_target_deallocate,
+    .pipeline_allocate = rb_vulkan_pipeline_allocate,
+    .pipeline_deallocate = rb_vulkan_pipeline_deallocate,
+    .pipeline_set_color_attachment = rb_vulkan_pipeline_set_color_attachment,
+    .pipeline_set_depth_attachment = rb_vulkan_pipeline_set_depth_attachment,
+    .pipeline_set_color_clear = rb_vulkan_pipeline_set_color_clear,
+    .pipeline_set_depth_clear = rb_vulkan_pipeline_set_depth_clear,
+    .pipeline_flush = rb_vulkan_pipeline_flush,
+    .pipeline_use_argument_buffer = rb_vulkan_pipeline_use_argument_buffer,
+    .pipeline_use_render_buffer = rb_vulkan_pipeline_use_render_buffer,
+    .pipeline_state_allocate = rb_vulkan_pipeline_state_allocate,
+    .pipeline_state_deallocate = rb_vulkan_pipeline_state_deallocate,
+    .shader_upload = rb_vulkan_shader_upload,
+    .shader_finalize = rb_vulkan_shader_finalize,
+    .buffer_allocate = rb_vulkan_buffer_allocate,
+    .buffer_deallocate = rb_vulkan_buffer_deallocate,
+    .buffer_upload = rb_vulkan_buffer_upload,
+    .buffer_set_label = rb_vulkan_buffer_set_label,
+    .buffer_data_declare = rb_vulkan_buffer_data_declare,
+    .buffer_data_encode_buffer = rb_vulkan_buffer_data_encode_buffer,
+    .buffer_data_encode_matrix = rb_vulkan_buffer_data_encode_matrix,
+    .buffer_data_encode_constant = rb_vulkan_buffer_data_encode_constant};
 
 render_backend_t*
 render_backend_vulkan_allocate(void) {

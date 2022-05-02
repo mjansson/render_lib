@@ -441,6 +441,22 @@ DECLARE_TEST(render, dx12_box) {
 
 #endif
 
+#if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_LINUX
+
+DECLARE_TEST(render, vulkan) {
+	return _test_render_api(RENDERAPI_VULKAN);
+}
+
+DECLARE_TEST(render, vulkan_clear) {
+	return _test_render_clear(RENDERAPI_VULKAN);
+}
+
+DECLARE_TEST(render, vulkan_box) {
+	return _test_render_box(RENDERAPI_VULKAN);
+}
+
+#endif
+
 #if FOUNDATION_PLATFORM_APPLE
 
 DECLARE_TEST(render, metal) {
@@ -467,6 +483,11 @@ test_render_declare(void) {
 	ADD_TEST(render, dx12);
 	ADD_TEST(render, dx12_clear);
 	ADD_TEST(render, dx12_box);
+#endif
+#if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_LINUX
+	ADD_TEST(render, vulkan);
+	ADD_TEST(render, vulkan_clear);
+	ADD_TEST(render, vulkan_box);
 #endif
 #if FOUNDATION_PLATFORM_APPLE
 	//ADD_TEST(render, metal);

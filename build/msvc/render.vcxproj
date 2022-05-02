@@ -46,16 +46,12 @@
     <ClCompile Include="..\..\render\shader.c" />
     <ClCompile Include="..\..\render\target.c" />
     <ClCompile Include="..\..\render\version.c" />
-<<<<<<< HEAD
-=======
-    <ClCompile Include="..\..\render\vertexbuffer.c" />
     <ClCompile Include="..\..\render\vulkan\backend.c">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)backend.vulkan.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Deploy|x64'">$(IntDir)backend.vulkan.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)backend.vulkan.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">$(IntDir)backend.vulkan.obj</ObjectFileName>
     </ClCompile>
->>>>>>> origin/mjansson/vulkan
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\render\backend.h" />
@@ -74,11 +70,7 @@
     <ClInclude Include="..\..\render\shader.h" />
     <ClInclude Include="..\..\render\target.h" />
     <ClInclude Include="..\..\render\types.h" />
-<<<<<<< HEAD
-=======
-    <ClInclude Include="..\..\render\vertexbuffer.h" />
     <ClInclude Include="..\..\render\vulkan\backend.h" />
->>>>>>> origin/mjansson/vulkan
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\..\render\hashstrings.txt" />
