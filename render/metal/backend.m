@@ -902,7 +902,8 @@ rb_metal_buffer_allocate(render_backend_t* backend, render_buffer_t* buffer, siz
 
 	@autoreleasepool {
 		id<MTLBuffer> metal_buffer;
-		if (buffer->usage == RENDERUSAGE_GPUONLY) {
+		if (buffer->usage & RENDERUSAGE_GPUONLY) {
+			buffer->usage &= ~(uint)RENDERUSAGE_CPUONLY;
 			metal_buffer = [backend_metal->device newBufferWithLength:buffer_size
 			                                                  options:MTLResourceStorageModePrivate];
 			if (!metal_buffer) {
@@ -915,7 +916,8 @@ rb_metal_buffer_allocate(render_backend_t* backend, render_buffer_t* buffer, siz
 				          STRING_CONST("Unable to allocate GPU only Metal buffer with given data"));
 			}
 			buffer->used = buffer_size;
-		} else if (buffer->usage == RENDERUSAGE_CPUONLY) {
+		} else if (buffer->usage & RENDERUSAGE_CPUONLY) {
+			buffer->usage &= ~(uint)RENDERUSAGE_GPUONLY;
 			buffer->store = memory_allocate(HASH_RENDER, buffer_size, 0, MEMORY_PERSISTENT);
 			buffer->allocated = buffer_size;
 			if (data_size && buffer->store) {
@@ -924,10 +926,9 @@ rb_metal_buffer_allocate(render_backend_t* backend, render_buffer_t* buffer, siz
 			}
 			buffer->usage &= ~(uint8_t)RENDERUSAGE_RENDER;
 		} else {
-			uint storage_mode =
-			    /*MTLResourceStorageModeManaged;
-if (buffer->usage == RENDERUSAGE_DYNAMIC)
-storage_mode =*/MTLResourceStorageModeShared;
+			uint storage_mode = MTLResourceStorageModeManaged;
+			if (buffer->usage & RENDERUSAGE_DYNAMIC)
+				storage_mode = MTLResourceStorageModeShared;
 			metal_buffer = [backend_metal->device newBufferWithLength:buffer_size options:storage_mode];
 			if (!metal_buffer) {
 				log_error(HASH_RENDER, ERROR_INVALID_VALUE, STRING_CONST("Unable to allocate GPU only Metal buffer"));
@@ -998,24 +999,28 @@ static void
 rb_metal_buffer_deallocate(render_backend_t* backend, render_buffer_t* buffer, bool cpu, bool gpu) {
 	render_backend_metal_t* backend_metal = (render_backend_metal_t*)backend;
 
-	if (cpu && (buffer->usage == RENDERUSAGE_CPUONLY) && buffer->store) {
+	if (cpu && (buffer->usage & RENDERUSAGE_CPUONLY) && buffer->store) {
 		memory_deallocate(buffer->store);
 		buffer->store = nullptr;
 	}
 
-	if (gpu && buffer->backend_data[0]) {
-		rb_metal_release_metal_buffer(buffer->backend_data[0]);
-		buffer->backend_data[0] = 0;
+	if (gpu) {
+		if (buffer->backend_data[0]) {
+			rb_metal_release_metal_buffer(buffer->backend_data[0]);
+			buffer->backend_data[0] = 0;
+		}
 
-		rb_metal_release_metal_argument_encoder(buffer->backend_data[1]);
-		buffer->backend_data[1] = 0;
+		if (buffer->backend_data[1]) {
+			rb_metal_release_metal_argument_encoder(buffer->backend_data[1]);
+			buffer->backend_data[1] = 0;
+		}
 
 		uint render_index = buffer->render_index;
+		buffer->render_index = 0;
+
 		if (render_index) {
 			backend_metal->buffer_lookup[render_index] = 0;
-		}
-		buffer->render_index = 0;
-		if (render_index) {
+
 			mutex_lock(backend_metal->buffer_lock);
 			array_push(backend_metal->buffer_free, render_index);
 			mutex_unlock(backend_metal->buffer_lock);
@@ -1026,16 +1031,16 @@ rb_metal_buffer_deallocate(render_backend_t* backend, render_buffer_t* buffer, b
 static void
 rb_metal_buffer_upload(render_backend_t* backend, render_buffer_t* buffer) {
 	FOUNDATION_UNUSED(backend);
-	if ((buffer->usage == RENDERUSAGE_CPUONLY) || (buffer->usage == RENDERUSAGE_GPUONLY) || !buffer->backend_data[0])
+	if ((buffer->usage & RENDERUSAGE_CPUONLY) || (buffer->usage & RENDERUSAGE_GPUONLY) || !buffer->backend_data[0])
 		return;
 
-	/* Restore when using Managed
-	id<MTLBuffer> metal_buffer = (__bridge id<MTLBuffer>)((void*)buffer->backend_data[0]);
-	NSRange range;
-	range.location = 0;
-	range.length = buffer->allocated;
-	[metal_buffer didModifyRange:range];
-	*/
+	if (!(buffer->usage & RENDERUSAGE_DYNAMIC)) {
+		id<MTLBuffer> metal_buffer = (__bridge id<MTLBuffer>)((void*)buffer->backend_data[0]);
+		NSRange range;
+		range.location = 0;
+		range.length = buffer->allocated;
+		[metal_buffer didModifyRange:range];
+	}
 }
 
 static void

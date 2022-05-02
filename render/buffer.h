@@ -34,6 +34,9 @@ RENDER_API void
 render_buffer_lock(render_buffer_t* buffer, unsigned int lock);
 
 RENDER_API void
+render_buffer_dirty(render_buffer_t* buffer, size_t offset, size_t size);
+
+RENDER_API void
 render_buffer_unlock(render_buffer_t* buffer);
 
 RENDER_API void
