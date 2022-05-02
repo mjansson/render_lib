@@ -28,8 +28,6 @@
 #pragma clang diagnostic ignored "-Wunused-function"
 #endif
 
-extern void rb_metal_do_capture(void);
-
 static application_t
 test_render_application(void) {
 	application_t app;
@@ -363,7 +361,6 @@ _test_render_box(render_api_t api) {
 
 	double dt = 0;
 	tick_t start = time_current();
-	bool has_captured = false;
 
 	while ((dt = time_elapsed(start)) < 15.0f) {
 		render_buffer_lock(instance_descriptor, RENDERBUFFER_LOCK_WRITE);
@@ -388,11 +385,6 @@ _test_render_box(render_api_t api) {
 		render_pipeline_queue(pipeline, RENDERPRIMITIVE_TRIANGLELIST, &primitive);
 
 		render_pipeline_flush(pipeline);
-
-		if (!has_captured && (time_elapsed(start) > 5.0)) {
-			has_captured = true;
-			rb_metal_do_capture();
-		}
 	}
 
 	render_pipeline_state_deallocate(backend, pipeline_color_state);
@@ -433,6 +425,22 @@ DECLARE_TEST(render, null_box) {
 	return _test_render_box(RENDERAPI_NULL);
 }
 
+#if FOUNDATION_PLATFORM_WINDOWS
+
+DECLARE_TEST(render, dx12) {
+	return _test_render_api(RENDERAPI_DIRECTX12);
+}
+
+DECLARE_TEST(render, dx12_clear) {
+	return _test_render_clear(RENDERAPI_DIRECTX12);
+}
+
+DECLARE_TEST(render, dx12_box) {
+	return _test_render_box(RENDERAPI_DIRECTX12);
+}
+
+#endif
+
 #if FOUNDATION_PLATFORM_APPLE
 
 DECLARE_TEST(render, metal) {
@@ -455,6 +463,11 @@ test_render_declare(void) {
 	//ADD_TEST(render, null);
 	//ADD_TEST(render, null_clear);
 	//ADD_TEST(render, null_box);
+#if FOUNDATION_PLATFORM_WINDOWS
+	ADD_TEST(render, dx12);
+	ADD_TEST(render, dx12_clear);
+	ADD_TEST(render, dx12_box);
+#endif
 #if FOUNDATION_PLATFORM_APPLE
 	//ADD_TEST(render, metal);
 	//ADD_TEST(render, metal_clear);

@@ -1,4 +1,4 @@
-/* backend.h  -  Render library  -  Public Domain  -  2021 Mattias Jansson
+/* backend.h  -  Render library  -  Public Domain  -  2022 Mattias Jansson
  *
  * This library provides a cross-platform rendering library in C11 providing
  * basic 2D/3D rendering functionality for projects based on our foundation library.
@@ -17,11 +17,11 @@
 
 #pragma once
 
-/*! \file null/backend.h
-    Null render backend */
+/*! \file dx12/backend.h
+    DirectX 12 render backend */
 
 #include <foundation/platform.h>
 #include <render/types.h>
 
 RENDER_API render_backend_t*
-render_backend_metal_allocate(void);
+render_backend_dx12_allocate(void);

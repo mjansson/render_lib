@@ -34,10 +34,10 @@
         <WholeProgramOptimization>false</WholeProgramOptimization>
       </PropertyGroup>
       <PropertyGroup Condition="'$(ConfigurationType)'=='Application'">
-        <OutDir>$(SolutionDir)..\..\bin\windows\debug\x86-64\</OutDir>
+        <OutDir>$(SolutionDir)..\..\bin\render\debug\x86-64\</OutDir>
       </PropertyGroup>
       <PropertyGroup Condition="'$(ConfigurationType)'=='StaticLibrary'">
-        <OutDir>$(SolutionDir)..\..\lib\windows\debug\x86-64\</OutDir>
+        <OutDir>$(SolutionDir)..\..\lib\render\debug\x86-64\</OutDir>
       </PropertyGroup>
     </When>
     <When Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -47,10 +47,10 @@
         <InterproceduralOptimization>true</InterproceduralOptimization>
       </PropertyGroup>
       <PropertyGroup Condition="'$(ConfigurationType)'=='Application'">
-        <OutDir>$(SolutionDir)..\..\bin\windows\release\x86-64\</OutDir>
+        <OutDir>$(SolutionDir)..\..\bin\render\release\x86-64\</OutDir>
       </PropertyGroup>
       <PropertyGroup Condition="'$(ConfigurationType)'=='StaticLibrary'">
-        <OutDir>$(SolutionDir)..\..\lib\windows\release\x86-64\</OutDir>
+        <OutDir>$(SolutionDir)..\..\lib\render\release\x86-64\</OutDir>
       </PropertyGroup>
     </When>
     <When Condition="'$(Configuration)|$(Platform)'=='Deploy|x64'">
@@ -60,10 +60,10 @@
         <InterproceduralOptimization>true</InterproceduralOptimization>
       </PropertyGroup>
       <PropertyGroup Condition="'$(ConfigurationType)'=='Application'">
-        <OutDir>$(SolutionDir)..\..\bin\windows\deploy\x86-64\</OutDir>
+        <OutDir>$(SolutionDir)..\..\bin\render\deploy\x86-64\</OutDir>
       </PropertyGroup>
       <PropertyGroup Condition="'$(ConfigurationType)'=='StaticLibrary'">
-        <OutDir>$(SolutionDir)..\..\lib\windows\deploy\x86-64\</OutDir>
+        <OutDir>$(SolutionDir)..\..\lib\render\deploy\x86-64\</OutDir>
       </PropertyGroup>
     </When>
     <When Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">
@@ -73,10 +73,10 @@
         <InterproceduralOptimization>true</InterproceduralOptimization>
       </PropertyGroup>
       <PropertyGroup Condition="'$(ConfigurationType)'=='Application'">
-        <OutDir>$(SolutionDir)..\..\bin\windows\profile\x86-64\</OutDir>
+        <OutDir>$(SolutionDir)..\..\bin\render\profile\x86-64\</OutDir>
       </PropertyGroup>
       <PropertyGroup Condition="'$(ConfigurationType)'=='StaticLibrary'">
-        <OutDir>$(SolutionDir)..\..\lib\windows\profile\x86-64\</OutDir>
+        <OutDir>$(SolutionDir)..\..\lib\render\profile\x86-64\</OutDir>
       </PropertyGroup>
     </When>
     <Otherwise>
@@ -90,7 +90,7 @@
   <ItemDefinitionGroup>
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <CompileAsManaged>false</CompileAsManaged>
       <CompileAsWinRT>false</CompileAsWinRT>
@@ -124,12 +124,12 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(OutputType)'=='Exe'">
     <Link>
-      <AdditionalDependencies>opengl32.lib;gdi32.lib;iphlpapi.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>gdi32.lib;iphlpapi.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(OutputType)'=='Winexe'">
     <Link>
-      <AdditionalDependencies>opengl32.lib;gdi32.lib;iphlpapi.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>gdi32.lib;iphlpapi.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -141,7 +141,7 @@
       <OmitFramePointers>false</OmitFramePointers>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(SolutionDir)..\..\lib\windows;$(SolutionDir)..\..\lib\windows\debug\x86-64</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\..\lib\render;$(SolutionDir)..\..\lib\render\debug\x86-64</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -158,7 +158,7 @@
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(SolutionDir)..\..\lib\windows;$(SolutionDir)..\..\lib\windows\release\x86-64</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\..\lib\render;$(SolutionDir)..\..\lib\render\release\x86-64</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Deploy|x64'">
@@ -176,7 +176,7 @@
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(SolutionDir)..\..\lib\windows;$(SolutionDir)..\..\lib\windows\deploy\x86-64</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\..\lib\render;$(SolutionDir)..\..\lib\render\deploy\x86-64</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">
@@ -193,7 +193,7 @@
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(SolutionDir)..\..\lib\windows;$(SolutionDir)..\..\lib\windows\profile\x86-64</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\..\lib\render;$(SolutionDir)..\..\lib\render\profile\x86-64</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
 </Project>

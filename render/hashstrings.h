@@ -15,6 +15,7 @@
 #define HASH_D3D_SHADER_DEBUG static_hash_string("d3d_shader_debug", 16, 0xd1be125e006c56e3ULL)
 #define HASH_PARAMETER_COUNT static_hash_string("parameter_count", 15, 0x2b2a2cd816c9cf3dULL)
 #define HASH_SHADER static_hash_string("shader", 6, 0x65475a9f9c166495ULL)
+#define HASH_SHADER_DIRECTX12 static_hash_string("shader_directx12", 16, 0xda40a824b5a787bULL)
 #define HASH_SHADER_METAL static_hash_string("shader_metal", 12, 0x95b2922f423fb543ULL)
 #define HASH_TEXTURE static_hash_string("texture", 7, 0x4b61d4f340e798f6ULL)
 #define HASH_TRANSFORM_MVP static_hash_string("transform_mvp", 13, 0x8b76b4155281b642ULL)

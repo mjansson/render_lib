@@ -9,6 +9,7 @@ HASH_D3D_SHADER_DEBUG                      d3d_shader_debug
 
 HASH_PARAMETER_COUNT                       parameter_count
 HASH_SHADER                                shader
+HASH_SHADER_DIRECTX12                      shader_directx12
 HASH_SHADER_METAL                          shader_metal
 HASH_TEXTURE                               texture
 

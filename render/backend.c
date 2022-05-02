@@ -23,6 +23,7 @@
 
 #include <render/null/backend.h>
 #include <render/metal/backend.h>
+#include <render/directx12/backend.h>
 
 #include <resource/platform.h>
 
@@ -83,29 +84,30 @@ render_backend_allocate(render_api_t api, bool allow_fallback) {
 			api = render_api_fallback(api);
 		switch (api) {
 			case RENDERAPI_DIRECTX12:
-				/*backend = render_dx11_allocate();
-				if( !backend || !backend->vtable.construct( backend ) )
-				{
-				    log_info( HASH_RENDER, "Failed to initialize DirectX 11 render backend" );
-				    render_deallocate( backend );
+				backend = render_backend_dx12_allocate();
+				if( !backend || !backend->vtable.construct(backend)) {
+				    log_info(HASH_RENDER, STRING_CONST("Failed to initialize DirectX 12 render backend"));
+					render_backend_deallocate(backend);
 				    backend = nullptr;
-				}*/
+				}
 				break;
 
 			case RENDERAPI_METAL:
-#if FOUNDATION_PLATFORM_APPLE
 				backend = render_backend_metal_allocate();
 				if (!backend || !backend->vtable.construct(backend)) {
 					log_info(HASH_RENDER, STRING_CONST("Failed to initialize Metal render backend"));
 					render_backend_deallocate(backend);
 					backend = nullptr;
 				}
-#endif
 				break;
 
 			case RENDERAPI_NULL:
 				backend = render_backend_null_allocate();
-				backend->vtable.construct(backend);
+				if (!backend || !backend->vtable.construct(backend)) {
+					log_info(HASH_RENDER, STRING_CONST("Failed to initialize null render backend"));
+					render_backend_deallocate(backend);
+					backend = nullptr;
+				}
 				break;
 
 			case RENDERAPI_UNKNOWN:
