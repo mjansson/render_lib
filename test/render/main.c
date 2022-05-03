@@ -129,7 +129,7 @@ DECLARE_TEST(render, initialize) {
 }
 
 static void*
-_test_render_api(render_api_t api) {
+test_render_api(render_api_t api) {
 	render_backend_t* backend = 0;
 	render_resolution_t resolutions[32];
 	//render_drawable_t* drawable = 0;
@@ -179,7 +179,7 @@ ignore_test:
 }
 
 static void*
-_test_render_clear(render_api_t api) {
+test_render_clear(render_api_t api) {
 	render_backend_t* backend = 0;
 	window_t window;
 	render_target_t* target = 0;
@@ -222,7 +222,7 @@ ignore_test:
 }
 
 static void*
-_test_render_box(render_api_t api) {
+test_render_box(render_api_t api) {
 	render_backend_t* backend = 0;
 	window_t window;
 	render_target_t* target = 0;
@@ -414,29 +414,29 @@ ignore_test:
 }
 
 DECLARE_TEST(render, null) {
-	return _test_render_api(RENDERAPI_NULL);
+	return test_render_api(RENDERAPI_NULL);
 }
 
 DECLARE_TEST(render, null_clear) {
-	return _test_render_clear(RENDERAPI_NULL);
+	return test_render_clear(RENDERAPI_NULL);
 }
 
 DECLARE_TEST(render, null_box) {
-	return _test_render_box(RENDERAPI_NULL);
+	return test_render_box(RENDERAPI_NULL);
 }
 
 #if FOUNDATION_PLATFORM_WINDOWS
 
 DECLARE_TEST(render, dx12) {
-	return _test_render_api(RENDERAPI_DIRECTX12);
+	return test_render_api(RENDERAPI_DIRECTX12);
 }
 
 DECLARE_TEST(render, dx12_clear) {
-	return _test_render_clear(RENDERAPI_DIRECTX12);
+	return test_render_clear(RENDERAPI_DIRECTX12);
 }
 
 DECLARE_TEST(render, dx12_box) {
-	return _test_render_box(RENDERAPI_DIRECTX12);
+	return test_render_box(RENDERAPI_DIRECTX12);
 }
 
 #endif
@@ -444,15 +444,15 @@ DECLARE_TEST(render, dx12_box) {
 #if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_LINUX
 
 DECLARE_TEST(render, vulkan) {
-	return _test_render_api(RENDERAPI_VULKAN);
+	return test_render_api(RENDERAPI_VULKAN);
 }
 
 DECLARE_TEST(render, vulkan_clear) {
-	return _test_render_clear(RENDERAPI_VULKAN);
+	return test_render_clear(RENDERAPI_VULKAN);
 }
 
 DECLARE_TEST(render, vulkan_box) {
-	return _test_render_box(RENDERAPI_VULKAN);
+	return test_render_box(RENDERAPI_VULKAN);
 }
 
 #endif
@@ -460,15 +460,15 @@ DECLARE_TEST(render, vulkan_box) {
 #if FOUNDATION_PLATFORM_APPLE
 
 DECLARE_TEST(render, metal) {
-	return _test_render_api(RENDERAPI_METAL);
+	return test_render_api(RENDERAPI_METAL);
 }
 
 DECLARE_TEST(render, metal_clear) {
-	return _test_render_clear(RENDERAPI_METAL);
+	return test_render_clear(RENDERAPI_METAL);
 }
 
 DECLARE_TEST(render, metal_box) {
-	return _test_render_box(RENDERAPI_METAL);
+	return test_render_box(RENDERAPI_METAL);
 }
 
 #endif

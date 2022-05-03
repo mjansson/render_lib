@@ -52,8 +52,8 @@ if not target.is_ios() and not target.is_android() and not target.is_tizen():
                       render_lib], dependlibs=dependlibs, libs=linklibs, frameworks=glframeworks, configs=configs)
 
 # No test cases if we're a submodule
-if generator.is_subninja():
-    sys.exit()
+#if generator.is_subninja():
+#    sys.exit()
 
 includepaths = generator.test_includepaths()
 
@@ -88,15 +88,16 @@ if toolchain.is_monolithic() or target.is_ios() or target.is_android() or target
             'tizen-manifest.xml', os.path.join('res', 'tizenapp.png')
         ]]
     if target.is_macos() or target.is_ios() or target.is_android() or target.is_tizen():
-        generator.app(module='', sources=[os.path.join(module, 'main.c') for module in test_cases] + test_extrasources, binname='test-all',
+        generator.app(module='', sources=[os.path.join(module, 'main.c') for module in test_cases] + test_extrasources, binname='test-all-render',
                       basepath='test', implicit_deps=[render_lib], libs=linklibs, frameworks=glframeworks, resources=test_resources, includepaths=includepaths)
     else:
-        generator.bin(module='', sources=[os.path.join(module, 'main.c') for module in test_cases] + test_extrasources, binname='test-all',
+        generator.bin(module='', sources=[os.path.join(module, 'main.c') for module in test_cases] + test_extrasources, binname='test-all-render',
                       basepath='test', implicit_deps=[render_lib], libs=linklibs, frameworks=glframeworks, resources=test_resources, includepaths=includepaths)
 else:
     # Build one binary per test case
-    generator.bin(module='all', sources=['main.c'], binname='test-all', basepath='test',
-                  implicit_deps=[render_lib], libs=['render'] + dependlibs + extralibs, includepaths=includepaths)
+    if not generator.is_subninja():
+        generator.bin(module='all', sources=['main.c'], binname='test-all', basepath='test',
+                      implicit_deps=[render_lib], libs=['render'] + dependlibs + extralibs, includepaths=includepaths)
     for test in test_cases:
         if target.is_macos():
             test_resources = [os.path.join('macos', item) for item in [
