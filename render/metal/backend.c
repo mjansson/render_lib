@@ -21,6 +21,8 @@
 #include <render/render.h>
 #include <render/internal.h>
 
+#include <render/metal/backend.h>
+
 #if !FOUNDATION_PLATFORM_APPLE
 
 render_backend_t*

@@ -403,7 +403,8 @@ rb_metal_pipeline_allocate(render_backend_t* backend, render_indexformat_t index
 		return 0;
 	}
 
-	pipeline->primitive_buffer = render_buffer_allocate(backend, RENDERUSAGE_RENDER, sizeof(render_primitive_t) * capacity, 0, 0);
+	pipeline->primitive_buffer =
+	    render_buffer_allocate(backend, RENDERUSAGE_RENDER, sizeof(render_primitive_t) * capacity, 0, 0);
 	render_buffer_set_label(pipeline->primitive_buffer, STRING_CONST("Pipeline primitive buffer"));
 
 	pipeline_metal->render_compute_shader =
@@ -942,6 +943,12 @@ rb_metal_buffer_allocate(render_backend_t* backend, render_buffer_t* buffer, siz
 				if (data_size) {
 					memcpy(buffer->store, data, data_size);
 					buffer->used = data_size;
+#if FOUNDATION_PLATFORM_MACOS
+					NSRange range;
+					range.location = 0;
+					range.length = data_size;
+					[metal_buffer didModifyRange:range];
+#endif
 				}
 			}
 		}

@@ -34,7 +34,7 @@
 #endif
 
 #if FOUNDATION_PLATFORM_LINUX
-#include <vulkan/vulkan_xcb.h>
+#include <vulkan/vulkan_xlib.h>
 #endif
 
 typedef struct render_backend_vulkan_t {
@@ -90,7 +90,7 @@ rb_vulkan_construct(render_backend_t* backend) {
 #if FOUNDATION_PLATFORM_WINDOWS
 #define PLATFORM_SURFACE_EXTENSION_NAME VK_KHR_WIN32_SURFACE_EXTENSION_NAME
 #elif FOUNDATION_PLATFORM_LINUX
-#define PLATFORM_SURFACE_EXTENSION_NAME VK_KHR_XCB_SURFACE_EXTENSION_NAME
+#define PLATFORM_SURFACE_EXTENSION_NAME VK_KHR_XLIB_SURFACE_EXTENSION_NAME
 #endif
 
 #define MAX_EXTENSION_COUNT 16
@@ -222,6 +222,7 @@ rb_vulkan_enumerate_modes(render_backend_t* backend, unsigned int adapter, rende
 
 static render_target_t*
 rb_vulkan_target_window_allocate(render_backend_t* backend, window_t* window, uint tag) {
+	FOUNDATION_UNUSED(tag);
 	render_backend_vulkan_t* backend_vk = (render_backend_vulkan_t*)backend;
 
 	if (!backend_vk->adapter_available)
@@ -299,17 +300,15 @@ rb_vulkan_target_window_allocate(render_backend_t* backend, window_t* window, ui
 	surface_info.flags = 0;
 	surface_info.hinstance = window->instance;
 	surface_info.hwnd = window->hwnd;
-
 	result = vkCreateWin32SurfaceKHR(backend_vk->instance, &surface_info, NULL, &target_vk->surface);
 #elif FOUNDATION_PLATFORM_LINUX
-	VkXcbSurfaceCreateInfoKHR createInfo;
+	VkXlibSurfaceCreateInfoKHR surface_info;
 	surface_info.sType = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
 	surface_info.pNext = NULL;
 	surface_info.flags = 0;
-	surface_info.connection = window->connection;
-	surface_info.window = window->xcb_window;
-
-	result = vkCreateXcbSurfaceKHR(backend_vk->inst, &surface_info, NULL, &target->surface);
+	surface_info.dpy = window->display;
+	surface_info.window = window->drawable;
+	result = vkCreateXlibSurfaceKHR(backend_vk->instance, &surface_info, NULL, &target_vk->surface);
 #endif
 	if (result != VK_SUCCESS) {
 		log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
@@ -397,8 +396,7 @@ rb_vulkan_pipeline_allocate(render_backend_t* backend, render_indexformat_t inde
 	render_pipeline_t* pipeline =
 	    memory_allocate(HASH_RENDER, sizeof(render_pipeline_t), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 	pipeline->backend = backend;
-	pipeline->primitive_buffer = render_buffer_allocate(backend, RENDERUSAGE_DYNAMIC | RENDERUSAGE_RENDER,
-	                                                    sizeof(render_primitive_t) * capacity, 0, 0);
+	pipeline->primitive_buffer = render_buffer_allocate(backend, RENDERUSAGE_RENDER, sizeof(render_primitive_t) * capacity, 0, 0);
 	pipeline->index_format = index_format;
 	return pipeline;
 }

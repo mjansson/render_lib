@@ -20,7 +20,9 @@ toolchain = generator.toolchain
 render_lib = generator.lib(module='render', sources=[
     'backend.c', 'buffer.c', 'compile.c', 'event.c', 'import.c', 'pipeline.c', 'projection.c', 'render.c',
     'shader.c', 'target.c', 'version.c',
-    os.path.join('metal', 'backend.m'),
+    os.path.join('directx12', 'backend.c'),
+    os.path.join('metal', 'backend.m'), os.path.join('metal', 'backend.c'),
+    os.path.join('vulkan', 'backend.c'),
     os.path.join('null', 'backend.c')
 ])
 
@@ -32,10 +34,10 @@ if target.is_macos():
 elif target.is_ios():
     glframeworks = ['Metal', 'QuartzCore', 'OpenGLES']
 if target.is_windows():
-    gllibs = ['opengl32', 'gdi32', 'iphlpapi', 'ws2_32']
+    gllibs = ['gdi32', 'iphlpapi', 'ws2_32']
     extralibs = ['iphlpapi', 'ws2_32']
 if target.is_linux():
-    gllibs = ['GL', 'Xxf86vm', 'Xext', 'X11']
+    gllibs = ['vulkan', 'Xxf86vm', 'Xext', 'X11', 'GL']
 
 dependlibs = ['render'] + dependlibs
 linklibs = gllibs + extralibs

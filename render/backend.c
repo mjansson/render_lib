@@ -91,7 +91,7 @@ render_backend_allocate(render_api_t api, bool allow_fallback) {
 			api = render_api_fallback(api);
 		switch (api) {
 			case RENDERAPI_DIRECTX12:
-				backend = render_backend_dx12_allocate();
+				backend = render_backend_directx12_allocate();
 				if( !backend || !backend->vtable.construct(backend)) {
 				    log_info(HASH_RENDER, STRING_CONST("Failed to initialize DirectX 12 render backend"));
 					render_backend_deallocate(backend);

@@ -24,4 +24,4 @@
 #include <render/types.h>
 
 RENDER_API render_backend_t*
-render_backend_dx12_allocate(void);
+render_backend_directx12_allocate(void);

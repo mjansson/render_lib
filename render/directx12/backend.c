@@ -262,7 +262,7 @@ static render_backend_vtable_t render_backend_vtable_null = {
     .buffer_data_encode_constant = rb_dx12_buffer_data_encode_constant};
 
 render_backend_t*
-render_backend_dx12_allocate(void) {
+render_backend_directx12_allocate(void) {
 	render_backend_t* backend =
 	    memory_allocate(HASH_RENDER, sizeof(render_backend_t), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 	backend->api = RENDERAPI_DIRECTX12;
@@ -274,7 +274,7 @@ render_backend_dx12_allocate(void) {
 #else
 
 render_backend_t*
-render_backend_dx12_allocate(void) {
+render_backend_directx12_allocate(void) {
 	return nullptr;
 }
 
