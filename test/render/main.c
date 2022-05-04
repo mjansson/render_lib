@@ -137,6 +137,8 @@ test_render_api(render_api_t api) {
 
 	EXPECT_TRUE(render_module_is_initialized());
 
+	log_set_suppress(HASH_RENDER, ERRORLEVEL_NONE);
+
 	window_t window;
 #if FOUNDATION_PLATFORM_MACOS || FOUNDATION_PLATFORM_IOS
 	window_initialize(&window, delegate_window());
@@ -475,7 +477,7 @@ DECLARE_TEST(render, metal_box) {
 
 static void
 test_render_declare(void) {
-	//ADD_TEST(render, initialize);
+	ADD_TEST(render, initialize);
 	//ADD_TEST(render, null);
 	//ADD_TEST(render, null_clear);
 	//ADD_TEST(render, null_box);
@@ -486,8 +488,8 @@ test_render_declare(void) {
 #endif
 #if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_LINUX
 	ADD_TEST(render, vulkan);
-	ADD_TEST(render, vulkan_clear);
-	ADD_TEST(render, vulkan_box);
+	//ADD_TEST(render, vulkan_clear);
+	//ADD_TEST(render, vulkan_box);
 #endif
 #if FOUNDATION_PLATFORM_APPLE
 	//ADD_TEST(render, metal);

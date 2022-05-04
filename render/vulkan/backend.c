@@ -228,7 +228,7 @@ rb_vulkan_target_window_allocate(render_backend_t* backend, window_t* window, ui
 	if (!backend_vk->adapter_available)
 		rb_vulkan_enumerate_adapters(backend, 0, 0);
 	if ((window->adapter != WINDOW_ADAPTER_DEFAULT) && (window->adapter >= backend_vk->adapter_count)) {
-		log_error(HASH_RENDER, ERROR_INVALID_VALUE, STRING_CONST("Failed to create Vulkan window target, bad adapter index"));
+		log_errorf(HASH_RENDER, ERROR_INVALID_VALUE, STRING_CONST("Failed to create Vulkan window target, bad adapter index: %u"), window->adapter);
 		return false;
 	}
 
@@ -388,6 +388,10 @@ rb_vulkan_target_texture_allocate(render_backend_t* backend, uint width, uint he
 static void
 rb_vulkan_target_deallocate(render_backend_t* backend, render_target_t* target) {
 	FOUNDATION_UNUSED(backend);
+	if (!target)
+		return;
+	render_target_window_vulkan_t* target_vk = (render_target_window_vulkan_t*)target;
+	memory_deallocate(target_vk->queue_props);
 	memory_deallocate(target);
 }
 
