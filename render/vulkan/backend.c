@@ -41,7 +41,7 @@ typedef struct render_backend_vulkan_t {
 	render_backend_t backend;
 
 	VkInstance instance;
-	
+
 	VkPhysicalDevice* adapter_available;
 	uint adapter_count;
 } render_backend_vulkan_t;
@@ -59,6 +59,8 @@ typedef struct render_target_window_vulkan_t {
 
 	VkDevice device;
 	VkSurfaceKHR surface;
+	VkCommandPool command_pool;
+	VkSwapchainKHR swap_chain;
 } render_target_window_vulkan_t;
 
 static bool
@@ -181,8 +183,9 @@ rb_vulkan_enumerate_adapters(render_backend_t* backend, unsigned int* store, siz
 		return 0;
 	}
 
-	backend_vulkan->adapter_available = memory_allocate(HASH_RENDER, sizeof(VkPhysicalDevice) * backend_vulkan->adapter_count, 0,
-	                                         MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
+	backend_vulkan->adapter_available =
+	    memory_allocate(HASH_RENDER, sizeof(VkPhysicalDevice) * backend_vulkan->adapter_count, 0,
+	                    MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 	result = vkEnumeratePhysicalDevices(backend_vulkan->instance, &backend_vulkan->adapter_count,
 	                                    backend_vulkan->adapter_available);
 	if (result != VK_SUCCESS) {
@@ -228,7 +231,8 @@ rb_vulkan_target_window_allocate(render_backend_t* backend, window_t* window, ui
 	if (!backend_vk->adapter_available)
 		rb_vulkan_enumerate_adapters(backend, 0, 0);
 	if ((window->adapter != WINDOW_ADAPTER_DEFAULT) && (window->adapter >= backend_vk->adapter_count)) {
-		log_errorf(HASH_RENDER, ERROR_INVALID_VALUE, STRING_CONST("Failed to create Vulkan window target, bad adapter index: %u"), window->adapter);
+		log_errorf(HASH_RENDER, ERROR_INVALID_VALUE,
+		           STRING_CONST("Failed to create Vulkan window target, bad adapter index: %u"), window->adapter);
 		return false;
 	}
 
@@ -236,13 +240,7 @@ rb_vulkan_target_window_allocate(render_backend_t* backend, window_t* window, ui
 	VkPhysicalDevice adapter = backend_vk->adapter_available[adapter_index];
 
 	VkPhysicalDeviceProperties properties;
-	static const char* device_type[] = {
-	    "other",
-	    "integrated GPU",
-	    "discrete GPU",
-	    "virtual GPU",
-	    "CPU"
-	};
+	static const char* device_type[] = {"other", "integrated GPU", "discrete GPU", "virtual GPU", "CPU"};
 	vkGetPhysicalDeviceProperties(adapter, &properties);
 	log_infof(HASH_RENDER, STRING_CONST("Using Vulkan GPU %d: %s (%s)"), adapter_index, properties.deviceName,
 	          device_type[math_clamp(properties.deviceType, 0, VK_PHYSICAL_DEVICE_TYPE_CPU + 1)]);
@@ -312,8 +310,7 @@ rb_vulkan_target_window_allocate(render_backend_t* backend, window_t* window, ui
 #endif
 	if (result != VK_SUCCESS) {
 		log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
-		           STRING_CONST("Failed to create Vulkan window target, unable to create surface: %d"),
-		           (int)result);
+		           STRING_CONST("Failed to create Vulkan window target, unable to create surface: %d"), (int)result);
 		memory_deallocate(target_vk);
 		return false;
 	}
@@ -348,13 +345,15 @@ rb_vulkan_target_window_allocate(render_backend_t* backend, window_t* window, ui
 		}
 	}
 	if (target_vk->queue_family_index == UINT32_MAX) {
-		log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
-		           STRING_CONST("Failed to create Vulkan window target, unable to find queue supporting both graphics and present"));
+		log_errorf(
+		    HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
+		    STRING_CONST(
+		        "Failed to create Vulkan window target, unable to find queue supporting both graphics and present"));
 		render_target_deallocate(target);
 		return false;
 	}
 
-    float queue_priorities[1] = {0.0};
+	float queue_priorities[1] = {0.0};
 	VkDeviceQueueCreateInfo queues[2];
 	queues[0].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
 	queues[0].pNext = NULL;
@@ -363,18 +362,116 @@ rb_vulkan_target_window_allocate(render_backend_t* backend, window_t* window, ui
 	queues[0].pQueuePriorities = queue_priorities;
 	queues[0].flags = 0;
 
-	VkDeviceCreateInfo device_info = {
-	    .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-	    .pNext = 0,
-	    .queueCreateInfoCount = 1,
-	    .pQueueCreateInfos = queues,
-	    .enabledLayerCount = 0,
-	    .ppEnabledLayerNames = 0,
-		.enabledExtensionCount = required_extension_count,
-	    .ppEnabledExtensionNames = required_extension,
-	    .pEnabledFeatures = 0
-	};
+	VkDeviceCreateInfo device_info = {.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+	                                  .pNext = 0,
+	                                  .queueCreateInfoCount = 1,
+	                                  .pQueueCreateInfos = queues,
+	                                  .enabledLayerCount = 0,
+	                                  .ppEnabledLayerNames = 0,
+	                                  .enabledExtensionCount = required_extension_count,
+	                                  .ppEnabledExtensionNames = required_extension,
+	                                  .pEnabledFeatures = 0};
 	result = vkCreateDevice(target_vk->adapter, &device_info, 0, &target_vk->device);
+
+	VkCommandPoolCreateInfo command_pool_info = {0};
+	command_pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	command_pool_info.queueFamilyIndex = target_vk->queue_family_index;
+	command_pool_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+	result = vkCreateCommandPool(target_vk->device, &command_pool_info, nullptr, &target_vk->command_pool);
+	if (result != VK_SUCCESS) {
+		log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
+		           STRING_CONST("Failed to create Vulkan window target, unable to create command pool: %d"),
+		           (int)result);
+		render_target_deallocate(target);
+		return false;
+	}
+
+	VkSurfaceFormatKHR* format = nullptr;
+	uint32_t format_count = 0;
+	uint32_t format_selected = 0;
+	vkGetPhysicalDeviceSurfaceFormatsKHR(target_vk->adapter, target_vk->surface, &format_count, nullptr);
+	if (!format_count) {
+		log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
+		           STRING_CONST("Failed to create Vulkan window target, unable to enumerate surface formats: %d"),
+		           (int)result);
+		render_target_deallocate(target);
+		return false;
+	}
+	format = memory_allocate(HASH_RENDER, sizeof(VkSurfaceFormatKHR) * format_count, 0, MEMORY_TEMPORARY);
+	vkGetPhysicalDeviceSurfaceFormatsKHR(target_vk->adapter, target_vk->surface, &format_count, format);
+	for (uint iformat = 0; iformat < format_count; ++iformat) {
+		if ((format[iformat].format == VK_FORMAT_B8G8R8A8_SRGB) &&
+		    (format[iformat].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)) {
+			format_selected = iformat;
+			break;
+		}
+	}
+
+	VkPresentModeKHR* present_mode = nullptr;
+	uint32_t present_mode_count = 0;
+	VkPresentModeKHR present_mode_selected = VK_PRESENT_MODE_FIFO_KHR;
+	vkGetPhysicalDeviceSurfacePresentModesKHR(target_vk->adapter, target_vk->surface, &present_mode_count, nullptr);
+	if (!present_mode_count) {
+		log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
+		           STRING_CONST("Failed to create Vulkan window target, unable to enumerate surface present modes: %d"),
+		           (int)result);
+		render_target_deallocate(target);
+		return false;
+	}
+	present_mode = memory_allocate(HASH_RENDER, sizeof(VkPresentModeKHR) * present_mode_count, 0, MEMORY_TEMPORARY);
+	vkGetPhysicalDeviceSurfacePresentModesKHR(target_vk->adapter, target_vk->surface, &present_mode_count,
+	                                          present_mode);
+	for (uint imode = 0; imode < present_mode_count; ++imode) {
+		if (present_mode[imode] == VK_PRESENT_MODE_MAILBOX_KHR) {
+			present_mode_selected = VK_PRESENT_MODE_MAILBOX_KHR;
+			break;
+		}
+	}
+	memory_deallocate(present_mode);
+
+	VkSurfaceCapabilitiesKHR surface_caps = {0};
+	result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(target_vk->adapter, target_vk->surface, &surface_caps);
+	if (result != VK_SUCCESS) {
+		log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
+		           STRING_CONST("Failed to create Vulkan window target, unable to query surface capabilities: %d"),
+		           (int)result);
+		memory_deallocate(format);
+		render_target_deallocate(target);
+		return false;
+	}
+
+	VkExtent2D extent = {.width = target->width, .height = target->height};
+	extent.width = math_clamp(extent.width, surface_caps.minImageExtent.width, surface_caps.maxImageExtent.width);
+	extent.height = math_clamp(extent.height, surface_caps.minImageExtent.height, surface_caps.maxImageExtent.height);
+
+	VkSwapchainCreateInfoKHR swapchain_info = {0};
+	swapchain_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+	swapchain_info.surface = target_vk->surface;
+	swapchain_info.minImageCount = surface_caps.minImageCount;
+	swapchain_info.imageFormat = format[format_selected].format;
+	swapchain_info.imageColorSpace = format[format_selected].colorSpace;
+	swapchain_info.imageExtent = extent;
+	swapchain_info.imageArrayLayers = 1;
+	swapchain_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+	swapchain_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+	swapchain_info.queueFamilyIndexCount = 0;
+	swapchain_info.pQueueFamilyIndices = nullptr;
+	swapchain_info.preTransform = surface_caps.currentTransform;
+	swapchain_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+	swapchain_info.presentMode = present_mode_selected;
+	swapchain_info.clipped = VK_TRUE;
+	swapchain_info.oldSwapchain = VK_NULL_HANDLE;
+
+	memory_deallocate(format);
+
+	result = vkCreateSwapchainKHR(target_vk->device, &swapchain_info, nullptr, &target_vk->swap_chain);
+	if (result != VK_SUCCESS) {
+		log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
+		           STRING_CONST("Failed to create Vulkan window target, unable to create swap chain: %d"), (int)result);
+		memory_deallocate(format);
+		render_target_deallocate(target);
+		return false;
+	}
 
 	return target;
 }
@@ -391,6 +488,12 @@ rb_vulkan_target_deallocate(render_backend_t* backend, render_target_t* target) 
 	if (!target)
 		return;
 	render_target_window_vulkan_t* target_vk = (render_target_window_vulkan_t*)target;
+	if (target_vk->swap_chain)
+		vkDestroySwapchainKHR(target_vk->device, target_vk->swap_chain, nullptr);
+	if (target_vk->command_pool)
+		vkDestroyCommandPool(target_vk->device, target_vk->command_pool, nullptr);
+	if (target_vk->device)
+		vkDestroyDevice(target_vk->device, nullptr);
 	memory_deallocate(target_vk->queue_props);
 	memory_deallocate(target);
 }
@@ -400,7 +503,8 @@ rb_vulkan_pipeline_allocate(render_backend_t* backend, render_indexformat_t inde
 	render_pipeline_t* pipeline =
 	    memory_allocate(HASH_RENDER, sizeof(render_pipeline_t), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 	pipeline->backend = backend;
-	pipeline->primitive_buffer = render_buffer_allocate(backend, RENDERUSAGE_RENDER, sizeof(render_primitive_t) * capacity, 0, 0);
+	pipeline->primitive_buffer =
+	    render_buffer_allocate(backend, RENDERUSAGE_RENDER, sizeof(render_primitive_t) * capacity, 0, 0);
 	pipeline->index_format = index_format;
 	return pipeline;
 }
@@ -415,27 +519,28 @@ rb_vulkan_pipeline_deallocate(render_backend_t* backend, render_pipeline_t* pipe
 
 static void
 rb_vulkan_pipeline_set_color_attachment(render_backend_t* backend, render_pipeline_t* pipeline, uint slot,
-                                      render_target_t* target) {
+                                        render_target_t* target) {
 	FOUNDATION_UNUSED(backend);
 	if (slot < RENDER_TARGET_COLOR_ATTACHMENT_COUNT)
 		pipeline->color_attachment[slot] = target;
 }
 
 static void
-rb_vulkan_pipeline_set_depth_attachment(render_backend_t* backend, render_pipeline_t* pipeline, render_target_t* target) {
+rb_vulkan_pipeline_set_depth_attachment(render_backend_t* backend, render_pipeline_t* pipeline,
+                                        render_target_t* target) {
 	FOUNDATION_UNUSED(backend);
 	pipeline->depth_attachment = target;
 }
 
 static void
 rb_vulkan_pipeline_set_color_clear(render_backend_t* backend, render_pipeline_t* pipeline, uint slot,
-                                 render_clear_action_t action, vector_t color) {
+                                   render_clear_action_t action, vector_t color) {
 	FOUNDATION_UNUSED(backend, pipeline, slot, action, color);
 }
 
 static void
 rb_vulkan_pipeline_set_depth_clear(render_backend_t* backend, render_pipeline_t* pipeline, render_clear_action_t action,
-                                 vector_t color) {
+                                   vector_t color) {
 	FOUNDATION_UNUSED(backend, pipeline, action, color);
 }
 
@@ -446,13 +551,13 @@ rb_vulkan_pipeline_flush(render_backend_t* backend, render_pipeline_t* pipeline)
 
 static void
 rb_vulkan_pipeline_use_argument_buffer(render_backend_t* backend, render_pipeline_t* pipeline,
-                                     render_buffer_index_t buffer) {
+                                       render_buffer_index_t buffer) {
 	FOUNDATION_UNUSED(backend, pipeline, buffer);
 }
 
 static void
 rb_vulkan_pipeline_use_render_buffer(render_backend_t* backend, render_pipeline_t* pipeline,
-                                   render_buffer_index_t buffer) {
+                                     render_buffer_index_t buffer) {
 	FOUNDATION_UNUSED(backend, pipeline, buffer);
 }
 
@@ -480,7 +585,7 @@ rb_vulkan_shader_finalize(render_backend_t* backend, render_shader_t* shader) {
 
 static void
 rb_vulkan_buffer_allocate(render_backend_t* backend, render_buffer_t* buffer, size_t buffer_size, const void* data,
-                        size_t data_size) {
+                          size_t data_size) {
 	FOUNDATION_UNUSED(backend);
 	if (buffer->usage == RENDERUSAGE_GPUONLY)
 		return;
@@ -508,25 +613,25 @@ rb_vulkan_buffer_upload(render_backend_t* backend, render_buffer_t* buffer, size
 
 static void
 rb_vulkan_buffer_data_declare(render_backend_t* backend, render_buffer_t* buffer, size_t instance_count,
-                            const render_buffer_data_t* data, size_t data_count) {
+                              const render_buffer_data_t* data, size_t data_count) {
 	FOUNDATION_UNUSED(backend, buffer, data, data_count, instance_count);
 }
 
 static void
 rb_vulkan_buffer_data_encode_buffer(render_backend_t* backend, render_buffer_t* buffer, uint instance, uint index,
-                                  render_buffer_t* source, uint offset) {
+                                    render_buffer_t* source, uint offset) {
 	FOUNDATION_UNUSED(backend, buffer, instance, index, source, offset);
 }
 
 static void
 rb_vulkan_buffer_data_encode_constant(render_backend_t* backend, render_buffer_t* buffer, uint instance, uint index,
-                                    const void* data, uint size) {
+                                      const void* data, uint size) {
 	FOUNDATION_UNUSED(backend, buffer, instance, index, data, size);
 }
 
 static void
 rb_vulkan_buffer_data_encode_matrix(render_backend_t* backend, render_buffer_t* buffer, uint instance, uint index,
-                                  const matrix_t* matrix) {
+                                    const matrix_t* matrix) {
 	FOUNDATION_UNUSED(backend, buffer, instance, index, matrix);
 }
 
@@ -536,13 +641,13 @@ rb_vulkan_buffer_set_label(render_backend_t* backend, render_buffer_t* buffer, c
 }
 
 static render_backend_vtable_t render_backend_vtable_null = {
-	.construct = rb_vulkan_construct,
-	.destruct = rb_vulkan_destruct,
-	.enumerate_adapters = rb_vulkan_enumerate_adapters,
-	.enumerate_modes = rb_vulkan_enumerate_modes,
-	.target_window_allocate = rb_vulkan_target_window_allocate,
-	.target_texture_allocate = rb_vulkan_target_texture_allocate,
-	.target_deallocate = rb_vulkan_target_deallocate,
+    .construct = rb_vulkan_construct,
+    .destruct = rb_vulkan_destruct,
+    .enumerate_adapters = rb_vulkan_enumerate_adapters,
+    .enumerate_modes = rb_vulkan_enumerate_modes,
+    .target_window_allocate = rb_vulkan_target_window_allocate,
+    .target_texture_allocate = rb_vulkan_target_texture_allocate,
+    .target_deallocate = rb_vulkan_target_deallocate,
     .pipeline_allocate = rb_vulkan_pipeline_allocate,
     .pipeline_deallocate = rb_vulkan_pipeline_deallocate,
     .pipeline_set_color_attachment = rb_vulkan_pipeline_set_color_attachment,
