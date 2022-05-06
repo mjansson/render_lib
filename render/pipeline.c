@@ -54,6 +54,11 @@ render_pipeline_set_depth_clear(render_pipeline_t* pipeline, render_clear_action
 }
 
 void
+render_pipeline_build(render_pipeline_t* pipeline) {
+	pipeline->backend->vtable.pipeline_build(pipeline->backend, pipeline);
+}
+
+void
 render_pipeline_flush(render_pipeline_t* pipeline) {
 	pipeline->backend->vtable.pipeline_flush(pipeline->backend, pipeline);
 	pipeline->primitive_buffer->used = 0;

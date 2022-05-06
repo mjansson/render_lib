@@ -44,6 +44,9 @@ RENDER_API void
 render_pipeline_set_depth_clear(render_pipeline_t* pipeline, render_clear_action_t action, vector_t color);
 
 RENDER_API void
+render_pipeline_build(render_pipeline_t* pipeline);
+
+RENDER_API void
 render_pipeline_flush(render_pipeline_t* pipeline);
 
 RENDER_API void

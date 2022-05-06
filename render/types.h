@@ -163,6 +163,7 @@ typedef void (*render_backend_pipeline_set_color_clear_fn)(render_backend_t*, re
                                                            render_clear_action_t, vector_t);
 typedef void (*render_backend_pipeline_set_depth_clear_fn)(render_backend_t*, render_pipeline_t*, render_clear_action_t,
                                                            vector_t);
+typedef void (*render_backend_pipeline_build_fn)(render_backend_t*, render_pipeline_t*);
 typedef render_pipeline_state_t (*render_backend_pipeline_state_allocate_fn)(render_backend_t*, render_pipeline_t*,
                                                                              render_shader_t*);
 typedef void (*render_backend_pipeline_state_deallocate_fn)(render_backend_t*, render_pipeline_state_t);
@@ -201,6 +202,7 @@ struct render_backend_vtable_t {
 	render_backend_pipeline_set_depth_attachment_fn pipeline_set_depth_attachment;
 	render_backend_pipeline_set_color_clear_fn pipeline_set_color_clear;
 	render_backend_pipeline_set_depth_clear_fn pipeline_set_depth_clear;
+	render_backend_pipeline_build_fn pipeline_build;
 	render_backend_pipeline_flush_fn pipeline_flush;
 	render_backend_pipeline_use_buffer_fn pipeline_use_argument_buffer;
 	render_backend_pipeline_use_buffer_fn pipeline_use_render_buffer;

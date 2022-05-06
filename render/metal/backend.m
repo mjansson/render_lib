@@ -74,10 +74,10 @@ typedef struct render_pipeline_metal_t {
 	render_pipeline_t pipeline;
 	MTLRenderPassDescriptor* descriptor;
 	id<MTLCommandQueue> command_queue;
-	render_shader_t* render_compute_shader;
-	id<MTLComputePipelineState> compute_pipeline_state[2];
-	id<MTLIndirectCommandBuffer> indirect_command_buffer;
-	id<MTLBuffer> compute_data;
+	// render_shader_t* render_compute_shader;
+	// id<MTLComputePipelineState> compute_pipeline_state[2];
+	// id<MTLIndirectCommandBuffer> indirect_command_buffer;
+	// id<MTLBuffer> compute_data;
 	render_buffer_index_t* argument_buffer_used;
 	render_buffer_index_t* render_buffer_used;
 	uint command_capacity;
@@ -407,9 +407,10 @@ rb_metal_pipeline_allocate(render_backend_t* backend, render_indexformat_t index
 	    render_buffer_allocate(backend, RENDERUSAGE_RENDER, sizeof(render_primitive_t) * capacity, 0, 0);
 	render_buffer_set_label(pipeline->primitive_buffer, STRING_CONST("Pipeline primitive buffer"));
 
+#if 0
 	pipeline_metal->render_compute_shader =
 	    render_shader_load(backend, uuid_decl(df075392, 1934, 4c89, a45c, 2139d64d9c92));
-#if 0
+
 	id<MTLLibrary> library = (__bridge id<MTLLibrary>)((void*)pipeline_metal->render_compute_shader->backend_data[0]);
 
 	@autoreleasepool {
@@ -458,17 +459,21 @@ rb_metal_pipeline_deallocate(render_backend_t* backend, render_pipeline_t* pipel
 	@autoreleasepool {
 		pipeline_metal->descriptor = nil;
 		pipeline_metal->command_queue = nil;
+		/*
 		pipeline_metal->compute_pipeline_state[0] = nil;
 		pipeline_metal->compute_pipeline_state[1] = nil;
 		pipeline_metal->indirect_command_buffer = nil;
 		pipeline_metal->compute_data = nil;
+		*/
 	}
 
 	array_deallocate(pipeline_metal->argument_buffer_used);
 	array_deallocate(pipeline_metal->render_buffer_used);
 
+	/*
 	render_shader_unload(pipeline_metal->render_compute_shader);
 	pipeline_metal->render_compute_shader = nullptr;
+	*/
 
 	render_buffer_deallocate(pipeline->primitive_buffer);
 	memory_deallocate(pipeline);
@@ -560,6 +565,11 @@ rb_metal_pipeline_use_render_buffer(render_backend_t* backend, render_pipeline_t
 	FOUNDATION_UNUSED(backend);
 	render_pipeline_metal_t* pipeline_metal = (render_pipeline_metal_t*)pipeline;
 	array_push(pipeline_metal->render_buffer_used, buffer);
+}
+
+static void
+rb_metal_pipeline_flush(render_backend_t* backend, render_pipeline_t* pipeline) {
+	FOUNDATION_UNUSED(backend, pipeline);
 }
 
 static void
@@ -1185,6 +1195,7 @@ static render_backend_vtable_t render_backend_vtable_metal = {
     .pipeline_set_depth_attachment = rb_metal_pipeline_set_depth_attachment,
     .pipeline_set_color_clear = rb_metal_pipeline_set_color_clear,
     .pipeline_set_depth_clear = rb_metal_pipeline_set_depth_clear,
+    .pipeline_build = rb_metal_pipeline_build,
     .pipeline_flush = rb_metal_pipeline_flush,
     .pipeline_use_argument_buffer = rb_metal_pipeline_use_argument_buffer,
     .pipeline_use_render_buffer = rb_metal_pipeline_use_render_buffer,

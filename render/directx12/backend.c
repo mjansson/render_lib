@@ -136,6 +136,11 @@ rb_dx12_pipeline_set_depth_clear(render_backend_t* backend, render_pipeline_t* p
 }
 
 static void
+rb_dx12_pipeline_build(render_backend_t* backend, render_pipeline_t* pipeline) {
+	FOUNDATION_UNUSED(backend, pipeline);
+}
+
+static void
 rb_dx12_pipeline_flush(render_backend_t* backend, render_pipeline_t* pipeline) {
 	FOUNDATION_UNUSED(backend, pipeline);
 }
@@ -245,6 +250,7 @@ static render_backend_vtable_t render_backend_vtable_null = {
     .pipeline_set_depth_attachment = rb_dx12_pipeline_set_depth_attachment,
     .pipeline_set_color_clear = rb_dx12_pipeline_set_color_clear,
     .pipeline_set_depth_clear = rb_dx12_pipeline_set_depth_clear,
+    .pipeline_build = rb_dx12_pipeline_build,
     .pipeline_flush = rb_dx12_pipeline_flush,
     .pipeline_use_argument_buffer = rb_dx12_pipeline_use_argument_buffer,
     .pipeline_use_render_buffer = rb_dx12_pipeline_use_render_buffer,

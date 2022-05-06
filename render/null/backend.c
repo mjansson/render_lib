@@ -93,7 +93,8 @@ rb_null_pipeline_allocate(render_backend_t* backend, render_indexformat_t index_
 	render_pipeline_t* pipeline =
 	    memory_allocate(HASH_RENDER, sizeof(render_pipeline_t), 0, MEMORY_PERSISTENT | MEMORY_ZERO_INITIALIZED);
 	pipeline->backend = backend;
-	pipeline->primitive_buffer = render_buffer_allocate(backend, RENDERUSAGE_RENDER, sizeof(render_primitive_t) * capacity, 0, 0);
+	pipeline->primitive_buffer =
+	    render_buffer_allocate(backend, RENDERUSAGE_RENDER, sizeof(render_primitive_t) * capacity, 0, 0);
 	pipeline->index_format = index_format;
 	return pipeline;
 }
@@ -130,6 +131,11 @@ static void
 rb_null_pipeline_set_depth_clear(render_backend_t* backend, render_pipeline_t* pipeline, render_clear_action_t action,
                                  vector_t color) {
 	FOUNDATION_UNUSED(backend, pipeline, action, color);
+}
+
+static void
+rb_null_pipeline_build(render_backend_t* backend, render_pipeline_t* pipeline) {
+	FOUNDATION_UNUSED(backend, pipeline);
 }
 
 static void
@@ -242,6 +248,7 @@ static render_backend_vtable_t render_backend_vtable_null = {
     .pipeline_set_depth_attachment = rb_null_pipeline_set_depth_attachment,
     .pipeline_set_color_clear = rb_null_pipeline_set_color_clear,
     .pipeline_set_depth_clear = rb_null_pipeline_set_depth_clear,
+    .pipeline_build = rb_null_pipeline_build,
     .pipeline_flush = rb_null_pipeline_flush,
     .pipeline_use_argument_buffer = rb_null_pipeline_use_argument_buffer,
     .pipeline_use_render_buffer = rb_null_pipeline_use_render_buffer,

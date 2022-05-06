@@ -132,8 +132,8 @@ static void*
 test_render_api(render_api_t api) {
 	render_backend_t* backend = 0;
 	render_resolution_t resolutions[32];
-	//render_drawable_t* drawable = 0;
-	//render_target_t* framebuffer = 0;
+	// render_drawable_t* drawable = 0;
+	// render_target_t* framebuffer = 0;
 
 	EXPECT_TRUE(render_module_is_initialized());
 
@@ -160,7 +160,6 @@ test_render_api(render_api_t api) {
 	                               sizeof(resolutions) / sizeof(resolutions[0]));
 	log_infof(HASH_TEST, STRING_CONST("Resolution: %ux%u@%uHz"), resolutions[0].width, resolutions[0].height,
 	          resolutions[0].refresh);
-
 
 	render_target_t* render_target = render_target_window_allocate(backend, &window, 0);
 	EXPECT_NE(render_target, nullptr);
@@ -205,6 +204,7 @@ test_render_clear(render_api_t api) {
 	render_pipeline_set_color_attachment(pipeline, 0, target);
 	render_pipeline_set_color_clear(pipeline, 0, RENDERCLEAR_CLEAR, vector(1, 0, 0, 0));
 	render_pipeline_set_depth_clear(pipeline, RENDERCLEAR_CLEAR, vector(0, 0, 0, 0));
+	render_pipeline_build(pipeline);
 
 	render_pipeline_flush(pipeline);
 
@@ -269,30 +269,23 @@ test_render_box(render_api_t api) {
 		EXPECT_NE(shader_white, 0);
 	}
 
-	const float32_t vertexdata[8 * 8] = { 0.1f,  0.1f,  0.1f, 1.0f, 1, 1, 1, 1,
-	                                      0.1f, -0.1f,  0.1f, 1.0f, 0, 1, 0, 1,
-	                                     -0.1f, -0.1f,  0.1f, 1.0f, 0, 0, 1, 1,
-	                                     -0.1f,  0.1f,  0.1f, 1.0f, 1, 0, 0, 1,
- 	                                      0.1f,  0.1f, -0.1f, 1.0f, 0, 1, 1, 1,
-	                                      0.1f, -0.1f, -0.1f, 1.0f, 1, 0, 1, 1,
-	                                     -0.1f, -0.1f, -0.1f, 1.0f, 1, 1, 0, 1,
-	                                     -0.1f,  0.1f, -0.1f, 1.0f, 1, 1, 1, 1};
-	render_buffer_t* vertexbuffer = render_buffer_allocate(backend, RENDERUSAGE_RENDER, sizeof(float32_t) * 8 * 1024, 0, 0);
+	const float32_t vertexdata[8 * 8] = {0.1f,  0.1f,  0.1f,  1.0f, 1, 1, 1, 1, 0.1f,  -0.1f, 0.1f,  1.0f, 0, 1, 0, 1,
+	                                     -0.1f, -0.1f, 0.1f,  1.0f, 0, 0, 1, 1, -0.1f, 0.1f,  0.1f,  1.0f, 1, 0, 0, 1,
+	                                     0.1f,  0.1f,  -0.1f, 1.0f, 0, 1, 1, 1, 0.1f,  -0.1f, -0.1f, 1.0f, 1, 0, 1, 1,
+	                                     -0.1f, -0.1f, -0.1f, 1.0f, 1, 1, 0, 1, -0.1f, 0.1f,  -0.1f, 1.0f, 1, 1, 1, 1};
+	render_buffer_t* vertexbuffer =
+	    render_buffer_allocate(backend, RENDERUSAGE_RENDER, sizeof(float32_t) * 8 * 1024, 0, 0);
 	render_buffer_lock(vertexbuffer, RENDERBUFFER_LOCK_WRITE_ALL);
 	memcpy(vertexbuffer->access, vertexdata, sizeof(vertexdata));
 	render_buffer_unlock(vertexbuffer);
 
-	const uint32_t indexdata[12 * 3] = {0, 3, 2, 0, 2, 1,
-	                                    4, 0, 1, 4, 1, 5,
-	                                    7, 4, 5, 7, 5, 6,
-	                                    3, 7, 6, 3, 6, 2,
-	                                    4, 7, 3, 4, 3, 0,
-	                                    1, 2, 6, 1, 6, 5};
+	const uint32_t indexdata[12 * 3] = {0, 3, 2, 0, 2, 1, 4, 0, 1, 4, 1, 5, 7, 4, 5, 7, 5, 6,
+	                                    3, 7, 6, 3, 6, 2, 4, 7, 3, 4, 3, 0, 1, 2, 6, 1, 6, 5};
 	render_buffer_t* indexbuffer = render_buffer_allocate(backend, RENDERUSAGE_RENDER, sizeof(uint32_t) * 1024, 0, 0);
 	render_buffer_lock(indexbuffer, RENDERBUFFER_LOCK_WRITE_ALL);
 	memcpy(indexbuffer->access, indexdata, sizeof(indexdata));
 	render_buffer_unlock(indexbuffer);
-	
+
 	real aspect_ratio = (real)width / (real)height;
 	matrix_t view_to_clip = render_projection_perspective(0.1f, 10.0f, REAL_PI * REAL_C(0.3), aspect_ratio);
 	matrix_t world_to_view = matrix_translation(vector(0, 0, -0.2f, 0));
@@ -301,33 +294,21 @@ test_render_box(render_api_t api) {
 
 	render_buffer_t* global_descriptor = render_buffer_allocate(backend, RENDERUSAGE_RENDER, 0, 0, 0);
 	// View-to-clip transform matrix
-	render_buffer_data_t global_data[1] = {{
-		.index = 0,
-		.data_type = RENDERDATA_MATRIX4X4,
-		.array_count = 0
-	}};
+	render_buffer_data_t global_data[1] = {{.index = 0, .data_type = RENDERDATA_MATRIX4X4, .array_count = 0}};
 	render_buffer_data_declare(global_descriptor, 1, global_data, 1);
 
 	render_buffer_t* material_descriptor = render_buffer_allocate(backend, RENDERUSAGE_RENDER, 0, 0, 0);
 	// Material color
-	render_buffer_data_t material_data[1] = {{
-		.index = 0,
-		.data_type = RENDERDATA_FLOAT4,
-		.array_count = 0
-	}};
+	render_buffer_data_t material_data[1] = {{.index = 0, .data_type = RENDERDATA_FLOAT4, .array_count = 0}};
 	render_buffer_data_declare(material_descriptor, 1, material_data, 1);
 
 	render_buffer_t* instance_descriptor = render_buffer_allocate(backend, RENDERUSAGE_RENDER, 0, 0, 0);
-	render_buffer_data_t instance_data[1] = {
-	// Model-view-projection matrix
-	{
-		.index = 0,
-		.data_type = RENDERDATA_MATRIX4X4,
-		.array_count = 0
-	}};
+	render_buffer_data_t instance_data[1] = {// Model-view-projection matrix
+	                                         {.index = 0, .data_type = RENDERDATA_MATRIX4X4, .array_count = 0}};
 	render_buffer_data_declare(instance_descriptor, 2, instance_data, 1);
 
-	render_buffer_t* argument_buffer = render_buffer_allocate(backend, RENDERUSAGE_RENDER, sizeof(render_argument_t) * 500, 0, 0);
+	render_buffer_t* argument_buffer =
+	    render_buffer_allocate(backend, RENDERUSAGE_RENDER, sizeof(render_argument_t) * 500, 0, 0);
 	render_buffer_lock(argument_buffer, RENDERBUFFER_LOCK_WRITE_ALL);
 	render_argument_t* argument = argument_buffer->access;
 	memset(argument, 0, sizeof(render_argument_t));
@@ -338,6 +319,7 @@ test_render_box(render_api_t api) {
 	render_pipeline_set_color_attachment(pipeline, 0, target);
 	render_pipeline_set_color_clear(pipeline, 0, RENDERCLEAR_CLEAR, vector(0, 0, 0, 0));
 	render_pipeline_set_depth_clear(pipeline, RENDERCLEAR_CLEAR, vector(1, 1, 1, 1));
+	render_pipeline_build(pipeline);
 
 	render_pipeline_state_t pipeline_color_state = render_pipeline_state_allocate(backend, pipeline, shader_color);
 	render_pipeline_state_t pipeline_white_state = render_pipeline_state_allocate(backend, pipeline, shader_white);
@@ -350,7 +332,7 @@ test_render_box(render_api_t api) {
 	vector_t material_color = vector(1, 1, 1, 1);
 	render_buffer_lock(material_descriptor, RENDERBUFFER_LOCK_WRITE_ALL);
 	render_buffer_data_encode_constant(material_descriptor, 0, 0, &material_color, sizeof(vector_t));
-	render_buffer_unlock(material_descriptor);	
+	render_buffer_unlock(material_descriptor);
 
 	render_primitive_t primitive;
 	primitive.argument_buffer = argument_buffer->render_index;
@@ -368,13 +350,15 @@ test_render_box(render_api_t api) {
 		render_buffer_lock(instance_descriptor, RENDERBUFFER_LOCK_WRITE_ALL);
 
 		matrix_t translate = matrix_translation(vector(0.3f, -0.25f, -0.75f, 0));
-		matrix_t rotate = matrix_from_quaternion(euler_angles_to_quaternion(euler_angles((real)(dt * 0.31), (real)(dt * 0.57), (real)(dt * 0.73), EULER_XYZs)));
+		matrix_t rotate = matrix_from_quaternion(euler_angles_to_quaternion(
+		    euler_angles((real)(dt * 0.31), (real)(dt * 0.57), (real)(dt * 0.73), EULER_XYZs)));
 		matrix_t scale = matrix_scaling(vector(1.0f, 1.0f, 1.0f, 1.0f));
 		model_to_world = matrix_mul(scale, matrix_mul(rotate, translate));
 		render_buffer_data_encode_matrix(instance_descriptor, 0, 0, &model_to_world);
 
 		translate = matrix_translation(vector(-0.3f, 0.25f, -0.75f, 0));
-		rotate = matrix_from_quaternion(euler_angles_to_quaternion(euler_angles((real)(dt * 0.57), (real)(dt * 0.73), (real)(dt * 0.31), EULER_XYZs)));
+		rotate = matrix_from_quaternion(euler_angles_to_quaternion(
+		    euler_angles((real)(dt * 0.57), (real)(dt * 0.73), (real)(dt * 0.31), EULER_XYZs)));
 		scale = matrix_scaling(vector(1.0f, 1.0f, 1.0f, 1.0f));
 		model_to_world = matrix_mul(scale, matrix_mul(rotate, translate));
 		render_buffer_data_encode_matrix(instance_descriptor, 1, 0, &model_to_world);
@@ -478,9 +462,9 @@ DECLARE_TEST(render, metal_box) {
 static void
 test_render_declare(void) {
 	ADD_TEST(render, initialize);
-	//ADD_TEST(render, null);
-	//ADD_TEST(render, null_clear);
-	//ADD_TEST(render, null_box);
+	// ADD_TEST(render, null);
+	// ADD_TEST(render, null_clear);
+	// ADD_TEST(render, null_box);
 #if FOUNDATION_PLATFORM_WINDOWS
 	ADD_TEST(render, dx12);
 	ADD_TEST(render, dx12_clear);
@@ -488,12 +472,12 @@ test_render_declare(void) {
 #endif
 #if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_LINUX
 	ADD_TEST(render, vulkan);
-	//ADD_TEST(render, vulkan_clear);
-	//ADD_TEST(render, vulkan_box);
+	// ADD_TEST(render, vulkan_clear);
+	// ADD_TEST(render, vulkan_box);
 #endif
 #if FOUNDATION_PLATFORM_APPLE
-	//ADD_TEST(render, metal);
-	//ADD_TEST(render, metal_clear);
+	// ADD_TEST(render, metal);
+	// ADD_TEST(render, metal_clear);
 	ADD_TEST(render, metal_box);
 #endif
 }
