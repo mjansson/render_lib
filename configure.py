@@ -27,29 +27,29 @@ render_lib = generator.lib(module='render', sources=[
 ])
 
 extralibs = []
-gllibs = []
-glframeworks = []
+gfxlibs = []
+gfxframeworks = []
 if target.is_macos():
-    glframeworks = ['Metal', 'QuartzCore', 'CoreGraphics', 'Carbon']
+    gfxframeworks = ['Metal', 'QuartzCore', 'CoreGraphics', 'Carbon']
 elif target.is_ios():
-    glframeworks = ['Metal', 'QuartzCore', 'OpenGLES']
+    gfxframeworks = ['Metal', 'QuartzCore', 'OpenGLES']
 if target.is_windows():
-    gllibs = ['gdi32', 'iphlpapi', 'ws2_32']
+    gfxlibs = ['gdi32', 'iphlpapi', 'ws2_32']
     extralibs = ['iphlpapi', 'ws2_32']
 if target.is_linux():
-    gllibs = ['vulkan', 'Xxf86vm', 'Xext', 'X11', 'GL']
+    gfxlibs = ['vulkan', 'Xxf86vm', 'Xext', 'X11', 'GL']
 
 dependlibs = ['render'] + dependlibs
-linklibs = gllibs + extralibs
+linklibs = gfxlibs + extralibs
 
 if not target.is_ios() and not target.is_android() and not target.is_tizen():
     configs = [config for config in toolchain.configs if config not in [
         'profile', 'deploy']]
     if not configs == []:
         generator.bin('renderimport', ['main.c'], 'renderimport', basepath='tools', implicit_deps=[
-                      render_lib], dependlibs=dependlibs, libs=linklibs, frameworks=glframeworks, configs=configs)
+                      render_lib], dependlibs=dependlibs, libs=linklibs, frameworks=gfxframeworks, configs=configs)
         generator.bin('rendercompile', ['main.c'], 'rendercompile', basepath='tools', implicit_deps=[
-                      render_lib], dependlibs=dependlibs, libs=linklibs, frameworks=glframeworks, configs=configs)
+                      render_lib], dependlibs=dependlibs, libs=linklibs, frameworks=gfxframeworks, configs=configs)
 
 # No test cases if we're a submodule
 #if generator.is_subninja():
@@ -57,7 +57,7 @@ if not target.is_ios() and not target.is_android() and not target.is_tizen():
 
 includepaths = generator.test_includepaths()
 
-linklibs = ['test'] + dependlibs + gllibs + extralibs
+linklibs = ['test'] + dependlibs + gfxlibs + extralibs
 
 test_cases = [
     'render'
@@ -89,10 +89,10 @@ if toolchain.is_monolithic() or target.is_ios() or target.is_android() or target
         ]]
     if target.is_macos() or target.is_ios() or target.is_android() or target.is_tizen():
         generator.app(module='', sources=[os.path.join(module, 'main.c') for module in test_cases] + test_extrasources, binname='test-all-render',
-                      basepath='test', implicit_deps=[render_lib], libs=linklibs, frameworks=glframeworks, resources=test_resources, includepaths=includepaths)
+                      basepath='test', implicit_deps=[render_lib], libs=linklibs, frameworks=gfxframeworks, resources=test_resources, includepaths=includepaths)
     else:
         generator.bin(module='', sources=[os.path.join(module, 'main.c') for module in test_cases] + test_extrasources, binname='test-all-render',
-                      basepath='test', implicit_deps=[render_lib], libs=linklibs, frameworks=glframeworks, resources=test_resources, includepaths=includepaths)
+                      basepath='test', implicit_deps=[render_lib], libs=linklibs, frameworks=gfxframeworks, resources=test_resources, includepaths=includepaths)
 else:
     # Build one binary per test case
     if not generator.is_subninja():
@@ -103,7 +103,7 @@ else:
             test_resources = [os.path.join('macos', item) for item in [
                 'test-' + test + '.plist', 'test-' + test + '.entitlements', 'Images.xcassets', 'test-' + test + '.xib']]
             generator.app(module=test, sources=['main.c'], binname='test-' + test, basepath='test', implicit_deps=[
-                          render_lib], libs=linklibs, frameworks=glframeworks, resources=test_resources, includepaths=includepaths)
+                          render_lib], libs=linklibs, frameworks=gfxframeworks, resources=test_resources, includepaths=includepaths)
         else:
             generator.bin(module=test, sources=['main.c'], binname='test-' + test, basepath='test', implicit_deps=[
-                          render_lib], libs=linklibs, frameworks=glframeworks, includepaths=includepaths)
+                          render_lib], libs=linklibs, frameworks=gfxframeworks, includepaths=includepaths)

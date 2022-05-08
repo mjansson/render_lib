@@ -16,9 +16,9 @@
 #include <render/render.h>
 #include <test/test.h>
 
-static volatile bool test_should_start;
-static volatile bool test_have_focus;
-static volatile bool test_should_terminate;
+static volatile bool test_start_flag;
+static volatile bool test_focus_flag;
+static volatile bool test_terminate_flag;
 static volatile bool test_memory_tracker;
 
 static void*
@@ -29,7 +29,7 @@ event_loop(void* arg) {
 
 	event_stream_set_beacon(system_event_stream(), &thread_self()->beacon);
 
-	while (!test_should_terminate) {
+	while (!test_should_terminate()) {
 		block = event_stream_process(system_event_stream());
 		event = 0;
 		while ((event = event_next(block, event))) {
@@ -37,14 +37,14 @@ event_loop(void* arg) {
 				case FOUNDATIONEVENT_START:
 #if FOUNDATION_PLATFORM_IOS || FOUNDATION_PLATFORM_ANDROID
 					log_debug(HASH_TEST, STRING_CONST("Application start event received"));
-					test_should_start = true;
+					test_start_flag = true;
 #endif
 					break;
 
 				case FOUNDATIONEVENT_TERMINATE:
 #if FOUNDATION_PLATFORM_IOS || FOUNDATION_PLATFORM_ANDROID
 					log_debug(HASH_TEST, STRING_CONST("Application stop/terminate event received"));
-					test_should_terminate = true;
+					test_terminate_flag = true;
 					break;
 #else
 					log_warn(HASH_TEST, WARNING_SUSPICIOUS, STRING_CONST("Terminating tests due to event"));
@@ -52,11 +52,11 @@ event_loop(void* arg) {
 #endif
 
 				case FOUNDATIONEVENT_FOCUS_GAIN:
-					test_have_focus = true;
+					test_focus_flag = true;
 					break;
 
 				case FOUNDATIONEVENT_FOCUS_LOST:
-					test_have_focus = false;
+					test_focus_flag = false;
 					break;
 
 				default:
@@ -119,7 +119,7 @@ static void
 test_log_handler(hash_t context, error_level_t severity, const char* msg, size_t length) {
 	FOUNDATION_UNUSED(context);
 	FOUNDATION_UNUSED(severity);
-	if (test_should_terminate)
+	if (test_terminate_flag)
 		return;
 	if (!log_stdout())
 		return;
@@ -156,7 +156,12 @@ test_parse_config(const char* buffer, size_t size, const json_token_t* tokens, s
 
 bool
 test_should_terminate(void) {
-	return test_should_terminate;
+	return test_terminate_flag;
+}
+
+bool
+test_have_focus(void) {
+	return test_focus_flag;
 }
 
 int
@@ -194,7 +199,7 @@ main_initialize(void) {
 
 #if !FOUNDATION_PLATFORM_IOS && !FOUNDATION_PLATFORM_ANDROID
 
-	test_should_start = true;
+	test_start_flag = true;
 
 #endif
 
@@ -324,7 +329,7 @@ main_run(void* main_arg) {
 		thread_sleep(10);
 
 #if FOUNDATION_PLATFORM_IOS || FOUNDATION_PLATFORM_ANDROID
-	while (!test_should_start) {
+	while (!test_should_start()) {
 #if FOUNDATION_PLATFORM_ANDROID
 		system_process_events();
 #endif
@@ -384,7 +389,7 @@ main_run(void* main_arg) {
 
 #if FOUNDATION_PLATFORM_IOS || FOUNDATION_PLATFORM_ANDROID
 
-	while (!test_should_terminate && test_have_focus && (remain_counter < 50)) {
+	while (!test_should_terminate() && test_have_focus() && (remain_counter < 50)) {
 		system_process_events();
 		thread_sleep(100);
 		++remain_counter;
@@ -495,7 +500,7 @@ exit:
 
 #endif
 
-	test_should_terminate = true;
+	test_terminate_flag = true;
 
 	thread_signal(&event_thread);
 	thread_join(&event_thread);
