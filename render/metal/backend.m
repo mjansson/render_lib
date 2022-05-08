@@ -568,7 +568,7 @@ rb_metal_pipeline_use_render_buffer(render_backend_t* backend, render_pipeline_t
 }
 
 static void
-rb_metal_pipeline_flush(render_backend_t* backend, render_pipeline_t* pipeline) {
+rb_metal_pipeline_build(render_backend_t* backend, render_pipeline_t* pipeline) {
 	FOUNDATION_UNUSED(backend, pipeline);
 }
 
