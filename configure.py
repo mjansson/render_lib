@@ -51,13 +51,9 @@ if not target.is_ios() and not target.is_android() and not target.is_tizen():
         generator.bin('rendercompile', ['main.c'], 'rendercompile', basepath='tools', implicit_deps=[
                       render_lib], dependlibs=dependlibs, libs=linklibs, frameworks=gfxframeworks, configs=configs)
 
-# No test cases if we're a submodule
-#if generator.is_subninja():
-#    sys.exit()
-
 includepaths = generator.test_includepaths()
 
-linklibs = ['test'] + dependlibs + gfxlibs + extralibs
+linklibs = ['test'] + gfxlibs + extralibs
 
 test_cases = [
     'render'
@@ -103,7 +99,7 @@ else:
             test_resources = [os.path.join('macos', item) for item in [
                 'test-' + test + '.plist', 'test-' + test + '.entitlements', 'Images.xcassets', 'test-' + test + '.xib']]
             generator.app(module=test, sources=['main.c'], binname='test-' + test, basepath='test', implicit_deps=[
-                          render_lib], libs=linklibs, frameworks=gfxframeworks, resources=test_resources, includepaths=includepaths)
+                          render_lib], dependlibs=dependlibs, libs=linklibs, frameworks=gfxframeworks, resources=test_resources, includepaths=includepaths)
         else:
             generator.bin(module=test, sources=['main.c'], binname='test-' + test, basepath='test', implicit_deps=[
-                          render_lib], libs=linklibs, frameworks=gfxframeworks, includepaths=includepaths)
+                          render_lib], dependlibs=dependlibs, libs=linklibs, frameworks=gfxframeworks, includepaths=includepaths)

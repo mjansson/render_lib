@@ -1165,7 +1165,7 @@ rb_metal_buffer_data_encode_constant(render_backend_t* backend, render_buffer_t*
 	FOUNDATION_UNUSED(backend);
 	if (!buffer->backend_data[1]) {
 		log_error(HASH_RENDER, ERROR_INVALID_VALUE,
-		          STRING_CONST("Unable to encode buffer structured without previous data layout declaration"));
+		          STRING_CONST("Unable to encode buffer structured data without previous data layout declaration"));
 		return;
 	}
 
