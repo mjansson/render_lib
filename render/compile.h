@@ -33,5 +33,5 @@
 \param type_length Length of type string
 \return 0 if successful, <0 if error */
 RENDER_API int
-render_compile(const uuid_t uuid, uint64_t platform, resource_source_t* source, const uint256_t source_hash,
+render_compile(const uuid_t uuid, uint64_t platform, resource_source_t* source, const blake3_hash_t source_hash,
                const char* type, size_t type_length);

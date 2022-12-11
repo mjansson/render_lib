@@ -19,14 +19,11 @@
 #include <foundation/foundation.h>
 #include <render/render.h>
 #include <resource/resource.h>
+#include <blake3/blake3.h>
 
 #if RESOURCE_ENABLE_LOCAL_SOURCE
 
-typedef enum {
-	IMPORTTYPE_UNKNOWN,
-	IMPORTTYPE_SHADER,
-	IMPORTTYPE_METAL_SHADER
-} renderimport_type_t;
+typedef enum { IMPORTTYPE_UNKNOWN, IMPORTTYPE_SHADER, IMPORTTYPE_METAL_SHADER } renderimport_type_t;
 
 static resource_platform_t
 render_import_parse_target(const char* target, size_t length, resource_platform_t base) {
@@ -234,7 +231,7 @@ render_import(stream_t* stream, const uuid_t uuid_given) {
 	}
 
 	if (store_import) {
-		uuid_t founduuid = resource_import_map_store(STRING_ARGS(path), uuid, uint256_null());
+		uuid_t founduuid = resource_import_map_store(STRING_ARGS(path), uuid, blake3_hash_null());
 		if (uuid_is_null(founduuid)) {
 			log_warn(HASH_RESOURCE, WARNING_SUSPICIOUS,
 			         STRING_CONST("Unable to open import map file to store new resource"));
@@ -256,7 +253,7 @@ render_import(stream_t* stream, const uuid_t uuid_given) {
 	}
 
 	if (ret == 0)
-		resource_import_map_store(STRING_ARGS(path), uuid, stream_sha256(stream));
+		resource_import_map_store(STRING_ARGS(path), uuid, blake3_hash_stream(stream));
 
 	return ret;
 }

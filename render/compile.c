@@ -20,6 +20,7 @@
 #include <render/render.h>
 #include <resource/resource.h>
 #include <window/window.h>
+#include <blake3/blake3.h>
 
 #if FOUNDATION_COMPILER_CLANG
 #pragma clang diagnostic push
@@ -31,7 +32,7 @@
 #if RESOURCE_ENABLE_LOCAL_SOURCE
 
 int
-render_compile(const uuid_t uuid, uint64_t platform, resource_source_t* source, const uint256_t source_hash,
+render_compile(const uuid_t uuid, uint64_t platform, resource_source_t* source, const blake3_hash_t source_hash,
                const char* type, size_t type_length) {
 	if (render_shader_compile(uuid, platform, source, source_hash, type, type_length) == 0)
 		return 0;
@@ -83,8 +84,8 @@ render_shader_shader_resource_type_valid(hash_t type) {
 }
 
 static int
-render_shader_ref_compile(const uuid_t uuid, uint64_t platform, resource_source_t* source, const uint256_t source_hash,
-                          const char* type, size_t type_length) {
+render_shader_ref_compile(const uuid_t uuid, uint64_t platform, resource_source_t* source,
+                          const blake3_hash_t source_hash, const char* type, size_t type_length) {
 	FOUNDATION_UNUSED(type);
 	FOUNDATION_UNUSED(type_length);
 
@@ -176,7 +177,7 @@ retry:
 }
 
 int
-render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* source, const uint256_t source_hash,
+render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* source, const blake3_hash_t source_hash,
                       const char* type, size_t type_length) {
 	int result = 0;
 	uint64_t* subplatforms = 0;
@@ -420,7 +421,7 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 #else
 
 int
-render_compile(const uuid_t uuid, uint64_t platform, resource_source_t* source, const uint256_t source_hash,
+render_compile(const uuid_t uuid, uint64_t platform, resource_source_t* source, const blake3_hash_t source_hash,
                const char* type, size_t type_length) {
 	FOUNDATION_UNUSED(uuid);
 	FOUNDATION_UNUSED(platform);
