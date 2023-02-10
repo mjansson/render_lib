@@ -53,7 +53,7 @@ if not target.is_ios() and not target.is_android() and not target.is_tizen():
 
 includepaths = generator.test_includepaths()
 
-linklibs = ['test'] + gfxlibs + extralibs
+dependlibs = ['test'] + dependlibs
 
 test_cases = [
     'render'
