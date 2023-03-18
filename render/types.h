@@ -261,6 +261,8 @@ struct render_pipeline_t {
 	render_target_t* depth_attachment;
 	render_buffer_t* primitive_buffer;
 	render_indexformat_t index_format;
+	atomic32_t primitive_used;
+	atomic32_t* barrier;
 };
 
 struct render_shader_t {

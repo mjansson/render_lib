@@ -21,6 +21,9 @@
 #include <render/hashstrings.h>
 
 #include <foundation/array.h>
+#include <foundation/atomic.h>
+
+#include <task/task.h>
 
 render_pipeline_t*
 render_pipeline_allocate(render_backend_t* backend, render_indexformat_t index_format, uint capacity) {
@@ -60,16 +63,24 @@ render_pipeline_build(render_pipeline_t* pipeline) {
 
 void
 render_pipeline_flush(render_pipeline_t* pipeline) {
+	if (pipeline->barrier) {
+		task_yield_and_wait(pipeline->barrier);
+		atomic_thread_fence_acquire();
+	}
+	pipeline->primitive_buffer->used = (uint)atomic_load32(&pipeline->primitive_used, memory_order_relaxed);
 	pipeline->backend->vtable.pipeline_flush(pipeline->backend, pipeline);
-	pipeline->primitive_buffer->used = 0;
+	atomic_store32(&pipeline->primitive_used, 0, memory_order_relaxed);
 }
 
 void
 render_pipeline_queue(render_pipeline_t* pipeline, render_primitive_type type, const render_primitive_t* primitive) {
 	FOUNDATION_UNUSED(type);
-	if (pipeline->primitive_buffer->used < pipeline->primitive_buffer->allocated) {
+	int32_t index = atomic_incr32(&pipeline->primitive_used, memory_order_release);
+	if ((uint)index <= pipeline->primitive_buffer->allocated) {
 		render_primitive_t* primitve_store = pipeline->primitive_buffer->store;
-		primitve_store[pipeline->primitive_buffer->used++] = *primitive;
+		primitve_store[index - 1] = *primitive;
+	} else {
+		atomic_store32(&pipeline->primitive_used, (int32_t)pipeline->primitive_buffer->allocated, memory_order_relaxed);
 	}
 }
 

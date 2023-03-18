@@ -554,9 +554,12 @@ rb_metal_pipeline_state_from_index(render_backend_metal_t* backend, uint index) 
 static void
 rb_metal_pipeline_use_argument_buffer(render_backend_t* backend, render_pipeline_t* pipeline,
                                       render_buffer_index_t buffer) {
-	FOUNDATION_UNUSED(backend);
+	FOUNDATION_UNUSED(backend, pipeline, buffer);
+	/*
+	// This must be thread safe
 	render_pipeline_metal_t* pipeline_metal = (render_pipeline_metal_t*)pipeline;
 	array_push(pipeline_metal->argument_buffer_used, buffer);
+	*/
 }
 
 static void
@@ -724,6 +727,7 @@ rb_metal_pipeline_flush(render_backend_t* backend, render_pipeline_t* pipeline) 
 					render_buffer_unlock(argument_buffer);
 				current_argument = primitive->argument_buffer;
 				argument_buffer = backend_metal->buffer_lookup[current_argument];
+				FOUNDATION_ASSERT(argument_buffer);
 				render_buffer_lock(argument_buffer, RENDERBUFFER_LOCK_READ);
 			}
 
