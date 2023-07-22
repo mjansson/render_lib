@@ -38,7 +38,7 @@ render_api_fallback(render_api_t api) {
 
 		case RENDERAPI_DEFAULT:
 #if FOUNDATION_PLATFORM_WINDOWS
-			return RENDERAPI_DIRECTX12;
+			return RENDERAPI_VULKAN;
 #elif FOUNDATION_PLATFORM_APPLE
 			return RENDERAPI_METAL;
 #else
@@ -92,10 +92,10 @@ render_backend_allocate(render_api_t api, bool allow_fallback) {
 		switch (api) {
 			case RENDERAPI_DIRECTX12:
 				backend = render_backend_directx12_allocate();
-				if( !backend || !backend->vtable.construct(backend)) {
-				    log_info(HASH_RENDER, STRING_CONST("Failed to initialize DirectX 12 render backend"));
+				if (!backend || !backend->vtable.construct(backend)) {
+					log_info(HASH_RENDER, STRING_CONST("Failed to initialize DirectX 12 render backend"));
 					render_backend_deallocate(backend);
-				    backend = nullptr;
+					backend = nullptr;
 				}
 				break;
 

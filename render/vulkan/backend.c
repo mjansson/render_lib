@@ -26,7 +26,6 @@
 #if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_LINUX
 
 #include <vulkan/vulkan.h>
-#include <vulkan/vk_sdk_platform.h>
 
 #if FOUNDATION_PLATFORM_WINDOWS
 #include <foundation/windows.h>
@@ -86,10 +85,10 @@ typedef struct render_target_window_vulkan_t {
 typedef struct render_pipeline_vulkan_t {
 	render_pipeline_t pipeline;
 	uint color_attachment_count;
-	VkAttachmentLoadOp color_load_op[RENDER_TARGET_COLOR_ATTACHMENT_COUNT];
-	vector_t color_clear[RENDER_TARGET_COLOR_ATTACHMENT_COUNT];
 	VkRenderPass render_pass;
 	VkPipelineLayout pipeline_layout;
+	VkAttachmentLoadOp color_load_op[RENDER_TARGET_COLOR_ATTACHMENT_COUNT];
+	vector_t color_clear[RENDER_TARGET_COLOR_ATTACHMENT_COUNT];
 } render_pipeline_vulkan_t;
 
 static bool
@@ -342,9 +341,9 @@ rb_vulkan_enumerate_adapters(render_backend_t* backend, unsigned int* store, siz
 	}
 
 	// Arrange adapters in suitable order
-	uint priority_order[5] = {VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU,
-	                          VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU, VK_PHYSICAL_DEVICE_TYPE_CPU,
-	                          VK_PHYSICAL_DEVICE_TYPE_OTHER};
+	int priority_order[5] = {VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU,
+	                         VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU, VK_PHYSICAL_DEVICE_TYPE_CPU,
+	                         VK_PHYSICAL_DEVICE_TYPE_OTHER};
 	uint iadapter = 0;
 	for (uint itype = 0; (itype < 5) && (iadapter < capacity); ++itype) {
 		VkPhysicalDeviceProperties properties;
@@ -606,6 +605,7 @@ rb_vulkan_target_deallocate(render_backend_t* backend, render_target_t* target) 
 		vkDestroySwapchainKHR(adapter->device, target_vk->swap_chain, nullptr);
 	if (target_vk->command_pool)
 		vkDestroyCommandPool(adapter->device, target_vk->command_pool, nullptr);
+	memory_deallocate(target);
 }
 
 static render_pipeline_t*

@@ -11,8 +11,11 @@ import generator
 
 dependlibs = ['resource', 'vector', 'window', 'network', 'task', 'blake3', 'foundation']
 
-generator = generator.Generator(project='render', dependlibs=dependlibs, variables=[
-                                ('bundleidentifier', 'com.maniccoder.render.$(binname)')])
+includepaths = [os.path.expandvars(os.path.join('$VK_SDK_PATH', 'Include'))]
+libpaths = [os.path.expandvars(os.path.join('$VK_SDK_PATH', 'Lib'))]
+
+generator = generator.Generator(project='render', dependlibs=dependlibs, includepaths=includepaths, libpaths=libpaths,
+                                variables=[('bundleidentifier', 'com.maniccoder.render.$(binname)')])
 target = generator.target
 writer = generator.writer
 toolchain = generator.toolchain
@@ -34,7 +37,7 @@ if target.is_macos():
 elif target.is_ios():
     gfxframeworks = ['Metal', 'QuartzCore', 'OpenGLES']
 if target.is_windows():
-    gfxlibs = ['gdi32', 'iphlpapi', 'ws2_32']
+    gfxlibs = ['vulkan-1', 'gdi32', 'iphlpapi', 'ws2_32']
     extralibs = ['iphlpapi', 'ws2_32']
 if target.is_linux():
     gfxlibs = ['vulkan', 'Xxf86vm', 'Xext', 'X11', 'GL']

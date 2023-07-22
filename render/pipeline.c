@@ -101,5 +101,6 @@ render_pipeline_state_allocate(render_backend_t* backend, render_pipeline_t* pip
 
 void
 render_pipeline_state_deallocate(render_backend_t* backend, render_pipeline_state_t state) {
-	backend->vtable.pipeline_state_deallocate(backend, state);
+	if (backend)
+		backend->vtable.pipeline_state_deallocate(backend, state);
 }
