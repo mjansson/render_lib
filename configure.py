@@ -11,8 +11,11 @@ import generator
 
 dependlibs = ['resource', 'vector', 'window', 'network', 'task', 'blake3', 'foundation']
 
-includepaths = [os.path.expandvars(os.path.join('$VK_SDK_PATH', 'Include'))]
-libpaths = [os.path.expandvars(os.path.join('$VK_SDK_PATH', 'Lib'))]
+libpaths = []
+includepaths = []
+if "VK_SDK_PATH" in os.environ:
+    includepaths += [os.path.expandvars(os.path.join('$VK_SDK_PATH', 'Include'))]
+    libpaths += [os.path.expandvars(os.path.join('$VK_SDK_PATH', 'Lib'))]
 
 generator = generator.Generator(project='render', dependlibs=dependlibs, includepaths=includepaths, libpaths=libpaths,
                                 variables=[('bundleidentifier', 'com.maniccoder.render.$(binname)')])
