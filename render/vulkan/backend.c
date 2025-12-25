@@ -174,6 +174,8 @@ rb_vulkan_construct(render_backend_t* backend) {
 		return false;
 	}
 
+	backend->shader_type = HASH_SHADER_VULKAN;
+
 	log_debug(HASH_RENDER, STRING_CONST("Constructed Vulkan render backend"));
 	return true;
 }

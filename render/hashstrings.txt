@@ -11,6 +11,7 @@ HASH_PARAMETER_COUNT                       parameter_count
 HASH_SHADER                                shader
 HASH_SHADER_DIRECTX12                      shader_directx12
 HASH_SHADER_METAL                          shader_metal
+HASH_SHADER_VULKAN                         shader_vulkan
 HASH_TEXTURE                               texture
 
 HASH_TRANSFORM_MVP                         transform_mvp

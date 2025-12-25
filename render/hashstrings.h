@@ -17,6 +17,7 @@
 #define HASH_SHADER static_hash_string("shader", 6, 0x65475a9f9c166495ULL)
 #define HASH_SHADER_DIRECTX12 static_hash_string("shader_directx12", 16, 0xda40a824b5a787bULL)
 #define HASH_SHADER_METAL static_hash_string("shader_metal", 12, 0x95b2922f423fb543ULL)
+#define HASH_SHADER_VULKAN static_hash_string("shader_vulkan", 13, 0x5700dcda82b3f57cULL)
 #define HASH_TEXTURE static_hash_string("texture", 7, 0x4b61d4f340e798f6ULL)
 #define HASH_TRANSFORM_MVP static_hash_string("transform_mvp", 13, 0x8b76b4155281b642ULL)
 #define HASH_TRANSFORM_MODEL static_hash_string("transform_model", 15, 0x967b3246fd50ab84ULL)

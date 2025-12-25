@@ -92,7 +92,7 @@ retry:
 			}
 		}
 		if (!shader && !recompiled) {
-			log_warnf(HASH_RENDER, WARNING_INVALID_VALUE, STRING_CONST("Got unexpected type/version %" PRIx64 " : %u"),
+			log_warnf(HASH_RENDER, WARNING_INVALID_VALUE, STRING_CONST("Got unexpected shader type/version %" PRIx64 " : %u"),
 			          (uint64_t)header.type, (uint32_t)header.version);
 			recompile = true;
 		}

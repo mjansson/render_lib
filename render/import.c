@@ -23,7 +23,7 @@
 
 #if RESOURCE_ENABLE_LOCAL_SOURCE
 
-typedef enum { IMPORTTYPE_UNKNOWN, IMPORTTYPE_SHADER, IMPORTTYPE_METAL_SHADER } renderimport_type_t;
+typedef enum { IMPORTTYPE_UNKNOWN, IMPORTTYPE_SHADER, IMPORTTYPE_METAL_SHADER, IMPORTTYPE_VULKAN_SHADER } renderimport_type_t;
 
 static resource_platform_t
 render_import_parse_target(const char* target, size_t length, resource_platform_t base) {
@@ -31,6 +31,8 @@ render_import_parse_target(const char* target, size_t length, resource_platform_
 	// TODO: Generalize
 	if (string_equal(target, length, STRING_CONST("metal"))) {
 		platform.render_api_group = RENDERAPIGROUP_METAL;
+	} else if (string_equal(target, length, STRING_CONST("hlsl"))) {
+		platform.render_api_group = RENDERAPIGROUP_VULKAN;
 	}
 	return platform;
 }
@@ -45,8 +47,12 @@ render_import_shader_guess_type(stream_t* stream, renderimport_type_t guess) {
 		if ((string_find_string(STRING_ARGS(line), STRING_CONST("metal_stdlib"), 0) != STRING_NPOS) ||
 		    (string_find_string(STRING_ARGS(line), STRING_CONST("__METAL"), 0) != STRING_NPOS) ||
 		    (string_find_string(STRING_ARGS(line), STRING_CONST("namespace metal"), 0) != STRING_NPOS)) {
-			if (type == IMPORTTYPE_UNKNOWN)
-				type = IMPORTTYPE_METAL_SHADER;
+			type = IMPORTTYPE_METAL_SHADER;
+			break;
+		} else if ((string_find_string(STRING_ARGS(line), STRING_CONST("VSMain("), 0) != STRING_NPOS) ||
+		           (string_find_string(STRING_ARGS(line), STRING_CONST("PSMain("), 0) != STRING_NPOS)) {
+			type = IMPORTTYPE_VULKAN_SHADER;
+			break;
 		}
 	}
 
@@ -100,6 +106,61 @@ render_import_metal_shader(stream_t* stream, const uuid_t uuid) {
 	} else {
 		string_const_t uuidstr = string_from_uuid_static(uuid);
 		log_infof(HASH_RESOURCE, STRING_CONST("Wrote imported Metal shader: %.*s"), STRING_FORMAT(uuidstr));
+	}
+
+finalize:
+	memory_deallocate(blob);
+	memory_deallocate(token);
+	resource_source_finalize(&source);
+
+	return ret;
+}
+
+static int
+render_import_vulkan_shader(stream_t* stream, const uuid_t uuid) {
+	resource_source_t source;
+	void* blob = 0;
+	size_t size;
+	hash_t checksum;
+	tick_t timestamp;
+	size_t parameter = 0;
+	string_const_t* token = 0;
+	string_const_t valstr;
+	resource_platform_t platformdecl = {-1, -1, RENDERAPIGROUP_VULKAN, -1, -1, -1};
+	uint64_t platform;
+	int ret = 0;
+
+	resource_source_initialize(&source);
+	resource_source_read(&source, uuid);
+
+	size = stream_size(stream);
+	blob = memory_allocate(HASH_RESOURCE, size, 0, MEMORY_PERSISTENT);
+
+	size = stream_read(stream, blob, size);
+
+	platform = resource_platform(platformdecl);
+	timestamp = stream_last_modified(stream);
+	checksum = hash(blob, size);
+	if (resource_source_write_blob(uuid, timestamp, HASH_SOURCE, platform, checksum, blob, size)) {
+		resource_source_set_blob(&source, timestamp, HASH_SOURCE, platform, checksum, size);
+	} else {
+		ret = -1;
+		goto finalize;
+	}
+
+	valstr = string_from_uint_static(parameter, false, 0, 0);
+	resource_source_set(&source, timestamp, HASH_PARAMETER_COUNT, platform, STRING_ARGS(valstr));
+	resource_source_set(&source, timestamp, HASH_RESOURCE_TYPE, 0, STRING_CONST("shader_vulkan"));
+
+	if (!resource_source_write(&source, uuid, false)) {
+		string_const_t uuidstr = string_from_uuid_static(uuid);
+		log_warnf(HASH_RESOURCE, WARNING_SUSPICIOUS, STRING_CONST("Failed writing imported Vulkan shader: %.*s"),
+		          STRING_FORMAT(uuidstr));
+		ret = -1;
+		goto finalize;
+	} else {
+		string_const_t uuidstr = string_from_uuid_static(uuid);
+		log_infof(HASH_RESOURCE, STRING_CONST("Wrote imported Vulkan shader: %.*s"), STRING_FORMAT(uuidstr));
 	}
 
 finalize:
@@ -246,6 +307,9 @@ render_import(stream_t* stream, const uuid_t uuid_given) {
 			break;
 		case IMPORTTYPE_METAL_SHADER:
 			ret = render_import_metal_shader(stream, uuid);
+			break;
+		case IMPORTTYPE_VULKAN_SHADER:
+			ret = render_import_vulkan_shader(stream, uuid);
 			break;
 		case IMPORTTYPE_UNKNOWN:
 		default:

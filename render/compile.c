@@ -80,6 +80,8 @@ static bool
 render_shader_shader_resource_type_valid(hash_t type) {
 	if (type == HASH_SHADER_METAL)
 		return true;
+	if (type == HASH_SHADER_VULKAN)
+		return true;
 	return false;
 }
 
@@ -186,10 +188,7 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 	hashmap_t* map = (hashmap_t*)&fixedmap;
 	resource_platform_t platform_decl;
 	render_backend_t* backend = 0;
-	window_t window;
-	hash_t resource_type_hash;
-
-	resource_type_hash = hash(type, type_length);
+	hash_t resource_type_hash = hash(type, type_length);
 
 	if (resource_type_hash == HASH_SHADER)
 		return render_shader_ref_compile(uuid, platform, source, source_hash, type, type_length);
@@ -233,12 +232,17 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 				platform_decl.render_api = RENDERAPI_METAL;
 				if (prev_backend && (prev_backend->api == RENDERAPI_METAL))
 					backend = prev_backend;
+			} else if (platform_decl.render_api_group == RENDERAPIGROUP_VULKAN) {
+				platform_decl.render_api = RENDERAPI_VULKAN;
+				if (prev_backend && (prev_backend->api == RENDERAPI_VULKAN))
+					backend = prev_backend;
 			} else {
 				continue;  // Nonspecific render api
 			}
 		}
 
 		valid_platform = true;
+		/*
 		if (!backend)
 			backend = render_backend_allocate((render_api_t)platform_decl.render_api, true);
 		if (!backend) {
@@ -247,6 +251,7 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 			continue;
 		}
 
+		window_t window = {0};
 		render_target_t* render_target = nullptr;
 		if (backend != prev_backend) {
 #if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_LINUX
@@ -257,117 +262,204 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 #endif
 			render_target = render_target_window_allocate(backend, &window, 0);
 		}
+		*/
 
 		result = -1;
-#if FOUNDATION_PLATFORM_APPLE
-		if (platform_decl.render_api == RENDERAPI_METAL) {
-			char* sourcebuffer = 0;
-			resource_change_t* sourcechange = resource_source_get(source, HASH_SOURCE, subplatform);
-			if (sourcechange && (sourcechange->flags & RESOURCE_SOURCEFLAG_BLOB)) {
-				sourcebuffer = memory_allocate(HASH_RESOURCE, sourcechange->value.blob.size, 0, MEMORY_PERSISTENT);
-				if (!resource_source_read_blob(uuid, HASH_SOURCE, subplatform, sourcechange->value.blob.checksum,
-				                               sourcebuffer, sourcechange->value.blob.size)) {
-					log_error(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Failed to read full source blob"));
-					memory_deallocate(sourcebuffer);
-					sourcebuffer = 0;
-				}
-			}
-			if (sourcebuffer) {
-				// Write to a temporary file and use command line tooling to generate the binary blob
-				char pathbuf[BUILD_MAX_PATHLEN];
-				string_t source_file = path_make_temporary(pathbuf, sizeof(pathbuf));
-				source_file = string_append(STRING_ARGS(source_file), sizeof(pathbuf), STRING_CONST(".metal"));
-				string_const_t directory = path_directory_name(STRING_ARGS(source_file));
-				fs_make_directory(STRING_ARGS(directory));
 
-				stream_t* source_stream = fs_open_file(STRING_ARGS(source_file),
-				                                       STREAM_OUT | STREAM_BINARY | STREAM_CREATE | STREAM_TRUNCATE);
-				stream_write(source_stream, sourcebuffer, sourcechange->value.blob.size);
-				stream_deallocate(source_stream);
+		char* sourcebuffer = 0;
+		resource_change_t* sourcechange = resource_source_get(source, HASH_SOURCE, subplatform);
+		if (sourcechange && (sourcechange->flags & RESOURCE_SOURCEFLAG_BLOB)) {
+			sourcebuffer = memory_allocate(HASH_RESOURCE, sourcechange->value.blob.size, 0, MEMORY_PERSISTENT);
+			if (!resource_source_read_blob(uuid, HASH_SOURCE, subplatform, sourcechange->value.blob.checksum,
+			                               sourcebuffer, sourcechange->value.blob.size)) {
+				log_error(HASH_RESOURCE, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Failed to read full source blob"));
 				memory_deallocate(sourcebuffer);
+				sourcebuffer = 0;
+			}
+		}
 
-				string_t air_file = string_allocate_concat(STRING_ARGS(source_file), STRING_CONST(".air"));
-				string_t lib_file = string_allocate_concat(STRING_ARGS(source_file), STRING_CONST(".metallib"));
+#if FOUNDATION_PLATFORM_WINDOWS || FOUNDATION_PLATFORM_LINUX
+		if ((platform_decl.render_api == RENDERAPI_VULKAN) && sourcebuffer) {
+			// Write to a temporary file and use command line tooling to generate the binary blob
+			char pathbuf[BUILD_MAX_PATHLEN];
+			string_t source_file = path_make_temporary(pathbuf, sizeof(pathbuf));
+			source_file = string_append(STRING_ARGS(source_file), sizeof(pathbuf), STRING_CONST(".hlsl"));
+			string_const_t directory = path_directory_name(STRING_ARGS(source_file));
+			fs_make_directory(STRING_ARGS(directory));
 
+			stream_t* source_stream = fs_open_file(STRING_ARGS(source_file),
+			                                       STREAM_OUT | STREAM_BINARY | STREAM_CREATE | STREAM_TRUNCATE);
+			stream_write(source_stream, sourcebuffer, sourcechange->value.blob.size);
+			stream_deallocate(source_stream);
+			memory_deallocate(sourcebuffer);
+			sourcebuffer = 0;
+
+			string_t spv_file = string_allocate_concat(STRING_ARGS(source_file), STRING_CONST(".spv"));
+
+			const string_const_t* tool_path = resource_compile_path();
+			for (size_t ipath = 0, path_count = array_size(tool_path); ipath <= path_count; ++ipath) {
 				process_t* compile_process = process_allocate();
 
-				string_const_t proc_args[8];
+				string_const_t proc_args[10];
 				size_t proc_args_count = sizeof(proc_args) / sizeof(proc_args[0]);
 
-				proc_args[0] = string_const(STRING_CONST("-sdk"));
-				proc_args[1] = string_const(STRING_CONST("macosx"));
-				proc_args[2] = string_const(STRING_CONST("metal"));
-				proc_args[3] = string_const(STRING_CONST("-c"));
-				proc_args[4] = path_strip_protocol(STRING_ARGS(source_file));
-				proc_args[5] = string_const(STRING_CONST("-o"));
-				proc_args[6] = path_strip_protocol(STRING_ARGS(air_file));
-				// Include source
-				bool embed_source = true;
-				if (embed_source) {
-					proc_args[7] = string_const(STRING_CONST("-frecord-sources"));
+				proc_args[0] = string_const(STRING_CONST("-T"));
+				proc_args[1] = string_const(STRING_CONST("vs_6_0"));
+				proc_args[2] = string_const(STRING_CONST("-E"));
+				proc_args[3] = string_const(STRING_CONST("VSMain"));
+				proc_args[4] = string_const(STRING_CONST("-spirv"));
+				proc_args[5] = string_const(STRING_CONST("-fspv-use-vulkan-memory-model"));
+				proc_args[6] = string_const(STRING_CONST("-fspv-target-env=vulkan1.3"));
+				proc_args[7] = string_const(STRING_CONST("-Fo"));
+				proc_args[8] = path_strip_protocol(STRING_ARGS(spv_file));
+				proc_args[9] = path_strip_protocol(STRING_ARGS(source_file));
+
+				if (ipath < path_count) {
+					char path_buffer[BUILD_MAX_PATHLEN];
+					string_t fullpath = path_concat(path_buffer, sizeof(path_buffer), STRING_ARGS(tool_path[ipath]),
+					                                STRING_CONST("dxc"));
+
+					log_infof(HASH_RENDER, STRING_CONST("Compiling HLSL source to SPIR-V using %.*s: %.*s -> %.*s"),
+					          STRING_FORMAT(fullpath), STRING_FORMAT(proc_args[9]), STRING_FORMAT(proc_args[8]));
+
+					process_set_executable_path(compile_process, STRING_ARGS(fullpath));
 				} else {
-					--proc_args_count;
+					log_infof(HASH_RENDER, STRING_CONST("Compiling HLSL source to SPIR-V using dxc: %.*s -> %.*s"),
+						      STRING_FORMAT(proc_args[9]), STRING_FORMAT(proc_args[8]));
+
+					process_set_executable_path(compile_process, STRING_CONST("dxc"));
 				}
 
-				log_infof(HASH_RENDER, STRING_CONST("Compiling Metal source: %.*s -> %.*s"),
-				          STRING_FORMAT(proc_args[4]), STRING_FORMAT(proc_args[6]));
-
-				process_set_executable_path(compile_process, STRING_CONST("/usr/bin/xcrun"));
 				process_set_arguments(compile_process, proc_args, proc_args_count);
 				int spawn_ret = process_spawn(compile_process);
 				process_deallocate(compile_process);
 
 				if (spawn_ret == 0) {
-					process_t* lib_process = process_allocate();
-
-					proc_args[2] = string_const(STRING_CONST("metallib"));
-					proc_args[3] = path_strip_protocol(STRING_ARGS(air_file));
-					proc_args[4] = string_const(STRING_CONST("-o"));
-					proc_args[5] = path_strip_protocol(STRING_ARGS(lib_file));
-					proc_args_count = 6;
-
-					log_infof(HASH_RENDER, STRING_CONST("Compiling Metal library: %.*s -> %.*s"),
-					          STRING_FORMAT(proc_args[3]), STRING_FORMAT(proc_args[5]));
-
-					process_set_executable_path(lib_process, STRING_CONST("/usr/bin/xcrun"));
-					process_set_arguments(lib_process, proc_args, proc_args_count);
-					spawn_ret = process_spawn(lib_process);
-					process_deallocate(lib_process);
-
-					if (spawn_ret == 0) {
-						stream_t* lib_stream = stream_open(STRING_ARGS(lib_file), STREAM_IN | STREAM_BINARY);
-						if (lib_stream) {
-							compiled_size = stream_size(lib_stream);
-							compiled_blob = memory_allocate(HASH_RESOURCE, compiled_size, 0, MEMORY_PERSISTENT);
-							stream_read(lib_stream, compiled_blob, compiled_size);
-							stream_deallocate(lib_stream);
-							result = 0;
-							log_infof(HASH_RENDER, STRING_CONST("Compiled metal shader: %u bytes"),
-							          (uint)compiled_size);
-						} else {
-							log_error(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
-							          STRING_CONST("Failed to read compiled Metal lib after compile"));
-						}
+					stream_t* spv_stream = stream_open(STRING_ARGS(spv_file), STREAM_IN | STREAM_BINARY);
+					if (spv_stream) {
+						compiled_size = stream_size(spv_stream);
+						compiled_blob = memory_allocate(HASH_RESOURCE, compiled_size, 0, MEMORY_PERSISTENT);
+						stream_read(spv_stream, compiled_blob, compiled_size);
+						stream_deallocate(spv_stream);
+						result = 0;
+						log_infof(HASH_RENDER, STRING_CONST("Compiled SPIR-V shader: %u bytes"),
+						          (uint)compiled_size);
 					} else {
-						log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Unable to compile Metal lib: %d"),
-						           spawn_ret);
-						_exit(-1);
+						log_error(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
+						          STRING_CONST("Failed to read compiled SPIR-V file after compile"));
 					}
+					break;
 				} else {
-					log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Unable to compile Metal source: %d"),
+					log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Unable to compile HLSL lib to SPIR-V with DXC: %d"),
 					           spawn_ret);
 				}
-
-				string_deallocate(lib_file.str);
-				string_deallocate(air_file.str);
 			}
+
+			string_deallocate(spv_file.str);
 		}
 #endif
+#if FOUNDATION_PLATFORM_APPLE
+		if ((platform_decl.render_api == RENDERAPI_METAL) && sourcebuffer) {
+			// Write to a temporary file and use command line tooling to generate the binary blob
+			char pathbuf[BUILD_MAX_PATHLEN];
+			string_t source_file = path_make_temporary(pathbuf, sizeof(pathbuf));
+			source_file = string_append(STRING_ARGS(source_file), sizeof(pathbuf), STRING_CONST(".metal"));
+			string_const_t directory = path_directory_name(STRING_ARGS(source_file));
+			fs_make_directory(STRING_ARGS(directory));
+
+			stream_t* source_stream = fs_open_file(STRING_ARGS(source_file),
+			                                       STREAM_OUT | STREAM_BINARY | STREAM_CREATE | STREAM_TRUNCATE);
+			stream_write(source_stream, sourcebuffer, sourcechange->value.blob.size);
+			stream_deallocate(source_stream);
+			memory_deallocate(sourcebuffer);
+			sourcebuffer = 0;
+
+			string_t air_file = string_allocate_concat(STRING_ARGS(source_file), STRING_CONST(".air"));
+			string_t lib_file = string_allocate_concat(STRING_ARGS(source_file), STRING_CONST(".metallib"));
+
+			process_t* compile_process = process_allocate();
+
+			string_const_t proc_args[8];
+			size_t proc_args_count = sizeof(proc_args) / sizeof(proc_args[0]);
+
+			proc_args[0] = string_const(STRING_CONST("-sdk"));
+			proc_args[1] = string_const(STRING_CONST("macosx"));
+			proc_args[2] = string_const(STRING_CONST("metal"));
+			proc_args[3] = string_const(STRING_CONST("-c"));
+			proc_args[4] = path_strip_protocol(STRING_ARGS(source_file));
+			proc_args[5] = string_const(STRING_CONST("-o"));
+			proc_args[6] = path_strip_protocol(STRING_ARGS(air_file));
+			// Include source
+			bool embed_source = true;
+			if (embed_source) {
+				proc_args[7] = string_const(STRING_CONST("-frecord-sources"));
+			} else {
+				--proc_args_count;
+			}
+
+			log_infof(HASH_RENDER, STRING_CONST("Compiling Metal source: %.*s -> %.*s"),
+			          STRING_FORMAT(proc_args[4]), STRING_FORMAT(proc_args[6]));
+
+			process_set_executable_path(compile_process, STRING_CONST("/usr/bin/xcrun"));
+			process_set_arguments(compile_process, proc_args, proc_args_count);
+			int spawn_ret = process_spawn(compile_process);
+			process_deallocate(compile_process);
+
+			if (spawn_ret == 0) {
+				process_t* lib_process = process_allocate();
+
+				proc_args[2] = string_const(STRING_CONST("metallib"));
+				proc_args[3] = path_strip_protocol(STRING_ARGS(air_file));
+				proc_args[4] = string_const(STRING_CONST("-o"));
+				proc_args[5] = path_strip_protocol(STRING_ARGS(lib_file));
+				proc_args_count = 6;
+
+				log_infof(HASH_RENDER, STRING_CONST("Compiling Metal library: %.*s -> %.*s"),
+				          STRING_FORMAT(proc_args[3]), STRING_FORMAT(proc_args[5]));
+
+				process_set_executable_path(lib_process, STRING_CONST("/usr/bin/xcrun"));
+				process_set_arguments(lib_process, proc_args, proc_args_count);
+				spawn_ret = process_spawn(lib_process);
+				process_deallocate(lib_process);
+
+				if (spawn_ret == 0) {
+					stream_t* lib_stream = stream_open(STRING_ARGS(lib_file), STREAM_IN | STREAM_BINARY);
+					if (lib_stream) {
+						compiled_size = stream_size(lib_stream);
+						compiled_blob = memory_allocate(HASH_RESOURCE, compiled_size, 0, MEMORY_PERSISTENT);
+						stream_read(lib_stream, compiled_blob, compiled_size);
+						stream_deallocate(lib_stream);
+						result = 0;
+						log_infof(HASH_RENDER, STRING_CONST("Compiled metal shader: %u bytes"),
+						          (uint)compiled_size);
+					} else {
+						log_error(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL,
+						          STRING_CONST("Failed to read compiled Metal lib after compile"));
+					}
+				} else {
+					log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Unable to compile Metal lib: %d"),
+					           spawn_ret);
+				}
+			} else {
+				log_errorf(HASH_RENDER, ERROR_SYSTEM_CALL_FAIL, STRING_CONST("Unable to compile Metal source: %d"),
+				           spawn_ret);
+			}
+
+			string_deallocate(lib_file.str);
+			string_deallocate(air_file.str);
+		}
+#endif
+		/*
 		if (backend != prev_backend) {
 			render_target_deallocate(render_target);
 			render_backend_deallocate(backend);
 			window_finalize(&window);
+			backend = 0;
 		}
+		*/
+
+		memory_deallocate(sourcebuffer);
+		sourcebuffer = 0;
 
 		if (result < 0)
 			continue;
