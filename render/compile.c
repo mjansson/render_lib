@@ -449,14 +449,15 @@ render_shader_compile(const uuid_t uuid, uint64_t platform, resource_source_t* s
 			string_deallocate(air_file.str);
 		}
 #endif
-		/*
+		
 		if (backend != prev_backend) {
+            /*
 			render_target_deallocate(render_target);
 			render_backend_deallocate(backend);
 			window_finalize(&window);
+            */
 			backend = 0;
 		}
-		*/
 
 		memory_deallocate(sourcebuffer);
 		sourcebuffer = 0;

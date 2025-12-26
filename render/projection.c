@@ -22,7 +22,7 @@
 
 matrix_t
 render_projection_perspective(real near, real far, real fov, real aspect) {
-	float32_aligned128_t matrix[4][4];
+	VECTOR_ALIGN float32_t matrix[4][4];
 	memset(matrix, 0, sizeof(float32_t) * 16);
 
 	real tanfov = math_tan(fov * 0.5f);
@@ -46,7 +46,7 @@ render_projection_perspective(real near, real far, real fov, real aspect) {
 
 matrix_t
 render_projection_orthographic(real near, real far, real left, real top, real right, real bottom) {
-	float32_aligned128_t matrix[4][4];
+	VECTOR_ALIGN float32_t matrix[4][4];
 	memset(matrix, 0, sizeof(float32_t) * 16);
 
 	matrix[0][0] = 2.0f / (right - left);
